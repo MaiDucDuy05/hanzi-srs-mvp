@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Query } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { CourseService, CourseLessonService } from './courses.service';
 import { CreateCourseDto, UpdateCourseDto, CreateCourseLessonDto, UpdateCourseLessonDto } from './dto/courses.dto';
 
@@ -9,9 +9,9 @@ export class CourseController {
   constructor(private readonly svc: CourseService) {}
   @Get() async findAll(@Query() q: any) { return ok(await this.svc.findAll(q), 'Courses retrieved'); }
   @Get(':id') async findOne(@Param('id') id: string) { return ok(await this.svc.findById(id), 'Course retrieved'); }
-  @Post() async create(@Body() dto: CreateCourseDto) { return ok(await this.svc.create(dto), 'Course created'); }
+  @Post() @HttpCode(HttpStatus.CREATED) async create(@Body() dto: CreateCourseDto) { return ok(await this.svc.create(dto), 'Course created'); }
   @Patch(':id') async update(@Param('id') id: string, @Body() dto: UpdateCourseDto) { return ok(await this.svc.update(id, dto), 'Course updated'); }
-  @Delete(':id') async remove(@Param('id') id: string) { await this.svc.softDelete(id); return ok(null, 'Course deleted'); }
+  @Delete(':id') @HttpCode(HttpStatus.NO_CONTENT) async remove(@Param('id') id: string) { await this.svc.softDelete(id); }
 }
 
 @Controller('course-lessons')
@@ -19,7 +19,7 @@ export class CourseLessonController {
   constructor(private readonly svc: CourseLessonService) {}
   @Get() async findAll(@Query() q: any) { return ok(await this.svc.findAll(q), 'Course lessons retrieved'); }
   @Get(':id') async findOne(@Param('id') id: string) { return ok(await this.svc.findById(id), 'Course lesson retrieved'); }
-  @Post() async create(@Body() dto: CreateCourseLessonDto) { return ok(await this.svc.create(dto), 'Course lesson created'); }
+  @Post() @HttpCode(HttpStatus.CREATED) async create(@Body() dto: CreateCourseLessonDto) { return ok(await this.svc.create(dto), 'Course lesson created'); }
   @Patch(':id') async update(@Param('id') id: string, @Body() dto: UpdateCourseLessonDto) { return ok(await this.svc.update(id, dto), 'Course lesson updated'); }
-  @Delete(':id') async remove(@Param('id') id: string) { await this.svc.delete(id); return ok(null, 'Course lesson deleted'); }
+  @Delete(':id') @HttpCode(HttpStatus.NO_CONTENT) async remove(@Param('id') id: string) { await this.svc.delete(id); }
 }

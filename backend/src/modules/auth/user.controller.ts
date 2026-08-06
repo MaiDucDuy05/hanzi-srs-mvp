@@ -7,6 +7,8 @@ import {
   Param,
   Body,
   Query,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto } from './dto/auth.dto';
@@ -32,6 +34,7 @@ export class UserController {
   }
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   async create(@Body() dto: CreateUserDto) {
     const user = await this.userService.create(dto);
     return { data: user, message: 'User created successfully' };
@@ -44,8 +47,8 @@ export class UserController {
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string) {
     await this.userService.softDelete(id);
-    return { data: null, message: 'User deleted successfully' };
   }
 }

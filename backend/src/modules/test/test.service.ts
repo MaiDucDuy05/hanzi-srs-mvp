@@ -35,12 +35,6 @@ export class TestService {
   async findById(id: string) { return findOr404(this.repo, id, 'Test'); }
   async create(dto: CreateTestDto) { return this.repo.save(this.repo.create(dto as any)); }
   async update(id: string, dto: UpdateTestDto) { const e = await this.findById(id); Object.assign(e, dto); return this.repo.save(e); }
-  async publish(id: string, accessCode?: string) {
-    const e = await this.findById(id);
-    e.status = TestStatus.PUBLISHED;
-    if (accessCode) e.accessCode = accessCode;
-    return this.repo.save(e);
-  }
   async softDelete(id: string) { await this.repo.softRemove(await this.findById(id)); }
 }
 
@@ -81,7 +75,6 @@ export class TestAttemptService {
     const test = await findOr404(this.testRepo, dto.testId, 'Test');
     if (test.status !== TestStatus.PUBLISHED) throw new BadRequestException('Test is not published');
 
-    // Check attempt limit
     const submittedCount = await this.repo.count({
       where: { testId: dto.testId, userId, status: TestAttemptStatus.SUBMITTED },
     });
