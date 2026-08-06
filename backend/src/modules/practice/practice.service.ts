@@ -1,33 +1,80 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { PracticeQuestion } from './entities/practice-question.entity';
 import { PracticeAttempt } from './entities/practice-attempt.entity';
-import { CreatePracticeQuestionDto, UpdatePracticeQuestionDto, StartPracticeAttemptDto, SubmitPracticeAttemptDto, PracticeQuestionQueryDto, PracticeAttemptQueryDto } from './dto/practice.dto';
+import {
+  CreatePracticeQuestionDto,
+  UpdatePracticeQuestionDto,
+  StartPracticeAttemptDto,
+  SubmitPracticeAttemptDto,
+  PracticeQuestionQueryDto,
+  PracticeAttemptQueryDto,
+} from './dto/practice.dto';
 import { PracticeAttemptStatus } from '../../common/enums/practice.enums';
-import { paginatedResult, findOrNotFound } from '../../common/helpers/query-helpers';
+import { DailyUsageService } from '../subscription/subscription.service';
+import {
+  paginatedResult,
+  findOrNotFound,
+} from '../../common/helpers/query-helpers';
 
 @Injectable()
 export class PracticeQuestionService {
-  constructor(@InjectRepository(PracticeQuestion) private repo: Repository<PracticeQuestion>) {}
+  constructor(
+    @InjectRepository(PracticeQuestion)
+    private repo: Repository<PracticeQuestion>,
+  ) {}
   async findAll(q: PracticeQuestionQueryDto) {
-    const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'DESC', questionType, levelId, status } = q;
+    const {
+      page = 1,
+      limit = 20,
+      sortBy = 'createdAt',
+      sortOrder = 'DESC',
+      questionType,
+      levelId,
+      status,
+    } = q;
     const where: any = {};
     if (questionType) where.questionType = questionType;
     if (levelId) where.levelId = levelId;
     if (status) where.status = status;
-    const [data, total] = await this.repo.findAndCount({ where, skip: (page - 1) * limit, take: limit, order: { [sortBy]: sortOrder } });
+    const [data, total] = await this.repo.findAndCount({
+      where,
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { [sortBy]: sortOrder },
+    });
     return paginatedResult(data, total, page, limit);
   }
-  async findById(id: string) { return findOrNotFound(this.repo, id, 'Practice question'); }
-  async create(dto: CreatePracticeQuestionDto) { return this.repo.save(this.repo.create(dto as any)); }
-  async update(id: string, dto: UpdatePracticeQuestionDto) { const e = await this.findById(id); Object.assign(e, dto); return this.repo.save(e); }
-  async softDelete(id: string) { await this.repo.softRemove(await this.findById(id)); }
+  async findById(id: string) {
+    return findOrNotFound(this.repo, id, 'Practice question');
+  }
+  async create(dto: CreatePracticeQuestionDto) {
+    return this.repo.save(this.repo.create(dto as any));
+  }
+  async update(id: string, dto: UpdatePracticeQuestionDto) {
+    const e = await this.findById(id);
+    Object.assign(e, dto);
+    return this.repo.save(e);
+  }
+  async softDelete(id: string) {
+    await this.repo.softRemove(await this.findById(id));
+  }
 }
 
 @Injectable()
 export class PracticeAttemptService {
-  constructor(@InjectRepository(PracticeAttempt) private repo: Repository<PracticeAttempt>) {}
+  constructor(
+    @InjectDataSource() private readonly dataSource: DataSource,
+    @InjectRepository(PracticeAttempt)
+    private repo: Repository<PracticeAttempt>,
+    private readonly limitSvc: DailyUsageService,
+  ) {}
+
   async findAll(q: PracticeAttemptQueryDto) {
     const { page = 1, limit = 20, userId, practiceType, status } = q;
     const where: any = {};
@@ -35,32 +82,69 @@ export class PracticeAttemptService {
     if (practiceType) where.practiceType = practiceType;
     if (status) where.status = status;
     const [data, total] = await this.repo.findAndCount({
-      where, skip: (page - 1) * limit, take: limit, order: { createdAt: 'DESC' },
+      where,
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { createdAt: 'DESC' },
     });
     return paginatedResult(data, total, page, limit);
   }
-  async findById(id: string) { return findOrNotFound(this.repo, id, 'Practice attempt'); }
-  async start(dto: StartPracticeAttemptDto, userId: string) {
+  async findById(id: string) {
+    return findOrNotFound(this.repo, id, 'Practice attempt');
+  }
+
+  /** activityKey theo PR-14 §1.2: practiceType:sourceType:sourceId. */
+  private buildActivityKey(dto: StartPracticeAttemptDto): string {
+    return `${dto.practiceType}:${dto.sourceType}:${dto.sourceId}`;
+  }
+
+  /**
+   * Bắt đầu bài luyện tập (PR-14 §3.2):
+   * - Retry cùng idempotencyKey trả attempt cũ, KHÔNG tăng lượt lần 2.
+   * - Tiêu thụ lượt (consumeInTransaction) và tạo attempt trong CÙNG transaction;
+   *   nếu tạo attempt lỗi → rollback → không mất lượt oan.
+   * - Hết lượt → HTTP 429 FREE_ATTEMPT_LIMIT_REACHED (từ consumeInTransaction).
+   */
+  async start(
+    dto: StartPracticeAttemptDto,
+    userId: string,
+    role: string | undefined,
+  ) {
     if (dto.idempotencyKey) {
       const existing = await this.repo.findOne({
         where: { userId, idempotencyKey: dto.idempotencyKey },
       });
       if (existing) return existing;
     }
-    const attempt = this.repo.create({
-      ...dto,
-      userId,
-      status: PracticeAttemptStatus.IN_PROGRESS,
-      startedAt: new Date(),
-    } as any);
-    return this.repo.save(attempt);
+
+    return this.dataSource.transaction(async (em) => {
+      await this.limitSvc.consumeInTransaction(
+        em,
+        userId,
+        this.buildActivityKey(dto),
+        role,
+      );
+      const attempt = await em.getRepository(PracticeAttempt).save(
+        em.getRepository(PracticeAttempt).create({
+          ...dto,
+          userId,
+          status: PracticeAttemptStatus.IN_PROGRESS,
+          startedAt: new Date(),
+        } as any),
+      );
+      return attempt;
+    });
   }
+
   async submit(id: string, dto: SubmitPracticeAttemptDto) {
     const attempt = await this.findById(id);
     if (attempt.status !== PracticeAttemptStatus.IN_PROGRESS) {
       throw new BadRequestException('Attempt is not in progress');
     }
-    Object.assign(attempt, dto, { status: PracticeAttemptStatus.COMPLETED, completedAt: new Date() });
+    Object.assign(attempt, dto, {
+      status: PracticeAttemptStatus.COMPLETED,
+      completedAt: new Date(),
+    });
     return this.repo.save(attempt);
   }
 }

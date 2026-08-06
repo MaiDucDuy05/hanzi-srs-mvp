@@ -13,6 +13,7 @@ import { PracticeModule } from './modules/practice/practice.module';
 import { TestModule } from './modules/test/test.module';
 import { SubscriptionModule } from './modules/subscription/subscription.module';
 import { ResourcesModule } from './modules/resources/resources.module';
+import { AudioModule } from './modules/audio/audio.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ResourcesModule } from './modules/resources/resources.module';
     TestModule,
     SubscriptionModule,
     ResourcesModule,
+    AudioModule,
   ],
   controllers: [AppController],
   providers: [
