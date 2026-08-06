@@ -83,11 +83,16 @@ export class DailyUsageController {
    * Kiểm tra lượt TRƯỚC khi bắt đầu bài (pure peek, không tăng lượt — PR-14 §1.3
    * chỉ tính lượt khi attempt tạo thành công). Người dùng lấy từ JWT, không tin body.
    */
-  @Post() async checkLimit(
+  @Post('checkLimit') async checkLimit(
     @Body() dto: CheckPracticeLimitDto,
-    @CurrentUser('sub') userId: string,
+    @CurrentUser() user: JwtPayload,
   ) {
-    const result = await this.svc.peek(userId, dto.activityKey);
+    // userId lấy từ JWT (không tin body) — xem subscription.dto.ts.
+    const result = await this.svc.peek(
+      user?.sub,
+      dto.activityKey,
+      user?.role,
+    );
     return ok(
       result,
       result.allowed ? 'Limit check passed' : 'Daily limit reached',

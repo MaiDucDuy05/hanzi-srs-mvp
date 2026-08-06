@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils/cn';
 
-// Backend chưa có route phát audio; nơi deploy có thể trỏ sang CDN/S3 qua env.
+// Backend phát audio qua GET /api/v1/audio/:key (AUDIO_STORAGE_DIR); next.config.ts
+// rewrite /api/audio/:path* sang backend. Nơi deploy có thể trỏ sang CDN/S3 qua env.
 const AUDIO_BASE_URL = process.env.NEXT_PUBLIC_AUDIO_BASE_URL ?? '/api/audio';
 
 /**

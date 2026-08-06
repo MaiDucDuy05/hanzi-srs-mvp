@@ -86,7 +86,6 @@ export function usePracticeEngine(options: {
           return;
         }
         const check = await subscriptionApi.checkLimit(
-          user.id,
           activityKey(practiceType, sourceType, sourceId),
         );
         if (cancelled) return;

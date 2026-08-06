@@ -1,7 +1,7 @@
 import {
   Injectable,
-  NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
@@ -15,7 +15,10 @@ import {
   PracticeQuestionQueryDto,
   PracticeAttemptQueryDto,
 } from './dto/practice.dto';
-import { PracticeAttemptStatus } from '../../common/enums/practice.enums';
+import {
+  PracticeAttemptStatus,
+} from '../../common/enums/practice.enums';
+import { Role } from '../../common/enums/user.enums';
 import { DailyUsageService } from '../subscription/subscription.service';
 import {
   paginatedResult,
@@ -75,10 +78,15 @@ export class PracticeAttemptService {
     private readonly limitSvc: DailyUsageService,
   ) {}
 
-  async findAll(q: PracticeAttemptQueryDto) {
-    const { page = 1, limit = 20, userId, practiceType, status } = q;
+  /** Học viên chỉ xem attempt của mình; teacher/admin được lọc theo userId (PR-03..13). */
+  async findAll(q: PracticeAttemptQueryDto, userId: string, role: string) {
+    const { page = 1, limit = 20, practiceType, status } = q;
     const where: any = {};
-    if (userId) where.userId = userId;
+    if (role === Role.TEACHER || role === Role.ADMIN) {
+      if (q.userId) where.userId = q.userId;
+    } else {
+      where.userId = userId;
+    }
     if (practiceType) where.practiceType = practiceType;
     if (status) where.status = status;
     const [data, total] = await this.repo.findAndCount({
@@ -89,8 +97,16 @@ export class PracticeAttemptService {
     });
     return paginatedResult(data, total, page, limit);
   }
-  async findById(id: string) {
-    return findOrNotFound(this.repo, id, 'Practice attempt');
+  async findById(id: string, userId: string, role: string) {
+    const attempt = await findOrNotFound(this.repo, id, 'Practice attempt');
+    if (
+      attempt.userId !== userId &&
+      role !== Role.TEACHER &&
+      role !== Role.ADMIN
+    ) {
+      throw new ForbiddenException('Not allowed to view this attempt');
+    }
+    return attempt;
   }
 
   /** activityKey theo PR-14 §1.2: practiceType:sourceType:sourceId. */
@@ -136,8 +152,11 @@ export class PracticeAttemptService {
     });
   }
 
-  async submit(id: string, dto: SubmitPracticeAttemptDto) {
-    const attempt = await this.findById(id);
+  async submit(id: string, dto: SubmitPracticeAttemptDto, userId: string) {
+    const attempt = await findOrNotFound(this.repo, id, 'Practice attempt');
+    // Chỉ chủ sở hữu attempt mới được nộp bài (chống force-complete attempt người khác).
+    if (attempt.userId !== userId)
+      throw new ForbiddenException('Attempt does not belong to user');
     if (attempt.status !== PracticeAttemptStatus.IN_PROGRESS) {
       throw new BadRequestException('Attempt is not in progress');
     }

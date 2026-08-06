@@ -119,11 +119,23 @@ export class TestAttemptController {
     private readonly answerSvc: TestAnswerService,
   ) {}
 
-  @Get() async findAll(@Query() q: TestAttemptQueryDto) {
-    return ok(await this.svc.findAll(q), 'Test attempts retrieved');
+  @Get() async findAll(
+    @Query() q: TestAttemptQueryDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return ok(
+      await this.svc.findAll(q, user?.sub, user?.role),
+      'Test attempts retrieved',
+    );
   }
-  @Get(':id') async findOne(@Param('id') id: string) {
-    return ok(await this.svc.findById(id), 'Test attempt retrieved');
+  @Get(':id') async findOne(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return ok(
+      await this.svc.findById(id, user?.sub, user?.role),
+      'Test attempt retrieved',
+    );
   }
 
   @Post() @HttpCode(HttpStatus.CREATED) async start(

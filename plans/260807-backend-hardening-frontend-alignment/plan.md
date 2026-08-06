@@ -1,6 +1,6 @@
 # Plan: Xử lý 4 việc còn lại (backend + align frontend)
 
-**Ngày:** 2026-08-07 · **Trạng thái:** In Progress
+**Ngày:** 2026-08-07 · **Trạng thái:** ✅ Complete (P1–P6 đều xong, có smoke test + code review)
 
 ## Bối cảnh
 Frontend đã build xong và pass. 4 việc còn lại được ghi nhận trong báo cáo trước đều thuộc backend (NestJS) — user yêu cầu xử lý nốt để đóng vòng lặp PR-05 / PR-14 và làm audio hoạt động thật.
@@ -43,7 +43,19 @@ Build backend + frontend, lint, test (frontend Vitest 19/19, backend jest), code
 ## Rủi ro
 - Thay đổi grading có thể đổi kết quả hiển thị cũ (SHORT_ANSWER lệch đáp án giờ là "sai" thay vì "chưa chấm") — đúng spec PR-05 (không có chấm tay trong MVP).
 - Transaction dùng lock — đảm bảo không tạo vòng lặp dependency module (practice → subscription đã export DailyUsageService).
-- `findOne`/`listAttempts` của test-attempt KHÔNG đổi scope (giáo viên xem kết quả học viên cần truy cập).
+- `findOne`/`listAttempts` của test-attempt KHÔNG đổi scope (giáo viên xem kết quả học viên cần truy cập). **Đã xử lý:** list/chi tiết attempt giờ scope theo owner/TEACHER/ADMIN (bỏ `?userId=` client), giáo viên vẫn lọc theo `testId`.
+
+## Ngoài 4 việc chính — bịt thêm lỗ hổng (từ code-reviewer, đã fix + smoke test)
+- **Cross-test answer injection** (HIGH): `submitAnswer` chặn câu hỏi không thuộc test của attempt (400); `submit` chỉ tính điểm cho câu thuộc đúng bài test.
+- **Attempts IDOR** (HIGH): `GET/PATCH /test-attempts` + `/practice-attempts` scope theo owner; `submit` practice bắt buộc sở hữu; `findAll` bỏ qua `?userId=` client cho học viên.
+- **Resources VIP gate phía server** (MEDIUM): `fileKey` chỉ trả cho VIP/Teacher/Admin (metadata vẫn hiện); module resources import SubscriptionModule.
+- **Peek miễn trừ Teacher/Admin** (MEDIUM): `checkLimit` đồng bộ với consume.
+- **`timeLimitMinutes: 0`** (MEDIUM): frontend coi 0 = không giới hạn (không auto-submit ngay).
+- **DTO `checkLimit`** (LOW): bỏ `userId` khỏi body — server lấy từ JWT; frontend bỏ gửi.
+- **Rollback race** (LOW): `consumeInTransaction` retry insert khi winner rollback.
+- Dọn unused import, comment stale audio-button.
 
 ## Câu hỏi chưa rõ
-- (không có — spec PR-05 §3.4 và PR-14 §3.2 đã đủ rõ)
+- Đặt tên `audioKey` (ASCII/pinyin hiện OK vì sanitize chặn non-ASCII; nếu cần key có dấu tiếng Việt/tiếng Trung thì phải nới regex).
+- `showScoreImmediately=false`: điểm vẫn hiện trên profile học viên (backend vẫn trả score) — quyết định sản phẩm, MVP giữ nguyên.
+- Concurrent `start`/`submitAnswer` có thể 500 do unique-violation (pre-existing, LOW) — chưa map 409 trong batch này.

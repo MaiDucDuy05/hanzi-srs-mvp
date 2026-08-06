@@ -65,9 +65,9 @@ src/
 
 - **Client Components cho trang dữ liệu**: JWT lưu trong `localStorage` nên mọi trang đọc dữ liệu người dùng là client component (`'use client'`); server components chỉ dùng cho layout/tĩnh.
 - **API layer** (`lib/api`): `apiFetch` tự gắn `Authorization: Bearer` từ localStorage, giải nén envelope `{ data, message }`, ném `ApiError` với message tiếng Việt thân thiện.
-- **Engine luyện tập dùng chung** (`components/practice/practice-engine.ts`): khôi phục phiên từ `sessionStorage` (không mất tiến độ khi refresh — theo đặc tả), kiểm tra giới hạn lượt PR-14 qua `daily-usage/checkLimit`, gọi `practice/start` với idempotency key, đếm thời gian, submit kết quả. Cả PracticeSession và GameSession tái sử dụng engine này.
-- **Chấm điểm client-side**: backend MVP lưu điểm client gửi lên (`PracticeAttemptService`/`TestAnswerService` chỉ lưu DTO), nên các mode luyện tập/thi thử tự chấm điểm và gửi kết quả.
-- **Giới hạn lượt (PR-14)**: Free 3 lượt/bài/ngày theo `activityKey = practiceType:sourceType:sourceId`; VIP/Teacher/Admin không giới hạn. Hết lượt hiển thị modal mời nâng cấp VIP.
+- **Engine luyện tập dùng chung** (`components/practice/practice-engine.ts`): khôi phục phiên từ `sessionStorage` (không mất tiến độ khi refresh — theo đặc tả), kiểm tra giới hạn lượt PR-14 qua `daily-usage/checkLimit` (pure peek, không tăng lượt), gọi `practice/start` với idempotency key (backend chốt lượt atomic trong transaction, hết lượt trả 429 → hiện màn giới hạn), đếm thời gian, submit kết quả. Cả PracticeSession và GameSession tái sử dụng engine này.
+- **Chấm điểm server-side (PR-05)**: backend tự chấm câu (`gradeQuestion`) khi nhận đáp án và tính `score` tổng lúc nộp bài; frontend không còn nhìn thấy `correctAnswer` (chỉ TEACHER/ADMIN được trả). Trang thi thử chỉ hiển thị kết quả do server trả về; `showScoreImmediately=false` thì ẩn điểm ở màn kết thúc.
+- **Giới hạn lượt (PR-14)**: Free 3 lượt/bài/ngày theo `activityKey = practiceType:sourceType:sourceId`; VIP/Teacher/Admin không giới hạn. `checkLimit` chỉ xem trước (không tăng lượt) — lượt được chốt atomic lúc `start`; hết lượt hiển thị modal mời nâng cấp VIP.
 - **Hanzi writing (PR-13)**: dynamic import `hanzi-writer` trong `useEffect` (an toàn SSR); dữ liệu nét chữ tự host tại `public/hanzi-data/<char>.json`, tải runtime qua `charDataLoader`.
 
 ## Triển khai theo đặc tả
@@ -78,13 +78,14 @@ src/
 | FR-02 | Học theo chủ đề | ✅ `/topics`, admin quản lý |
 | PR-03 | Nối Trung–Pinyin–Việt | ✅ `practice?type=WORD_MATCHING` |
 | PR-04 | Flashcard | ✅ `practice?type=FLASHCARD` |
-| PR-05 | Bài kiểm tra giáo viên | ✅ `/tests/join`, `/teacher/tests` |
+| PR-05 | Bài kiểm tra giáo viên | ✅ `/tests/join`, `/teacher/tests`, chấm server + ẩn đáp án học viên |
 | PR-09 | Điền chỗ trống | ✅ `practice?type=FILL_BLANK` |
 | PR-10 | Sắp xếp câu | ✅ `practice?type=SENTENCE_ORDERING` |
 | PR-11 | Bắn bóng Pinyin | ✅ `games?game=PINYIN_BALLOON` |
 | PR-12 | Memory lật thẻ | ✅ `games?game=MEMORY` |
 | PR-13 | Luyện viết chữ Hán | ✅ `games?game=WRITING` |
-| PR-14 | Giới hạn lượt Free/VIP | ✅ checkLimit + modal nâng cấp |
+| PR-14 | Giới hạn lượt Free/VIP | ✅ checkLimit (peek) + start atomic + modal nâng cấp |
+| FR-01 | Phát audio | ✅ `/api/audio/*` rewrite → backend `GET /api/v1/audio/:key` |
 | FR-17 | Sổ lỗi sai | ✅ `/mistake-book` |
 | FR-24/25/26 | Tài liệu, liên hệ, VIP | ✅ `/resources`, `/contact`, `/upgrade-vip` |
 

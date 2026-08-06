@@ -15,7 +15,7 @@ Dự án này là phiên bản MVP (Minimum Viable Product) được tối ưu c
 ### Backend
 - **Framework:** NestJS
 - **Database:** PostgreSQL
-- **Storage/CDN:** AWS S3 & CloudFront (Lưu trữ audio, hình ảnh, JSON nét chữ Hán)
+- **Storage/CDN:** AWS S3 & CloudFront (Lưu trữ audio, hình ảnh, JSON nét chữ Hán) — MVP phục vụ audio từ thư mục cục bộ qua `GET /api/v1/audio/:key` (`AUDIO_STORAGE_DIR`, mặc định `./storage/audio`); frontend proxy qua `/api/audio/*`.
 
 ## 📦 Cấu trúc Module
 

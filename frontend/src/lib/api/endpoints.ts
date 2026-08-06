@@ -233,8 +233,9 @@ export const subscriptionApi = {
 
   getLimitSettings: () => unwrap(apiFetch<Single<LimitSettings>>('/limit-settings')),
 
-  checkLimit: (userId: string, activityKey: string) =>
-    unwrap(apiFetch<Single<DailyUsageCheck>>('/daily-usage/checkLimit', { method: 'POST', body: JSON.stringify({ userId, activityKey }) })),
+  // userId lấy từ JWT phía server (PR-14 §3.2) — chỉ gửi activityKey.
+  checkLimit: (activityKey: string) =>
+    unwrap(apiFetch<Single<DailyUsageCheck>>('/daily-usage/checkLimit', { method: 'POST', body: JSON.stringify({ activityKey }) })),
 };
 
 // ── Resources ──

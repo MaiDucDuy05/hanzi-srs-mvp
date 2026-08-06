@@ -140,11 +140,15 @@ export class DailyUsageService {
   /**
    * Kiểm tra lượt KHÔNG tăng (pure peek) — dùng cho màn hình báo trước.
    * Việc chốt lượt thật sự nằm ở `consumeInTransaction` trong API start (PR-14 §3.2).
+   * Teacher/Admin/VIP miễn trừ (đồng bộ với consumeInTransaction).
    */
   async peek(
     userId: string,
     activityKey: string,
+    role?: string,
   ): Promise<{ allowed: boolean; usedCount: number; limit: number }> {
+    if (role === Role.TEACHER || role === Role.ADMIN)
+      return { allowed: true, usedCount: 0, limit: 0 };
     const isVip = await this.subscriptionSvc.checkVipEntitlement(userId);
     if (isVip) return { allowed: true, usedCount: 0, limit: 0 };
     const freeLimit = await this.getFreeLimit();
@@ -208,6 +212,17 @@ export class DailyUsageService {
             { userId, activityKey, usageDate },
           )
           .getOne();
+        if (!usage) {
+          // Winner đã rollback toàn bộ transaction → bản ghi không tồn tại,
+          // thử chèn lại một lần nữa (không được 429 oan).
+          usage = usageRepo.create({
+            userId,
+            activityKey,
+            usageDate,
+            usedCount: 0,
+          });
+          usage = await usageRepo.save(usage);
+        }
       }
     }
 

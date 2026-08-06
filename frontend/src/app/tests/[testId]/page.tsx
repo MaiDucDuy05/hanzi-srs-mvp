@@ -108,9 +108,10 @@ export default function TakeTestPage() {
     submitRef.current = submit;
   }, [submit]);
 
-  // Đồng hồ + tự nộp khi hết giờ.
+  // Đồng hồ + tự nộp khi hết giờ. timeLimitMinutes <= 0 = không giới hạn thời gian.
   useEffect(() => {
     if (phase !== 'running' || !test) return;
+    if (!(test.timeLimitMinutes > 0)) return;
     const t = setInterval(() => setElapsed((s) => s + 1), 1000);
     const deadline = setTimeout(() => {
       clearInterval(t);

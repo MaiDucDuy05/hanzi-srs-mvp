@@ -1,6 +1,5 @@
 import {
   Injectable,
-  NotFoundException,
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
@@ -157,11 +156,19 @@ export class TestAttemptService {
     private questionRepo: Repository<TestQuestion>,
   ) {}
 
-  async findAll(q: TestAttemptQueryDto) {
-    const { page = 1, limit = 20, testId, userId, status } = q;
+  /**
+   * PR-05 §1.2: học viên chỉ xem được attempt của chính mình (bỏ qua ?userId= client gửi lên);
+   * teacher/admin được lọc theo userId/testId phục vụ màn kết quả.
+   */
+  async findAll(q: TestAttemptQueryDto, userId: string, role: string) {
+    const { page = 1, limit = 20, testId, status } = q;
     const where: any = {};
+    if (role === Role.TEACHER || role === Role.ADMIN) {
+      if (q.userId) where.userId = q.userId;
+    } else {
+      where.userId = userId;
+    }
     if (testId) where.testId = testId;
-    if (userId) where.userId = userId;
     if (status) where.status = status;
     const [data, total] = await this.repo.findAndCount({
       where,
@@ -171,8 +178,17 @@ export class TestAttemptService {
     });
     return paginatedResult(data, total, page, limit);
   }
-  async findById(id: string) {
-    return findOrNotFound(this.repo, id, 'Test attempt');
+  /** Xem attempt: chủ sở hữu hoặc teacher/admin (đồng bộ với findByAttempt). */
+  async findById(id: string, userId: string, role: string) {
+    const attempt = await findOrNotFound(this.repo, id, 'Test attempt');
+    if (
+      attempt.userId !== userId &&
+      role !== Role.TEACHER &&
+      role !== Role.ADMIN
+    ) {
+      throw new ForbiddenException('Not allowed to view this attempt');
+    }
+    return attempt;
   }
   async start(dto: StartTestAttemptDto, userId: string) {
     const test = await findOrNotFound(this.testRepo, dto.testId, 'Test');
@@ -204,7 +220,7 @@ export class TestAttemptService {
    * Điểm tổng = tổng điểm đạt / tổng điểm toàn bài (tính cả câu bỏ trống).
    */
   async submit(id: string, dto: SubmitTestAttemptDto, userId: string) {
-    const attempt = await this.findById(id);
+    const attempt = await findOrNotFound(this.repo, id, 'Test attempt');
     if (attempt.userId !== userId)
       throw new ForbiddenException('Attempt does not belong to user');
     if (attempt.status !== TestAttemptStatus.IN_PROGRESS)
@@ -218,8 +234,12 @@ export class TestAttemptService {
         order: { displayOrder: 'ASC' },
       }),
     ]);
+    const qIds = new Set(questions.map((q) => q.id));
     const totalPoints = questions.reduce((s, q) => s + q.points, 0);
-    const earned = answers.reduce((s, a) => s + a.pointsAwarded, 0);
+    // Chỉ tính điểm cho câu thuộc đúng bài test của attempt (chặn inject câu bài khác).
+    const earned = answers
+      .filter((a) => qIds.has(a.questionId))
+      .reduce((s, a) => s + a.pointsAwarded, 0);
     const score = totalPoints ? Math.round((earned / totalPoints) * 100) : 0;
 
     Object.assign(attempt, {
@@ -245,7 +265,7 @@ export class TestAnswerService {
   private async assertCanAnswer(
     attemptId: string,
     userId: string,
-  ): Promise<void> {
+  ): Promise<TestAttempt> {
     const attempt = await findOrNotFound(
       this.attemptRepo,
       attemptId,
@@ -255,6 +275,7 @@ export class TestAnswerService {
       throw new ForbiddenException('Attempt does not belong to user');
     if (attempt.status !== TestAttemptStatus.IN_PROGRESS)
       throw new BadRequestException('Attempt already submitted');
+    return attempt;
   }
 
   /** Lưu đáp án + chấm ngay phía server; upsert theo UNIQUE(attempt_id, question_id). */
@@ -263,12 +284,15 @@ export class TestAnswerService {
     dto: SubmitTestAnswerDto,
     userId: string,
   ) {
-    await this.assertCanAnswer(attemptId, userId);
+    const attempt = await this.assertCanAnswer(attemptId, userId);
     const question = await findOrNotFound(
       this.questionRepo,
       dto.questionId,
       'Test question',
     );
+    // Chống inject: câu hỏi phải thuộc đúng bài test của attempt.
+    if (question.testId !== attempt.testId)
+      throw new BadRequestException('Question does not belong to this test');
     const submitted = dto.answer?.answer;
     const { isCorrect, pointsAwarded } = gradeQuestion(question, submitted);
 

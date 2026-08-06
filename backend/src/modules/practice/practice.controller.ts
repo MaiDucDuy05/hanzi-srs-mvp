@@ -59,11 +59,23 @@ export class PracticeQuestionController {
 @Controller('practice-attempts')
 export class PracticeAttemptController {
   constructor(private readonly svc: PracticeAttemptService) {}
-  @Get() async findAll(@Query() q: PracticeAttemptQueryDto) {
-    return ok(await this.svc.findAll(q), 'Practice attempts retrieved');
+  @Get() async findAll(
+    @Query() q: PracticeAttemptQueryDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return ok(
+      await this.svc.findAll(q, user?.sub, user?.role),
+      'Practice attempts retrieved',
+    );
   }
-  @Get(':id') async findOne(@Param('id') id: string) {
-    return ok(await this.svc.findById(id), 'Practice attempt retrieved');
+  @Get(':id') async findOne(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return ok(
+      await this.svc.findById(id, user?.sub, user?.role),
+      'Practice attempt retrieved',
+    );
   }
   @Post() @HttpCode(HttpStatus.CREATED) async start(
     @Body() dto: StartPracticeAttemptDto,
@@ -77,7 +89,11 @@ export class PracticeAttemptController {
   @Patch(':id') async submit(
     @Param('id') id: string,
     @Body() dto: SubmitPracticeAttemptDto,
+    @CurrentUser('sub') userId: string,
   ) {
-    return ok(await this.svc.submit(id, dto), 'Practice attempt submitted');
+    return ok(
+      await this.svc.submit(id, dto, userId),
+      'Practice attempt submitted',
+    );
   }
 }
