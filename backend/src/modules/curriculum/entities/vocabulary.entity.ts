@@ -1,0 +1,28 @@
+import { Column, Entity } from 'typeorm';
+import { BaseEntity } from '../../../common/base.entity';
+import { ContentStatus } from '../../../common/enums/curriculum.enums';
+
+/** Từ vựng (FR-01). Dùng cho: bài học, chủ đề, practice, flashcard, game. */
+@Entity('vocabularies')
+export class Vocabulary extends BaseEntity {
+  @Column({ name: 'level_id', type: 'uuid' })
+  levelId: string;
+
+  @Column({ type: 'varchar', length: 50 })
+  hanzi: string;
+
+  @Column({ type: 'varchar', length: 100 })
+  pinyin: string;
+
+  @Column({ name: 'meaning_vi', type: 'text' })
+  meaningVi: string;
+
+  @Column({ name: 'audio_key', type: 'varchar', length: 255, nullable: true })
+  audioKey: string | null;
+
+  @Column({ type: 'varchar', length: 20, default: ContentStatus.DRAFT })
+  status: ContentStatus;
+
+  @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true })
+  deletedAt: Date | null;
+}
