@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "ui-designer": {
+      "source": "daymade/claude-code-skills",
+      "sourceType": "github",
+      "skillPath": "ui-designer/SKILL.md",
+      "computedHash": "fe2c9febd76bf62140678ed3005cda8e06e7afab896214254823962757932857"
+    }
+  }
+}
