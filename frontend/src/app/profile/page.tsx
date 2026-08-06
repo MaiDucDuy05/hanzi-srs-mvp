@@ -27,22 +27,15 @@ export default function ProfilePage() {
     if (!user) return;
     (async () => {
       try {
-        const [ats, tats] = await Promise.all([
+        const [ats, tats, me] = await Promise.all([
           practiceApi.listAttempts({ userId: user.id }),
           testApi.listAttempts({ userId: user.id }),
+          subscriptionApi.me().catch(() => null),
         ]);
         setAttempts(ats.slice().reverse());
         setTestAttempts(tats.slice().reverse());
-        // GET /subscriptions chỉ dành cho ADMIN — người dùng khác không lấy được
-        // gói của mình, không làm sập trang.
-        if (user.role === 'ADMIN') {
-          try {
-            const subs = await subscriptionApi.list({ userId: user.id });
-            setSubscriptions(subs);
-          } catch {
-            setSubscriptions([]);
-          }
-        }
+        // GET /subscriptions/me: gói của chính người dùng (authenticated) — ai cũng xem được.
+        setSubscriptions(me ? [me] : []);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Lỗi tải hồ sơ.');
       } finally {
@@ -52,9 +45,10 @@ export default function ProfilePage() {
   }, [user]);
 
   const activeSub = subscriptions.find((s) => s.status === 'ACTIVE');
-  const isVip = activeSub?.plan === 'VIP';
-  // Chỉ admin có dữ liệu gói; người dùng khác không xem được (endpoint admin-only).
-  const planKnown = user?.role === 'ADMIN' && subscriptions.length > 0;
+  const isVip =
+    activeSub?.plan === 'VIP' &&
+    (!activeSub.expiresAt || new Date(activeSub.expiresAt) > new Date());
+  // me() trả gói thực tế (null = chưa có gói = FREE) — ai cũng biết gói của mình.
 
   return (
     <AuthGuard>
@@ -90,15 +84,15 @@ export default function ProfilePage() {
             <section className="grid gap-4 sm:grid-cols-3">
               <Card>
                 <CardBody className="text-center">
-                  <p className="text-3xl">{planKnown ? (isVip ? '👑' : '🆓') : '❔'}</p>
-                  <p className="mt-1 font-bold">
-                    {planKnown ? (isVip ? 'Gói VIP' : 'Gói miễn phí') : 'Thông tin gói'}
-                  </p>
-                  {planKnown && activeSub?.expiresAt && (
+                  <p className="text-3xl">{isVip ? '👑' : '🆓'}</p>
+                  <p className="mt-1 font-bold">{isVip ? 'Gói VIP' : 'Gói miễn phí'}</p>
+                  {activeSub?.expiresAt && (
                     <p className="text-xs text-gray-500">Đến {formatDate(activeSub.expiresAt)}</p>
                   )}
-                  {!planKnown && (
-                    <p className="text-xs text-gray-500">Gói VIP do quản trị viên quản lý.</p>
+                  {!isVip && (
+                    <a href="/upgrade-vip" className="text-xs text-brand underline">
+                      Nâng cấp VIP
+                    </a>
                   )}
                 </CardBody>
               </Card>

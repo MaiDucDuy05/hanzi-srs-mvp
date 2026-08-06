@@ -228,6 +228,9 @@ export const subscriptionApi = {
   list: (params: { userId?: string; plan?: string; status?: string; page?: number; limit?: number } = {}) =>
     apiFetch<Paginated<Subscription>>(`/subscriptions${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
 
+  // Gói của người dùng hiện tại (authenticated, không admin-only) — phân biệt VIP subscriber vs FREE.
+  me: () => unwrap(apiFetch<Single<Subscription | null>>('/subscriptions/me')),
+
   getLimitSettings: () => unwrap(apiFetch<Single<LimitSettings>>('/limit-settings')),
 
   checkLimit: (userId: string, activityKey: string) =>

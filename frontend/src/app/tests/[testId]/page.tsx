@@ -18,7 +18,6 @@ type Phase = 'loading' | 'info' | 'running' | 'submitting' | 'finished' | 'error
 interface TestResult {
   score: number;
   correct: number;
-  ungraded: number;
   pointsEarned: number;
   totalPoints: number;
   duration: number;
@@ -73,7 +72,7 @@ export default function TakeTestPage() {
     setPhase('submitting');
     try {
       const duration = elapsed || 1;
-      // Gửi từng câu trả lời.
+      // Gửi từng câu trả lời — backend chấm từng câu phía server (PR-05 §3.4).
       for (const q of questions) {
         const a = answers[q.id];
         if (a === undefined) continue;
@@ -82,36 +81,16 @@ export default function TakeTestPage() {
           answer: { answer: a },
         });
       }
-      await testApi.submitAttempt(attemptId!, duration);
-
-      // Chấm điểm cục bộ (backend MVP chưa tính điểm).
-      let pointsEarned = 0;
-      let totalPoints = 0;
-      let correct = 0;
-      let ungraded = 0;
-      for (const q of questions) {
-        totalPoints += q.points;
-        const a = answers[q.id];
-        if (a === undefined) continue;
-        const ca = q.correctAnswer as Record<string, unknown> | null;
-        const accepted = Array.isArray(ca?.accepted) ? (ca.accepted as string[]) : [];
-        const expected = ca?.answer;
-        if (q.questionType === 'SHORT_ANSWER') {
-          if (accepted.includes(String(a ?? '').trim())) {
-            pointsEarned += q.points;
-            correct += 1;
-          } else {
-            ungraded += 1;
-          }
-        } else if (a === expected) {
-          pointsEarned += q.points;
-          correct += 1;
-        }
-      }
+      // Nộp bài — backend tính điểm tổng, không tin điểm từ client.
+      const attempt = await testApi.submitAttempt(attemptId!, duration);
+      // Đọc kết quả đã chấm để hiển thị số câu đúng/điểm đạt.
+      const graded = await testApi.listAnswers(attemptId!);
+      const correct = graded.filter((a) => a.isCorrect).length;
+      const pointsEarned = graded.reduce((s, a) => s + a.pointsAwarded, 0);
+      const totalPoints = questions.reduce((s, q) => s + q.points, 0);
       setResult({
-        score: totalPoints ? Math.round((pointsEarned / totalPoints) * 100) : 0,
+        score: attempt.score,
         correct,
-        ungraded,
         pointsEarned,
         totalPoints,
         duration,
@@ -177,20 +156,23 @@ export default function TakeTestPage() {
         <Card className="mx-auto max-w-lg">
           <CardHeader title="Đã nộp bài! 🎉" subtitle={test.name} />
           <CardBody className="space-y-4 text-center">
-            <p className="text-5xl font-bold text-brand">{result.score}%</p>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                <p className="font-semibold text-green-600">{result.correct}/{questions.length}</p>
-                <p className="text-xs text-gray-500">Câu đúng</p>
-              </div>
-              <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-                <p className="font-semibold">{formatDuration(result.duration)}</p>
-                <p className="text-xs text-gray-500">Thời gian</p>
-              </div>
-            </div>
-            {result.ungraded > 0 && (
-              <p className="text-xs text-gray-500">
-                {result.ungraded} câu trả lời ngắn chưa khớp đáp án mẫu — giáo viên sẽ chấm.
+            {test.showScoreImmediately ? (
+              <>
+                <p className="text-5xl font-bold text-brand">{result.score}%</p>
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
+                    <p className="font-semibold text-green-600">{result.correct}/{questions.length}</p>
+                    <p className="text-xs text-gray-500">Câu đúng</p>
+                  </div>
+                  <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
+                    <p className="font-semibold">{formatDuration(result.duration)}</p>
+                    <p className="text-xs text-gray-500">Thời gian</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-gray-600">
+                Đã nộp bài thành công. Điểm sẽ được giáo viên công bố.
               </p>
             )}
             <div className="flex justify-center gap-2">

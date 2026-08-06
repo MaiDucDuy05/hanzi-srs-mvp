@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { practiceApi, subscriptionApi } from '@/lib/api/endpoints';
+import { ApiError } from '@/lib/api/client';
 import type { DailyUsageCheck, PracticeType, SourceType } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/auth-context';
 import { activityKey } from '@/lib/utils/constants';
@@ -114,6 +115,13 @@ export function usePracticeEngine(options: {
         });
       } catch (e) {
         if (!cancelled) {
+          // PR-14 §3.2: backend chốt lượt atomic ngay lúc start; nếu hết lượt (429)
+          // do race với tab/thiết bị khác thì hiện limit screen thay vì lỗi chung.
+          if (e instanceof ApiError && e.status === 429) {
+            setLimit({ allowed: false, usedCount: 0 });
+            setStatus('limit');
+            return;
+          }
           setError(e instanceof Error ? e.message : 'Không thể bắt đầu phiên luyện tập.');
           setStatus('error');
         }

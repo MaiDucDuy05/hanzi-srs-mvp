@@ -23,18 +23,21 @@ export default function ResourcesPage() {
       try {
         const list = await resourceApi.list({ status: 'PUBLISHED' });
         setResources(list.filter((r) => !r.deletedAt));
-        if (user?.role === 'ADMIN') {
+        // Teacher/Admin được dùng tài liệu VIP theo ma trận BRD (docs.md);
+        // học viên khác kiểm tra gói thật của mình qua GET /subscriptions/me.
+        const vipRole = user?.role === 'TEACHER' || user?.role === 'ADMIN';
+        let vipActive = false;
+        if (!vipRole) {
           try {
-            const subs = await subscriptionApi.list({ userId: user.id });
-            setIsVip(subs.some((s) => s.status === 'ACTIVE' && s.plan === 'VIP'));
+            const me = await subscriptionApi.me();
+            vipActive =
+              !!me && me.plan === 'VIP' && me.status === 'ACTIVE' &&
+              (!me.expiresAt || new Date(me.expiresAt) > new Date());
           } catch {
-            setIsVip(false);
+            vipActive = false;
           }
-        } else {
-          // Backend chưa có endpoint tự xem gói (GET /subscriptions là admin-only).
-          // Dùng proxy theo role theo ma trận BRD: Teacher/Admin dùng được tài liệu VIP.
-          setIsVip(user?.role === 'TEACHER');
         }
+        setIsVip(vipRole || vipActive);
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Lỗi tải tài liệu.');
       } finally {
