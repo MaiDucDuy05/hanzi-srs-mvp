@@ -1,0 +1,33 @@
+import { Column, Entity } from 'typeorm';
+import { BaseEntity } from '../../../common/base.entity';
+import { TestAttemptStatus } from '../../../common/enums/test.enums';
+
+/**
+ * Lượt làm bài kiểm tra (PR-05).
+ * - Chống 2 attempt IN_PROGRESS song song: partial unique index ở migration
+ *   WHERE status = 'IN_PROGRESS' (không unique toàn cục vì attempt_limit > 1).
+ * - "Chỉ nộp 1 lần" enforce ở service (transition IN_PROGRESS → SUBMITTED).
+ */
+@Entity('test_attempts')
+export class TestAttempt extends BaseEntity {
+  @Column({ name: 'test_id', type: 'uuid' })
+  testId: string;
+
+  @Column({ name: 'user_id', type: 'uuid' })
+  userId: string;
+
+  @Column({ type: 'varchar', length: 20, default: TestAttemptStatus.IN_PROGRESS })
+  status: TestAttemptStatus;
+
+  @Column({ name: 'started_at', type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  startedAt: Date;
+
+  @Column({ name: 'submitted_at', type: 'timestamptz', nullable: true })
+  submittedAt: Date | null;
+
+  @Column({ type: 'int', default: 0 })
+  score: number;
+
+  @Column({ name: 'duration_seconds', type: 'int', default: 0 })
+  durationSeconds: number;
+}
