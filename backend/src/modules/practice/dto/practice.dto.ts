@@ -1,5 +1,22 @@
 import { IsEnum, IsInt, IsJSON, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 import { PracticeQuestionType, PracticeAnswerType, PracticeType, SourceType, PracticeAttemptStatus } from '../../../common/enums/practice.enums';
+import { PaginationQueryDto } from '../../../common/pagination.dto';
+
+// ── Query DTOs ──
+
+export class PracticeQuestionQueryDto extends PaginationQueryDto {
+  @IsOptional() @IsEnum(PracticeQuestionType) questionType?: PracticeQuestionType;
+  @IsOptional() @IsUUID() levelId?: string;
+  @IsOptional() @IsString() status?: string;
+}
+
+export class PracticeAttemptQueryDto extends PaginationQueryDto {
+  @IsOptional() @IsUUID() userId?: string;
+  @IsOptional() @IsEnum(PracticeType) practiceType?: PracticeType;
+  @IsOptional() @IsEnum(PracticeAttemptStatus) status?: PracticeAttemptStatus;
+}
+
+// ── Create/Update DTOs ──
 
 export class CreatePracticeQuestionDto {
   @IsEnum(PracticeQuestionType) questionType: PracticeQuestionType;

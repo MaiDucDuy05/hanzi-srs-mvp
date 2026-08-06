@@ -8,31 +8,23 @@ import { TestAnswer } from './entities/test-answer.entity';
 import {
   CreateTestDto, UpdateTestDto, CreateTestQuestionDto, UpdateTestQuestionDto,
   StartTestAttemptDto, SubmitTestAnswerDto, SubmitTestAttemptDto,
+  TestQueryDto, TestQuestionQueryDto, TestAttemptQueryDto,
 } from './dto/test.dto';
 import { TestAttemptStatus, TestStatus } from '../../common/enums/test.enums';
-import { PaginatedResult } from '../../common/pagination.dto';
-
-function paginated<T>(data: T[], total: number, page: number, limit: number): PaginatedResult<T> {
-  return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
-}
-async function findOr404<T extends { id: string }>(repo: Repository<T>, id: string, label: string): Promise<T> {
-  const e = await repo.findOne({ where: { id } as any });
-  if (!e) throw new NotFoundException(`${label} not found`);
-  return e;
-}
+import { paginatedResult, findOrNotFound } from '../../common/helpers/query-helpers';
 
 @Injectable()
 export class TestService {
   constructor(@InjectRepository(Test) private repo: Repository<Test>) {}
-  async findAll(q: any) {
+  async findAll(q: TestQueryDto) {
     const { page = 1, limit = 20, teacherId, status } = q;
     const where: any = {};
     if (teacherId) where.teacherId = teacherId;
     if (status) where.status = status;
     const [data, total] = await this.repo.findAndCount({ where, skip: (page - 1) * limit, take: limit, order: { createdAt: 'DESC' } });
-    return paginated(data, total, page, limit);
+    return paginatedResult(data, total, page, limit);
   }
-  async findById(id: string) { return findOr404(this.repo, id, 'Test'); }
+  async findById(id: string) { return findOrNotFound(this.repo, id, 'Test'); }
   async create(dto: CreateTestDto) { return this.repo.save(this.repo.create(dto as any)); }
   async update(id: string, dto: UpdateTestDto) { const e = await this.findById(id); Object.assign(e, dto); return this.repo.save(e); }
   async softDelete(id: string) { await this.repo.softRemove(await this.findById(id)); }
@@ -41,14 +33,14 @@ export class TestService {
 @Injectable()
 export class TestQuestionService {
   constructor(@InjectRepository(TestQuestion) private repo: Repository<TestQuestion>) {}
-  async findAll(q: any) {
+  async findAll(q: TestQuestionQueryDto) {
     const { page = 1, limit = 50, testId } = q;
     const where: any = {};
     if (testId) where.testId = testId;
     const [data, total] = await this.repo.findAndCount({ where, skip: (page - 1) * limit, take: limit, order: { displayOrder: 'ASC' } });
-    return paginated(data, total, page, limit);
+    return paginatedResult(data, total, page, limit);
   }
-  async findById(id: string) { return findOr404(this.repo, id, 'Test question'); }
+  async findById(id: string) { return findOrNotFound(this.repo, id, 'Test question'); }
   async create(dto: CreateTestQuestionDto) { return this.repo.save(this.repo.create(dto as any)); }
   async update(id: string, dto: UpdateTestQuestionDto) { const e = await this.findById(id); Object.assign(e, dto); return this.repo.save(e); }
   async delete(id: string) { await this.repo.remove(await this.findById(id)); }
@@ -61,18 +53,18 @@ export class TestAttemptService {
     @InjectRepository(Test) private testRepo: Repository<Test>,
   ) {}
 
-  async findAll(q: any) {
+  async findAll(q: TestAttemptQueryDto) {
     const { page = 1, limit = 20, testId, userId, status } = q;
     const where: any = {};
     if (testId) where.testId = testId;
     if (userId) where.userId = userId;
     if (status) where.status = status;
     const [data, total] = await this.repo.findAndCount({ where, skip: (page - 1) * limit, take: limit, order: { createdAt: 'DESC' } });
-    return paginated(data, total, page, limit);
+    return paginatedResult(data, total, page, limit);
   }
-  async findById(id: string) { return findOr404(this.repo, id, 'Test attempt'); }
+  async findById(id: string) { return findOrNotFound(this.repo, id, 'Test attempt'); }
   async start(dto: StartTestAttemptDto, userId: string) {
-    const test = await findOr404(this.testRepo, dto.testId, 'Test');
+    const test = await findOrNotFound(this.testRepo, dto.testId, 'Test');
     if (test.status !== TestStatus.PUBLISHED) throw new BadRequestException('Test is not published');
 
     const submittedCount = await this.repo.count({

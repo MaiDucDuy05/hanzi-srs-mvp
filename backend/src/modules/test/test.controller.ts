@@ -3,6 +3,7 @@ import { TestService, TestQuestionService, TestAttemptService, TestAnswerService
 import {
   CreateTestDto, UpdateTestDto, CreateTestQuestionDto, UpdateTestQuestionDto,
   StartTestAttemptDto, SubmitTestAnswerDto, SubmitTestAttemptDto,
+  TestQueryDto, TestQuestionQueryDto, TestAttemptQueryDto,
 } from './dto/test.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -13,7 +14,7 @@ function ok(data: any, msg: string) { return data?.meta ? { ...data, message: ms
 @Controller('tests')
 export class TestController {
   constructor(private readonly svc: TestService) {}
-  @Get() async findAll(@Query() q: any) { return ok(await this.svc.findAll(q), 'Tests retrieved'); }
+  @Get() async findAll(@Query() q: TestQueryDto) { return ok(await this.svc.findAll(q), 'Tests retrieved'); }
   @Get(':id') async findOne(@Param('id') id: string) { return ok(await this.svc.findById(id), 'Test retrieved'); }
   @Post() @Roles(Role.TEACHER, Role.ADMIN) @HttpCode(HttpStatus.CREATED) async create(@Body() dto: CreateTestDto) { return ok(await this.svc.create(dto), 'Test created'); }
   @Patch(':id') @Roles(Role.TEACHER, Role.ADMIN) async update(@Param('id') id: string, @Body() dto: UpdateTestDto) { return ok(await this.svc.update(id, dto), 'Test updated'); }
@@ -23,7 +24,7 @@ export class TestController {
 @Controller('test-questions')
 export class TestQuestionController {
   constructor(private readonly svc: TestQuestionService) {}
-  @Get() async findAll(@Query() q: any) { return ok(await this.svc.findAll(q), 'Test questions retrieved'); }
+  @Get() async findAll(@Query() q: TestQuestionQueryDto) { return ok(await this.svc.findAll(q), 'Test questions retrieved'); }
   @Get(':id') async findOne(@Param('id') id: string) { return ok(await this.svc.findById(id), 'Test question retrieved'); }
   @Post() @Roles(Role.TEACHER, Role.ADMIN) @HttpCode(HttpStatus.CREATED) async create(@Body() dto: CreateTestQuestionDto) { return ok(await this.svc.create(dto), 'Test question created'); }
   @Patch(':id') @Roles(Role.TEACHER, Role.ADMIN) async update(@Param('id') id: string, @Body() dto: UpdateTestQuestionDto) { return ok(await this.svc.update(id, dto), 'Test question updated'); }
@@ -37,7 +38,7 @@ export class TestAttemptController {
     private readonly answerSvc: TestAnswerService,
   ) {}
 
-  @Get() async findAll(@Query() q: any) { return ok(await this.svc.findAll(q), 'Test attempts retrieved'); }
+  @Get() async findAll(@Query() q: TestAttemptQueryDto) { return ok(await this.svc.findAll(q), 'Test attempts retrieved'); }
   @Get(':id') async findOne(@Param('id') id: string) { return ok(await this.svc.findById(id), 'Test attempt retrieved'); }
 
   @Post() @HttpCode(HttpStatus.CREATED) async start(@Body() dto: StartTestAttemptDto, @CurrentUser('sub') userId: string) { return ok(await this.svc.start(dto, userId), 'Test attempt started'); }

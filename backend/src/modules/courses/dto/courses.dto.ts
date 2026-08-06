@@ -1,5 +1,19 @@
 import { IsEnum, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 import { Audience } from '../../../common/enums/curriculum.enums';
+import { PaginationQueryDto } from '../../../common/pagination.dto';
+
+// ── Query DTOs ──
+
+export class CourseQueryDto extends PaginationQueryDto {
+  @IsOptional() @IsEnum(Audience) audience?: Audience;
+  @IsOptional() @IsString() status?: string;
+}
+
+export class CourseLessonQueryDto extends PaginationQueryDto {
+  @IsOptional() @IsUUID() courseId?: string;
+}
+
+// ── Create/Update DTOs ──
 
 export class CreateCourseDto {
   @IsString() name: string;

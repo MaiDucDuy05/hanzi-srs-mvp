@@ -1,5 +1,40 @@
 import { IsEmail, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { ResourceTier, AiJobType, UpgradeRequestStatus, ContactStatus, SpeakingStatus } from '../../../common/enums/resources.enums';
+import { PaginationQueryDto } from '../../../common/pagination.dto';
+
+// ── Query DTOs ──
+
+export class ResourceQueryDto extends PaginationQueryDto {
+  @IsOptional() @IsEnum(ResourceTier) tier?: ResourceTier;
+  @IsOptional() @IsString() status?: string;
+}
+
+export class AiJobQueryDto extends PaginationQueryDto {
+  @IsOptional() @IsUUID() userId?: string;
+  @IsOptional() @IsString() status?: string;
+}
+
+export class ContactRequestQueryDto extends PaginationQueryDto {
+  @IsOptional() @IsEnum(ContactStatus) status?: ContactStatus;
+}
+
+export class MistakeBookQueryDto extends PaginationQueryDto {
+  @IsOptional() @IsUUID() userId?: string;
+  @IsOptional() @IsString() sourceType?: string;
+  @IsOptional() @IsString() sourceId?: string;
+}
+
+export class SpeakingAttemptQueryDto extends PaginationQueryDto {
+  @IsOptional() @IsUUID() userId?: string;
+  @IsOptional() @IsEnum(SpeakingStatus) status?: SpeakingStatus;
+}
+
+export class VipUpgradeRequestQueryDto extends PaginationQueryDto {
+  @IsOptional() @IsUUID() userId?: string;
+  @IsOptional() @IsEnum(UpgradeRequestStatus) status?: UpgradeRequestStatus;
+}
+
+// ── Create/Update DTOs ──
 
 export class CreateResourceDto {
   @IsString() title: string;

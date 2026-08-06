@@ -4,32 +4,23 @@ import { Repository } from 'typeorm';
 import { Subscription } from './entities/subscription.entity';
 import { DailyPracticeUsage } from './entities/daily-practice-usage.entity';
 import { PracticeLimitSettings } from './entities/practice-limit-settings.entity';
-import { CreateSubscriptionDto, UpdateSubscriptionDto, UpdateLimitSettingsDto } from './dto/subscription.dto';
+import { CreateSubscriptionDto, UpdateSubscriptionDto, UpdateLimitSettingsDto, SubscriptionQueryDto, DailyUsageQueryDto } from './dto/subscription.dto';
 import { SubscriptionPlan, SubscriptionStatus } from '../../common/enums/subscription.enums';
-import { PaginatedResult } from '../../common/pagination.dto';
-
-function paginated<T>(data: T[], total: number, page: number, limit: number): PaginatedResult<T> {
-  return { data, meta: { page, limit, total, totalPages: Math.ceil(total / limit) } };
-}
-async function findOr404<T extends { id: string }>(repo: Repository<T>, id: string, label: string): Promise<T> {
-  const e = await repo.findOne({ where: { id } as any });
-  if (!e) throw new NotFoundException(`${label} not found`);
-  return e;
-}
+import { paginatedResult, findOrNotFound } from '../../common/helpers/query-helpers';
 
 @Injectable()
 export class SubscriptionService {
   constructor(@InjectRepository(Subscription) private repo: Repository<Subscription>) {}
-  async findAll(q: any) {
+  async findAll(q: SubscriptionQueryDto) {
     const { page = 1, limit = 20, userId, plan, status } = q;
     const where: any = {};
     if (userId) where.userId = userId;
     if (plan) where.plan = plan;
     if (status) where.status = status;
     const [data, total] = await this.repo.findAndCount({ where, skip: (page - 1) * limit, take: limit, order: { createdAt: 'DESC' } });
-    return paginated(data, total, page, limit);
+    return paginatedResult(data, total, page, limit);
   }
-  async findById(id: string) { return findOr404(this.repo, id, 'Subscription'); }
+  async findById(id: string) { return findOrNotFound(this.repo, id, 'Subscription'); }
   async findByUser(userId: string) {
     const sub = await this.repo.findOne({ where: { userId, status: SubscriptionStatus.ACTIVE } });
     return sub || null;
@@ -55,13 +46,13 @@ export class DailyUsageService {
     private subscriptionSvc: SubscriptionService,
   ) {}
 
-  async findAll(q: any) {
+  async findAll(q: DailyUsageQueryDto) {
     const { page = 1, limit = 20, userId, usageDate } = q;
     const where: any = {};
     if (userId) where.userId = userId;
     if (usageDate) where.usageDate = usageDate;
     const [data, total] = await this.repo.findAndCount({ where, skip: (page - 1) * limit, take: limit, order: { usageDate: 'DESC' } });
-    return paginated(data, total, page, limit);
+    return paginatedResult(data, total, page, limit);
   }
 
   async checkAndIncrement(userId: string, activityKey: string): Promise<{ allowed: boolean; usedCount: number }> {

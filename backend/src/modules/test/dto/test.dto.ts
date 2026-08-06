@@ -1,5 +1,25 @@
 import { IsBoolean, IsEnum, IsInt, IsJSON, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 import { TestStatus, TestQuestionType, TestAttemptStatus } from '../../../common/enums/test.enums';
+import { PaginationQueryDto } from '../../../common/pagination.dto';
+
+// ── Query DTOs ──
+
+export class TestQueryDto extends PaginationQueryDto {
+  @IsOptional() @IsUUID() teacherId?: string;
+  @IsOptional() @IsEnum(TestStatus) status?: TestStatus;
+}
+
+export class TestQuestionQueryDto extends PaginationQueryDto {
+  @IsOptional() @IsUUID() testId?: string;
+}
+
+export class TestAttemptQueryDto extends PaginationQueryDto {
+  @IsOptional() @IsUUID() testId?: string;
+  @IsOptional() @IsUUID() userId?: string;
+  @IsOptional() @IsEnum(TestAttemptStatus) status?: TestAttemptStatus;
+}
+
+// ── Create/Update DTOs ──
 
 export class CreateTestDto {
   @IsUUID() teacherId: string;

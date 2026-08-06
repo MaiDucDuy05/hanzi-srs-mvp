@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, InternalServerErrorException } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -19,10 +19,16 @@ import { RolesGuard } from './guards/roles.guard';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'dev-secret',
-        signOptions: { expiresIn: '7d' },
-      }),
+      useFactory: (configService: ConfigService) => {
+        const secret = configService.get<string>('JWT_SECRET');
+        if (!secret && configService.get<string>('NODE_ENV') === 'production') {
+          throw new InternalServerErrorException('JWT_SECRET is required in production');
+        }
+        return {
+          secret: secret || 'dev-secret',
+          signOptions: { expiresIn: '7d' },
+        };
+      },
     }),
   ],
   controllers: [AuthController, UserController],

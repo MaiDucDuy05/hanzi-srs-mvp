@@ -1,4 +1,37 @@
 import { IsEnum, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { Type } from 'class-transformer';
+import { PaginationQueryDto } from '../../../common/pagination.dto';
+
+// ── Query DTOs ──
+
+export class VocabularyQueryDto extends PaginationQueryDto {
+  @IsOptional() @IsUUID() levelId?: string;
+  @IsOptional() @IsString() status?: string;
+}
+
+export class GrammarPointQueryDto extends PaginationQueryDto {
+  @IsOptional() @IsUUID() levelId?: string;
+  @IsOptional() @IsString() status?: string;
+}
+
+export class LessonQueryDto extends PaginationQueryDto {
+  @IsOptional() @IsUUID() levelId?: string;
+  @IsOptional() @IsString() status?: string;
+}
+
+export class LessonContentQueryDto extends PaginationQueryDto {
+  @IsOptional() @IsUUID() lessonId?: string;
+}
+
+export class TopicQueryDto extends PaginationQueryDto {
+  @IsOptional() @IsString() status?: string;
+}
+
+export class TopicVocabularyQueryDto extends PaginationQueryDto {
+  @IsOptional() @IsUUID() topicId?: string;
+}
+
+// ── Create/Update DTOs ──
 
 export class CreateHskLevelDto {
   @IsString()
