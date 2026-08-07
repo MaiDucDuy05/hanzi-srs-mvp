@@ -44,6 +44,7 @@ export default function AdminCurriculumPage() {
               title: 'Cấp độ HSK',
               fetchList: () => curriculumApi.listLevels(),
               create: (d) => curriculumApi.createLevel(d as never),
+              update: (id, d) => curriculumApi.updateLevel(id, d as never),
               remove: (id) => curriculumApi.deleteLevel(id),
               initialForm: { code: '', name: '', displayOrder: '' },
               fields: [
@@ -67,6 +68,7 @@ export default function AdminCurriculumPage() {
               title: 'Bài học',
               fetchList: () => curriculumApi.listLessons({}),
               create: (d) => curriculumApi.createLesson(d as never),
+              update: (id, d) => curriculumApi.updateLesson(id, d as never),
               remove: (id) => curriculumApi.deleteLesson(id),
               initialForm: { title: '', levelId: '', description: '', displayOrder: '', status: 'DRAFT' },
               fields: [
@@ -95,6 +97,7 @@ export default function AdminCurriculumPage() {
               title: 'Từ vựng',
               fetchList: () => curriculumApi.listVocabularies({}),
               create: (d) => curriculumApi.createVocabulary(d as never),
+              update: (id, d) => curriculumApi.updateVocabulary(id, d as never),
               remove: (id) => curriculumApi.deleteVocabulary(id),
               initialForm: { hanzi: '', pinyin: '', meaningVi: '', levelId: '', status: 'DRAFT' },
               fields: [
@@ -123,6 +126,7 @@ export default function AdminCurriculumPage() {
               title: 'Ngữ pháp',
               fetchList: () => curriculumApi.listGrammar({}),
               create: (d) => curriculumApi.createGrammar(d as never),
+              update: (id, d) => curriculumApi.updateGrammar(id, d as never),
               remove: (id) => curriculumApi.deleteGrammar(id),
               initialForm: { title: '', structure: '', explanation: '', levelId: '', status: 'DRAFT' },
               fields: [

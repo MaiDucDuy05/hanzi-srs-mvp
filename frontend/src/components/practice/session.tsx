@@ -1,21 +1,19 @@
 'use client';
 
-import Link from 'next/link';
 import { usePracticeEngine } from './practice-engine';
-import {
-  type ModeResult,
-} from './practice-models';
 import { MatchingMode, type MatchingState } from './matching-mode';
 import { FlashcardMode, type FlashcardState } from './flashcard-mode';
 import { FillBlankMode, type FillBlankState } from './fill-blank-mode';
 import { SentenceOrderingMode, type OrderingState } from './sentence-ordering-mode';
-import { Card, CardBody, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { LimitScreen, SummaryCard } from './session-frame';
 import { PageLoading } from '@/components/ui/spinner';
 import { ErrorState } from '@/components/ui/error-state';
 import { PRACTICE_TYPE_LABELS, SOURCE_TYPE_LABELS } from '@/lib/utils/constants';
 import { formatDuration } from '@/lib/utils/format';
 import type { PracticeType, SourceType } from '@/lib/api/types';
+
+/** Trạng thái mode mà engine quản lý — mỗi chế độ có state riêng (P2-7). */
+type PracticeModeState = MatchingState | FlashcardState | FillBlankState | OrderingState;
 
 interface SessionProps {
   practiceType: PracticeType;
@@ -33,7 +31,12 @@ export function PracticeSession({
   onExit,
 }: SessionProps) {
   const sessionKey = `practice:${practiceType}:${sourceType}:${sourceId}`;
-  const engine = usePracticeEngine({ practiceType, sourceType, sourceId, sessionKey });
+  const engine = usePracticeEngine<PracticeModeState>({
+    practiceType,
+    sourceType,
+    sourceId,
+    sessionKey,
+  });
 
   if (engine.status === 'loading') {
     return <PageLoading label="Đang chuẩn bị phiên luyện tập..." />;
@@ -41,27 +44,11 @@ export function PracticeSession({
 
   if (engine.status === 'limit' && engine.limit) {
     return (
-      <Card className="mx-auto max-w-md">
-        <CardHeader
-          title="Hết lượt luyện tập hôm nay"
-          subtitle={PRACTICE_TYPE_LABELS[practiceType]}
-        />
-        <CardBody className="space-y-3">
-          <p className="text-sm text-gray-600">
-            Bạn đã dùng hết lượt miễn phí hôm nay cho chế độ này (đã dùng{' '}
-            {engine.limit.usedCount} lượt). Lượt sẽ được làm mới vào ngày mai, hoặc
-            nâng cấp VIP để luyện không giới hạn.
-          </p>
-          <div className="flex gap-2">
-            <Link href="/upgrade-vip">
-              <Button size="sm">Nâng cấp VIP</Button>
-            </Link>
-            <Button variant="outline" size="sm" onClick={onExit}>
-              Quay lại
-            </Button>
-          </div>
-        </CardBody>
-      </Card>
+      <LimitScreen
+        practiceType={practiceType}
+        usedCount={engine.limit.usedCount}
+        onExit={onExit}
+      />
     );
   }
 
@@ -131,45 +118,5 @@ export function PracticeSession({
         />
       )}
     </div>
-  );
-}
-
-export function SummaryCard({
-  title,
-  subtitle,
-  result,
-  elapsed,
-  onExit,
-}: {
-  title: string;
-  subtitle: string;
-  result: ModeResult;
-  elapsed: number;
-  onExit: () => void;
-}) {
-  return (
-    <Card className="mx-auto max-w-md">
-      <CardHeader title={title} subtitle={subtitle} />
-      <CardBody className="space-y-4 text-center">
-        <p className="text-5xl font-bold text-brand">{result.score}%</p>
-        <div className="grid grid-cols-3 gap-2 text-sm">
-          <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-            <p className="font-semibold text-green-600">{result.correctCount}</p>
-            <p className="text-xs text-gray-500">Đúng</p>
-          </div>
-          <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-            <p className="font-semibold text-red-600">{result.wrongCount}</p>
-            <p className="text-xs text-gray-500">Sai</p>
-          </div>
-          <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
-            <p className="font-semibold">{formatDuration(elapsed)}</p>
-            <p className="text-xs text-gray-500">Thời gian</p>
-          </div>
-        </div>
-        <div className="flex justify-center gap-2">
-          <Button onClick={onExit}>Quay lại</Button>
-        </div>
-      </CardBody>
-    </Card>
   );
 }

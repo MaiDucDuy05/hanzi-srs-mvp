@@ -17,11 +17,21 @@ export default function JoinTestPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     testApi
       .list({ status: 'PUBLISHED' })
-      .then((list) => setTests(list.filter((t) => !t.deletedAt)))
-      .catch((e) => setError(e instanceof Error ? e.message : 'Lỗi tải bài kiểm tra.'))
-      .finally(() => setLoading(false));
+      .then((list) => {
+        if (!cancelled) setTests(list.filter((t) => !t.deletedAt));
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Lỗi tải bài kiểm tra.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (

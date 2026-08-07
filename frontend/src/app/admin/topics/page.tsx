@@ -95,6 +95,7 @@ export default function AdminTopicsPage() {
             title: 'Danh sách chủ đề',
             fetchList: () => curriculumApi.listTopics({}),
             create: (d) => curriculumApi.createTopic(d as never),
+            update: (id, d) => curriculumApi.updateTopic(id, d as never),
             remove: (id) => curriculumApi.deleteTopic(id),
             initialForm: { name: '', slug: '', description: '', displayOrder: '', status: 'DRAFT' },
             fields: [

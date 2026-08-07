@@ -21,18 +21,28 @@ export interface EntityConfig<T> {
   title: string;
   fetchList: () => Promise<T[]>;
   create: (data: Record<string, unknown>) => Promise<unknown>;
+  /** Nếu có, hiện nút "Sửa" và chuyển modal sang chế độ cập nhật (P2-9). */
+  update?: (id: string, data: Record<string, unknown>) => Promise<unknown>;
   remove: (id: string) => Promise<unknown>;
   fields: EntityField[];
   initialForm: Record<string, string>;
   renderRow: (item: T) => ReactNode;
 }
 
-/** Bảng CRUD đơn giản dùng chung cho các thực thể admin. */
+function toFormValue(item: unknown, key: string): string {
+  const raw = (item as Record<string, unknown> | null)?.[key];
+  if (raw === null || raw === undefined) return '';
+  if (typeof raw === 'object') return JSON.stringify(raw);
+  return String(raw);
+}
+
+/** Bảng CRUD đơn giản dùng chung cho các thực thể admin (thêm/sửa/xóa). */
 export function EntityManager<T>({ config }: { config: EntityConfig<T> }) {
   const [items, setItems] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, string>>(config.initialForm);
   const [saving, setSaving] = useState(false);
 
@@ -47,6 +57,24 @@ export function EntityManager<T>({ config }: { config: EntityConfig<T> }) {
 
   useEffect(load, []);
 
+  const closeForm = () => {
+    setShowForm(false);
+    setEditingId(null);
+    setForm(config.initialForm);
+  };
+
+  const startEdit = (item: T) => {
+    const id = (item as { id?: string }).id;
+    if (!id || !config.update) return;
+    setEditingId(id);
+    setForm(
+      Object.fromEntries(
+        config.fields.map((f) => [f.key, toFormValue(item, f.key)]),
+      ),
+    );
+    setShowForm(true);
+  };
+
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -56,9 +84,12 @@ export function EntityManager<T>({ config }: { config: EntityConfig<T> }) {
         const raw = form[f.key] ?? '';
         data[f.key] = f.type === 'number' ? (raw ? Number(raw) : null) : raw || null;
       }
-      await config.create(data);
-      setShowForm(false);
-      setForm(config.initialForm);
+      if (editingId) {
+        await config.update?.(editingId, data);
+      } else {
+        await config.create(data);
+      }
+      closeForm();
       load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Lưu thất bại.');
@@ -96,9 +127,16 @@ export function EntityManager<T>({ config }: { config: EntityConfig<T> }) {
               {items.map((item) => (
                 <li key={(item as { id: string }).id} className="flex items-center justify-between gap-3 px-4 py-3">
                   <div className="min-w-0">{config.renderRow(item)}</div>
-                  <Button variant="ghost" size="sm" onClick={() => remove(item)}>
-                    Xóa
-                  </Button>
+                  <div className="flex shrink-0 gap-1">
+                    {config.update && (
+                      <Button variant="ghost" size="sm" onClick={() => startEdit(item)}>
+                        Sửa
+                      </Button>
+                    )}
+                    <Button variant="ghost" size="sm" onClick={() => remove(item)}>
+                      Xóa
+                    </Button>
+                  </div>
                 </li>
               ))}
               {items.length === 0 && (
@@ -111,12 +149,14 @@ export function EntityManager<T>({ config }: { config: EntityConfig<T> }) {
 
       <Modal
         open={showForm}
-        onClose={() => setShowForm(false)}
-        title={`Thêm ${config.title.toLowerCase()}`}
+        onClose={closeForm}
+        title={`${editingId ? 'Sửa' : 'Thêm'} ${config.title.toLowerCase()}`}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setShowForm(false)}>Hủy</Button>
-            <Button form="entity-form" type="submit" loading={saving}>Lưu</Button>
+            <Button variant="ghost" onClick={closeForm}>Hủy</Button>
+            <Button form="entity-form" type="submit" loading={saving}>
+              {editingId ? 'Cập nhật' : 'Lưu'}
+            </Button>
           </>
         }
       >

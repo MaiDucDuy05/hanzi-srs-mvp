@@ -45,3 +45,13 @@ Practice/game grading happens client-side because the current backend only store
 - `next build` zero type errors
 - Manual smoke against running backend
 - `tester` + `code-reviewer` agents
+
+## Batch: architecture hardening (2026-08-07, sau /architecture-designer)
+Implement từ đề xuất review kiến trúc — chi tiết: `plans/reports/architect-review-260807-frontend.md` (resolution log).
+- **P2-8** `session-frame.tsx` (LimitScreen + SummaryCard) dùng chung practice & games
+- **P2-7** `usePracticeEngine<TState>` generic (union state ở session/games)
+- **P1-4** cancelled-flag chống setState sau unmount: learn/profile/tests-join/resources
+- **P2-9** `EntityManager` hỗ trợ update + wire update API 6 entity admin
+- **P2-6** tách `tests/[testId]` → `use-take-test.ts` + `test-result-card.tsx` + `test-question-nav.tsx`
+- **FE-008** `client.test.ts` (11 test transport; tổng vitest 19→30)
+- **Deferred:** FE-006 middleware/RSC (chặn bởi auth trong localStorage), FE-007 codegen types (backend chưa có Swagger)

@@ -20,13 +20,13 @@ export interface PersistedSession {
   startedAt: string;
 }
 
-export interface PracticeEngine {
+export interface PracticeEngine<TState = unknown> {
   status: EngineStatus;
   error: string | null;
   limit: DailyUsageCheck | null;
   items: QuestionItem[];
-  modeState: unknown;
-  setModeState: (state: unknown) => void;
+  modeState: TState | null;
+  setModeState: (state: TState) => void;
   result: ModeResult | null;
   elapsed: number;
   handleComplete: (res: ModeResult) => void;
@@ -38,12 +38,12 @@ export interface PracticeEngine {
  * - Nạp từ vựng nguồn, kiểm tra giới hạn PR-14, start attempt.
  * - Đếm thời gian, lưu trạng thái, submit kết quả.
  */
-export function usePracticeEngine(options: {
+export function usePracticeEngine<TState = unknown>(options: {
   practiceType: PracticeType;
   sourceType: SourceType;
   sourceId: string;
   sessionKey: string;
-}): PracticeEngine {
+}): PracticeEngine<TState> {
   const { practiceType, sourceType, sourceId, sessionKey } = options;
   const { user } = useAuth();
 
@@ -51,7 +51,7 @@ export function usePracticeEngine(options: {
   const [error, setError] = useState<string | null>(null);
   const [limit, setLimit] = useState<DailyUsageCheck | null>(null);
   const [items, setItems] = useState<QuestionItem[]>([]);
-  const [modeState, setModeState] = useState<unknown>(null);
+  const [modeState, setModeState] = useState<TState | null>(null);
   const [result, setResult] = useState<ModeResult | null>(null);
   const [elapsed, setElapsed] = useState(0);
   const startedAtRef = useRef<string | null>(null);
@@ -65,7 +65,7 @@ export function usePracticeEngine(options: {
       attemptIdRef.current = saved.attemptId;
       startedAtRef.current = saved.startedAt;
       setItems(saved.items);
-      setModeState(saved.modeState);
+      setModeState(saved.modeState as TState);
       setStatus('running');
       return;
     }
@@ -139,7 +139,7 @@ export function usePracticeEngine(options: {
     return () => clearInterval(t);
   }, [status]);
 
-  const persistState = (next: unknown) => {
+  const persistState = (next: TState) => {
     setModeState(next);
     const saved = loadSession<PersistedSession>(sessionKey);
     if (saved) saveSession(sessionKey, { ...saved, modeState: next });

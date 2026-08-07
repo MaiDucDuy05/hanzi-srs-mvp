@@ -1,13 +1,10 @@
 'use client';
 
-import Link from 'next/link';
 import { usePracticeEngine } from '../practice/practice-engine';
 import { BalloonMode, type BalloonState } from './balloon-mode';
 import { MemoryMode, type MemoryState } from './memory-mode';
 import { WritingMode, type WritingState } from './writing-mode';
-import { SummaryCard } from '../practice/session';
-import { Card, CardBody, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { LimitScreen, SummaryCard } from '../practice/session-frame';
 import { PageLoading } from '@/components/ui/spinner';
 import { ErrorState } from '@/components/ui/error-state';
 import { PRACTICE_TYPE_LABELS, SOURCE_TYPE_LABELS } from '@/lib/utils/constants';
@@ -15,6 +12,9 @@ import { formatDuration } from '@/lib/utils/format';
 import type { SourceType } from '@/lib/api/types';
 
 type GameType = 'PINYIN_BALLOON_GAME' | 'MEMORY_GAME' | 'HANZI_WRITING';
+
+/** Trạng thái mode của các trò chơi (P2-7). */
+type GameModeState = BalloonState | MemoryState | WritingState;
 
 interface GameSessionProps {
   practiceType: GameType;
@@ -32,7 +32,12 @@ export function GameSession({
   onExit,
 }: GameSessionProps) {
   const sessionKey = `game:${practiceType}:${sourceType}:${sourceId}`;
-  const engine = usePracticeEngine({ practiceType, sourceType, sourceId, sessionKey });
+  const engine = usePracticeEngine<GameModeState>({
+    practiceType,
+    sourceType,
+    sourceId,
+    sessionKey,
+  });
 
   if (engine.status === 'loading') {
     return <PageLoading label="Đang chuẩn bị trò chơi..." />;
@@ -40,26 +45,12 @@ export function GameSession({
 
   if (engine.status === 'limit' && engine.limit) {
     return (
-      <Card className="mx-auto max-w-md">
-        <CardHeader
-          title="Hết lượt chơi hôm nay"
-          subtitle={PRACTICE_TYPE_LABELS[practiceType]}
-        />
-        <CardBody className="space-y-3">
-          <p className="text-sm text-gray-600">
-            Bạn đã dùng hết lượt miễn phí hôm nay (đã dùng {engine.limit.usedCount} lượt).
-            Lượt mới có vào ngày mai, hoặc nâng cấp VIP để chơi không giới hạn.
-          </p>
-          <div className="flex gap-2">
-            <Link href="/upgrade-vip">
-              <Button size="sm">Nâng cấp VIP</Button>
-            </Link>
-            <Button variant="outline" size="sm" onClick={onExit}>
-              Quay lại
-            </Button>
-          </div>
-        </CardBody>
-      </Card>
+      <LimitScreen
+        practiceType={practiceType}
+        usedCount={engine.limit.usedCount}
+        onExit={onExit}
+        kind="chơi"
+      />
     );
   }
 

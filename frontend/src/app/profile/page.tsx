@@ -25,6 +25,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!user) return;
+    let cancelled = false;
     (async () => {
       try {
         const [ats, tats, me] = await Promise.all([
@@ -32,16 +33,20 @@ export default function ProfilePage() {
           testApi.listAttempts({ userId: user.id }),
           subscriptionApi.me().catch(() => null),
         ]);
+        if (cancelled) return;
         setAttempts(ats.slice().reverse());
         setTestAttempts(tats.slice().reverse());
         // GET /subscriptions/me: gói của chính người dùng (authenticated) — ai cũng xem được.
         setSubscriptions(me ? [me] : []);
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Lỗi tải hồ sơ.');
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Lỗi tải hồ sơ.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   const activeSub = subscriptions.find((s) => s.status === 'ACTIVE');

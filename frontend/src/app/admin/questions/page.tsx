@@ -11,6 +11,24 @@ export default function AdminQuestionsPage() {
   const { data: levels } = useApi(() => curriculumApi.listLevels(), []);
   const levelOptions = (levels ?? []).map((l) => ({ value: l.id, label: `${l.code} — ${l.name}` }));
 
+  // Parse các trường JSON về object trước khi gửi lên (dùng chung create/update).
+  const parseJson = (d: Record<string, unknown>) => {
+    const parsed = { ...d };
+    for (const k of ['questionData', 'answerData', 'acceptedAnswers'] as const) {
+      const raw = parsed[k];
+      if (typeof raw === 'string' && raw.trim()) {
+        try {
+          parsed[k] = JSON.parse(raw);
+        } catch {
+          parsed[k] = null;
+        }
+      } else {
+        parsed[k] = null;
+      }
+    }
+    return parsed;
+  };
+
   return (
     <AdminGuard>
       <div className="space-y-6">
@@ -25,23 +43,8 @@ export default function AdminQuestionsPage() {
           config={{
             title: 'Câu hỏi',
             fetchList: () => practiceApi.listQuestions({}),
-            create: async (d) => {
-              // Parse các trường JSON về object trước khi gửi lên.
-              const parsed = { ...d };
-              for (const k of ['questionData', 'answerData', 'acceptedAnswers'] as const) {
-                const raw = parsed[k];
-                if (typeof raw === 'string' && raw.trim()) {
-                  try {
-                    parsed[k] = JSON.parse(raw);
-                  } catch {
-                    parsed[k] = null;
-                  }
-                } else {
-                  parsed[k] = null;
-                }
-              }
-              return practiceApi.createQuestion(parsed as never);
-            },
+            create: (d) => practiceApi.createQuestion(parseJson(d) as never),
+            update: (id, d) => practiceApi.updateQuestion(id, parseJson(d) as never),
             remove: (id) => practiceApi.deleteQuestion(id),
             initialForm: {
               questionType: 'FILL_BLANK',

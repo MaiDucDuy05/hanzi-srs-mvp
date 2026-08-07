@@ -15,11 +15,21 @@ export default function LearnPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     curriculumApi
       .listLevels()
-      .then(setLevels)
-      .catch((e) => setError(e instanceof Error ? e.message : 'Lỗi tải cấp độ.'))
-      .finally(() => setLoading(false));
+      .then((list) => {
+        if (!cancelled) setLevels(list);
+      })
+      .catch((e) => {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Lỗi tải cấp độ.');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (

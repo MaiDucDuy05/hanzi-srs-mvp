@@ -19,9 +19,11 @@ export default function ResourcesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
         const list = await resourceApi.list({ status: 'PUBLISHED' });
+        if (cancelled) return;
         setResources(list.filter((r) => !r.deletedAt));
         // Teacher/Admin được dùng tài liệu VIP theo ma trận BRD (docs.md);
         // học viên khác kiểm tra gói thật của mình qua GET /subscriptions/me.
@@ -37,13 +39,17 @@ export default function ResourcesPage() {
             vipActive = false;
           }
         }
+        if (cancelled) return;
         setIsVip(vipRole || vipActive);
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Lỗi tải tài liệu.');
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Lỗi tải tài liệu.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   const download = async (r: Resource) => {
