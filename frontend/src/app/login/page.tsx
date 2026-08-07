@@ -1,76 +1,31 @@
-'use client';
-
-import { useState, type FormEvent } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth/auth-context';
-import { Button } from '@/components/ui/button';
+import type { Metadata } from 'next';
+import { LoginForm } from '@/components/auth/login-form';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
-import { Field, Input } from '@/components/ui/form';
 
-export default function LoginPage() {
-  const { login } = useAuth();
-  const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+export const metadata: Metadata = {
+  title: 'Đăng nhập',
+  description: 'Đăng nhập vào Hán Tự HSK để tiếp tục học tiếng Trung.',
+};
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setSubmitting(true);
-    try {
-      const user = await login(email.trim(), password);
-      router.replace(user.role === 'ADMIN' ? '/admin' : '/');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Đăng nhập thất bại.');
-    } finally {
-      setSubmitting(false);
-    }
-  };
+/**
+ * RSC (FE-006): shell server render sẵn; form là client island (LoginForm).
+ * `next` (từ middleware ?next= khi chặn route) được đọc server-side và truyền
+ * xuống form để sau đăng nhập quay lại đúng trang định truy cập.
+ */
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const { next } = await searchParams;
+  const safeNext = typeof next === 'string' ? next : undefined;
 
   return (
     <div className="mx-auto mt-10 max-w-md">
       <Card>
         <CardHeader title="Đăng nhập" subtitle="Chào mừng bạn quay lại!" />
         <CardBody>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <Field label="Email" hint="Tài khoản bạn đã đăng ký">
-              <Input
-                type="email"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-              />
-            </Field>
-            <Field label="Mật khẩu">
-              <Input
-                type="password"
-                required
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-              />
-            </Field>
-            {error && (
-              <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
-                {error}
-              </p>
-            )}
-            <Button type="submit" className="w-full" loading={submitting}>
-              Đăng nhập
-            </Button>
-          </form>
-          <p className="mt-4 text-center text-sm text-gray-500">
-            Chưa có tài khoản?{' '}
-            <Link href="/register" className="font-medium text-brand hover:underline">
-              Đăng ký miễn phí
-            </Link>
-          </p>
+          <LoginForm next={safeNext} />
         </CardBody>
       </Card>
     </div>

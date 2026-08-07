@@ -55,4 +55,5 @@ Implement từ đề xuất review kiến trúc — chi tiết: `plans/reports/a
 - **P2-9** `EntityManager` hỗ trợ update + wire update API 6 entity admin
 - **P2-6** tách `tests/[testId]` → `use-take-test.ts` + `test-result-card.tsx` + `test-question-nav.tsx`
 - **FE-008** `client.test.ts` (11 test transport; tổng vitest 19→30)
-- **Deferred:** FE-006 middleware/RSC — **đã gỡ blocker** (auth chuyển sang HttpOnly cookie, 2026-08-07: middleware đọc được cookie, RSC fetch được API auth-gated); chưa implement. FE-007 codegen types (backend chưa có Swagger)
+- **FE-006** FIXED (2026-08-07, sau khi auth chuyển sang HttpOnly cookie): `src/proxy.ts` (tên mới của middleware trong Next 16) — đọc cookie `access_token`, chặn route sớm + role gate `/admin` (ADMIN) `/teacher` (TEACHER/ADMIN), redirect `/login?next=`; `src/lib/auth/server-auth.ts` `getServerUser()` — RSC fetch `/auth/me` server-side qua cookie (không lộ JWT vào URL); 4 trang public `/`, `/contact`, `/login`, `/register` thành Server Component + 3 client islands (`LoginForm`/`RegisterForm`/`ContactForm`) + metadata SEO. Verify: tsc/eslint/vitest 29/29/build 23/23 + smoke proxy (307 redirect các case).
+- **Deferred:** FE-007 codegen types (backend chưa có Swagger)

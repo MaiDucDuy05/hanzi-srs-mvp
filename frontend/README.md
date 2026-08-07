@@ -32,6 +32,7 @@ Yêu cầu backend NestJS đang chạy ở `http://localhost:8000` (xem `../back
 
 ```
 src/
+├── proxy.ts                # Route protection server-side (FE-006): cookie + role gate
 ├── app/                    # Routes (App Router)
 │   ├── learn/              #   Học theo cấp/bài (FR-01)
 │   ├── topics/             #   Học theo chủ đề (FR-02)
@@ -63,7 +64,9 @@ src/
 
 ## Kiến trúc chính
 
-- **Client Components cho trang dữ liệu**: mọi trang đọc dữ liệu người dùng là client component (`'use client'`); server components chỉ dùng cho layout/tĩnh.
+- **Client Components cho trang dữ liệu**: các trang đọc dữ liệu người dùng tương tác (learn/practice/games/tests/profile/admin) là client component (`'use client'`); module tĩnh là Server Component — đã chuyển `/`, `/contact`, `/login`, `/register` sang RSC (SSR HTML + metadata SEO, form là client island `LoginForm`/`RegisterForm`/`ContactForm`).
+- **Route protection server-side (FE-006)**: `src/proxy.ts` (tên mới của middleware trong Next 16) đọc cookie `access_token` (HttpOnly — proxy chạy server nên đọc được), decode payload JWT (không verify — chỉ UX, backend là nguồn sự thật) để: chưa đăng nhập → `/login?next=<path>`; role gate `/admin` (ADMIN) & `/teacher` (TEACHER/ADMIN) → `/`; đã đăng nhập mà vào `/login`/`/register` → `/`; token hết hạn → coi như chưa đăng nhập. Guard client-side vẫn giữ làm defense-in-depth.
+- **RSC fetch auth-gated (FE-006)**: `src/lib/auth/server-auth.ts` `getServerUser()` — server component đọc token từ cookie và gọi backend `/auth/me` kèm header `Cookie` (`cache: no-store`), trả `User|null`; dùng ở trang chủ để render hero/dashboard đúng trạng thái ngay từ HTML đầu tiên (không JWT trong URL).
 - **Auth qua HttpOnly cookie**: backend set `Set-Cookie: access_token=...; HttpOnly; Secure; SameSite=Lax` (7 ngày, khớp `expiresIn` của JWT). Frontend **không đọc/touch token** (đã xoá `TOKEN_KEY` + interceptor gắn header) — browser tự gửi cookie mỗi request. Mọi API call đi cùng origin `/api/v1` (rewrite trong `next.config.ts` → backend) nên cookie auto-send; `apiFetch` luôn set `credentials: 'include'` cho trường hợp override `NEXT_PUBLIC_API_URL`. Profile nạp từ `GET /auth/me` theo cookie khi mount; 401 → `apiFetch` dispatch sự kiện `hanzi:unauthorized` → `AuthProvider` set `user=null` → guard chuyển về `/login`.
 - **Engine luyện tập dùng chung** (`components/practice/practice-engine.ts`): khôi phục phiên từ `sessionStorage` (không mất tiến độ khi refresh — theo đặc tả), kiểm tra giới hạn lượt PR-14 qua `daily-usage/checkLimit` (pure peek, không tăng lượt), gọi `practice/start` với idempotency key (backend chốt lượt atomic trong transaction, hết lượt trả 429 → hiện màn giới hạn), đếm thời gian, submit kết quả. Cả PracticeSession và GameSession tái sử dụng engine này.
 - **Chấm điểm server-side (PR-05)**: backend tự chấm câu (`gradeQuestion`) khi nhận đáp án và tính `score` tổng lúc nộp bài; frontend không còn nhìn thấy `correctAnswer` (chỉ TEACHER/ADMIN được trả). Trang thi thử chỉ hiển thị kết quả do server trả về; `showScoreImmediately=false` thì ẩn điểm ở màn kết thúc.

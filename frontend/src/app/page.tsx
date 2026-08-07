@@ -1,10 +1,16 @@
-'use client';
-
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import { useAuth } from '@/lib/auth/auth-context';
+import { getServerUser } from '@/lib/auth/server-auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardBody, CardHeader } from '@/components/ui/card';
 import { ROLE_LABELS } from '@/lib/utils/constants';
+
+// SEO (P1-1): trang chủ là Server Component — metadata + HTML render sẵn từ server.
+export const metadata: Metadata = {
+  title: 'Học tiếng Trung, chinh phục HSK',
+  description:
+    'Hệ thống học từ vựng, ngữ pháp theo cấp độ HSK kết hợp luyện tập, trò chơi và kiểm tra — hoàn toàn miễn phí.',
+};
 
 const FEATURES = [
   {
@@ -39,13 +45,18 @@ const FEATURES = [
   },
 ];
 
-export default function HomePage() {
-  const { user, loading } = useAuth();
+/**
+ * RSC (FE-006): user đọc server-side từ cookie HttpOnly qua getServerUser()
+ * — không phải client fetch, không giật PageLoading, hero đúng trạng thái ngay
+ * từ HTML đầu tiên. Trang vẫn public (không auth-gate), chỉ phân biệt CTA theo user.
+ */
+export default async function HomePage() {
+  const user = await getServerUser();
 
   return (
     <div className="space-y-10">
       {/* Hero */}
-      <section className="rounded-2xl bg-gradient-to-br from-brand to-brand-dark px-6 py-12 text-center text-white">
+      <section className="rounded-2xl bg-linear-to-br from-brand to-brand-dark px-6 py-12 text-center text-white">
         <h1 className="text-3xl font-bold sm:text-4xl">
           Học tiếng Trung, chinh phục HSK
         </h1>
@@ -81,7 +92,7 @@ export default function HomePage() {
       </section>
 
       {/* Dashboard hub khi đã đăng nhập */}
-      {user && !loading && (
+      {user && (
         <section>
           <Card>
             <CardHeader
