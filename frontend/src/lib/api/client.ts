@@ -1,0 +1,88 @@
+/**
+ * API client — fetch wrapper cho backend NestJS (api/v1).
+ * - Auth qua HttpOnly cookie (access_token): browser tự gửi mỗi request,
+ *   frontend KHÔNG đọc/touch token (đã xoá TOKEN_KEY + interceptor header).
+ * - Mọi call đi cùng origin (/api/v1) — Next rewrite proxy → backend,
+ *   nên cookie được gửi tự động mà không cần CORS.
+ * - Giải nén envelope { data, message }.
+ * - Ném ApiError với message thân thiện từ backend.
+ */
+
+// Cùng origin (Next rewrite /api/v1/* → backend) để cookie HttpOnly tự gửi.
+const BASE_URL = '/api/v1';
+
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
+type RequestOptions = RequestInit & { auth?: boolean };
+
+/**
+ * Gọi API. Mặc định gắn cookie HttpOnly (credentials include); truyền
+ * `auth: false` cho endpoint public để 401 không kích hoạt đăng xuất.
+ * Trả về body JSON đã parse (chưa bóc envelope — dùng helper `unwrap` nếu cần).
+ */
+export async function apiFetch<T = unknown>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<T> {
+  const { auth = true, headers, ...rest } = options;
+
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      ...rest,
+      // Luôn gửi cookie HttpOnly access_token. Same-origin nên là mặc định;
+      // để 'include' cho trường hợp NEXT_PUBLIC_API_URL trỏ host khác.
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(headers as Record<string, string> | undefined),
+      },
+    });
+  } catch {
+    throw new ApiError('Không kết nối được máy chủ. Vui lòng thử lại.', 0);
+  }
+
+  let body: unknown = null;
+  try {
+    body = await res.json();
+  } catch {
+    // response không phải JSON (vd 204)
+  }
+
+  if (!res.ok) {
+    // Token hết hạn/không hợp lệ: báo AuthProvider để chuyển về /login
+    // (không áp dụng cho endpoint public như login/register — auth=false).
+    if (res.status === 401 && auth) {
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('hanzi:unauthorized'));
+      }
+    }
+    const rawMessage = (body as { message?: unknown } | null)?.message;
+    const message = Array.isArray(rawMessage)
+      ? rawMessage.join(', ')
+      : typeof rawMessage === 'string'
+        ? rawMessage
+        : 'Yêu cầu thất bại. Vui lòng thử lại.';
+    throw new ApiError(message, res.status);
+  }
+
+  return body as T;
+}
+
+/**
+ * Bóc envelope dạng single: { data, message }.
+ * Nhận cả Promise (để dùng trực tiếp với apiFetch).
+ */
+export async function unwrap<T>(
+  body: { data: T } | Promise<{ data: T }>,
+): Promise<T> {
+  const resolved = await body;
+  return resolved.data;
+}

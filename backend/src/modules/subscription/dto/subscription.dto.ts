@@ -39,6 +39,6 @@ export class UpdateLimitSettingsDto {
 }
 
 export class CheckPracticeLimitDto {
-  @IsUUID() userId: string;
+  // userId KHÔNG nhận từ body — server lấy từ JWT (chống giả mạo).
   @IsString() activityKey: string;
 }

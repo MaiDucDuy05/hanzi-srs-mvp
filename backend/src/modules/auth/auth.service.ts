@@ -19,7 +19,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(dto: RegisterDto): Promise<{ accessToken: string; user: Partial<User> }> {
+  async register(dto: RegisterDto): Promise<{ accessToken: string; user: User }> {
     const existing = await this.userRepo.findOne({ where: { email: dto.email } });
     if (existing) throw new ConflictException('Email already exists');
 
@@ -28,11 +28,10 @@ export class AuthService {
     const saved = await this.userRepo.save(user);
 
     const payload = { sub: saved.id, email: saved.email, role: saved.role };
-    const { passwordHash: _, ...safeUser } = saved;
-    return { accessToken: this.jwtService.sign(payload), user: safeUser };
+    return { accessToken: this.jwtService.sign(payload), user: saved };
   }
 
-  async login(dto: LoginDto): Promise<{ accessToken: string; user: Partial<User> }> {
+  async login(dto: LoginDto): Promise<{ accessToken: string; user: User }> {
     const user = await this.userRepo.findOne({ where: { email: dto.email } });
     if (!user) throw new UnauthorizedException('Invalid email or password');
 
@@ -40,8 +39,13 @@ export class AuthService {
     if (!valid) throw new UnauthorizedException('Invalid email or password');
 
     const payload = { sub: user.id, email: user.email, role: user.role };
+    return { accessToken: this.jwtService.sign(payload), user };
+  }
+
+  /** Bỏ passwordHash trước khi trả về client (dùng cho login/register/me). */
+  sanitizeUser(user: User): Omit<User, 'passwordHash'> {
     const { passwordHash: _, ...safeUser } = user;
-    return { accessToken: this.jwtService.sign(payload), user: safeUser };
+    return safeUser;
   }
 
   async validateUser(id: string): Promise<User | null> {

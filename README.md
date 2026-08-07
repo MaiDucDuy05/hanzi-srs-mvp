@@ -15,7 +15,7 @@ Dự án này là phiên bản MVP (Minimum Viable Product) được tối ưu c
 ### Backend
 - **Framework:** NestJS
 - **Database:** PostgreSQL
-- **Storage/CDN:** AWS S3 & CloudFront (Lưu trữ audio, hình ảnh, JSON nét chữ Hán)
+- **Storage/CDN:** AWS S3 & CloudFront (Lưu trữ audio, hình ảnh, JSON nét chữ Hán) — MVP phục vụ audio từ thư mục cục bộ qua `GET /api/v1/audio/:key` (`AUDIO_STORAGE_DIR`, mặc định `./storage/audio`); frontend proxy qua `/api/audio/*`.
 
 ## 📦 Cấu trúc Module
 
@@ -46,19 +46,20 @@ Toàn bộ đặc tả yêu cầu (BRD) và thiết kế chi tiết các chức 
 
 ## ⚙️ Hướng dẫn cài đặt (Getting Started)
 
-*(Phần này sẽ được cập nhật chi tiết khi khởi tạo bộ source code gốc)*
-
 ### Yêu cầu hệ thống cơ bản:
 - Node.js (v18 trở lên)
 - PostgreSQL (v14 trở lên)
 - Package manager: `npm`, `yarn` hoặc `pnpm`
 
-### Các bước dự kiến:
+### Các bước:
 1. Clone repository.
-2. Chạy `npm install` tại thư mục frontend và backend.
+2. Chạy `npm install` tại thư mục `frontend` và `backend`.
 3. Thiết lập biến môi trường `.env` cho kết nối DB và các API keys (nếu có).
 4. Chạy migration tạo bảng trong PostgreSQL.
-5. Chạy `npm run dev` để khởi động môi trường phát triển.
+5. Chạy backend NestJS: `npm run start:dev` trong `backend/` (mặc định cổng 8000).
+6. Chạy frontend: `npm run dev` trong `frontend/` (mặc định cổng 5000).
+
+Chi tiết frontend: xem [`frontend/README.md`](./frontend/README.md).
 
 ## 📜 Giấy phép & Mã nguồn tham khảo
 

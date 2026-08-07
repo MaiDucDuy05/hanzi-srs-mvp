@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { SubscriptionModule } from '../subscription/subscription.module';
 import { Resource } from './entities/resource.entity';
 import { AiGenerationJob } from './entities/ai-generation-job.entity';
 import { ContactRequest } from './entities/contact-request.entity';
@@ -22,6 +23,7 @@ import { VipUpgradeController } from './vip-upgrade-request.controller';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Resource, AiGenerationJob, ContactRequest, MistakeBook, SpeakingAttempt, VipUpgradeRequest]),
+    SubscriptionModule,
   ],
   controllers: [
     ResourceController, AiJobController, ContactController, MistakeBookController, SpeakingController, VipUpgradeController,
