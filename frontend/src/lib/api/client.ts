@@ -1,15 +1,15 @@
 /**
  * API client — fetch wrapper cho backend NestJS (api/v1).
- * - Tự đính JWT từ localStorage (trừ các endpoint public).
+ * - Auth qua HttpOnly cookie (access_token): browser tự gửi mỗi request,
+ *   frontend KHÔNG đọc/touch token (đã xoá TOKEN_KEY + interceptor header).
+ * - Mọi call đi cùng origin (/api/v1) — Next rewrite proxy → backend,
+ *   nên cookie được gửi tự động mà không cần CORS.
  * - Giải nén envelope { data, message }.
  * - Ném ApiError với message thân thiện từ backend.
  */
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000/api/v1';
-
-export const TOKEN_KEY = 'hanzi_srs_token';
-export const USER_KEY = 'hanzi_srs_user';
+// Cùng origin (Next rewrite /api/v1/* → backend) để cookie HttpOnly tự gửi.
+const BASE_URL = '/api/v1';
 
 export class ApiError extends Error {
   status: number;
@@ -20,37 +20,11 @@ export class ApiError extends Error {
   }
 }
 
-export function getToken(): string | null {
-  if (typeof window === 'undefined') return null;
-  return window.localStorage.getItem(TOKEN_KEY);
-}
-
-export function setAuth(token: string, user: unknown): void {
-  if (typeof window === 'undefined') return;
-  window.localStorage.setItem(TOKEN_KEY, token);
-  window.localStorage.setItem(USER_KEY, JSON.stringify(user));
-}
-
-export function clearAuth(): void {
-  if (typeof window === 'undefined') return;
-  window.localStorage.removeItem(TOKEN_KEY);
-  window.localStorage.removeItem(USER_KEY);
-}
-
-export function getStoredUser<T>(): T | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = window.localStorage.getItem(USER_KEY);
-    return raw ? (JSON.parse(raw) as T) : null;
-  } catch {
-    return null;
-  }
-}
-
 type RequestOptions = RequestInit & { auth?: boolean };
 
 /**
- * Gọi API. Mặc định gắn Bearer token; truyền `auth: false` cho endpoint public.
+ * Gọi API. Mặc định gắn cookie HttpOnly (credentials include); truyền
+ * `auth: false` cho endpoint public để 401 không kích hoạt đăng xuất.
  * Trả về body JSON đã parse (chưa bóc envelope — dùng helper `unwrap` nếu cần).
  */
 export async function apiFetch<T = unknown>(
@@ -58,15 +32,16 @@ export async function apiFetch<T = unknown>(
   options: RequestOptions = {},
 ): Promise<T> {
   const { auth = true, headers, ...rest } = options;
-  const token = auth ? getToken() : null;
 
   let res: Response;
   try {
     res = await fetch(`${BASE_URL}${path}`, {
       ...rest,
+      // Luôn gửi cookie HttpOnly access_token. Same-origin nên là mặc định;
+      // để 'include' cho trường hợp NEXT_PUBLIC_API_URL trỏ host khác.
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
         ...(headers as Record<string, string> | undefined),
       },
     });
@@ -82,10 +57,9 @@ export async function apiFetch<T = unknown>(
   }
 
   if (!res.ok) {
-    // Token hết hạn/không hợp lệ: xoá thông tin đăng nhập và báo AuthProvider
+    // Token hết hạn/không hợp lệ: báo AuthProvider để chuyển về /login
     // (không áp dụng cho endpoint public như login/register — auth=false).
     if (res.status === 401 && auth) {
-      clearAuth();
       if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('hanzi:unauthorized'));
       }

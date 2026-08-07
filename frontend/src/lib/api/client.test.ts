@@ -1,22 +1,17 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, apiFetch, clearAuth, setAuth, unwrap } from './client';
+import { ApiError, apiFetch, unwrap } from './client';
 
 /**
- * Test transport layer (FE-008): apiFetch tự đính Bearer, bóc envelope,
- * 401 → clearAuth + sự kiện hanzi:unauthorized, message từ backend, lỗi mạng.
+ * Test transport layer (FE-008): apiFetch gửi cookie HttpOnly (credentials include),
+ * không gắn Authorization header (auth qua cookie), 401 → sự kiện hanzi:unauthorized,
+ * message từ backend, lỗi mạng.
  */
 
 function makeFakeWindow() {
-  const store = new Map<string, string>();
   const win = {
-    localStorage: {
-      getItem: (k: string) => store.get(k) ?? null,
-      setItem: (k: string, v: string) => void store.set(k, v),
-      removeItem: (k: string) => void store.delete(k),
-    },
     dispatchEvent: vi.fn(),
   };
-  return { win, store };
+  return { win };
 }
 
 function jsonResponse(body: unknown, init: { ok: boolean; status: number }) {
@@ -29,7 +24,7 @@ function jsonResponse(body: unknown, init: { ok: boolean; status: number }) {
 
 const fetchMock = vi.fn<typeof fetch>();
 
-describe('apiFetch transport', () => {
+describe('apiFetch transport (HttpOnly cookie)', () => {
   beforeEach(() => {
     const { win } = makeFakeWindow();
     vi.stubGlobal('window', win);
@@ -46,26 +41,25 @@ describe('apiFetch transport', () => {
     await expect(unwrap({ data: [1, 2] })).resolves.toEqual([1, 2]);
   });
 
-  it('gắn Authorization: Bearer khi có token', async () => {
-    setAuth('tok-123', { id: 'u1' });
+  it('gọi API cùng origin /api/v1 với credentials include (cookie HttpOnly)', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ data: null }, { ok: true, status: 200 }));
+
+    await apiFetch('/auth/me');
+
+    const [url, init] = fetchMock.mock.calls[0];
+    expect(url).toBe('/api/v1/auth/me');
+    expect(init?.credentials).toBe('include');
+  });
+
+  it('KHÔNG gắn Authorization header — auth qua cookie', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ data: null }, { ok: true, status: 200 }));
 
     await apiFetch('/tests');
 
     const [, init] = fetchMock.mock.calls[0];
     const headers = init?.headers as Record<string, string>;
-    expect(headers.Authorization).toBe('Bearer tok-123');
-    expect(headers['Content-Type']).toBe('application/json');
-  });
-
-  it('không gắn Authorization cho endpoint public (auth: false)', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ data: null }, { ok: true, status: 200 }));
-
-    await apiFetch('/auth/login', { auth: false });
-
-    const [, init] = fetchMock.mock.calls[0];
-    const headers = init?.headers as Record<string, string>;
     expect(headers.Authorization).toBeUndefined();
+    expect(headers['Content-Type']).toBe('application/json');
   });
 
   it('trả về body JSON chưa bóc envelope khi ok', async () => {
@@ -74,25 +68,23 @@ describe('apiFetch transport', () => {
     await expect(apiFetch('/x')).resolves.toEqual({ data: 42, message: 'ok' });
   });
 
-  it('401 khi đã đăng nhập → clearAuth + dispatch sự kiện + ném ApiError', async () => {
-    setAuth('expired', { id: 'u1' });
+  it('401 ở endpoint authenticated → dispatch sự kiện hanzi:unauthorized + ném ApiError', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ message: 'Unauthorized' }, { ok: false, status: 401 }));
 
     await expect(apiFetch('/private')).rejects.toMatchObject({
       name: 'ApiError',
       status: 401,
     });
-    const win = window as unknown as { localStorage: Storage; dispatchEvent: ReturnType<typeof vi.fn> };
-    expect(win.localStorage.getItem('hanzi_srs_token')).toBeNull();
+    const win = window as unknown as { dispatchEvent: ReturnType<typeof vi.fn> };
     expect(win.dispatchEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'hanzi:unauthorized' }));
   });
 
-  it('không clearAuth khi 401 ở endpoint public', async () => {
-    setAuth('t', { id: 'u1' });
+  it('không dispatch sự kiện khi 401 ở endpoint public (auth: false)', async () => {
     fetchMock.mockResolvedValue(jsonResponse({ message: 'Unauthorized' }, { ok: false, status: 401 }));
 
     await expect(apiFetch('/auth/login', { auth: false })).rejects.toBeInstanceOf(ApiError);
-    expect((window as unknown as { localStorage: Storage }).localStorage.getItem('hanzi_srs_token')).toBe('t');
+    const win = window as unknown as { dispatchEvent: ReturnType<typeof vi.fn> };
+    expect(win.dispatchEvent).not.toHaveBeenCalled();
   });
 
   it('lấy message string từ backend', async () => {
@@ -124,13 +116,5 @@ describe('apiFetch transport', () => {
     fetchMock.mockResolvedValue({ ok: true, status: 204, json: async () => { throw new Error('no body'); } } as unknown as Response);
 
     await expect(apiFetch('/x')).resolves.toBeNull();
-  });
-
-  it('clearAuth xoá token + user', () => {
-    setAuth('t', { id: 'u1' });
-    clearAuth();
-    const ls = (window as unknown as { localStorage: Storage }).localStorage;
-    expect(ls.getItem('hanzi_srs_token')).toBeNull();
-    expect(ls.getItem('hanzi_srs_user')).toBeNull();
   });
 });

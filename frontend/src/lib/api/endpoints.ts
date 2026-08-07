@@ -49,6 +49,12 @@ export const authApi = {
 
   login: (data: { email: string; password: string }) =>
     unwrap(apiFetch<Single<AuthResponse>>('/auth/login', { method: 'POST', body: JSON.stringify(data), auth: false })),
+
+  // Profile hiện tại theo HttpOnly cookie — thay cho user lưu localStorage.
+  me: () => unwrap(apiFetch<Single<User>>('/auth/me')),
+
+  // Xoá cookie phía server (client không tự xoá được HttpOnly).
+  logout: () => apiFetch('/auth/logout', { method: 'POST' }),
 };
 
 // ── Curriculum ──

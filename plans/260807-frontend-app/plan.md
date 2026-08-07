@@ -10,8 +10,9 @@ Practice/game grading happens client-side because the current backend only store
 (`practice-attempts` start/submit accept `score` from client; no server grading yet).
 
 ## Rendering strategy
-- Data pages = **Client Components** fetching via a shared API client (JWT in localStorage).
-  Backend requires JWT for nearly every endpoint; token lives in the browser only.
+- Data pages = **Client Components** fetching via a shared API client.
+  Auth qua **HttpOnly cookie** `access_token` (backend set `Set-Cookie`; xoá `TOKEN_KEY` + interceptor gắn header 2026-08-07).
+  Profile nạp từ `GET /auth/me` theo cookie; `credentials: 'include'` + rewrite `/api/v1` → backend (same-origin, cookie auto-send).
 - Hub/static pages = Server Components.
 - `loading.tsx` / `error.tsx` boundaries per async route segment.
 
@@ -31,10 +32,10 @@ Practice/game grading happens client-side because the current backend only store
 | Misc | `/resources`, `/contact`, `/upgrade-vip`, `/mistake-book`, `/profile` |
 
 ## Key lib modules
-- `lib/api/client.ts` — fetch wrapper, JWT attach, ApiError, `data` unwrap
+- `lib/api/client.ts` — fetch wrapper (cookie HttpOnly, credentials include, no header), ApiError, `data` unwrap
 - `lib/api/types.ts` — API entity types mirroring backend entities
-- `lib/api/endpoints.ts` — typed endpoint functions
-- `lib/auth/auth-context.tsx` — AuthProvider (login/register/logout, localStorage)
+- `lib/api/endpoints.ts` — typed endpoint functions (+ `authApi.me`, `authApi.logout`)
+- `lib/auth/auth-context.tsx` — AuthProvider (login/register/logout; user từ `/auth/me`; lắng nghe `hanzi:unauthorized`)
 - `lib/hooks/use-api.ts` — `useApi` fetch hook
 - `lib/utils/*` — cn, pinyin normalizer, format, storage, constants
 
@@ -54,4 +55,4 @@ Implement từ đề xuất review kiến trúc — chi tiết: `plans/reports/a
 - **P2-9** `EntityManager` hỗ trợ update + wire update API 6 entity admin
 - **P2-6** tách `tests/[testId]` → `use-take-test.ts` + `test-result-card.tsx` + `test-question-nav.tsx`
 - **FE-008** `client.test.ts` (11 test transport; tổng vitest 19→30)
-- **Deferred:** FE-006 middleware/RSC (chặn bởi auth trong localStorage), FE-007 codegen types (backend chưa có Swagger)
+- **Deferred:** FE-006 middleware/RSC — **đã gỡ blocker** (auth chuyển sang HttpOnly cookie, 2026-08-07: middleware đọc được cookie, RSC fetch được API auth-gated); chưa implement. FE-007 codegen types (backend chưa có Swagger)
