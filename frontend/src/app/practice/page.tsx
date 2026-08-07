@@ -95,8 +95,8 @@ function PracticeHubInner() {
               className={cn(
                 'rounded-lg border p-4 text-left transition-colors',
                 practiceType === t.type
-                  ? 'border-brand bg-brand-light dark:bg-brand/20'
-                  : 'border-gray-200 bg-white hover:border-brand dark:border-gray-700 dark:bg-gray-900',
+                  ? 'border-brand bg-brand-light '
+                  : 'border-gray-200 bg-white hover:border-brand  ',
               )}
             >
               <p className="font-bold">{t.title}</p>

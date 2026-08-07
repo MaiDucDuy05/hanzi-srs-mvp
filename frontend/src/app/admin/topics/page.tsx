@@ -147,7 +147,7 @@ export default function AdminTopicsPage() {
               {loading ? (
                 <PageLoading label="Đang tải..." />
               ) : (
-                <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                <ul className="divide-y divide-gray-100 ">
                   {links.map((l) => {
                     const v = vocabById(l.vocabularyId);
                     return (

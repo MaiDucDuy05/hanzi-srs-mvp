@@ -63,7 +63,7 @@ export function SourcePicker({
               'rounded-md px-4 py-2 text-sm font-medium',
               sourceKind === k
                 ? 'bg-brand text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300',
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200  ',
             )}
           >
             {k === 'LEVEL' ? 'Theo cấp HSK' : 'Theo chủ đề'}
@@ -78,8 +78,8 @@ export function SourcePicker({
             className={cn(
               'rounded-lg border px-4 py-3 text-left text-sm transition-colors',
               value?.sourceId === s.sourceId
-                ? 'border-brand bg-brand-light text-brand dark:bg-brand/20'
-                : 'border-gray-200 bg-white hover:border-brand dark:border-gray-700 dark:bg-gray-900',
+                ? 'border-brand bg-brand-light text-brand '
+                : 'border-gray-200 bg-white hover:border-brand  ',
             )}
           >
             {s.label}

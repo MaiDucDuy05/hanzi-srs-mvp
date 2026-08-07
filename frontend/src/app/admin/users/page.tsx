@@ -75,7 +75,7 @@ export default function AdminUsersPage() {
               <Card>
                 <CardHeader title={`Tài khoản (${users.length})`} />
                 <CardBody className="p-0">
-                  <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                  <ul className="divide-y divide-gray-100 ">
                     {users.map((u) => (
                       <li key={u.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                         <div className="min-w-0">
@@ -90,7 +90,7 @@ export default function AdminUsersPage() {
                             <select
                               value={u.role}
                               onChange={(e) => void changeRole(u, e.target.value as User['role'])}
-                              className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs dark:border-gray-700 dark:bg-gray-900"
+                              className="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs  "
                             >
                               <option value="FREE">FREE</option>
                               <option value="TEACHER">TEACHER</option>
@@ -108,7 +108,7 @@ export default function AdminUsersPage() {
               <Card>
                 <CardHeader title={`Yêu cầu nâng cấp VIP (${requests.length})`} />
                 <CardBody className="p-0">
-                  <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                  <ul className="divide-y divide-gray-100 ">
                     {requests.map((r) => (
                       <li key={r.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
                         <div className="min-w-0">

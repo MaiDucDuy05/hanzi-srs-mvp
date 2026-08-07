@@ -130,7 +130,7 @@ export default function UpgradeVipPage() {
               {!loading && !error && user?.role === 'ADMIN' && (
                 <ul className="space-y-2">
                   {requests.map((r) => (
-                    <li key={r.id} className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 text-sm dark:border-gray-800">
+                    <li key={r.id} className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 text-sm ">
                       <span className="text-gray-600">{formatDateTime(r.requestedAt)}</span>
                       <Badge tone={toneFor(r.status) as 'green' | 'red' | 'amber'}>{r.status}</Badge>
                     </li>

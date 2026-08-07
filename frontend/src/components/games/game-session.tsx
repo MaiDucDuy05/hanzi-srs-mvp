@@ -82,7 +82,7 @@ export function GameSession({
             {SOURCE_TYPE_LABELS[sourceType]}: {sourceLabel}
           </p>
         </div>
-        <span className="rounded-full bg-gray-100 px-3 py-1 font-mono text-sm text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+        <span className="rounded-full bg-gray-100 px-3 py-1 font-mono text-sm text-gray-600  ">
           {formatDuration(engine.elapsed)}
         </span>
       </header>

@@ -84,7 +84,7 @@ export default function TakeTestPage() {
           <span
             className={cn(
               'rounded-full px-3 py-1 font-mono text-sm',
-              timeLeft < 60 ? 'bg-red-100 text-red-700 dark:bg-red-950' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
+              timeLeft < 60 ? 'bg-red-100 text-red-700 ' : 'bg-gray-100 text-gray-600  ',
             )}
           >
             ⏱ {formatDuration(timeLeft)}

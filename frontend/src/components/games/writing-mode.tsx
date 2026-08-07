@@ -86,15 +86,15 @@ export function WritingMode({
         </span>
       </div>
 
-      <div className="rounded-xl border border-gray-200 p-6 text-center dark:border-gray-700">
+      <div className="rounded-xl border border-gray-200 p-6 text-center ">
         <p className="text-2xl font-bold text-brand">{question.hanzi}</p>
-        <p className="mt-1 text-lg text-gray-700 dark:text-gray-200">{question.pinyin}</p>
+        <p className="mt-1 text-lg text-gray-700 ">{question.pinyin}</p>
         <p className="text-gray-500">{question.meaning}</p>
         <div className="mt-2 flex justify-center">
           <AudioButton audioKey={question.audioKey} />
         </div>
 
-        <div className="mt-4 rounded-lg bg-gray-50 p-4 dark:bg-gray-800">
+        <div className="mt-4 rounded-lg bg-gray-50 p-4 ">
           <HanziWriterCanvas
             char={question.hanzi}
             onComplete={() => handleDone()}

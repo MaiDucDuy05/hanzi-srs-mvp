@@ -27,8 +27,8 @@ export function TestQuestionNav({
             i === current
               ? 'bg-brand text-white'
               : answered(i)
-                ? 'bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300'
-                : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
+                ? 'bg-green-100 text-green-700  '
+                : 'bg-gray-100 text-gray-600  ',
           )}
         >
           {i + 1}

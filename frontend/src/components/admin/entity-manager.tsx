@@ -123,7 +123,7 @@ export function EntityManager<T>({ config }: { config: EntityConfig<T> }) {
       {!loading && !error && (
         <Card>
           <CardBody className="p-0">
-            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+            <ul className="divide-y divide-gray-100 ">
               {items.map((item) => (
                 <li key={(item as { id: string }).id} className="flex items-center justify-between gap-3 px-4 py-3">
                   <div className="min-w-0">{config.renderRow(item)}</div>

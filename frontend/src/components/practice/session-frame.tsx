@@ -68,15 +68,15 @@ export function SummaryCard({
       <CardBody className="space-y-4 text-center">
         <p className="text-5xl font-bold text-brand">{result.score}%</p>
         <div className="grid grid-cols-3 gap-2 text-sm">
-          <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
+          <div className="rounded-lg bg-gray-50 p-3 ">
             <p className="font-semibold text-green-600">{result.correctCount}</p>
             <p className="text-xs text-gray-500">Đúng</p>
           </div>
-          <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
+          <div className="rounded-lg bg-gray-50 p-3 ">
             <p className="font-semibold text-red-600">{result.wrongCount}</p>
             <p className="text-xs text-gray-500">Sai</p>
           </div>
-          <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
+          <div className="rounded-lg bg-gray-50 p-3 ">
             <p className="font-semibold">{formatDuration(elapsed)}</p>
             <p className="text-xs text-gray-500">Thời gian</p>
           </div>

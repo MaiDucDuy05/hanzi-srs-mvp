@@ -97,7 +97,7 @@ export function BalloonMode({
         </span>
       </div>
 
-      <div className="rounded-xl border border-gray-200 p-6 text-center dark:border-gray-700">
+      <div className="rounded-xl border border-gray-200 p-6 text-center ">
         <p className="text-xs text-gray-400">Chữ Hán này đọc là gì?</p>
         <p className="hanzi mt-1 text-6xl font-bold text-brand">{question.hanzi}</p>
         {state.feedback === 'wrong' && (
@@ -121,9 +121,9 @@ export function BalloonMode({
               disabled={!!state.feedback}
               className={cn(
                 'rounded-2xl border-2 px-4 py-5 text-lg font-semibold transition-all',
-                'border-blue-200 bg-gradient-to-br from-blue-100 to-indigo-200 text-blue-800 hover:scale-105 hover:border-blue-400 dark:from-blue-950 dark:to-indigo-950 dark:text-blue-200',
-                showCorrect && 'border-green-400 bg-green-100 text-green-700 dark:bg-green-900',
-                picked && 'border-green-400 bg-green-100 text-green-700 dark:bg-green-900',
+                'border-blue-200 bg-gradient-to-br from-blue-100 to-indigo-200 text-blue-800 hover:scale-105 hover:border-blue-400   ',
+                showCorrect && 'border-green-400 bg-green-100 text-green-700 ',
+                picked && 'border-green-400 bg-green-100 text-green-700 ',
                 state.feedback === 'wrong' && !showCorrect && 'opacity-50',
               )}
             >

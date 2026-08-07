@@ -112,11 +112,11 @@ export function MemoryMode({
                 'flex aspect-[3/4] items-center justify-center rounded-lg border text-sm transition-all',
                 show
                   ? card.matched
-                    ? 'border-green-300 bg-green-50 text-green-700 dark:bg-green-950'
+                    ? 'border-green-300 bg-green-50 text-green-700 '
                     : card.kind === 'hanzi'
-                      ? 'hanzi border-brand bg-brand-light text-xl font-bold text-brand dark:bg-brand/20'
-                      : 'border-indigo-300 bg-indigo-50 text-indigo-700 dark:bg-indigo-950'
-                  : 'border-gray-200 bg-gray-100 text-gray-400 hover:border-brand dark:border-gray-700 dark:bg-gray-800',
+                      ? 'hanzi border-brand bg-brand-light text-xl font-bold text-brand '
+                      : 'border-indigo-300 bg-indigo-50 text-indigo-700 '
+                  : 'border-gray-200 bg-gray-100 text-gray-400 hover:border-brand  ',
               )}
             >
               {show ? card.value : '?'}

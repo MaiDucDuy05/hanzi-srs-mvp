@@ -124,7 +124,7 @@ export default function ProfilePage() {
                   {attempts.length === 0 ? (
                     <p className="text-sm text-gray-500">Chưa luyện tập lần nào.</p>
                   ) : (
-                    <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                    <ul className="divide-y divide-gray-100 ">
                       {attempts.slice(0, 8).map((a) => (
                         <li key={a.id} className="flex items-center justify-between gap-2 py-2.5 text-sm">
                           <div className="flex items-center gap-2">
@@ -149,7 +149,7 @@ export default function ProfilePage() {
                   {testAttempts.length === 0 ? (
                     <p className="text-sm text-gray-500">Chưa làm bài kiểm tra nào.</p>
                   ) : (
-                    <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                    <ul className="divide-y divide-gray-100 ">
                       {testAttempts.slice(0, 8).map((a) => (
                         <li key={a.id} className="flex items-center justify-between gap-2 py-2.5 text-sm">
                           <div className="flex items-center gap-2">

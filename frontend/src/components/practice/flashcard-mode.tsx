@@ -77,7 +77,7 @@ export function FlashcardMode({
       >
         <div className="preserve-3d relative aspect-[4/3] w-full">
           <div
-            className={`backface-hidden absolute inset-0 flex flex-col items-center justify-center rounded-2xl border bg-white shadow-sm dark:bg-gray-900 ${
+            className={`backface-hidden absolute inset-0 flex flex-col items-center justify-center rounded-2xl border bg-white shadow-sm  ${
               state.revealed ? 'rotate-y-180' : ''
             }`}
           >
@@ -85,12 +85,12 @@ export function FlashcardMode({
             <p className="mt-3 text-xs text-gray-400">Nhấn để lật thẻ</p>
           </div>
           <div
-            className={`backface-hidden absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl border border-brand/30 bg-brand-light p-6 text-center dark:bg-brand/20 ${
+            className={`backface-hidden absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-2xl border border-brand/30 bg-brand-light p-6 text-center  ${
               state.revealed ? '' : 'rotate-y-180'
             }`}
           >
             <span className="text-lg font-semibold text-brand">{current.pinyin}</span>
-            <span className="text-gray-700 dark:text-gray-200">{current.meaning}</span>
+            <span className="text-gray-700 ">{current.meaning}</span>
             <AudioButton audioKey={current.audioKey} />
           </div>
         </div>

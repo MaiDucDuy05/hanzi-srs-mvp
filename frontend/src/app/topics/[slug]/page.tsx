@@ -80,7 +80,7 @@ export default function TopicDetailPage() {
             {vocabularies.length === 0 ? (
               <p className="text-sm text-gray-500">Chủ đề chưa có từ vựng.</p>
             ) : (
-              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+              <ul className="divide-y divide-gray-100 ">
                 {vocabularies.map((v) => (
                   <li key={v.id} className="flex items-center gap-3 py-2.5">
                     <span className="hanzi w-12 text-xl font-bold text-brand">{v.hanzi}</span>

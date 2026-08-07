@@ -27,13 +27,13 @@ export function TestResultCard({
           <>
             <p className="text-5xl font-bold text-brand">{result.score}%</p>
             <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
+              <div className="rounded-lg bg-gray-50 p-3 ">
                 <p className="font-semibold text-green-600">
                   {result.correct}/{result.totalQuestions}
                 </p>
                 <p className="text-xs text-gray-500">Câu đúng</p>
               </div>
-              <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800">
+              <div className="rounded-lg bg-gray-50 p-3 ">
                 <p className="font-semibold">{formatDuration(result.duration)}</p>
                 <p className="text-xs text-gray-500">Thời gian</p>
               </div>

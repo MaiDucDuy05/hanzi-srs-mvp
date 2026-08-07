@@ -46,8 +46,8 @@ export function TestQuestionForm({
             className={cn(
               'block w-full rounded-lg border px-4 py-3 text-left text-sm transition-colors',
               selected
-                ? 'border-brand bg-brand-light text-brand dark:bg-brand/20'
-                : 'border-gray-200 bg-white hover:border-brand dark:border-gray-700 dark:bg-gray-900',
+                ? 'border-brand bg-brand-light text-brand '
+                : 'border-gray-200 bg-white hover:border-brand  ',
             )}
           >
             {String.fromCharCode(65 + i)}. {label}

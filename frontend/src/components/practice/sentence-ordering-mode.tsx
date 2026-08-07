@@ -128,7 +128,7 @@ export function SentenceOrderingMode({
         </span>
       </div>
 
-      <div className="rounded-xl border border-gray-200 p-6 text-center dark:border-gray-700">
+      <div className="rounded-xl border border-gray-200 p-6 text-center ">
         <p className="text-lg font-semibold text-brand">{question.pinyin}</p>
         <p className="mt-1 text-gray-600">{question.meaning}</p>
         <div className="mt-3 flex justify-center">
@@ -136,7 +136,7 @@ export function SentenceOrderingMode({
         </div>
 
         <p className="mt-5 text-xs text-gray-400">Sắp xếp các chữ thành từ đúng:</p>
-        <div className="mt-2 flex min-h-12 flex-wrap items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 p-3 dark:border-gray-600">
+        <div className="mt-2 flex min-h-12 flex-wrap items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 p-3 ">
           {state.answer.length === 0 && (
             <span className="text-sm text-gray-400">Chạm chữ bên dưới để ghép</span>
           )}
@@ -157,7 +157,7 @@ export function SentenceOrderingMode({
               key={`${t}-${i}`}
               onClick={() => pickToken(t, i)}
               disabled={!!state.feedback}
-              className="hanzi rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xl font-bold text-gray-700 hover:border-brand hover:text-brand disabled:opacity-40 dark:border-gray-600 dark:bg-gray-900 dark:text-gray-200"
+              className="hanzi rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xl font-bold text-gray-700 hover:border-brand hover:text-brand disabled:opacity-40   "
             >
               {t}
             </button>

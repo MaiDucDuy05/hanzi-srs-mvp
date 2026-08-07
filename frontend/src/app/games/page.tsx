@@ -81,8 +81,8 @@ function GamesHubInner() {
               className={cn(
                 'rounded-xl border p-5 text-left transition-colors',
                 gameType === g.type
-                  ? 'border-brand bg-brand-light dark:bg-brand/20'
-                  : 'border-gray-200 bg-white hover:border-brand dark:border-gray-700 dark:bg-gray-900',
+                  ? 'border-brand bg-brand-light '
+                  : 'border-gray-200 bg-white hover:border-brand  ',
               )}
             >
               <p className="text-3xl">{g.emoji}</p>

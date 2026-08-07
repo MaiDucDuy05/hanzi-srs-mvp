@@ -77,7 +77,7 @@ export function FillBlankMode({
         </span>
       </div>
 
-      <div className="rounded-xl border border-gray-200 p-6 text-center dark:border-gray-700">
+      <div className="rounded-xl border border-gray-200 p-6 text-center ">
         <p className="text-lg font-semibold text-brand">{current.pinyin}</p>
         <p className="mt-1 text-gray-600">{current.meaning}</p>
         <div className="mt-3 flex justify-center">

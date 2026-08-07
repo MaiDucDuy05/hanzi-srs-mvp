@@ -130,10 +130,10 @@ export function MatchingMode({
               className={cn(
                 'hanzi w-full rounded-lg border px-4 py-3 text-xl font-bold transition-colors',
                 p.matched
-                  ? 'border-green-300 bg-green-50 text-green-700 dark:bg-green-950'
+                  ? 'border-green-300 bg-green-50 text-green-700 '
                   : state.selectedHanzi === p.item.id
-                    ? 'border-brand bg-brand-light text-brand dark:bg-brand/20'
-                    : 'border-gray-200 bg-white hover:border-brand dark:border-gray-700 dark:bg-gray-900',
+                    ? 'border-brand bg-brand-light text-brand '
+                    : 'border-gray-200 bg-white hover:border-brand  ',
               )}
             >
               {p.item.hanzi}
@@ -149,10 +149,10 @@ export function MatchingMode({
               className={cn(
                 'w-full rounded-lg border px-4 py-3 text-left text-sm transition-colors',
                 p.matched
-                  ? 'border-green-300 bg-green-50 text-green-700 dark:bg-green-950'
+                  ? 'border-green-300 bg-green-50 text-green-700 '
                   : state.selectedMeaning === p.item.id
-                    ? 'border-brand bg-brand-light text-brand dark:bg-brand/20'
-                    : 'border-gray-200 bg-white hover:border-brand dark:border-gray-700 dark:bg-gray-900',
+                    ? 'border-brand bg-brand-light text-brand '
+                    : 'border-gray-200 bg-white hover:border-brand  ',
               )}
             >
               {p.item.pinyin} — {p.item.meaning}

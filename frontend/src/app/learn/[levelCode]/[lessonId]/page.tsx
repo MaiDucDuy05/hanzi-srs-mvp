@@ -79,7 +79,7 @@ export default function LessonDetailPage() {
               {vocabularies.length === 0 ? (
                 <p className="text-sm text-gray-500">Chưa có từ vựng.</p>
               ) : (
-                <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+                <ul className="divide-y divide-gray-100 ">
                   {vocabularies.map((v) => (
                     <li key={v.id} className="flex items-center gap-3 py-2.5">
                       <span className="hanzi w-12 text-xl font-bold text-brand">{v.hanzi}</span>
@@ -106,7 +106,7 @@ export default function LessonDetailPage() {
               ) : (
                 <ul className="space-y-4">
                   {grammar.map((g) => (
-                    <li key={g.id} className="rounded-lg border border-gray-100 p-3 dark:border-gray-800">
+                    <li key={g.id} className="rounded-lg border border-gray-100 p-3 ">
                       <p className="font-semibold">{g.title}</p>
                       <p className="mt-1 text-sm font-medium text-brand">{g.structure}</p>
                       <p className="mt-1 text-sm text-gray-600">{g.explanation}</p>
