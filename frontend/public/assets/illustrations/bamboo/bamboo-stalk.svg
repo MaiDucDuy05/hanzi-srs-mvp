@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 140" aria-hidden="true" focusable="false">
+  <!-- Single bamboo stalk with nodes and leaves. -->
+  <path d="M30 138 C30 100 30 70 30 12" stroke="#5e7f26" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <path d="M23 96 C30 91 37 96 37 96" stroke="#6e8b2d" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M23 58 C30 53 37 58 37 58" stroke="#6e8b2d" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M23 24 C30 19 37 24 37 24" stroke="#6e8b2d" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M30 30 C44 26 54 30 56 38 C46 38 36 42 30 46 Z" fill="#78993a"/>
+  <path d="M30 66 C16 62 6 66 4 74 C14 74 24 78 30 82 Z" fill="#6e8b2d"/>
+  <path d="M30 44 C42 40 50 42 53 48 C44 49 37 52 30 55 Z" fill="#5e7f26"/>
+  <path d="M30 108 C18 104 8 108 6 116 C16 116 26 120 30 124 Z" fill="#78993a"/>
+</svg>
