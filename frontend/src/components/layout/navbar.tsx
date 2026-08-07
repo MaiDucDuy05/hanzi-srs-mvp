@@ -32,11 +32,9 @@ export function Navbar() {
 
  return (
  <header className="sticky top-0 z-40 px-3 pt-3">
- <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 rounded-full border border-light-bamboo bg-white/70 px-4 shadow-soft backdrop-blur md:px-6">
+ <div className="mx-auto flex min-h-[56px] py-2 max-w-6xl items-center justify-between gap-3 rounded-full border border-light-bamboo bg-white/70 px-4 shadow-soft backdrop-blur md:px-6">
  <Link href="/" className="flex items-center gap-2 font-bold text-forest">
- <span className="text-xl" aria-hidden>
- 🐼
- </span>
+ <img src="/assets/illustrations/panda/panda-at-beach.svg" alt="Panda Mascot" className="h-16 w-auto" />
  <span className="font-heading">{APP_NAME}</span>
  </Link>
 

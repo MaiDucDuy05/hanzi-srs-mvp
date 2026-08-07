@@ -45,7 +45,7 @@ export function Footer() {
  <BambooSprig className="absolute -right-1 bottom-2 w-20 -scale-x-100 opacity-80" />
  <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm text-gray-500 sm:flex-row">
  <p className="flex items-center gap-1.5">
- <span aria-hidden>🐼</span>
+ <img src="/assets/illustrations/panda/panda-at-beach.svg" alt="Panda" className="inline-block h-10 w-auto" />
  © {new Date().getFullYear()} {APP_NAME} — Nền tảng học tiếng Trung &amp;
  luyện thi HSK
  </p>
