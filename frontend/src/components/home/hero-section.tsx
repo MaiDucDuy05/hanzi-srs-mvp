@@ -18,8 +18,15 @@ export function HeroSection({ user }: { user: User | null }) {
       </div>
 
       <div className="relative z-10 mx-auto grid max-w-5xl grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-8">
-        {/* Left: Illustration (Gấu trúc) - Bỏ trống vì đã chuyển sang ForestBackground */}
-        <div className="hidden lg:block relative h-[350px] sm:h-[450px] lg:h-[500px]"></div>
+        {/* Left: Illustration (Gấu trúc) */}
+        <div className="relative flex h-[350px] items-end justify-center sm:h-[450px] lg:h-[500px]">
+          {/* Sử dụng file ảnh có sẵn trong assets */}
+          <img
+            src="/assets/illustrations/panda/panda.png"
+            alt="Panda Eating Bamboo"
+            className="relative z-10 h-[90%] w-auto object-contain sm:h-[100%]"
+          />
+        </div>
 
         {/* Right: Content */}
         <div className="text-center lg:text-left">
@@ -33,9 +40,9 @@ export function HeroSection({ user }: { user: User | null }) {
             {user ? (
               <Link
                 href="/learn"
-                className="font-[family-name:var(--font-nunito)] inline-block rounded-full bg-[#8BC34A] px-8 py-4 text-lg font-black text-white shadow-md transition-all hover:scale-105 hover:bg-[#7CB342]"
+                className="font-(family-name:--font-nunito) inline-block rounded-full bg-[#8BC34A] px-8 py-4 text-lg font-black text-white shadow-md transition-all hover:scale-105 hover:bg-[#7CB342]"
               >
-                Tiếp tục học
+                 Start Your Journey
               </Link>
             ) : (
               <Link

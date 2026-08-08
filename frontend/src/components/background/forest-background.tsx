@@ -24,16 +24,6 @@ export function ForestBackground({ children, className }: ForestBackgroundProps)
         <Blob className="absolute -right-16 -top-16 h-[300px] w-[350px] scale-x-[-1] opacity-100 sm:-right-24 sm:-top-24 sm:h-[400px] sm:w-[500px]" fill="#d7e9c1" />
         <Blob className="absolute -bottom-16 -right-16 h-[300px] w-[350px] scale-x-[-1] scale-y-[-1] opacity-100 sm:-bottom-24 sm:-right-24 sm:h-[400px] sm:w-[500px]" fill="#d7e9c1" />
         
-        {/* Panda Illustration (Background mascot) */}
-        <div className="absolute inset-0 z-0 mx-auto w-full max-w-5xl">
-          <div className="absolute left-0 top-1/2 flex w-full -translate-y-1/2 items-center justify-center opacity-30 lg:w-1/2 lg:opacity-100">
-            <img
-              src="/assets/illustrations/panda/panda-on-meadow.svg"
-              alt="Panda"
-              className="relative z-10 h-[350px] w-auto object-contain drop-shadow-xl sm:h-[450px] lg:h-[450px]"
-            />
-          </div>
-        </div>
       </div>
       
       {/* Nội dung trang */}
