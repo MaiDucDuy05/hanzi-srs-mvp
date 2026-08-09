@@ -5,12 +5,12 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { curriculumApi } from '@/lib/api/endpoints';
 import type { Topic, Vocabulary } from '@/lib/api/types';
-import { AuthGuard } from '@/components/layout/auth-guard';
-import { Card, CardBody, CardHeader } from '@/components/ui/card';
-import { PageLoading } from '@/components/ui/spinner';
-import { ErrorState } from '@/components/ui/error-state';
-import { AudioButton } from '@/components/ui/audio-button';
-import { Button } from '@/components/ui/button';
+import { AuthGuard } from '@/features/layout/components/auth-guard';
+import { Card, CardBody, CardHeader } from '@/features/ui/components/card';
+import { PageLoading } from '@/features/ui/components/spinner';
+import { ErrorState } from '@/features/ui/components/error-state';
+import { AudioButton } from '@/features/ui/components/audio-button';
+import { Button } from '@/features/ui/components/button';
 
 export default function TopicDetailPage() {
   const { slug } = useParams<{ slug: string }>();

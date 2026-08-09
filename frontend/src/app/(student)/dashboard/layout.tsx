@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ForestBackground } from '@/components/background/forest-background';
+import { ForestBackground } from '@/features/background/components/forest-background';
 
 const PawIcon = ({ className }: { className?: string }) => (
   <img 

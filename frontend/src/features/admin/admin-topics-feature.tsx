@@ -3,12 +3,12 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { curriculumApi } from '@/lib/api/endpoints';
 import type { Topic, TopicVocabulary, Vocabulary } from '@/lib/api/types';
-import { EntityManager } from '@/components/admin/entity-manager';
-import { Card, CardBody, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Field, Select } from '@/components/ui/form';
-import { PageLoading } from '@/components/ui/spinner';
-import { ErrorState } from '@/components/ui/error-state';
+import { EntityManager } from '@/features/admin/components/entity-manager';
+import { Card, CardBody, CardHeader } from '@/features/ui/components/card';
+import { Button } from '@/features/ui/components/button';
+import { Field, Select } from '@/features/ui/components/form';
+import { PageLoading } from '@/features/ui/components/spinner';
+import { ErrorState } from '@/features/ui/components/error-state';
 
 export function AdminTopicsFeature() {
   const [topics, setTopics] = useState<Topic[]>([]);

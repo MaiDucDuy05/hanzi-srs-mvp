@@ -3,11 +3,11 @@
 import { useEffect, useState } from 'react';
 import { resourceApi } from '@/lib/api/endpoints';
 import type { User, VipUpgradeRequest } from '@/lib/api/types';
-import { Card, CardBody, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { PageLoading } from '@/components/ui/spinner';
-import { ErrorState } from '@/components/ui/error-state';
+import { Card, CardBody, CardHeader } from '@/features/ui/components/card';
+import { Button } from '@/features/ui/components/button';
+import { Badge } from '@/features/ui/components/badge';
+import { PageLoading } from '@/features/ui/components/spinner';
+import { ErrorState } from '@/features/ui/components/error-state';
 import { ROLE_LABELS } from '@/lib/utils/constants';
 import { formatDateTime } from '@/lib/utils/format';
 

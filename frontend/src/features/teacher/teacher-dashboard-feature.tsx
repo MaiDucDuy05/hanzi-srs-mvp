@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Card, CardBody } from '@/components/ui/card';
+import { Card, CardBody } from '@/features/ui/components/card';
 
 const LINKS = [
   {

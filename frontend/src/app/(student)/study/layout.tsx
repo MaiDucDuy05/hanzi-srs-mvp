@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { StudyBackground } from '@/components/background/study-background';
+import { StudyBackground } from '@/features/background/components/study-background';
 import { useRouter } from 'next/navigation';
 
 export default function StudyLayout({ children }: { children: React.ReactNode }) {

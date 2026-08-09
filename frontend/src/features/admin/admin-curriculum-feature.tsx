@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { curriculumApi } from '@/lib/api/endpoints';
 import type { GrammarPoint, HskLevel, Lesson, Vocabulary } from '@/lib/api/types';
-import { EntityManager } from '@/components/admin/entity-manager';
-import { Tabs } from '@/components/ui/tabs';
+import { EntityManager } from '@/features/admin/components/entity-manager';
+import { Tabs } from '@/features/ui/components/tabs';
 import { useApi } from '@/lib/hooks/use-api';
 
 function useLevelOptions() {

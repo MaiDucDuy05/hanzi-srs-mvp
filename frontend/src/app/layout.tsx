@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Inter, Poppins, Nunito } from "next/font/google";
 import { AuthProvider } from "@/lib/auth/auth-context";
-import { AppShell } from "@/components/layout/app-shell";
+import { AppShell } from "@/features/layout/components/app-shell";
 import "./globals.css";
 
 const poppins = Poppins({

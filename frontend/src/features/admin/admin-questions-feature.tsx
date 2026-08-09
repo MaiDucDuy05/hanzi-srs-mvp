@@ -2,9 +2,9 @@
 
 import type { PracticeQuestion } from '@/lib/api/types';
 import { practiceApi, curriculumApi } from '@/lib/api/endpoints';
-import { EntityManager } from '@/components/admin/entity-manager';
+import { EntityManager } from '@/features/admin/components/entity-manager';
 import { useApi } from '@/lib/hooks/use-api';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/features/ui/components/badge';
 
 export function AdminQuestionsFeature() {
   const { data: levels } = useApi(() => curriculumApi.listLevels(), []);

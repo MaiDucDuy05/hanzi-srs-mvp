@@ -3,11 +3,11 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { PracticeType, SourceType } from '@/lib/api/types';
-import { PracticeSession } from '@/components/practice/session';
-import { SourcePicker, type PickedSource } from '@/components/practice/source-picker';
-import { Card, CardBody } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { PageLoading } from '@/components/ui/spinner';
+import { PracticeSession } from '@/features/practice/components/session';
+import { SourcePicker, type PickedSource } from '@/features/practice/components/source-picker';
+import { Card, CardBody } from '@/features/ui/components/card';
+import { Button } from '@/features/ui/components/button';
+import { PageLoading } from '@/features/ui/components/spinner';
 import { cn } from '@/lib/utils/cn';
 
 const PRACTICE_TYPES: { type: PracticeType; title: string; desc: string }[] = [

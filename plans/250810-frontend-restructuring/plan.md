@@ -3,96 +3,84 @@
 ## Cấu trúc mới
 
 ```
-src/app/
-├── layout.tsx                    # Root layout
-├── page.tsx                      # Trang chủ
-├── error.tsx / loading.tsx
+src/
+├── app/                          # Next.js App Router
+│   ├── (auth)/                  # Route group: auth pages
+│   │   ├── login/page.tsx
+│   │   └── register/page.tsx
+│   │
+│   ├── (student)/               # Route group: student pages
+│   │   ├── layout.tsx           # AuthGuard
+│   │   ├── dashboard/
+│   │   ├── games/
+│   │   ├── practice/
+│   │   ├── study/
+│   │   └── profile/
+│   │
+│   ├── admin/                   # /admin/*
+│   │   └── layout.tsx           # AdminGuard
+│   │
+│   ├── teacher/                 # /teacher/*
+│   │   └── layout.tsx           # TeacherGuard
+│   │
+│   ├── topics/
+│   ├── tests/
+│   ├── contact/
+│   ├── resources/
+│   ├── mistake-book/
+│   └── upgrade-vip/
 │
-├── (auth)/                       # Route group cho auth pages
-│   ├── layout.tsx
-│   ├── login/page.tsx
-│   └── register/page.tsx
-│
-├── (student)/                    # Route group cho student pages
-│   ├── layout.tsx                # AuthGuard wrapper
-│   ├── dashboard/
-│   │   ├── layout.tsx
-│   │   ├── page.tsx
-│   │   ├── courses/page.tsx
-│   │   ├── courses/[id]/page.tsx
-│   │   └── practice/
-│   │       ├── page.tsx
-│   │       └── lessons/page.tsx
+├── features/                    # Tất cả components, hooks, page features
+│   ├── ui/
+│   │   └── components/          # Shared UI: Button, Card, Modal, etc.
+│   │
+│   ├── layout/
+│   │   └── components/          # AuthGuard, AdminGuard, Navbar, Footer
+│   │
+│   ├── auth/
+│   │   ├── components/          # LoginForm, RegisterForm
+│   │   └── page-features/       # Auth page logic
+│   │
+│   ├── admin/
+│   │   ├── components/          # EntityManager
+│   │   ├── hooks/               # Admin hooks
+│   │   └── page-features/       # AdminCurriculumFeature, etc.
+│   │
+│   ├── teacher/
+│   │   ├── components/
+│   │   └── page-features/       # TeacherDashboardFeature, etc.
+│   │
 │   ├── games/
-│   │   ├── layout.tsx
-│   │   ├── page.tsx
-│   │   ├── flashcard/page.tsx
-│   │   ├── match/page.tsx
-│   │   ├── memory/page.tsx
-│   │   ├── sentence/page.tsx
-│   │   ├── stroke/page.tsx
-│   │   └── listening/page.tsx
-│   ├── practice/page.tsx
-│   ├── study/
-│   │   ├── layout.tsx
-│   │   └── [lessonId]/page.tsx
-│   └── profile/page.tsx
+│   │   └── components/          # BalloonMode, MemoryMode, WritingMode, etc.
+│   │
+│   ├── practice/
+│   │   └── components/          # Session, FlashcardMode, etc.
+│   │
+│   ├── tests/
+│   │   └── components/          # TestQuestionForm, TestResultCard, etc.
+│   │
+│   ├── background/
+│   │   └── components/         # ForestBackground, etc.
+│   │
+│   ├── contact/
+│   │   └── components/         # ContactForm
+│   │
+│   └── home/
+│       └── components/          # HeroSection, PandaDecoration
 │
-├── admin/                        # Admin pages (URL: /admin/*)
-│   ├── layout.tsx                # AdminGuard wrapper
-│   ├── page.tsx
-│   ├── curriculum/page.tsx
-│   ├── questions/page.tsx
-│   ├── topics/page.tsx
-│   └── users/page.tsx
+├── lib/                         # Utilities, API, hooks
+│   ├── api/
+│   ├── auth/
+│   ├── utils/
+│   └── hooks/
 │
-├── teacher/                      # Teacher pages (URL: /teacher/*)
-│   ├── layout.tsx                # TeacherGuard wrapper
-│   ├── page.tsx
-│   └── tests/
-│       ├── page.tsx
-│       └── [testId]/page.tsx
-│
-├── topics/                       # Public topic pages
-│   ├── page.tsx
-│   └── [slug]/page.tsx
-│
-├── tests/                        # Public test pages
-│   ├── join/page.tsx
-│   └── [testId]/page.tsx
-│
-├── contact/page.tsx
-├── resources/page.tsx
-├── upgrade-vip/page.tsx
-└── mistake-book/page.tsx
-
-src/features/                     # Business logic (tách từ pages)
-├── auth/
-│   ├── login-form.tsx
-│   └── register-form.tsx
-├── admin/
-│   ├── admin-dashboard-feature.tsx
-│   ├── admin-curriculum-feature.tsx
-│   ├── admin-questions-feature.tsx
-│   ├── admin-topics-feature.tsx
-│   └── admin-users-feature.tsx
-├── teacher/
-│   ├── teacher-dashboard-feature.tsx
-│   ├── teacher-tests-feature.tsx
-│   └── manage-test-feature.tsx
-└── practice/
-    └── practice-hub-feature.tsx
+└── assets/
 ```
 
-## Pages chỉ export Page component
+## Quy tắc
+- **Pages** chỉ export `default Page` component
+- **Logic** đặt trong `features/{domain}/page-features/` hoặc `features/{domain}/`
+- **Components** đặt trong `features/{domain}/components/`
+- **Hooks** đặt trong `features/{domain}/hooks/`
 
-Pages trong `app/` chỉ là entry points, logic đặt trong `features/`.
-
-## Build Status: ✅ PASSED
-
-All routes compile successfully:
-- `/admin/*` - Admin pages with AdminGuard
-- `/teacher/*` - Teacher pages with TeacherGuard  
-- `(student)/*` - Student pages with AuthGuard
-- `(auth)/*` - Auth pages (login, register)
-- Root pages (topics, tests, contact, resources, etc.)
+## Build Status: ✅ PASSED (32 routes)

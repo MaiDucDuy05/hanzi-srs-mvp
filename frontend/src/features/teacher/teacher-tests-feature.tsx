@@ -5,13 +5,13 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { testApi } from '@/lib/api/endpoints';
 import type { Test } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/auth-context';
-import { Card, CardBody, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Modal } from '@/components/ui/modal';
-import { Field, Input } from '@/components/ui/form';
-import { PageLoading } from '@/components/ui/spinner';
-import { ErrorState } from '@/components/ui/error-state';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardBody, CardHeader } from '@/features/ui/components/card';
+import { Button } from '@/features/ui/components/button';
+import { Modal } from '@/features/ui/components/modal';
+import { Field, Input } from '@/features/ui/components/form';
+import { PageLoading } from '@/features/ui/components/spinner';
+import { ErrorState } from '@/features/ui/components/error-state';
+import { Badge } from '@/features/ui/components/badge';
 import { formatDate } from '@/lib/utils/format';
 
 export function TeacherTestsFeature() {

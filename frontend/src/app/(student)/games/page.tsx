@@ -3,11 +3,11 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { SourceType } from '@/lib/api/types';
-import { AuthGuard } from '@/components/layout/auth-guard';
-import { GameSession } from '@/components/games/game-session';
-import { SourcePicker, type PickedSource } from '@/components/practice/source-picker';
-import { Button } from '@/components/ui/button';
-import { PageLoading } from '@/components/ui/spinner';
+import { AuthGuard } from '@/features/layout/components/auth-guard';
+import { GameSession } from '@/features/games/components/game-session';
+import { SourcePicker, type PickedSource } from '@/features/practice/components/source-picker';
+import { Button } from '@/features/ui/components/button';
+import { PageLoading } from '@/features/ui/components/spinner';
 import { cn } from '@/lib/utils/cn';
 
 type GameType = 'PINYIN_BALLOON_GAME' | 'MEMORY_GAME' | 'HANZI_WRITING';

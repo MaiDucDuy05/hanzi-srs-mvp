@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import { RegisterForm } from '@/components/auth/register-form';
-import { Card, CardBody, CardHeader } from '@/components/ui/card';
+import { RegisterForm } from '@/features/auth/components/register-form';
+import { Card, CardBody, CardHeader } from '@/features/ui/components/card';
 
 export const metadata: Metadata = {
   title: 'Đăng ký tài khoản',

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getServerUser } from '@/lib/auth/server-auth';
-import { HeroSection } from '@/components/home/hero-section';
+import { HeroSection } from '@/features/home/components/hero-section';
 
 // SEO (P1-1): trang chủ là Server Component — metadata + HTML render sẵn từ server.
 export const metadata: Metadata = {

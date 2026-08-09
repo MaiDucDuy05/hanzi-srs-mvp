@@ -3,14 +3,14 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { resourceApi } from '@/lib/api/endpoints';
 import type { VipUpgradeRequest } from '@/lib/api/types';
-import { AuthGuard } from '@/components/layout/auth-guard';
+import { AuthGuard } from '@/features/layout/components/auth-guard';
 import { useAuth } from '@/lib/auth/auth-context';
-import { Card, CardBody, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Field, Textarea } from '@/components/ui/form';
-import { Badge } from '@/components/ui/badge';
-import { PageLoading } from '@/components/ui/spinner';
-import { ErrorState } from '@/components/ui/error-state';
+import { Card, CardBody, CardHeader } from '@/features/ui/components/card';
+import { Button } from '@/features/ui/components/button';
+import { Field, Textarea } from '@/features/ui/components/form';
+import { Badge } from '@/features/ui/components/badge';
+import { PageLoading } from '@/features/ui/components/spinner';
+import { ErrorState } from '@/features/ui/components/error-state';
 import { formatDateTime } from '@/lib/utils/format';
 
 const BENEFITS = [
