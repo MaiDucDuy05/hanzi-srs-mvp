@@ -16,7 +16,7 @@ const PawIcon = ({ className }: { className?: string }) => (
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/dashboard' },
   { label: 'Courses', href: '/dashboard/courses' },
-  { label: 'Games', href: '/dashboard/games' },
+  { label: 'Practice', href: '/dashboard/practice' },
   { label: 'Leaderboard', href: '/dashboard/leaderboard' },
   { label: 'Settings', href: '/dashboard/settings' },
 ];
@@ -55,8 +55,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </aside>
         
         {/* Main Content Area */}
-        <main className="flex-1 min-w-0 flex flex-col justify-center items-center">
-          <div className="w-full max-w-6xl">
+        <main className={`flex-1 min-w-0 flex flex-col items-center overflow-y-auto custom-scrollbar h-full rounded-[2rem] ${
+          !(pathname.startsWith('/dashboard/courses') || pathname.startsWith('/dashboard/practice/lessons')) 
+            ? 'justify-center' 
+            : ''
+        }`}>
+          <div className="w-full max-w-6xl py-4 sm:py-0">
             {children}
           </div>
         </main>
