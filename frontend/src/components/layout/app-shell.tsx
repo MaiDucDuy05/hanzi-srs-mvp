@@ -12,8 +12,10 @@ import { Footer } from '@/components/layout/footer';
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isHome = pathname === '/';
+  const isDashboard = pathname?.startsWith('/dashboard');
+  const isStudy = pathname?.startsWith('/study');
 
-  if (isHome) {
+  if (isHome || isDashboard || isStudy) {
     return <main className="flex min-h-screen w-full flex-col">{children}</main>;
   }
 

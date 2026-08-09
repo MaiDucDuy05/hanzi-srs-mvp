@@ -40,7 +40,7 @@ function BambooSprig({ className }: { className?: string }) {
  */
 export function Footer() {
  return (
- <footer className="relative mt-10 overflow-hidden rounded-t-[32px] bg-off-white">
+ <footer className="relative mt-10 overflow-hidden rounded-t-[32px] bg-[#f3fef6]">
  <BambooSprig className="absolute -left-1 bottom-2 w-20 opacity-80" />
  <BambooSprig className="absolute -right-1 bottom-2 w-20 -scale-x-100 opacity-80" />
  <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm text-gray-500 sm:flex-row">

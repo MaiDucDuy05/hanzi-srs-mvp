@@ -39,14 +39,14 @@ export function HeroSection({ user }: { user: User | null }) {
           <div className="mt-10">
             {user ? (
               <Link
-                href="/learn"
+                href="/dashboard"
                 className="font-(family-name:--font-nunito) inline-block rounded-full bg-[#8BC34A] px-8 py-4 text-lg font-black text-white shadow-md transition-all hover:scale-105 hover:bg-[#7CB342]"
               >
                  Start Your Journey
               </Link>
             ) : (
               <Link
-                href="/register"
+                href="/dashboard"
                 className="font-[family-name:var(--font-nunito)] inline-block rounded-full bg-[#8BC34A] px-8 py-4 text-lg font-black text-white shadow-md transition-all hover:scale-105 hover:bg-[#7CB342]"
               >
                 Start Your Journey

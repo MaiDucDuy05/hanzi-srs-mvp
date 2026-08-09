@@ -2,13 +2,16 @@
 
 :root {
   /* Panda Forest palette — light-only (brief: no dark theme) */
-  --background: #fafcec; /* mint-cream */
+  --background: #def9ea; /* light mint green */
   --foreground: #4a5a3a; /* soft dark green */
 
   /* Brand: forest green (was Chinese red #c8102e) */
   --brand: #5e7f26; /* forest-green */
   --brand-dark: #4a6520; /* darker forest */
   --brand-light: #f3f8d7; /* pale-green */
+
+  /* Light gray text */
+  --color-gray-500: #6b7280;
 
   /* Primary greens */
   --color-forest: #5e7f26;
@@ -46,9 +49,9 @@
   --color-accent-olive: var(--color-accent-olive);
   --color-off-white: var(--color-off-white);
 
-  --font-sans: var(--font-inter), var(--font-geist-sans), "PingFang SC",
+  --font-sans: var(--font-nunito), var(--font-inter), var(--font-geist-sans), "PingFang SC",
     "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
-  --font-heading: var(--font-poppins), var(--font-inter), "PingFang SC",
+  --font-heading: var(--font-nunito), var(--font-poppins), var(--font-inter), "PingFang SC",
     "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
@@ -129,4 +132,18 @@ h6 {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* 3D transforms */
+.perspective-1000 {
+  perspective: 1000px;
+}
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+}
+.rotate-y-180 {
+  transform: rotateY(180deg);
 }
