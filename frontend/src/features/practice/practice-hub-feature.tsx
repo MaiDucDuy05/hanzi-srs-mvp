@@ -3,7 +3,6 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { PracticeType, SourceType } from '@/lib/api/types';
-import { AuthGuard } from '@/components/layout/auth-guard';
 import { PracticeSession } from '@/components/practice/session';
 import { SourcePicker, type PickedSource } from '@/components/practice/source-picker';
 import { Card, CardBody } from '@/components/ui/card';
@@ -20,7 +19,7 @@ const PRACTICE_TYPES: { type: PracticeType; title: string; desc: string }[] = [
 
 const GAME_TYPES: PracticeType[] = ['PINYIN_BALLOON_GAME', 'MEMORY_GAME', 'HANZI_WRITING'];
 
-function PracticeHubInner() {
+export function PracticeHubFeature() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const type = searchParams.get('type') as PracticeType | null;
@@ -30,7 +29,6 @@ function PracticeHubInner() {
   const [picked, setPicked] = useState<PickedSource | null>(null);
   const [practiceType, setPracticeType] = useState<PracticeType | null>(null);
 
-  // Đủ query param → vào thẳng phiên luyện tập.
   if (type && sourceType && sourceId) {
     if (GAME_TYPES.includes(type)) {
       return (
@@ -120,10 +118,8 @@ function PracticeHubInner() {
 
 export default function PracticePage() {
   return (
-    <AuthGuard>
-      <Suspense fallback={<PageLoading label="Đang tải luyện tập..." />}>
-        <PracticeHubInner />
-      </Suspense>
-    </AuthGuard>
+    <Suspense fallback={<PageLoading label="Đang tải luyện tập..." />}>
+      <PracticeHubFeature />
+    </Suspense>
   );
 }
