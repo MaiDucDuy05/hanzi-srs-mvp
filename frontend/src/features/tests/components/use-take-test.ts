@@ -86,7 +86,7 @@ export function useTakeTest(testId: string) {
         if (a === undefined) continue;
         await testApi.submitAnswer(attemptId!, {
           questionId: q.id,
-          answer: { answer: a },
+          answer: a,
         });
       }
       // Nộp bài — backend tính điểm tổng, không tin điểm từ client.

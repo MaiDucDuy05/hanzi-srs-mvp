@@ -12,6 +12,8 @@ export class SpeakingController {
   constructor(private readonly svc: SpeakingService) {}
   @Get() async findAll(@Query() q: DTO.SpeakingAttemptQueryDto) { return ok(await this.svc.findAll(q), 'Speaking attempts retrieved'); }
   @Get(':id') async findOne(@Param('id') id: string) { return ok(await this.svc.findById(id), 'Speaking attempt retrieved'); }
-  @Post() @HttpCode(HttpStatus.CREATED) async create(@Body() dto: DTO.CreateSpeakingAttemptDto) { return ok(await this.svc.create(dto), 'Speaking attempt created'); }
+  @Post() @HttpCode(HttpStatus.CREATED) async create(@Body() dto: DTO.CreateSpeakingAttemptDto, @CurrentUser('sub') userId: string) {
+    return ok(await this.svc.create(dto, userId), 'Speaking attempt created');
+  }
   @Patch(':id') @Roles(Role.TEACHER, Role.ADMIN) async grade(@Param('id') id: string, @Body() dto: DTO.GradeSpeakingDto, @CurrentUser('sub') gradedBy: string) { return ok(await this.svc.grade(id, dto, gradedBy), 'Speaking attempt graded'); }
 }

@@ -10,6 +10,8 @@ import { Button } from '@/features/ui/components/button';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
 import { Badge } from '@/features/ui/components/badge';
+import { Modal } from '@/features/ui/components/modal';
+import { Field, Input, Select, Textarea } from '@/features/ui/components/form';
 
 export default function ResourcesPage() {
   const { user } = useAuth();
@@ -17,6 +19,10 @@ export default function ResourcesPage() {
   const [isVip, setIsVip] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({ title: '', description: '', fileKey: '', tier: 'FREE' as 'FREE' | 'VIP', status: 'PUBLISHED' as 'DRAFT' | 'PUBLISHED' });
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -66,14 +72,37 @@ export default function ResourcesPage() {
     }
   };
 
+  const handleCreate = async () => {
+    if (!createForm.title || !createForm.fileKey) {
+      window.alert('Vui lòng nhập đủ tên và đường dẫn file');
+      return;
+    }
+    try {
+      setCreating(true);
+      const newRes = await resourceApi.create(createForm);
+      setResources([newRes, ...resources]);
+      setIsModalOpen(false);
+      setCreateForm({ title: '', description: '', fileKey: '', tier: 'FREE', status: 'PUBLISHED' });
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : 'Lỗi tạo tài liệu');
+    } finally {
+      setCreating(false);
+    }
+  };
+
   return (
     <AuthGuard>
       <div className="space-y-6">
-        <header>
-          <h1 className="text-2xl font-bold">Tài liệu học tập</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Giáo trình, đề thi và tài liệu tham khảo cho từng cấp độ HSK.
-          </p>
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">Tài liệu học tập</h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Giáo trình, đề thi và tài liệu tham khảo cho từng cấp độ HSK.
+            </p>
+          </div>
+          {user?.role === 'ADMIN' && (
+            <Button onClick={() => setIsModalOpen(true)}>Thêm tài liệu</Button>
+          )}
         </header>
 
         {loading && <PageLoading label="Đang tải tài liệu..." />}
@@ -110,6 +139,47 @@ export default function ResourcesPage() {
               <p className="text-sm text-gray-500">Chưa có tài liệu công khai.</p>
             )}
           </div>
+        )}
+
+        {/* Admin Create Modal */}
+        {user?.role === 'ADMIN' && (
+          <Modal 
+            open={isModalOpen} 
+            onClose={() => !creating && setIsModalOpen(false)} 
+            title="Đăng tài liệu mới"
+            footer={
+              <>
+                <Button variant="outline" onClick={() => setIsModalOpen(false)} disabled={creating}>Hủy</Button>
+                <Button onClick={handleCreate} disabled={creating}>{creating ? 'Đang đăng...' : 'Đăng'}</Button>
+              </>
+            }
+          >
+            <div className="space-y-4">
+              <Field label="Tên tài liệu (*)">
+                <Input value={createForm.title} onChange={e => setCreateForm({...createForm, title: e.target.value})} disabled={creating} />
+              </Field>
+              <Field label="Mô tả">
+                <Textarea value={createForm.description} onChange={e => setCreateForm({...createForm, description: e.target.value})} disabled={creating} />
+              </Field>
+              <Field label="URL/Đường dẫn (*)">
+                <Input value={createForm.fileKey} onChange={e => setCreateForm({...createForm, fileKey: e.target.value})} disabled={creating} />
+              </Field>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Loại tài liệu">
+                  <Select value={createForm.tier} onChange={e => setCreateForm({...createForm, tier: e.target.value as 'FREE'|'VIP'})} disabled={creating}>
+                    <option value="FREE">Miễn phí</option>
+                    <option value="VIP">VIP</option>
+                  </Select>
+                </Field>
+                <Field label="Trạng thái">
+                  <Select value={createForm.status} onChange={e => setCreateForm({...createForm, status: e.target.value as 'DRAFT'|'PUBLISHED'})} disabled={creating}>
+                    <option value="PUBLISHED">Công khai (Published)</option>
+                    <option value="DRAFT">Nháp (Draft)</option>
+                  </Select>
+                </Field>
+              </div>
+            </div>
+          </Modal>
         )}
       </div>
     </AuthGuard>

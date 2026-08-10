@@ -9,6 +9,11 @@ const LINKS = [
     title: '📝 Quản lý bài kiểm tra',
     desc: 'Tạo đề, biên soạn câu hỏi, xem kết quả học viên.',
   },
+  {
+    href: '/teacher/speaking',
+    title: '🎤 Chấm bài luyện nói HSKK',
+    desc: 'Nghe audio, nhập điểm và phản hồi cho học viên.',
+  },
 ];
 
 export function TeacherDashboardFeature() {
