@@ -2,9 +2,9 @@
 
 import { usePracticeEngine } from '../../practice/components/practice-engine';
 import { BalloonMode } from './balloon-mode';
+import type { ShooterCtx } from '../sec/shooter-sec';
 import { MemoryMode } from './memory-mode';
 import { WritingMode } from './writing-mode';
-import type { BalloonState } from './balloon-mode';
 import type { MemoryState } from './memory-mode';
 import type { WritingState } from './writing-mode';
 import { LimitScreen, SummaryCard } from '../../practice/components/session-frame';
@@ -16,8 +16,7 @@ import type { SourceType } from '@/lib/api/types';
 
 type GameType = 'PINYIN_BALLOON_GAME' | 'MEMORY_GAME' | 'HANZI_WRITING';
 
-/** Trạng thái mode của các trò chơi (P2-7). */
-type GameModeState = BalloonState | MemoryState | WritingState;
+type GameModeState = ShooterCtx | MemoryState | WritingState;
 
 interface GameSessionProps {
   practiceType: GameType;
@@ -93,7 +92,6 @@ export function GameSession({
       {practiceType === 'PINYIN_BALLOON_GAME' && (
         <BalloonMode
           items={engine.items}
-          initialState={engine.modeState as BalloonState | null}
           onStateChange={engine.setModeState}
           onComplete={engine.handleComplete}
         />

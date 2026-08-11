@@ -12,8 +12,17 @@ const MOCK_ITEMS: QuestionItem[] = [
   { id: '5', hanzi: '土', pinyin: 'tǔ', meaning: 'earth', audioKey: '' },
   { id: '6', hanzi: '日', pinyin: 'rì', meaning: 'sun', audioKey: '' },
   { id: '7', hanzi: '月', pinyin: 'yuè', meaning: 'moon', audioKey: '' },
+  { id: '8', hanzi: '你好', pinyin: 'nǐ hǎo', meaning: 'hello', audioKey: '' },
+  { id: '9', hanzi: '学生', pinyin: 'xué shēng', meaning: 'student', audioKey: '' },
+  { id: '10', hanzi: '老师', pinyin: 'lǎo shī', meaning: 'teacher', audioKey: '' },
+  { id: '11', hanzi: '中国', pinyin: 'zhōng guó', meaning: 'China', audioKey: '' },
+  { id: '12', hanzi: '美国', pinyin: 'měi guó', meaning: 'USA', audioKey: '' },
+  { id: '13', hanzi: '喜欢', pinyin: 'xǐ huān', meaning: 'like', audioKey: '' },
+  { id: '14', hanzi: '学习', pinyin: 'xué xí', meaning: 'study', audioKey: '' },
+  { id: '15', hanzi: '朋友', pinyin: 'péng yǒu', meaning: 'friend', audioKey: '' },
+  { id: '16', hanzi: '女人', pinyin: 'nǚ rén', meaning: 'woman', audioKey: '' },
 ];
-
+ 
 export function BalloonGameFeature() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center w-full max-w-5xl mx-auto px-4 py-6 sm:py-8 relative z-10 h-full">

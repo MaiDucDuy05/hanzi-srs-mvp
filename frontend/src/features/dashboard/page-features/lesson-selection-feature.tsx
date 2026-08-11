@@ -65,7 +65,7 @@ const DecorativeLeaves = () => (
 );
 
 const GAMES = [
-  { id: 'flashcard', title: 'Flashcards', icon: <LeafIcon /> },
+  { id: 'balloon', title: 'Balloon', icon: <LeafIcon /> },
   { id: 'match', title: 'Match', icon: <BambooIcon /> },
   { id: 'memory', title: 'Memory', icon: <TreeIcon /> },
   { id: 'sentence', title: 'Sentence', icon: <SproutIcon /> },
@@ -92,7 +92,7 @@ export function LessonSelectionFeature() {
 
   const handleLessonClick = (lessonId: string, lessonTitle: string) => {
     if (mode === 'assignment') {
-      router.push(`/games/flashcard?mode=assignment&lesson=${lessonId}`);
+      router.push(`/games/balloon?mode=assignment&lesson=${lessonId}`);
     } else {
       setSelectedLesson({ id: lessonId, title: lessonTitle });
     }
