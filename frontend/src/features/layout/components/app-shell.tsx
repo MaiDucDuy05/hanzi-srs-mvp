@@ -15,8 +15,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isDashboard = pathname?.startsWith('/dashboard');
   const isStudy = pathname?.startsWith('/study');
   const isGames = pathname?.startsWith('/games');
+  const isAdmin = pathname?.startsWith('/admin');
 
-  if (isHome || isDashboard || isStudy || isGames) {
+  const isTeacher = pathname?.startsWith('/teacher');
+
+  if (isHome || isDashboard || isStudy || isGames || isAdmin || isTeacher) {
     return <main className="flex min-h-screen w-full flex-col">{children}</main>;
   }
 
