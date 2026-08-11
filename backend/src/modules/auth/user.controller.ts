@@ -22,12 +22,14 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Get()
+  @Roles(Role.ADMIN, Role.TEACHER)
   async findAll(@Query() query: UserQueryDto) {
     const result = await this.userService.findAll(query);
     return { ...result, message: 'Users retrieved successfully' };
   }
 
   @Get(':id')
+  @Roles(Role.ADMIN, Role.TEACHER)
   async findOne(@Param('id') id: string) {
     const user = await this.userService.findById(id);
     return { data: user, message: 'User retrieved successfully' };
