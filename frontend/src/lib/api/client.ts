@@ -39,20 +39,42 @@ export async function apiFetch<T = unknown>(
   options: RequestOptions = {},
 ): Promise<T> {
   const { auth = true, contentType = 'application/json', headers, ...rest } = options;
+  const retries = 2;
 
-  let res: Response;
-  try {
-    res = await fetch(`${BASE_URL}${path}`, {
-      ...rest,
-      // Luôn gửi cookie HttpOnly access_token. Same-origin nên là mặc định;
-      // để 'include' cho trường hợp NEXT_PUBLIC_API_URL trỏ host khác.
-      credentials: 'include',
-      headers: {
-        ...(contentType !== false ? { 'Content-Type': contentType } : {}),
-        ...(headers as Record<string, string> | undefined),
-      },
-    });
-  } catch {
+  let res: Response | null = null;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      res = await fetch(`${BASE_URL}${path}`, {
+        ...rest,
+        credentials: 'include',
+        headers: {
+          ...(contentType !== false ? { 'Content-Type': contentType } : {}),
+          ...(headers as Record<string, string> | undefined),
+        },
+      });
+
+      // Break out of retry loop if it's a successful response or client error (4xx)
+      // We only retry network failures or 5xx server errors
+      if (res.ok || (res.status >= 400 && res.status < 500)) {
+        break;
+      }
+
+      if (res.status >= 500) {
+        throw new Error(`Server Error: ${res.status}`);
+      }
+    } catch {
+      if (attempt < retries) {
+        // Exponential backoff: 500ms, 1000ms
+        await new Promise((r) => setTimeout(r, 500 * Math.pow(2, attempt)));
+      } else if (!res) {
+        throw new ApiError('Không kết nối được máy chủ. Vui lòng thử lại.', 0);
+      }
+    }
+  }
+
+  // Safety fallback if res is somehow null (e.g. fetch throws consistently)
+  if (!res) {
     throw new ApiError('Không kết nối được máy chủ. Vui lòng thử lại.', 0);
   }
 
