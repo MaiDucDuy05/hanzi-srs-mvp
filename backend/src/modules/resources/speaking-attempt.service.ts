@@ -18,7 +18,7 @@ export class SpeakingService {
     return paginatedResult(data, total, page, limit);
   }
   async findById(id: string) { return findOrNotFound(this.repo, id, 'Speaking attempt'); }
-  async create(dto: DTO.CreateSpeakingAttemptDto) { return this.repo.save(this.repo.create({ ...dto, submittedAt: new Date() } as any)); }
+  async create(dto: DTO.CreateSpeakingAttemptDto, userId: string) { return this.repo.save(this.repo.create({ audioKey: dto.audioKey, userId, submittedAt: new Date() } as any)); }
   async grade(id: string, dto: DTO.GradeSpeakingDto, gradedBy: string) {
     const e = await this.findById(id);
     Object.assign(e, { ...dto, status: SpeakingStatus.GRADED, gradedBy });

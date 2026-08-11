@@ -4,10 +4,10 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { curriculumApi } from '@/lib/api/endpoints';
 import type { Topic } from '@/lib/api/types';
-import { AuthGuard } from '@/components/layout/auth-guard';
-import { Card, CardBody } from '@/components/ui/card';
-import { PageLoading } from '@/components/ui/spinner';
-import { ErrorState } from '@/components/ui/error-state';
+import { AuthGuard } from '@/features/layout/components/auth-guard';
+import { Card, CardBody } from '@/features/ui/components/card';
+import { PageLoading } from '@/features/ui/components/spinner';
+import { ErrorState } from '@/features/ui/components/error-state';
 
 export default function TopicsPage() {
   const [topics, setTopics] = useState<Topic[]>([]);

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import { ContactForm } from '@/components/contact/contact-form';
-import { Card, CardBody, CardHeader } from '@/components/ui/card';
+import { ContactForm } from '@/features/contact/components/contact-form';
+import { Card, CardBody, CardHeader } from '@/features/ui/components/card';
 
 // SEO (P1-1): trang công khai là Server Component, chỉ form liên hệ là client island.
 export const metadata: Metadata = {

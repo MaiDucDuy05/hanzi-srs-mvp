@@ -1,4 +1,4 @@
-import * as crypto from 'crypto';
+import * as bcrypt from 'bcrypt';
 import dataSource from '../data-source';
 import { User } from '../../modules/auth/entities/user.entity';
 import { Subscription } from '../../modules/subscription/entities/subscription.entity';
@@ -9,15 +9,8 @@ import { SubscriptionPlan, SubscriptionStatus } from '../../common/enums/subscri
  * Seed tài khoản (idempotent — kiểm tra theo email):
  *  - 1 admin, 2 giáo viên, 5 học viên (mix FREE/VIP)
  * Password của TẤT CẢ account: "Test@1234"
- *   Hash format (dev-only): scrypt$hanzi-srs-salt$<64-byte-hex>
- *   → Auth module sau này dùng cùng format: crypto.scryptSync(pw, 'hanzi-srs-salt', 64)
  */
-const SALT = 'hanzi-srs-salt';
-function hashPwd(pass: string): string {
-  const buf = crypto.scryptSync(pass, SALT, 64) as Buffer;
-  return `scrypt$${SALT}$${buf.toString('hex')}`;
-}
-const DEFAULT_PWD = hashPwd('Test@1234');
+const DEFAULT_PWD = bcrypt.hashSync('Test@1234', 10);
 
 type UserSeed = { email: string; fullName: string; role: Role; vipUntil?: Date };
 
@@ -49,7 +42,9 @@ async function run(): Promise<void> {
     let userId: string;
     if (existing) {
       userId = existing.id;
-      console.log(`User exists, skip insert: ${u.email}`);
+      existing.passwordHash = DEFAULT_PWD;
+      await userRepo.save(existing);
+      console.log(`User exists, updated password: ${u.email}`);
     } else {
       const saved = await userRepo.save({
         email: u.email,
