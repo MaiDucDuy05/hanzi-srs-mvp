@@ -2,32 +2,84 @@
 
 import React, { useState } from 'react';
 
+import { BambooProgressBar } from '@/features/ui/components/bamboo-progress-bar';
+
 export function FlashcardGameFeature() {
   const [isFlipped, setIsFlipped] = useState(false);
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center w-full relative h-full">
-      <h1 className="text-3xl font-black text-[#215b3b] font-heading mb-8">Flashcard Mastery</h1>
-      <div className="w-full max-w-sm aspect-[3/4] perspective-1000 cursor-pointer" onClick={() => setIsFlipped(!isFlipped)}>
-        <div className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
-          <div className="absolute inset-0 backface-hidden bg-white rounded-3xl shadow-xl flex flex-col items-center justify-center p-8 border-4 border-[#eef7e9]">
-            <span className="text-9xl font-black text-[#215b3b] mb-4 drop-shadow-sm">学</span>
-            <span className="text-gray-400 font-medium">Click to flip</span>
+    <div className="flex-1 flex flex-col items-center justify-between w-full relative h-full py-4 sm:py-8 z-10">
+      
+      {/* Top Progress Bar */}
+      <BambooProgressBar progress={30} className="mb-4 sm:mb-6 mt-2" />
+
+      {/* Flashcard Area */}
+      <div className="w-full max-w-3xl flex-1 flex flex-col items-center justify-center my-6 perspective-1000">
+        <div 
+          className={`relative w-full h-[320px] sm:h-[400px] cursor-pointer transition-transform duration-700 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}
+          onClick={() => setIsFlipped(!isFlipped)}
+        >
+          {/* Front of card */}
+          <div className="absolute inset-0 backface-hidden bg-white rounded-[2rem] sm:rounded-[3rem] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] flex flex-col items-center justify-center p-8 border-b-[6px] sm:border-b-[8px] border-gray-100">
+            <span className="text-8xl sm:text-[140px] font-black text-[#215b3b] mb-4 drop-shadow-sm tracking-wide">熊猫</span>
+            <span className="text-gray-400 font-medium text-sm sm:text-base">Click to flip</span>
           </div>
-          <div className="absolute inset-0 backface-hidden rotate-y-180 bg-white rounded-3xl shadow-xl flex flex-col items-center justify-center p-8 border-4 border-[#8BC34A]">
-            <span className="text-6xl font-bold text-[#4a6b38] mb-4">xué</span>
-            <span className="text-2xl text-gray-600 mb-12 text-center">to study; to learn</span>
-            <button className="p-5 rounded-full bg-[#eef7e9] text-[#215b3b] hover:bg-[#dffce8] transition-colors shadow-sm" onClick={(e) => e.stopPropagation()}>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
-            </button>
+
+          {/* Back of card (matches the image) */}
+          <div className="absolute inset-0 backface-hidden rotate-y-180 bg-white rounded-[2rem] sm:rounded-[3rem] shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] flex flex-col items-center justify-center p-8 border-b-[6px] sm:border-b-[8px] border-gray-100">
+            {/* Top Right Actions */}
+            <div className="absolute top-4 right-6 sm:top-8 sm:right-10 flex gap-3 sm:gap-5">
+              <div className="flex flex-col items-center gap-1 sm:gap-2 group" onClick={(e) => e.stopPropagation()}>
+                <button className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-[#7bc62d] text-white flex items-center justify-center shadow-md group-hover:bg-[#6ab322] group-hover:scale-105 transition-all">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-7 sm:w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" /></svg>
+                </button>
+                <span className="text-[10px] sm:text-xs font-bold text-[#4a6b38]">Audio</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 sm:gap-2 group" onClick={(e) => e.stopPropagation()}>
+                <button className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-[#7bc62d] text-white flex items-center justify-center shadow-md group-hover:bg-[#6ab322] group-hover:scale-105 transition-all">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-7 sm:w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                </button>
+                <span className="text-[10px] sm:text-xs font-bold text-[#4a6b38]">Stroke Order</span>
+              </div>
+            </div>
+
+            {/* Center Content */}
+            <div className="flex flex-col items-center justify-center mt-6 sm:mt-10">
+              <span className="text-3xl sm:text-[44px] font-medium text-[#7bc62d] mb-1 sm:mb-3 tracking-wider">xióng māo</span>
+              <span className="text-7xl sm:text-[120px] font-bold text-[#215b3b] leading-tight drop-shadow-sm tracking-wide">熊猫</span>
+            </div>
           </div>
         </div>
       </div>
-      <div className={`mt-12 flex gap-4 transition-all duration-300 ${isFlipped ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
-        {['Hard', 'Good', 'Easy'].map((label) => (
-          <button key={label} onClick={() => setIsFlipped(false)} className={`px-8 py-3 rounded-2xl font-bold transition-colors shadow-sm text-lg ${label === 'Hard' ? 'bg-red-100 text-red-600 hover:bg-red-200' : label === 'Good' ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}>{label}</button>
-        ))}
+
+      {/* Bottom Action Buttons */}
+      <div className={`w-full max-w-3xl mt-auto pb-4 flex justify-between gap-2 sm:gap-4 transition-all duration-500 ease-out ${isFlipped ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8 pointer-events-none'}`}>
+        <button 
+          onClick={() => setIsFlipped(false)} 
+          className="flex-1 py-4 sm:py-5 px-2 rounded-[1.5rem] font-bold text-white shadow-[0_4px_0_rgba(0,0,0,0.1)] hover:shadow-[0_2px_0_rgba(0,0,0,0.1)] active:shadow-none hover:translate-y-[2px] active:translate-y-[4px] transition-all text-sm sm:text-xl bg-[#c2daba] hover:bg-[#a5c59b]"
+        >
+          Again
+        </button>
+        <button 
+          onClick={() => setIsFlipped(false)} 
+          className="flex-1 py-4 sm:py-5 px-2 rounded-[1.5rem] font-bold text-white shadow-[0_4px_0_rgba(0,0,0,0.1)] hover:shadow-[0_2px_0_rgba(0,0,0,0.1)] active:shadow-none hover:translate-y-[2px] active:translate-y-[4px] transition-all text-sm sm:text-xl bg-[#cfe583] hover:bg-[#b8d655]"
+        >
+          Hard
+        </button>
+        <button 
+          onClick={() => setIsFlipped(false)} 
+          className="flex-1 py-4 sm:py-5 px-2 rounded-[1.5rem] font-bold text-white shadow-[0_4px_0_rgba(0,0,0,0.1)] hover:shadow-[0_2px_0_rgba(0,0,0,0.1)] active:shadow-none hover:translate-y-[2px] active:translate-y-[4px] transition-all text-sm sm:text-xl bg-[#93c448] hover:bg-[#81b235]"
+        >
+          Good
+        </button>
+        <button 
+          onClick={() => setIsFlipped(false)} 
+          className="flex-1 py-4 sm:py-5 px-2 rounded-[1.5rem] font-bold text-white shadow-[0_4px_0_rgba(0,0,0,0.1)] hover:shadow-[0_2px_0_rgba(0,0,0,0.1)] active:shadow-none hover:translate-y-[2px] active:translate-y-[4px] transition-all text-sm sm:text-xl bg-[#7bc62d] hover:bg-[#68a826]"
+        >
+          Easy
+        </button>
       </div>
+
     </div>
   );
 }

@@ -1,9 +1,12 @@
 'use client';
 
 import { usePracticeEngine } from '../../practice/components/practice-engine';
-import { BalloonMode, type BalloonState } from './balloon-mode';
-import { MemoryMode, type MemoryState } from './memory-mode';
-import { WritingMode, type WritingState } from './writing-mode';
+import { BalloonMode } from './balloon-mode';
+import { MemoryMode } from './memory-mode';
+import { WritingMode } from './writing-mode';
+import type { BalloonState } from './balloon-mode';
+import type { MemoryState } from './memory-mode';
+import type { WritingState } from './writing-mode';
 import { LimitScreen, SummaryCard } from '../../practice/components/session-frame';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';

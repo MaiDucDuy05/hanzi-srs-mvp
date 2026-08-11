@@ -8,7 +8,7 @@ export default function GamesLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
 
   return (
-    <StudyBackground className="min-h-screen flex flex-col p-4 sm:p-6 overflow-hidden">
+    <StudyBackground className="h-[100dvh] w-screen flex flex-col p-4 sm:p-6 overflow-hidden">
       {/* Top Header */}
       <header className="fixed top-4 sm:top-6 left-0 right-0 w-full max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between z-50 pointer-events-none">
         
@@ -31,8 +31,8 @@ export default function GamesLayout({ children }: { children: React.ReactNode })
       </header>
 
       {/* Game Area */}
-      <main className="flex-1 w-full max-w-5xl mx-auto flex flex-col items-center justify-center relative z-10 pt-20 pb-8 h-full">
-        <div className="w-full max-w-3xl flex-1 flex flex-col">
+      <main className="flex-1 w-full max-w-5xl mx-auto flex flex-col items-center justify-center relative z-10 pb-8 h-full overflow-hidden">
+        <div className="w-full  flex-1 flex flex-col overflow-hidden">
           {children}
         </div>
       </main>

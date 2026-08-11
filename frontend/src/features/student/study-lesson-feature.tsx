@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { FlashcardGameFeature } from '@/features/games/page-features/flashcard-game-feature';
 
 const VOCAB_DATA = [
   { id: 1, hanzi: '你好', pinyin: 'nǐ hǎo', meaning: 'Hello / Hi', example: '你好，朋友！(Chào bạn!)', type: 'vocab', partOfSpeech: 'Greeting', masteryLevel: 2 },
@@ -220,78 +221,8 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
 
   // Flashcard Mode
   return (
-    <div className="w-full flex flex-col items-center gap-10 h-full justify-center mt-[-40px]">
-      <div className="text-center mb-[-10px]">
-        <p className="text-[#5e7f26] font-bold text-lg">
-          Thẻ {currentIndex + 1} / {VOCAB_DATA.length}
-        </p>
-      </div>
-
-      <div 
-        className="relative w-full max-w-2xl aspect-[4/3] perspective-1000 cursor-pointer"
-        onClick={() => setIsFlipped(!isFlipped)}
-      >
-        <div className={`w-full h-full transition-transform duration-500 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
-          
-          {/* Front */}
-          <div className="absolute inset-0 bg-white rounded-[3rem] shadow-xl flex flex-col items-center justify-center backface-hidden p-8 border-[6px] border-[#eef7e9]">
-            <h2 className="text-8xl sm:text-[140px] font-black text-[#215b3b] font-[family-name:var(--font-nunito)]">
-              {currentCard.hanzi}
-            </h2>
-            <div className="absolute top-8 right-8">
-               <button 
-                 className="p-4 bg-[#f3fef6] rounded-full text-[#7CB342] hover:bg-[#eef7e9] transition-colors shadow-sm" 
-                 onClick={(e) => { e.stopPropagation(); /* play audio */ }}
-                 aria-label="Play pronunciation"
-               >
-                 <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5 10v4a2 2 0 002 2h2l4 4V4L9 8H7a2 2 0 00-2 2z" />
-                 </svg>
-               </button>
-            </div>
-            <p className="mt-8 text-gray-300 font-bold tracking-widest text-sm uppercase">Nhấn để lật thẻ</p>
-          </div>
-
-          {/* Back */}
-          <div className="absolute inset-0 bg-[#f3fef6] rounded-[3rem] shadow-xl flex flex-col items-center justify-center backface-hidden p-8 border-[6px] border-[#8BC34A] rotate-y-180">
-            <h3 className="text-5xl sm:text-6xl font-black text-[#7CB342] mb-6 font-[family-name:var(--font-nunito)]">
-              {currentCard.pinyin}
-            </h3>
-            <p className="text-3xl sm:text-4xl font-bold text-[#215b3b] mb-10 text-center px-4">
-              {currentCard.meaning}
-            </p>
-            <div className="bg-white/80 p-6 rounded-3xl w-full max-w-lg text-center shadow-sm">
-              <p className="text-[#4a6b38] text-xl font-medium">{currentCard.example}</p>
-            </div>
-            <p className="absolute bottom-6 text-[#8BC34A]/50 font-bold tracking-widest text-sm uppercase">
-              {currentCard.type === 'grammar' ? 'Ngữ pháp' : 'Từ vựng'}
-            </p>
-          </div>
-
-        </div>
-      </div>
-
-      <div className={`flex w-full max-w-2xl gap-6 transition-all duration-300 transform ${isFlipped ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
-        <button 
-          onClick={handleNext}
-          className="flex-1 py-5 rounded-full bg-white text-[#d32f2f] font-black text-xl shadow-md hover:bg-red-50 border-2 border-transparent hover:border-red-100 transition-all hover:-translate-y-1"
-        >
-          Quên (Lại)
-        </button>
-        <button 
-          onClick={handleNext}
-          className="flex-1 py-5 rounded-full bg-[#8BC34A] text-white font-black text-xl shadow-md hover:bg-[#7CB342] hover:-translate-y-1 transition-all border-2 border-transparent"
-        >
-          Đã nhớ (Tốt)
-        </button>
-      </div>
-
-      <button 
-        onClick={() => { setMode('list'); setCurrentIndex(0); }} 
-        className="mt-2 text-gray-500 font-bold hover:text-gray-700 underline underline-offset-4 transition-colors"
-      >
-        Thoát Flashcard
-      </button>
+    <div className="w-full h-[80vh] pt-4 pb-12">
+      <FlashcardGameFeature />
     </div>
   );
 }

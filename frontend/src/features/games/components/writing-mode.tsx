@@ -1,110 +1,101 @@
 'use client';
 
+/**
+ * WritingMode — UI thin layer over WritingSec
+ *
+ * Responsibilities:
+ * - Render character + canvas + controls
+ * - Subscribe to SEC events
+ * - Pass complete/skip to SEC
+ */
+
 import { useEffect, useRef, useState } from 'react';
-import { computeScore, type ModeProps, type ModeResult } from '../../practice/components/practice-models';
+import { WritingSec, type WritingCtx as WritingState } from '../sec/writing-sec';
+import type { QuestionItem, ModeResult } from '../../practice/components/practice-models';
 import { HanziWriterCanvas } from './hanzi-writer-canvas';
 import { AudioButton } from '@/features/ui/components/audio-button';
 import { Button } from '@/features/ui/components/button';
 
-export interface WritingState {
-  index: number;
-  correct: number;
-  wrong: number;
-  moves: number;
-  feedback: 'done' | null;
+interface WritingModeProps {
+  items: readonly QuestionItem[];
+  initialState?: WritingState | null;
+  onStateChange: (state: WritingState) => void;
+  onComplete: (result: ModeResult) => void;
 }
 
-/** Luyện viết chữ Hán theo nét (PR-13). */
-export function WritingMode({
-  items,
-  initialState,
-  onStateChange,
-  onComplete,
-}: ModeProps<WritingState>) {
-  const [state, setState] = useState<WritingState>(
-    initialState ?? { index: 0, correct: 0, wrong: 0, moves: 0, feedback: null },
-  );
-  // Timeout nâng cấp chữ khi viết đúng — phải huỷ khi bỏ qua/unmount để tránh
-  // advance hai lần (nhảy cóc chữ tiếp theo).
-  const doneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(
-    () => () => {
-      if (doneTimerRef.current) clearTimeout(doneTimerRef.current);
-    },
-    [],
-  );
+export { WritingState };
 
-  const update = (next: WritingState) => {
-    setState(next);
-    onStateChange(next);
-  };
+export function WritingMode({ items, initialState, onStateChange, onComplete }: WritingModeProps) {
+  const secRef = useRef<WritingSec | null>(null);
+  const [ctx, setCtx] = useState<WritingState>(() => initialState ?? createInitCtx(items));
 
-  const question = items[state.index];
-  if (!question) return null;
+  useEffect(() => {
+    const sec = new WritingSec(items);
+    secRef.current = sec;
 
-  const advance = (correct: boolean) => {
-    if (doneTimerRef.current) {
-      clearTimeout(doneTimerRef.current);
-      doneTimerRef.current = null;
-    }
-    const index = state.index + 1;
-    const next: WritingState = {
-      index,
-      correct: state.correct + (correct ? 1 : 0),
-      wrong: state.wrong + (correct ? 0 : 1),
-      moves: state.moves + 1,
-      feedback: null,
+    const unsubComplete = sec.onComplete.addListener((data) => {
+      onComplete({
+        correctCount: data.correct,
+        wrongCount: data.wrong,
+        moveCount: data.correct + data.wrong,
+        score: data.score,
+        answerData: { written: data.chars },
+      });
+    });
+
+    const interval = setInterval(() => {
+      if (secRef.current) {
+        setCtx(secRef.current.getState());
+      }
+    }, 50);
+
+    const initCtx = sec.start();
+    setCtx(initCtx);
+    onStateChange(initCtx);
+
+    return () => {
+      clearInterval(interval);
+      unsubComplete();
+      sec.destroy();
     };
-    if (index >= items.length) {
-      const result: ModeResult = {
-        correctCount: next.correct,
-        wrongCount: next.wrong,
-        moveCount: next.moves,
-        score: computeScore(next.correct, items.length),
-        answerData: { written: items.length },
-      };
-      onComplete(result);
-    } else {
-      update(next);
-    }
+  }, [items, onComplete, onStateChange]);
+
+  const handleComplete = () => {
+    secRef.current?.complete();
   };
 
-  const handleDone = () => {
-    update({ ...state, feedback: 'done' });
-    if (doneTimerRef.current) clearTimeout(doneTimerRef.current);
-    doneTimerRef.current = setTimeout(() => advance(true), 900);
+  const handleSkip = () => {
+    secRef.current?.skip();
   };
 
   return (
     <div className="mx-auto max-w-lg space-y-4">
       <div className="flex items-center justify-between text-sm text-gray-500">
+        <span>Chữ {ctx.charIndex + 1}/{ctx.totalChars}</span>
         <span>
-          Chữ {state.index + 1}/{items.length}
-        </span>
-        <span>
-          Đã viết {state.correct} · Bỏ qua {state.wrong}
+          Đã viết {ctx.correctCount} · Bỏ qua {ctx.wrongCount}
         </span>
       </div>
 
-      <div className="rounded-xl border border-gray-200 p-6 text-center ">
-        <p className="text-2xl font-bold text-brand">{question.hanzi}</p>
-        <p className="mt-1 text-lg text-gray-700 ">{question.pinyin}</p>
-        <p className="text-gray-500">{question.meaning}</p>
+      <div className="rounded-xl border border-gray-200 p-6 text-center">
+        <p className="text-2xl font-bold text-brand">{ctx.currentHanzi}</p>
+        <p className="mt-1 text-lg text-gray-700">{ctx.currentPinyin}</p>
+        <p className="text-gray-500">{ctx.currentMeaning}</p>
         <div className="mt-2 flex justify-center">
-          <AudioButton audioKey={question.audioKey} />
+          <AudioButton audioKey={items[ctx.charIndex]?.audioKey} />
         </div>
 
-        <div className="mt-4 rounded-lg bg-gray-50 p-4 ">
+        <div className="mt-4 rounded-lg bg-gray-50 p-4">
           <HanziWriterCanvas
-            char={question.hanzi}
-            onComplete={() => handleDone()}
+            char={ctx.currentHanzi}
+            onComplete={handleComplete}
           />
         </div>
         <p className="mt-2 text-xs text-gray-400">
           Dùng chuột hoặc ngón tay viết đúng thứ tự nét trong khung.
         </p>
 
-        {state.feedback === 'done' && (
+        {ctx.feedback === 'done' && (
           <p className="mt-3 font-medium text-green-600">Viết đúng! ✓</p>
         )}
       </div>
@@ -113,12 +104,27 @@ export function WritingMode({
         <Button
           variant="outline"
           size="sm"
-          disabled={state.feedback === 'done'}
-          onClick={() => advance(false)}
+          disabled={ctx.feedback === 'done'}
+          onClick={handleSkip}
         >
           Chữ này khó — bỏ qua
         </Button>
       </div>
     </div>
   );
+}
+
+function createInitCtx(items: readonly QuestionItem[]): WritingState {
+  return {
+    phase: 'idle',
+    charIndex: 0,
+    totalChars: items.length,
+    currentHanzi: items[0]?.hanzi ?? '',
+    currentPinyin: items[0]?.pinyin ?? '',
+    currentMeaning: items[0]?.meaning ?? '',
+    correctCount: 0,
+    wrongCount: 0,
+    moves: 0,
+    feedback: null,
+  };
 }

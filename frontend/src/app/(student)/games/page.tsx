@@ -1,5 +1,5 @@
-import { GamesHubFeature } from '@/features/games/games-hub-feature';
+import { redirect } from 'next/navigation';
 
 export default function GamesPage() {
-  return <GamesHubFeature />;
+  redirect('/games/balloon');
 }
