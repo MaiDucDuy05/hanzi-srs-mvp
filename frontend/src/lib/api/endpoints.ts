@@ -6,6 +6,8 @@ import { apiFetch, unwrap } from './client';
 import type {
   AiJob,
   AuthResponse,
+  Course,
+  CourseLesson,
   DailyUsageCheck,
   HskLevel,
   Lesson,
@@ -18,6 +20,7 @@ import type {
   PracticeType,
   Resource,
   Single,
+  SpeakingAttempt,
   SourceType,
   Subscription,
   Test,
@@ -225,8 +228,8 @@ export const testApi = {
   listAnswers: (attemptId: string) =>
     unwrap(apiFetch<Single<TestAnswer[]>>(`/test-attempts/${attemptId}/answers`)),
 
-  submitAnswer: (attemptId: string, data: { questionId: string; answer?: Record<string, unknown> }) =>
-    unwrap(apiFetch<Single<TestAnswer>>(`/test-attempts/${attemptId}/answers`, { method: 'POST', body: JSON.stringify(data) })),
+  submitAnswer: (attemptId: string, data: { questionId: string; answer?: unknown }) =>
+    unwrap(apiFetch<Single<TestAnswer>>(`/test-attempts/${attemptId}/answers`, { method: 'POST', body: JSON.stringify({ questionId: data.questionId, answer: data.answer }) })),
 };
 
 // ── Subscription / Limits ──
@@ -250,6 +253,9 @@ export const resourceApi = {
     apiFetch<Paginated<Resource>>(`/resources${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
 
   get: (id: string) => unwrap(apiFetch<Single<Resource>>(`/resources/${id}`)),
+
+  create: (data: Partial<Resource>) =>
+    unwrap(apiFetch<Single<Resource>>('/resources', { method: 'POST', body: JSON.stringify(data) })),
 
   createContact: (data: { name: string; email: string; phone?: string; message: string }) =>
     unwrap(apiFetch<Single<{ id: string }>>('/contact-requests', { method: 'POST', body: JSON.stringify(data), auth: false })),
@@ -281,6 +287,43 @@ export const resourceApi = {
   listUsers: (params: { page?: number; limit?: number } = {}) =>
     apiFetch<Paginated<User>>(`/users${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
 
+  // Admin-only — returns 403 for non-admin users.
   updateUser: (id: string, data: Partial<User>) =>
     unwrap(apiFetch<Single<User>>(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) })),
+};
+
+// ── Courses ──
+export const coursesApi = {
+  list: (params: { audience?: string; status?: string; page?: number; limit?: number } = {}) =>
+    apiFetch<Paginated<Course>>(`/courses${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
+
+  get: (id: string) => unwrap(apiFetch<Single<Course>>(`/courses/${id}`)),
+
+  listLessons: (params: { courseId?: string; page?: number; limit?: number } = {}) =>
+    apiFetch<Paginated<CourseLesson>>(`/course-lessons${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
+};
+
+// ── Speaking ──
+export const speakingApi = {
+  /** Tải file audio lên, trả audioKey. */
+  uploadAudio: async (file: Blob): Promise<string> => {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch('/api/v1/audio/upload', { method: 'POST', credentials: 'include', body: fd });
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      throw new Error((body as { message?: string }).message ?? 'Upload thất bại');
+    }
+    const json = await res.json() as { data: { audioKey: string } };
+    return json.data.audioKey;
+  },
+
+  list: (params: { userId?: string; status?: string; page?: number; limit?: number } = {}) =>
+    apiFetch<Paginated<SpeakingAttempt>>(`/speaking-attempts${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
+
+  create: (data: { audioKey: string }) =>
+    unwrap(apiFetch<Single<SpeakingAttempt>>('/speaking-attempts', { method: 'POST', body: JSON.stringify(data) })),
+
+  grade: (id: string, data: { score?: number | null; feedback?: string | null }) =>
+    unwrap(apiFetch<Single<SpeakingAttempt>>(`/speaking-attempts/${id}`, { method: 'PATCH', body: JSON.stringify(data) })),
 };

@@ -20,10 +20,17 @@ export class ApiError extends Error {
   }
 }
 
-type RequestOptions = RequestInit & { auth?: boolean };
+type RequestOptions = RequestInit & {
+  auth?: boolean;
+  /**
+   * Mặc định 'application/json'. Truyền `false` cho multipart/form-data
+   * (body = FormData) để browser tự đặt Content-Type kèm boundary.
+   */
+  contentType?: string | false;
+};
 
 /**
- * Gọi API. Mặc định gắn cookie HttpOnly (credentials include); truyền
+ * Gọi API. Mặc định gắn cookie HttpOnly access_token; truyền
  * `auth: false` cho endpoint public để 401 không kích hoạt đăng xuất.
  * Trả về body JSON đã parse (chưa bóc envelope — dùng helper `unwrap` nếu cần).
  */
@@ -31,7 +38,7 @@ export async function apiFetch<T = unknown>(
   path: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { auth = true, headers, ...rest } = options;
+  const { auth = true, contentType = 'application/json', headers, ...rest } = options;
 
   let res: Response;
   try {
@@ -41,7 +48,7 @@ export async function apiFetch<T = unknown>(
       // để 'include' cho trường hợp NEXT_PUBLIC_API_URL trỏ host khác.
       credentials: 'include',
       headers: {
-        'Content-Type': 'application/json',
+        ...(contentType !== false ? { 'Content-Type': contentType } : {}),
         ...(headers as Record<string, string> | undefined),
       },
     });

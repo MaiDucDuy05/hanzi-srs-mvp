@@ -148,6 +148,30 @@ export interface Course {
   updatedAt: string;
 }
 
+export interface CourseLesson {
+  id: string;
+  courseId: string;
+  lessonId: string;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type SpeakingStatus = 'SUBMITTED' | 'GRADED';
+
+export interface SpeakingAttempt {
+  id: string;
+  userId: string;
+  audioKey: string;
+  status: SpeakingStatus;
+  score: number | string | null;
+  feedback: string | null;
+  gradedBy: string | null;
+  submittedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ── Practice ──
 export interface PracticeQuestion {
   id: string;

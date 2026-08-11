@@ -5,12 +5,12 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { curriculumApi } from '@/lib/api/endpoints';
 import type { Topic, Vocabulary } from '@/lib/api/types';
-import { AuthGuard } from '@/components/layout/auth-guard';
-import { Card, CardBody, CardHeader } from '@/components/ui/card';
-import { PageLoading } from '@/components/ui/spinner';
-import { ErrorState } from '@/components/ui/error-state';
-import { AudioButton } from '@/components/ui/audio-button';
-import { Button } from '@/components/ui/button';
+import { AuthGuard } from '@/features/layout/components/auth-guard';
+import { Card, CardBody, CardHeader } from '@/features/ui/components/card';
+import { PageLoading } from '@/features/ui/components/spinner';
+import { ErrorState } from '@/features/ui/components/error-state';
+import { AudioButton } from '@/features/ui/components/audio-button';
+import { Button } from '@/features/ui/components/button';
 
 export default function TopicDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -80,7 +80,7 @@ export default function TopicDetailPage() {
             {vocabularies.length === 0 ? (
               <p className="text-sm text-gray-500">Chủ đề chưa có từ vựng.</p>
             ) : (
-              <ul className="divide-y divide-gray-100 dark:divide-gray-800">
+              <ul className="divide-y divide-gray-100 ">
                 {vocabularies.map((v) => (
                   <li key={v.id} className="flex items-center gap-3 py-2.5">
                     <span className="hanzi w-12 text-xl font-bold text-brand">{v.hanzi}</span>

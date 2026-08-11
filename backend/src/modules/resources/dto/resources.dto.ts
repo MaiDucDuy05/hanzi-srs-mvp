@@ -80,7 +80,6 @@ export class CreateMistakeBookDto {
 }
 
 export class CreateSpeakingAttemptDto {
-  @IsUUID() userId: string;
   @IsString() audioKey: string;
 }
 

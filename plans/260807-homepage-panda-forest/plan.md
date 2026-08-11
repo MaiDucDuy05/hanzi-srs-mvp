@@ -3,7 +3,7 @@
 **Ngày:** 2026-08-07
 **Folder code:** `frontend/` (Next.js 16 App Router, React 19, Tailwind v4, TS strict)
 **Nguồn yêu cầu:** `/ui-designer` + design brief khách hàng (theme Cute Panda Forest)
-**Trạng thái:** Design doc — chưa implement.
+**Trạng thái:** ✅ **ĐÃ IMPLEMENT** (scope B — app-wide, theo `04-scope-b-implementation-plan.md`)
 
 ---
 
@@ -31,13 +31,14 @@ Trang chủ phục vụ **2 trạng thái** (đã chốt ưu tiên “Dashboard 
 
 ---
 
-## 3. Quyết định scope (cần xác nhận trước khi implement)
+## 3. Quyết định scope (ĐÃ CHỐT 2026-08-07 — người dùng xác nhận)
 
-1. **Phạm vi theme** — quyết định lớn nhất:
-   - **A. Homepage-only (đề xuất MVP):** `/` dùng shell riêng (HomeNavbar/HomeFooter panda), tự thêm token màu xanh — KHÔNG đụng các trang trong app (vẫn đỏ #c8102e hiện tại). Rủi ro thấp, không rà toàn app.
-   - **B. App-wide:** đổi `--brand` sang xanh rừng + font rounded + light-only toàn app → đụng ~20 trang, bỏ dark mode, rủi ro cao.
-2. **Dark mode:** brief yêu cầu *No dark theme* → trang chủ light-only. Nếu chọn A, các trang khác giữ dark như hiện tại.
-3. **Brand conflict:** hiện `--brand: #c8102e` (đỏ Trung Hoa). Panda dùng xanh `#5E7F26…`. Nếu chọn A: thêm token mới `--color-forest-*`, giữ token cũ.
+1. **Phạm vi theme — B. App-wide:** đổi `--brand` sang xanh rừng `#5E7F26` + font rounded + light-only TOÀN app (~20 trang). Dark mode bị bỏ toàn bộ. Token đỏ cũ `#c8102e` đã thay, không giữ lại.
+2. **Dark mode:** loại bỏ hoàn toàn — xoá block `prefers-color-scheme: dark` + mọi class `dark:` trong toàn app.
+3. **Brand conflict:** `--brand` chuyển sang xanh rừng; thêm token mới `--color-forest-*`, `--color-accent-*`.
+4. **CTA contrast:** text **xanh đậm** trên nền `#C7CF35` (accessibility — bỏ "text trắng" của brief).
+5. **Font:** Poppins (heading) + Inter (body) load GLOBAL qua `next/font/google`.
+6. **Dashboard dữ liệu thiếu API:** render **placeholder rõ ràng + ghi chú**, không fake số liệu.
 
 ---
 
@@ -52,11 +53,18 @@ Trang chủ phục vụ **2 trạng thái** (đã chốt ưu tiên “Dashboard 
 
 ---
 
-## 5. Open questions (chưa giải quyết — ghi cuối mọi báo cáo)
+## 5. Open questions (đã giải quyết 2026-08-07)
 
-- **Phạm vi theme A hay B?** (ảnh hưởng rà soát toàn app — cần user chốt).
-- **Nguồn illustration panda/bamboo:** tự vẽ SVG inline đơn giản (đề xuất MVP) hay dùng thư viện flat-2D? Không có ảnh thật/realistic.
-- **Leaderboard:** backend chưa có API xếp hạng → dùng mock tạm, placeholder, hay ẩn tới khi có API (FR-18)?
-- **Dữ liệu dashboard:** “tiếp tục học / ôn tập hôm nay” cần nguồn dữ liệu — hiện backend chưa có SRS schedule API; dùng gì làm nguồn thật? (xem `03-implementation-guide.md` §3)
-- **Font:** thêm Nunito/Inter qua `next/font` ở `layout.tsx` (toàn app) — chấp nhận load font global hay chỉ dùng system rounded stack cho homepage?
-- **Contrast CTA:** text trắng trên `#C7CF35` contrast thấp (~1.6:1, WCAG fail) — brief chỉ định rõ “White text”; giữ đúng brief hay đổi thành text xanh đậm cho accessibility?
+- ~~**Phạm vi theme A hay B?**~~ → **B (App-wide)** — người dùng chốt. Xem `04-scope-b-implementation-plan.md`.
+- ~~**Nguồn illustration:**~~ → **SVG inline** (`panda-decoration.tsx`) — flat 2D, không dependency.
+- ~~**Leaderboard:**~~ → **Mock tạm nhãn rõ "Xem trước"** (`leaderboard-section.tsx`), thay bằng API khi có (FR-18).
+- ~~**Dữ liệu dashboard:**~~ → **Placeholder + ghi chú** — tên/role thật từ `getServerUser()`, streak/SRS/HSK tiến độ hiển thị mẫu "Xem trước" hoặc placeholder rõ ràng.
+- ~~**Font:**~~ → **Global** — Poppins (heading) + Inter (body) qua `next/font/google` ở `layout.tsx`.
+- ~~**Contrast CTA:**~~ → **Text xanh đậm** trên `#C7CF35` (accessibility, lệch brief có chủ đích).
+
+## 6. Kết quả verify (2026-08-07)
+
+- `npm run lint` — 0 errors (12 warnings có sẵn từ trước, không do thay đổi này).
+- `npm run build` — 0 lỗi, 23 route compile.
+- `npm test` — 29/29 pass.
+- Smoke: `/` guest render đủ Hero/Features/Games/Achievements/Leaderboard/CTA; navbar pill panda + footer bo tròn; font Poppins load; route auth-gated redirect hoạt động (`/learn` → `/login`); các trang public (login/register/contact) mang theme forest.

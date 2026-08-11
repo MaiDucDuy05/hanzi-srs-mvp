@@ -1,15 +1,15 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useTakeTest } from '@/components/tests/use-take-test';
-import { TestResultCard } from '@/components/tests/test-result-card';
-import { TestQuestionNav } from '@/components/tests/test-question-nav';
-import { TestQuestionForm } from '@/components/tests/test-question-form';
-import { AuthGuard } from '@/components/layout/auth-guard';
-import { Card, CardBody, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { PageLoading } from '@/components/ui/spinner';
-import { ErrorState } from '@/components/ui/error-state';
+import { useTakeTest } from '@/features/tests/components/use-take-test';
+import { TestResultCard } from '@/features/tests/components/test-result-card';
+import { TestQuestionNav } from '@/features/tests/components/test-question-nav';
+import { TestQuestionForm } from '@/features/tests/components/test-question-form';
+import { AuthGuard } from '@/features/layout/components/auth-guard';
+import { Card, CardBody, CardHeader } from '@/features/ui/components/card';
+import { Button } from '@/features/ui/components/button';
+import { PageLoading } from '@/features/ui/components/spinner';
+import { ErrorState } from '@/features/ui/components/error-state';
 import { formatDuration } from '@/lib/utils/format';
 import { cn } from '@/lib/utils/cn';
 
@@ -84,7 +84,7 @@ export default function TakeTestPage() {
           <span
             className={cn(
               'rounded-full px-3 py-1 font-mono text-sm',
-              timeLeft < 60 ? 'bg-red-100 text-red-700 dark:bg-red-950' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300',
+              timeLeft < 60 ? 'bg-red-100 text-red-700 ' : 'bg-gray-100 text-gray-600  ',
             )}
           >
             ⏱ {formatDuration(timeLeft)}
