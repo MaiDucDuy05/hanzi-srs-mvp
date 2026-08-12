@@ -2,13 +2,14 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
+import { RegisterDto, LoginDto, UpdateMeDto } from './dto/auth.dto';
 import { Role, UserStatus } from '../../common/enums/user.enums';
 
 @Injectable()
@@ -54,5 +55,14 @@ export class AuthService {
 
   async validateUser(id: string): Promise<User | null> {
     return this.userRepo.findOne({ where: { id } });
+  }
+
+  async updateMe(userId: string, dto: UpdateMeDto): Promise<User> {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+    const { fullName, dailyGoal } = dto;
+    if (fullName !== undefined) user.fullName = fullName;
+    if (dailyGoal !== undefined) user.dailyGoal = dailyGoal;
+    return this.userRepo.save(user);
   }
 }

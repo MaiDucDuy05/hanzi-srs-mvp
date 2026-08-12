@@ -1,6 +1,9 @@
 'use client';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { BookOpenCheck, Library, TrendingUp, BookX } from 'lucide-react';
+import { studentApi } from '@/lib/api/endpoints/student';
+import type { StudentProgress } from '@/lib/api/types';
 
 const MODES = [
   { id: 'assignment', icon: BookOpenCheck, title: "Teacher's Assignments", desc: "Exercises assigned by teacher" },
@@ -10,6 +13,16 @@ const MODES = [
 ];
 
 export function PracticeHubFeature() {
+  const [progress, setProgress] = useState<StudentProgress | null>(null);
+
+  useEffect(() => {
+    studentApi.getProgress().then(setProgress).catch(console.error);
+  }, []);
+
+  const currentXp = progress?.dailyXp ?? 0;
+  const goalXp = progress?.dailyGoal ?? 50;
+  const progressPercent = Math.min(100, Math.round((currentXp / goalXp) * 100)) || 0;
+
   return (
     <div className="w-full flex flex-col min-h-full py-4 sm:py-0">
       <div className="flex items-center gap-4 mb-6 pl-2">
@@ -21,8 +34,10 @@ export function PracticeHubFeature() {
       </div>
 
       <div className="relative w-full h-12 bg-white rounded-full p-1.5 shadow-sm mb-10 overflow-hidden flex items-center border border-white">
-        <div className="absolute left-1.5 top-1.5 bottom-1.5 rounded-full bg-[#aadd4a] transition-all duration-1000 ease-out" style={{ width: '80%' }} />
-        <div className="relative z-10 font-bold text-white pl-4 drop-shadow-md tracking-wide">Daily Practice Goal: 40/50 XP</div>
+        <div className="absolute left-1.5 top-1.5 bottom-1.5 rounded-full bg-[#aadd4a] transition-all duration-1000 ease-out" style={{ width: `${progressPercent}%` }} />
+        <div className="relative z-10 font-bold text-[#215b3b] pl-4 tracking-wide">
+          Daily Practice Goal: {currentXp}/{goalXp} XP
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 flex-1 mb-8">

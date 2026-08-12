@@ -48,6 +48,7 @@ export interface User {
   fullName: string;
   role: Role;
   status: string;
+  dailyGoal?: number;
   createdAt: string;
   updatedAt: string;
 }

@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Patch,
   Body,
   Get,
   HttpCode,
@@ -12,7 +13,7 @@ import { ConfigService } from '@nestjs/config';
 import { Throttle, SkipThrottle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { UserService } from './user.service';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
+import { RegisterDto, LoginDto, UpdateMeDto } from './dto/auth.dto';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
 import type { JwtPayload } from './strategies/jwt.strategy';
@@ -77,6 +78,16 @@ export class AuthController {
     return {
       data: this.authService.sanitizeUser(user),
       message: 'Profile retrieved successfully',
+    };
+  }
+
+  /** Student tự cập nhật profile của mình (fullName, dailyGoal). */
+  @Patch('me')
+  async updateMe(@CurrentUser() current: JwtPayload, @Body() dto: UpdateMeDto) {
+    const user = await this.authService.updateMe(current.sub, dto);
+    return {
+      data: this.authService.sanitizeUser(user),
+      message: 'Profile updated successfully',
     };
   }
 

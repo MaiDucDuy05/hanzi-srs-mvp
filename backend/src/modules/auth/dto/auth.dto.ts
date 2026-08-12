@@ -2,8 +2,11 @@ import {
   IsEmail,
   IsEnum,
   IsNotEmpty,
-  IsOptional,
   IsString,
+  IsInt,
+  Min,
+  Max,
+  IsOptional,
   MinLength,
   Matches,
 } from 'class-validator';
@@ -88,4 +91,18 @@ export class UpdateUserDto {
   @IsOptional()
   @IsEnum(UserStatus)
   status?: UserStatus;
+}
+
+/** DTO cho student tự cập nhật profile của mình qua PATCH /auth/me */
+export class UpdateMeDto {
+  @IsOptional()
+  @IsString()
+  @IsNotEmpty()
+  fullName?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(10000)
+  dailyGoal?: number;
 }
