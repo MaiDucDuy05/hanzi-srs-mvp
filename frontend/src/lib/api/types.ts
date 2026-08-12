@@ -63,6 +63,7 @@ export interface HskLevel {
   code: string;
   name: string;
   displayOrder: number;
+  vocabularyCount: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -152,9 +153,31 @@ export interface Topic {
   recommendedLevelId: string | null;
   status: ContentStatus;
   displayOrder: number;
+  vocabularyCount: number;
   deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface Assignment {
+  id: string;
+  title: string;
+  description: string | null;
+  assignedBy: string;
+  assignedTo: string;
+  dueDate: string | null;
+  vocabularyCount: number;
+  status: 'PENDING' | 'COMPLETED';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LessonSelectionOverview {
+  hskLevels: HskLevel[];
+  topics: Topic[];
+  assignments: Assignment[];
+  recentMistakeCount: number;
+  totalMistakeCount: number;
 }
 
 export interface TopicVocabulary {

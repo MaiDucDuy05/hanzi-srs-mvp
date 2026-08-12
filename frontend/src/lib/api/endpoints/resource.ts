@@ -14,7 +14,7 @@ export const resourceApi = {
   createContact: (data: { name: string; email: string; phone?: string; message: string }) =>
     unwrap(apiFetch<Single<{ id: string }>>('/contact-requests', { method: 'POST', body: JSON.stringify(data), auth: false })),
 
-  listMistakes: (params: { userId?: string; page?: number; limit?: number } = {}) =>
+  listMistakes: (params: { userId?: string; since?: string; page?: number; limit?: number } = {}) =>
     apiFetch<Paginated<MistakeBookEntry>>(`/mistake-book${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
 
   createMistake: (data: Partial<MistakeBookEntry>) =>

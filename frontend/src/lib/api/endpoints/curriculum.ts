@@ -1,5 +1,5 @@
 import { apiFetch, unwrap } from '../client';
-import type { Paginated, Single, HskLevel, Lesson, Vocabulary, GrammarPoint, LessonContent, Topic, TopicVocabulary, LessonContentsAggregate } from '../types';
+import type { Paginated, Single, HskLevel, Lesson, Vocabulary, GrammarPoint, LessonContent, Topic, TopicVocabulary, LessonContentsAggregate, Assignment, LessonSelectionOverview } from '../types';
 import { toQuery } from './utils';
 
 export const curriculumApi = {
@@ -87,4 +87,12 @@ export const curriculumApi = {
     unwrap(apiFetch<Single<TopicVocabulary>>('/topic-vocabularies', { method: 'POST', body: JSON.stringify(data) })),
 
   deleteTopicVocabulary: (id: string) => apiFetch(`/topic-vocabularies/${id}`, { method: 'DELETE' }),
+
+  // Lesson selection overview — aggregate HSK, Topics, Assignments, Mistake stats
+  getLessonSelectionOverview: () =>
+    apiFetch<{ data: LessonSelectionOverview }>('/lesson-selection/overview').then((r) => r.data),
+
+  // Assignments
+  listAssignments: (params: { assignedTo?: string; status?: string; page?: number; limit?: number } = {}) =>
+    apiFetch<Paginated<Assignment>>(`/assignments${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
 };

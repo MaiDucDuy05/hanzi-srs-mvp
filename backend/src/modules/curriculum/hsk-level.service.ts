@@ -2,20 +2,80 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HskLevel } from './entities/hsk-level.entity';
+import { Vocabulary } from './entities/vocabulary.entity';
 import { CreateHskLevelDto, UpdateHskLevelDto } from './dto/curriculum.dto';
 import { PaginationQueryDto } from '../../common/pagination.dto';
-import { paginatedResult, findOrNotFound } from '../../common/helpers/query-helpers';
+import {
+  paginatedResult,
+  findOrNotFound,
+} from '../../common/helpers/query-helpers';
+
+export interface HskLevelWithCount extends HskLevel {
+  vocabularyCount: number;
+}
 
 @Injectable()
 export class HskLevelService {
-  constructor(@InjectRepository(HskLevel) private repo: Repository<HskLevel>) {}
+  constructor(
+    @InjectRepository(HskLevel) private repo: Repository<HskLevel>,
+    @InjectRepository(Vocabulary) private vocabRepo: Repository<Vocabulary>,
+  ) {}
+
   async findAll(q: PaginationQueryDto) {
-    const { page = 1, limit = 20, sortBy = 'displayOrder', sortOrder = 'ASC' } = q;
-    const [data, total] = await this.repo.findAndCount({ skip: (page - 1) * limit, take: limit, order: { [sortBy]: sortOrder } });
-    return paginatedResult(data, total, page, limit);
+    const {
+      page = 1,
+      limit = 20,
+      sortBy = 'displayOrder',
+      sortOrder = 'ASC',
+    } = q;
+    const [data, total] = await this.repo.findAndCount({
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { [sortBy]: sortOrder },
+    });
+
+    if (data.length === 0) {
+      return paginatedResult(data, total, page, limit);
+    }
+
+    // Batch count vocabularies per level
+    const levelIds = data.map((l) => l.id);
+    const counts = await this.vocabRepo
+      .createQueryBuilder('v')
+      .select('v.level_id', 'levelId')
+      .addSelect('COUNT(*)', 'count')
+      .where('v.level_id IN (:...ids)', { ids: levelIds })
+      .groupBy('v.level_id')
+      .getRawMany<{ levelId: string; count: string }>();
+
+    const countMap = new Map(
+      counts.map((c) => [c.levelId, parseInt(c.count, 10)]),
+    );
+    const result: HskLevelWithCount[] = data.map((level) => ({
+      ...level,
+      vocabularyCount: countMap.get(level.id) ?? 0,
+    }));
+
+    return paginatedResult(result, total, page, limit);
   }
-  async findById(id: string) { return findOrNotFound(this.repo, id, 'HSK level'); }
-  async create(dto: CreateHskLevelDto) { return this.repo.save(this.repo.create(dto)); }
-  async update(id: string, dto: UpdateHskLevelDto) { const e = await this.findById(id); Object.assign(e, dto); return this.repo.save(e); }
-  async delete(id: string) { await this.repo.remove(await this.findById(id)); }
+
+  async findById(id: string): Promise<HskLevelWithCount> {
+    const level = await findOrNotFound<HskLevel>(this.repo, id, 'HSK level');
+    const count = await this.vocabRepo.count({ where: { levelId: id } });
+    return { ...level, vocabularyCount: count };
+  }
+
+  async create(dto: CreateHskLevelDto) {
+    return this.repo.save(this.repo.create(dto));
+  }
+
+  async update(id: string, dto: UpdateHskLevelDto) {
+    const e = await this.findById(id);
+    Object.assign(e, dto);
+    return this.repo.save(e);
+  }
+
+  async delete(id: string) {
+    await this.repo.remove(await this.findById(id));
+  }
 }

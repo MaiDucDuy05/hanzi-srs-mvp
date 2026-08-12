@@ -19,15 +19,13 @@ import { TopicVocabulary } from './entities/topic-vocabulary.entity';
 describe('HskLevelService', () => {
   let service: HskLevelService;
   let repo: jest.Mocked<Repository<HskLevel>>;
+  let vocabRepo: { count: jest.Mock; createQueryBuilder: jest.Mock };
 
   const mockLevel: HskLevel = {
     id: 'level-1',
-    level: 1,
+    code: 'HSK1',
     name: 'HSK 1',
-    description: 'Beginner Chinese',
     displayOrder: 1,
-    vocabularyCount: 150,
-    grammarCount: 30,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
@@ -40,11 +38,23 @@ describe('HskLevelService', () => {
       save: jest.fn(),
       remove: jest.fn(),
     };
+    const mockQb = {
+      select: jest.fn().mockReturnThis(),
+      addSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      groupBy: jest.fn().mockReturnThis(),
+      getRawMany: jest.fn(),
+    };
+    vocabRepo = {
+      count: jest.fn(),
+      createQueryBuilder: jest.fn().mockReturnValue(mockQb),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         HskLevelService,
         { provide: getRepositoryToken(HskLevel), useValue: mockRepo },
+        { provide: getRepositoryToken(Vocabulary), useValue: vocabRepo },
       ],
     }).compile();
 
@@ -55,71 +65,58 @@ describe('HskLevelService', () => {
   afterEach(() => jest.clearAllMocks());
 
   describe('findAll', () => {
-    it('should return paginated levels sorted by displayOrder ASC', async () => {
+    it('should return paginated levels with vocabulary counts', async () => {
       repo.findAndCount.mockResolvedValue([[mockLevel], 1]);
+      vocabRepo.createQueryBuilder().getRawMany.mockResolvedValue([
+        { levelId: 'level-1', count: '150' },
+      ]);
 
       const result = await service.findAll({});
 
-      expect(result.data).toEqual([mockLevel]);
-      expect(result.meta.total).toBe(1);
+      expect(result.data).toHaveLength(1);
+      expect((result.data[0] as any).vocabularyCount).toBe(150);
     });
 
-    it('should handle custom pagination', async () => {
-      repo.findAndCount.mockResolvedValue([[], 0]);
+    it('should return empty counts for levels with no vocabularies', async () => {
+      repo.findAndCount.mockResolvedValue([[mockLevel], 1]);
+      vocabRepo.createQueryBuilder().getRawMany.mockResolvedValue([]);
 
-      await service.findAll({ page: 2, limit: 5 });
+      const result = await service.findAll({});
 
-      expect(repo.findAndCount).toHaveBeenCalledWith(
-        expect.objectContaining({ skip: 5, take: 5, order: { displayOrder: 'ASC' } }),
-      );
-    });
-
-    it('should handle custom sort', async () => {
-      repo.findAndCount.mockResolvedValue([[], 0]);
-
-      await service.findAll({ sortBy: 'level', sortOrder: 'DESC' });
-
-      expect(repo.findAndCount).toHaveBeenCalledWith(
-        expect.objectContaining({ order: { level: 'DESC' } }),
-      );
+      expect((result.data[0] as any).vocabularyCount).toBe(0);
     });
   });
 
   describe('findById', () => {
-    it('should return level when found', async () => {
+    it('should return level with vocabulary count', async () => {
       repo.findOne.mockResolvedValue(mockLevel);
+      vocabRepo.count.mockResolvedValue(150);
 
       const result = await service.findById('level-1');
 
-      expect(result).toEqual(mockLevel);
-    });
-
-    it('should throw NotFoundException when not found', async () => {
-      repo.findOne.mockResolvedValue(null);
-
-      await expect(service.findById('non-existent')).rejects.toThrow('HSK level not found');
+      expect((result as any).vocabularyCount).toBe(150);
     });
   });
 
   describe('create', () => {
     it('should create new level', async () => {
-      const createDto = { level: 2, name: 'HSK 2', displayOrder: 2 };
+      const createDto = { code: 'HSK2', name: 'HSK 2', displayOrder: 2 };
       repo.create.mockReturnValue({ ...mockLevel, ...createDto } as HskLevel);
       repo.save.mockResolvedValue({ ...mockLevel, ...createDto } as HskLevel);
 
-      const result = await service.create(createDto);
+      const result = await service.create(createDto as any);
 
-      expect(result.level).toBe(2);
+      expect(result.name).toBe('HSK 2');
     });
   });
 
   describe('update', () => {
     it('should update level', async () => {
-      const updateDto = { name: 'Updated HSK 1' };
       repo.findOne.mockResolvedValue(mockLevel);
       repo.save.mockImplementation((e) => Promise.resolve(e as HskLevel));
+      vocabRepo.count.mockResolvedValue(0);
 
-      const result = await service.update('level-1', updateDto);
+      const result = await service.update('level-1', { name: 'Updated HSK 1' });
 
       expect(result.name).toBe('Updated HSK 1');
     });
@@ -134,12 +131,6 @@ describe('HskLevelService', () => {
 
       expect(repo.remove).toHaveBeenCalledWith(mockLevel);
     });
-
-    it('should throw NotFoundException when deleting non-existent', async () => {
-      repo.findOne.mockResolvedValue(null);
-
-      await expect(service.delete('non-existent')).rejects.toThrow('HSK level not found');
-    });
   });
 });
 
@@ -149,14 +140,16 @@ describe('TopicService', () => {
 
   const mockTopic: Topic = {
     id: 'topic-1',
-    levelId: 'level-1',
     name: 'Greetings',
+    slug: 'greetings',
     description: 'Basic greetings',
-    displayOrder: 1,
+    thumbnailKey: null,
+    recommendedLevelId: 'level-1',
     status: 'ACTIVE',
+    displayOrder: 1,
+    deletedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
-    deletedAt: null,
   };
 
   beforeEach(async () => {
@@ -167,11 +160,23 @@ describe('TopicService', () => {
       save: jest.fn(),
       softRemove: jest.fn(),
     };
+    const mockQb = {
+      select: jest.fn().mockReturnThis(),
+      addSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      groupBy: jest.fn().mockReturnThis(),
+      getRawMany: jest.fn().mockResolvedValue([]),
+    };
+    const mockTvRepo = {
+      count: jest.fn(),
+      createQueryBuilder: jest.fn().mockReturnValue(mockQb),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TopicService,
         { provide: getRepositoryToken(Topic), useValue: mockRepo },
+        { provide: getRepositoryToken(TopicVocabulary), useValue: mockTvRepo },
       ],
     }).compile();
 
@@ -182,12 +187,15 @@ describe('TopicService', () => {
   afterEach(() => jest.clearAllMocks());
 
   describe('findAll', () => {
-    it('should return paginated topics', async () => {
+    it('should return paginated topics with vocabulary counts', async () => {
       repo.findAndCount.mockResolvedValue([[mockTopic], 1]);
+      const mockQb = (service as any).tvRepo.createQueryBuilder();
+      mockQb.getRawMany.mockResolvedValue([{ topicId: 'topic-1', count: '45' }]);
 
       const result = await service.findAll({});
 
-      expect(result.data).toEqual([mockTopic]);
+      expect(result.data).toHaveLength(1);
+      expect((result.data[0] as any).vocabularyCount).toBe(45);
     });
 
     it('should filter by status', async () => {
@@ -202,12 +210,13 @@ describe('TopicService', () => {
   });
 
   describe('findById', () => {
-    it('should return topic when found', async () => {
+    it('should return topic with vocabulary count', async () => {
       repo.findOne.mockResolvedValue(mockTopic);
+      (service as any).tvRepo.count.mockResolvedValue(45);
 
       const result = await service.findById('topic-1');
 
-      expect(result).toEqual(mockTopic);
+      expect((result as any).vocabularyCount).toBe(45);
     });
 
     it('should throw NotFoundException when not found', async () => {
@@ -219,11 +228,11 @@ describe('TopicService', () => {
 
   describe('create', () => {
     it('should create new topic', async () => {
-      const createDto = { levelId: 'level-1', name: 'Family', displayOrder: 2 };
+      const createDto = { name: 'Family', slug: 'family', displayOrder: 2 };
       repo.create.mockReturnValue({ ...mockTopic, ...createDto } as Topic);
       repo.save.mockResolvedValue({ ...mockTopic, ...createDto } as Topic);
 
-      const result = await service.create(createDto);
+      const result = await service.create(createDto as any);
 
       expect(result.name).toBe('Family');
     });

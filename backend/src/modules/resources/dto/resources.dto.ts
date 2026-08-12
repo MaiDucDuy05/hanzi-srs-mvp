@@ -1,5 +1,18 @@
-import { IsEmail, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
-import { ResourceTier, AiJobType, UpgradeRequestStatus, ContactStatus, SpeakingStatus } from '../../../common/enums/resources.enums';
+import {
+  IsDateString,
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
+import {
+  ResourceTier,
+  AiJobType,
+  UpgradeRequestStatus,
+  ContactStatus,
+  SpeakingStatus,
+} from '../../../common/enums/resources.enums';
 import { PaginationQueryDto } from '../../../common/pagination.dto';
 
 // ── Query DTOs ──
@@ -22,6 +35,8 @@ export class MistakeBookQueryDto extends PaginationQueryDto {
   @IsOptional() @IsUUID() userId?: string;
   @IsOptional() @IsString() sourceType?: string;
   @IsOptional() @IsString() sourceId?: string;
+  /** Filter entries created on or after this ISO timestamp (e.g. 7 days ago for "recent"). */
+  @IsOptional() @IsDateString() since?: string;
 }
 
 export class SpeakingAttemptQueryDto extends PaginationQueryDto {
