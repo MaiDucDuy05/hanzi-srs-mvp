@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { studentApi } from '@/lib/api/endpoints/student';
+import { studentApi, LessonProgressItem } from '@/lib/api/endpoints/student';
 import type { StudentProgress } from '@/lib/api/types';
 
 const BambooShoot = ({ className }: { className?: string }) => (
@@ -43,12 +43,19 @@ const CircularProgress = ({ value, label }: { value: number; label: string }) =>
 
 export function DashboardFeature() {
   const [progress, setProgress] = useState<StudentProgress | null>(null);
+  const [recommendedLessons, setRecommendedLessons] = useState<LessonProgressItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    studentApi.getProgress()
-      .then(setProgress)
-      .catch((err) => console.error('[Dashboard] getProgress failed', err))
+    Promise.all([
+      studentApi.getProgress(),
+      studentApi.getRecommendedLessons(),
+    ])
+      .then(([p, lessons]) => {
+        setProgress(p);
+        setRecommendedLessons(lessons);
+      })
+      .catch((err) => console.error('[Dashboard] load failed', err))
       .finally(() => setLoading(false));
   }, []);
 
@@ -64,7 +71,7 @@ export function DashboardFeature() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Today's Goal */}
+        {/* Today&apos;s Goal */}
         <div className="bg-[#d4ed8f] rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center">
           <h2 className="font-bold text-[#215b3b] mb-2 font-[family-name:var(--font-nunito)] text-2xl">
             Today&apos;s Goal
@@ -111,27 +118,40 @@ export function DashboardFeature() {
         </div>
       </div>
 
+      {/* Recommended Lessons */}
       <div className="mt-4">
         <h2 className="font-black text-[#215b3b] font-[family-name:var(--font-nunito)] text-2xl mb-6">
           Recommended Lessons
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            { name: 'Animals', progress: 70 },
-            { name: 'Family', progress: 40 },
-            { name: 'Numbers', progress: 20 },
-          ].map((item) => (
-            <div key={item.name} className="bg-white rounded-[2rem] p-4 shadow-sm flex items-center gap-4 hover:-translate-y-1 transition-transform cursor-pointer">
-              <img src="/assets/illustrations/bamboo/bamboo.png" alt="Bamboo" className="h-32 w-auto flex-shrink-0 object-contain" />
-              <div className="flex-1">
-                <h3 className="font-bold text-[#215b3b] text-lg">{item.name}</h3>
-                <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                  <div className="bg-[#8BC34A] h-2 rounded-full" style={{ width: `${item.progress}%` }} />
+        {loading ? (
+          <p className="text-gray-400">Loading...</p>
+        ) : recommendedLessons.length === 0 ? (
+          <p className="text-gray-400">No lessons available yet.</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {recommendedLessons.map((item) => (
+              <div
+                key={item.id}
+                className="bg-white rounded-[2rem] p-4 shadow-sm flex items-center gap-4 hover:-translate-y-1 transition-transform cursor-pointer"
+              >
+                <img
+                  src="/assets/illustrations/bamboo/bamboo.png"
+                  alt="Bamboo"
+                  className="h-32 w-auto flex-shrink-0 object-contain"
+                />
+                <div className="flex-1">
+                  <h3 className="font-bold text-[#215b3b] text-lg">{item.title}</h3>
+                  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div
+                      className="bg-[#8BC34A] h-2 rounded-full transition-all"
+                      style={{ width: `${item.progress}%` }}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
