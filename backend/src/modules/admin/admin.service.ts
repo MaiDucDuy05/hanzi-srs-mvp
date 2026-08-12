@@ -65,7 +65,10 @@ export class AdminService {
   /** Top N VIP active subscriptions gần nhất + user fullName cho dashboard table. */
   private async getPendingSubscriptions(): Promise<PendingSubscriptionItem[]> {
     const subs = await this.subRepo.find({
-      where: { status: SubscriptionStatus.PENDING_PAYMENT, plan: SubscriptionPlan.VIP },
+      where: {
+        status: SubscriptionStatus.PENDING_PAYMENT,
+        plan: SubscriptionPlan.VIP,
+      },
       order: { createdAt: 'DESC' },
       take: PENDING_SUBS_LIMIT,
     });

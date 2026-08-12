@@ -24,16 +24,39 @@ import { TopicVocabularyController } from './topic-vocabulary.controller';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([HskLevel, Vocabulary, GrammarPoint, Lesson, LessonContent, Topic, TopicVocabulary]),
+    TypeOrmModule.forFeature([
+      HskLevel,
+      Vocabulary,
+      GrammarPoint,
+      Lesson,
+      LessonContent,
+      Topic,
+      TopicVocabulary,
+    ]),
   ],
   controllers: [
-    HskLevelController, VocabularyController, GrammarPointController,
-    LessonController, LessonContentController, TopicController, TopicVocabularyController,
+    HskLevelController,
+    VocabularyController,
+    GrammarPointController,
+    LessonController,
+    LessonContentController,
+    TopicController,
+    TopicVocabularyController,
   ],
   providers: [
-    HskLevelService, VocabularyService, GrammarPointService,
-    LessonService, LessonContentService, TopicService, TopicVocabularyService,
+    HskLevelService,
+    VocabularyService,
+    GrammarPointService,
+    LessonService,
+    LessonContentService,
+    TopicService,
+    TopicVocabularyService,
   ],
-  exports: [VocabularyService, GrammarPointService, LessonService, TopicService],
+  exports: [
+    VocabularyService,
+    GrammarPointService,
+    LessonService,
+    TopicService,
+  ],
 })
 export class CurriculumModule {}

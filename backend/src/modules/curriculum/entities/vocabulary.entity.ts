@@ -20,6 +20,12 @@ export class Vocabulary extends BaseEntity {
   @Column({ name: 'audio_key', type: 'varchar', length: 255, nullable: true })
   audioKey: string | null;
 
+  @Column({ name: 'part_of_speech', type: 'varchar', length: 30, nullable: true })
+  partOfSpeech: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  example: string | null;
+
   @Column({ type: 'varchar', length: 20, default: ContentStatus.DRAFT })
   status: ContentStatus;
 

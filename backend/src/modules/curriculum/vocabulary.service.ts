@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { Vocabulary } from './entities/vocabulary.entity';
 import { CreateVocabularyDto, UpdateVocabularyDto, VocabularyQueryDto } from './dto/curriculum.dto';
 import { paginatedResult, findOrNotFound } from '../../common/helpers/query-helpers';
@@ -9,11 +9,25 @@ import { paginatedResult, findOrNotFound } from '../../common/helpers/query-help
 export class VocabularyService {
   constructor(@InjectRepository(Vocabulary) private repo: Repository<Vocabulary>) {}
   async findAll(q: VocabularyQueryDto) {
-    const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'DESC', levelId, status } = q;
+    const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'DESC', levelId, status, search } = q;
     const where: any = {};
     if (levelId) where.levelId = levelId;
     if (status) where.status = status;
-    const [data, total] = await this.repo.findAndCount({ where, skip: (page - 1) * limit, take: limit, order: { [sortBy]: sortOrder } });
+    if (search) {
+      where.hanzi = ILike(`%${search}%`);
+    }
+    const [data, total] = await this.repo.findAndCount({
+      where: search
+        ? [
+            { ...where, hanzi: ILike(`%${search}%`) },
+            { ...where, pinyin: ILike(`%${search}%`) },
+            { ...where, meaningVi: ILike(`%${search}%`) },
+          ]
+        : where,
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { [sortBy]: sortOrder },
+    });
     return paginatedResult(data, total, page, limit);
   }
   async findById(id: string) { return findOrNotFound(this.repo, id, 'Vocabulary'); }

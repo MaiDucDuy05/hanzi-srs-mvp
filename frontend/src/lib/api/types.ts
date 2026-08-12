@@ -80,12 +80,40 @@ export interface Lesson {
   updatedAt: string;
 }
 
+export enum SrsRating {
+  AGAIN = 'AGAIN',
+  HARD = 'HARD',
+  GOOD = 'GOOD',
+  EASY = 'EASY',
+}
+
+export interface UserVocabProgress {
+  id: string;
+  userId: string;
+  vocabularyId: string;
+  masteryLevel: number;
+  reviewCount: number;
+  easinessFactor: number;
+  intervalDays: number;
+  nextReviewAt: string;
+  lastReviewedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface LessonContentsAggregate {
+  vocabularies: Vocabulary[];
+  grammarPoints: GrammarPoint[];
+}
+
 export interface Vocabulary {
   id: string;
   levelId: string;
   hanzi: string;
   pinyin: string;
   meaningVi: string;
+  partOfSpeech: string | null;
+  example: string | null;
   audioKey: string | null;
   status: ContentStatus;
   deletedAt: string | null;

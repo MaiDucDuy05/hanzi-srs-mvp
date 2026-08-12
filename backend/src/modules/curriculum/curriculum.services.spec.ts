@@ -12,6 +12,7 @@ import { HskLevel } from './entities/hsk-level.entity';
 import { Topic } from './entities/topic.entity';
 import { GrammarPoint } from './entities/grammar-point.entity';
 import { Lesson } from './entities/lesson.entity';
+import { Vocabulary } from './entities/vocabulary.entity';
 import { LessonContent } from './entities/lesson-content.entity';
 import { TopicVocabulary } from './entities/topic-vocabulary.entity';
 
@@ -401,11 +402,18 @@ describe('LessonService', () => {
       save: jest.fn(),
       softRemove: jest.fn(),
     };
+    // Minimal mocks for the new LessonContent + contentRepo / vocabRepo / grammarRepo deps
+    const mockContentRepo = { find: jest.fn() };
+    const mockVocabRepo = { findBy: jest.fn() };
+    const mockGrammarRepo = { findBy: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         LessonService,
         { provide: getRepositoryToken(Lesson), useValue: mockRepo },
+        { provide: getRepositoryToken(LessonContent), useValue: mockContentRepo },
+        { provide: getRepositoryToken(Vocabulary), useValue: mockVocabRepo },
+        { provide: getRepositoryToken(GrammarPoint), useValue: mockGrammarRepo },
       ],
     }).compile();
 
