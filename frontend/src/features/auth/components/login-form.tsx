@@ -8,6 +8,23 @@ import { Button } from '@/features/ui/components/button';
 import { Field, Input } from '@/features/ui/components/form';
 
 /**
+ * Validate redirect URL to prevent open redirect attacks.
+ * Only allows relative paths starting with / and not // or containing protocols.
+ */
+function isValidRedirect(url: string | undefined): boolean {
+  if (!url) return false;
+  // Must start with / but not // (prevents protocol-relative URLs)
+  // Must not contain :// (prevents URLs like javascript:, https:, etc.)
+  // Must not start with /http or /https
+  return (
+    url.startsWith('/') &&
+    !url.startsWith('//') &&
+    !url.includes('://') &&
+    !url.match(/^\/https?/)
+  );
+}
+
+/**
  * Form đăng nhập (client island). `next` = đường dẫn quay lại sau khi đăng nhập
  * (middleware gắn `?next=` khi chặn route). Chỉ nhận local path — chống open redirect.
  */
@@ -25,12 +42,11 @@ export function LoginForm({ next }: { next?: string }) {
     setSubmitting(true);
     try {
       const user = await login(email.trim(), password);
-      const target =
-        next && next.startsWith('/') && !next.startsWith('//')
-          ? next
-          : user.role === 'ADMIN'
-            ? '/admin'
-            : '/';
+      const target = isValidRedirect(next)
+        ? (next as string)
+        : user.role === 'ADMIN'
+          ? '/admin'
+          : '/';
       router.replace(target);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Đăng nhập thất bại.');

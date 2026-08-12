@@ -21,11 +21,17 @@ import { RolesGuard } from './guards/roles.guard';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const secret = configService.get<string>('JWT_SECRET');
-        if (!secret && configService.get<string>('NODE_ENV') === 'production') {
-          throw new InternalServerErrorException('JWT_SECRET is required in production');
+        const nodeEnv = configService.get<string>('NODE_ENV');
+
+        if (!secret) {
+          if (nodeEnv === 'production') {
+            throw new InternalServerErrorException('JWT_SECRET is required in production');
+          }
+          throw new InternalServerErrorException('JWT_SECRET must be set');
         }
+
         return {
-          secret: secret || 'dev-secret',
+          secret,
           signOptions: { expiresIn: '7d' },
         };
       },

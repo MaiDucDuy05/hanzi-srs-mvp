@@ -1,14 +1,15 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, Index } from 'typeorm';
 import { BaseEntity } from '../../../common/base.entity';
 import { Role, UserStatus } from '../../../common/enums/user.enums';
 
 /**
  * Bảng users — tài khoản người dùng (Free/Teacher/Admin).
  * VIP là trạng thái gói ở bảng subscriptions, không phải role.
- * Login case-insensitive: unique index trên LOWER(email) tạo ở migration.
+ * Email unique và case-insensitive (index trên LOWER(email)).
  */
 @Entity('users')
 export class User extends BaseEntity {
+  @Index('idx_users_email_unique', { unique: true })
   @Column({ type: 'varchar', length: 255 })
   email: string;
 

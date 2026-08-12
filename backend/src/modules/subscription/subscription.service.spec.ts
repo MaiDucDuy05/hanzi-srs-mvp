@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken, getDataSourceToken } from '@nestjs/typeorm';
-import { HttpException, HttpStatus } from '@nestjs/common';
 import { Repository, DataSource, EntityManager } from 'typeorm';
 import { SubscriptionService, DailyUsageService, LimitSettingsService } from './subscription.service';
 import { Subscription } from './entities/subscription.entity';
