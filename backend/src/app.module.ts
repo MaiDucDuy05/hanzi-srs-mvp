@@ -29,12 +29,12 @@ import { SrsModule } from './modules/srs/srs.module';
           {
             name: 'default',
             ttl: 60000, // 1 minute
-            limit: 100, // 100 requests per minute
+            limit: 10000, // Very high limit for dev
           },
           {
             name: 'auth',
             ttl: 60000, // 1 minute
-            limit: 10, // 10 attempts per minute for auth endpoints
+            limit: 1000, // High limit for auth
           },
         ],
       }),

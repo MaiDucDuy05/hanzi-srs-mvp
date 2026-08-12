@@ -1,13 +1,12 @@
 'use client';
-
-import React from 'react';
 import Link from 'next/link';
+import { BookOpenCheck, Library, TrendingUp, BookX } from 'lucide-react';
 
 const MODES = [
-  { id: 'assignment', icon: '👩‍🏫', title: "Teacher's Assignments", desc: "Exercises assigned by teacher" },
-  { id: 'topic', icon: '📚', title: "By Topic", desc: "Choose a specific vocabulary topic" },
-  { id: 'hsk', icon: '📈', title: "By HSK Level", desc: "Practice words by difficulty" },
-  { id: 'mistakes', icon: '📖', title: "Mistake Book", desc: "Review words you got wrong" },
+  { id: 'assignment', icon: BookOpenCheck, title: "Teacher's Assignments", desc: "Exercises assigned by teacher" },
+  { id: 'topic', icon: Library, title: "By Topic", desc: "Choose a specific vocabulary topic" },
+  { id: 'hsk', icon: TrendingUp, title: "By HSK Level", desc: "Practice words by difficulty" },
+  { id: 'mistakes', icon: BookX, title: "Mistake Book", desc: "Review words you got wrong" },
 ];
 
 export function PracticeHubFeature() {
@@ -29,7 +28,9 @@ export function PracticeHubFeature() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 flex-1 mb-8">
         {MODES.map((mode) => (
           <Link href={`/dashboard/practice/lessons?mode=${mode.id}`} key={mode.id} className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-6 sm:p-8 rounded-[2.5rem] border-4 border-transparent hover:border-[#aadd4a] bg-white transition-all shadow-sm hover:shadow-md group text-center sm:text-left">
-            <div className="w-24 h-24 flex-shrink-0 bg-[#f9fdf5] rounded-full flex items-center justify-center text-5xl group-hover:scale-110 transition-transform">{mode.icon}</div>
+            <div className="w-24 h-24 flex-shrink-0 bg-[#f9fdf5] rounded-full flex items-center justify-center text-[#8BC34A] group-hover:scale-110 transition-transform">
+              <mode.icon className="w-12 h-12" strokeWidth={2.5} />
+            </div>
             <div className="flex flex-col justify-center h-full sm:pt-2">
               <span className="font-bold text-[#215b3b] text-2xl mb-2">{mode.title}</span>
               <span className="text-gray-500 font-medium text-lg">{mode.desc}</span>

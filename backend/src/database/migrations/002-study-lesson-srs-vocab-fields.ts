@@ -7,8 +7,8 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * 1. ALTER vocabularies: +part_of_speech, +example
  * 2. CREATE user_vocabulary_progress: SRS mastery tracking per user/vocab (SM-2)
  */
-export class StudyLessonSrs002 implements MigrationInterface {
-  name = 'StudyLessonSrs002';
+export class StudyLessonSrs1723512345678 implements MigrationInterface {
+  name = 'StudyLessonSrs1723512345678';
 
   public async up(qr: QueryRunner): Promise<void> {
     await qr.query(`
