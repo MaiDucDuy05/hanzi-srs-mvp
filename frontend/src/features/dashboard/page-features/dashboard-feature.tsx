@@ -1,5 +1,9 @@
 'use client';
 
+import React, { useState, useEffect } from 'react';
+import { studentApi } from '@/lib/api/endpoints/student';
+import type { StudentProgress } from '@/lib/api/types';
+
 const BambooShoot = ({ className }: { className?: string }) => (
   <img
     src="/assets/nature/trees/bamboo_shot.png"
@@ -38,6 +42,19 @@ const CircularProgress = ({ value, label }: { value: number; label: string }) =>
 };
 
 export function DashboardFeature() {
+  const [progress, setProgress] = useState<StudentProgress | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    studentApi.getProgress()
+      .then(setProgress)
+      .catch((err) => console.error('[Dashboard] getProgress failed', err))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const remainingXp = progress ? Math.max(0, progress.dailyGoal - progress.dailyXp) : 0;
+  const remainingText = remainingXp > 0 ? `${remainingXp} more XP needed` : 'Goal reached! 🎉';
+
   return (
     <div className="flex flex-col gap-6 h-full justify-center">
       <header className="flex justify-between items-center mb-2 relative">
@@ -47,26 +64,47 @@ export function DashboardFeature() {
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Today's Goal */}
         <div className="bg-[#d4ed8f] rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center">
-          <h2 className="font-bold text-[#215b3b] mb-2 font-[family-name:var(--font-nunito)] text-2xl">Today's Goal</h2>
-          <CircularProgress value={80} label="20 more XP needed" />
-          <p className="mt-2 text-[#4a6b38] text-sm font-medium">20 more XP needed</p>
+          <h2 className="font-bold text-[#215b3b] mb-2 font-[family-name:var(--font-nunito)] text-2xl">
+            Today&apos;s Goal
+          </h2>
+          {loading ? (
+            <div className="w-32 h-32 flex items-center justify-center">
+              <span className="text-gray-400 text-sm">Loading...</span>
+            </div>
+          ) : (
+            <>
+              <CircularProgress value={progress?.progressPercent ?? 0} label={remainingText} />
+              <p className="mt-2 text-[#4a6b38] text-sm font-medium">
+                {progress?.dailyXp ?? 0} / {progress?.dailyGoal ?? 50} XP — {remainingText}
+              </p>
+            </>
+          )}
         </div>
 
+        {/* Daily Streak */}
         <div className="bg-white rounded-[2rem] p-6 shadow-sm flex items-center gap-6">
           <div className="flex-shrink-0">
             <BambooShoot className="w-auto h-32" />
           </div>
           <div className="flex flex-col justify-center">
-            <h2 className="font-bold text-[#215b3b] font-[family-name:var(--font-nunito)] text-2xl">Daily Streak</h2>
-            <div className="text-xl font-black text-[#215b3b]">5 Days</div>
+            <h2 className="font-bold text-[#215b3b] font-[family-name:var(--font-nunito)] text-2xl">
+              Daily Streak
+            </h2>
+            <div className="text-xl font-black text-[#215b3b]">
+              {loading ? '—' : progress?.currentStreak ?? 0} Days
+            </div>
             <div className="text-xl font-black text-[#215b3b] mb-1">Streak!</div>
             <p className="text-gray-500 text-sm font-medium">Keep growing!</p>
           </div>
         </div>
 
+        {/* Ready for Review */}
         <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center text-center">
-          <h2 className="font-black text-[#215b3b] font-[family-name:var(--font-nunito)] text-2xl mb-6">Ready for Review</h2>
+          <h2 className="font-black text-[#215b3b] font-[family-name:var(--font-nunito)] text-2xl mb-6">
+            Ready for Review
+          </h2>
           <button className="bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold py-3 px-8 rounded-full shadow-md transition-transform hover:scale-105">
             Review Now
           </button>
@@ -74,7 +112,9 @@ export function DashboardFeature() {
       </div>
 
       <div className="mt-4">
-        <h2 className="font-black text-[#215b3b] font-[family-name:var(--font-nunito)] text-2xl mb-6">Recommended Lessons</h2>
+        <h2 className="font-black text-[#215b3b] font-[family-name:var(--font-nunito)] text-2xl mb-6">
+          Recommended Lessons
+        </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             { name: 'Animals', progress: 70 },

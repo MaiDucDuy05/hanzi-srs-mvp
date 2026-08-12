@@ -18,6 +18,7 @@ import { AudioModule } from './modules/audio/audio.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { SrsModule } from './modules/srs/srs.module';
 import { LessonSelectionModule } from './modules/lesson-selection/lesson-selection.module';
+import { StudentModule } from './modules/student/student.module';
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { LessonSelectionModule } from './modules/lesson-selection/lesson-selecti
     AdminModule,
     SrsModule,
     LessonSelectionModule,
+    StudentModule,
   ],
   controllers: [AppController],
   providers: [

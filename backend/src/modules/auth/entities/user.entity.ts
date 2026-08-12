@@ -25,6 +25,18 @@ export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 20, default: UserStatus.ACTIVE })
   status: UserStatus;
 
+  /** Daily XP target */
+  @Column({ name: 'daily_goal', type: 'int', default: 50 })
+  dailyGoal: number;
+
+  /** Consecutive days streak */
+  @Column({ name: 'current_streak', type: 'int', default: 0 })
+  currentStreak: number;
+
+  /** Last date user earned XP (YYYY-MM-DD), used for streak calculation */
+  @Column({ name: 'last_activity_date', type: 'date', nullable: true })
+  lastActivityDate: string | null;
+
   @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true })
   deletedAt: Date | null;
 }

@@ -57,6 +57,14 @@ export interface AuthResponse {
   user: User;
 }
 
+// ── Student Progress ──
+export interface StudentProgress {
+  dailyXp: number;
+  dailyGoal: number;
+  progressPercent: number;
+  currentStreak: number;
+}
+
 // ── Curriculum ──
 export interface HskLevel {
   id: string;
