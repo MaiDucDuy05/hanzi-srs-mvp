@@ -5,6 +5,7 @@ export enum SubscriptionPlan {
 }
 
 export enum SubscriptionStatus {
+  PENDING_PAYMENT = 'PENDING_PAYMENT',
   ACTIVE = 'ACTIVE',
   EXPIRED = 'EXPIRED',
   CANCELLED = 'CANCELLED',

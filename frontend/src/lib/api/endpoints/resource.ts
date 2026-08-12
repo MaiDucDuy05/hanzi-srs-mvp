@@ -22,7 +22,7 @@ export const resourceApi = {
 
   deleteMistake: (id: string) => apiFetch(`/mistake-book/${id}`, { method: 'DELETE' }),
 
-  listVipRequests: (params: { userId?: string; page?: number; limit?: number } = {}) =>
+  listVipRequests: (params: { userId?: string; status?: string; page?: number; limit?: number } = {}) =>
     apiFetch<Paginated<VipUpgradeRequest>>(`/vip-upgrade-requests${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
 
   createVipRequest: (data: { userId: string; note?: string }) =>

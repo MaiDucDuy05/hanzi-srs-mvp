@@ -23,7 +23,6 @@ import {
   ChevronRight,
   UserCheck
 } from 'lucide-react';
-import { Badge } from '@/features/ui/components/badge';
 
 export function AdminUsersFeature() {
   const [users, setUsers] = useState<User[]>([]);

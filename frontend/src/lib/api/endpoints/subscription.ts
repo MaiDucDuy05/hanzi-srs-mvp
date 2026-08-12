@@ -9,6 +9,10 @@ export const subscriptionApi = {
   // Gói của người dùng hiện tại (authenticated, không admin-only) — phân biệt VIP subscriber vs FREE.
   me: () => unwrap(apiFetch<Single<Subscription | null>>('/subscriptions/me')),
 
+  // Admin-only — cập nhật gói (vd approve/reject pending subscription).
+  update: (id: string, data: Partial<Subscription>) =>
+    unwrap(apiFetch<Single<Subscription>>(`/subscriptions/${id}`, { method: 'PATCH', body: JSON.stringify(data) })),
+
   getLimitSettings: () => unwrap(apiFetch<Single<LimitSettings>>('/limit-settings')),
 
   // userId lấy từ JWT phía server (PR-14 §3.2) — chỉ gửi activityKey.

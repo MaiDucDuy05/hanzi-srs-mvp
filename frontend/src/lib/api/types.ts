@@ -35,7 +35,7 @@ export type TestStatus = 'DRAFT' | 'PUBLISHED' | 'CLOSED';
 export type TestQuestionType = 'SINGLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER';
 export type TestAttemptStatus = 'IN_PROGRESS' | 'SUBMITTED';
 export type SubscriptionPlan = 'FREE' | 'VIP';
-export type SubscriptionStatus = 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
+export type SubscriptionStatus = 'PENDING_PAYMENT' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
 export type ResourceTier = 'FREE' | 'VIP';
 export type UpgradeRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 export type AiJobType = 'STORY' | 'STUDY_PATH';
@@ -342,4 +342,41 @@ export interface AiJob {
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+// ── Admin Dashboard ──
+export interface UserStats {
+  total: number;
+  byRole: { FREE: number; TEACHER: number; ADMIN: number };
+  vipCount: number;
+}
+
+export interface RevenueMetrics {
+  monthlyRevenue: number;
+  revenueTarget: number;
+  currency: string;
+}
+
+export type HealthStatus = 'Optimal' | 'Degraded' | 'Critical';
+
+export interface SystemHealth {
+  healthPercent: number;
+  statusLabel: HealthStatus;
+  statusMessage: string;
+  lastCheckedAt: string;
+}
+
+export interface PendingSubscriptionItem {
+  id: string;
+  userId: string;
+  userFullName: string;
+  plan: SubscriptionPlan;
+}
+
+export interface DashboardOverview {
+  userStats: UserStats;
+  pendingVipCount: number;
+  revenue: RevenueMetrics;
+  health: SystemHealth;
+  pendingSubscriptions: PendingSubscriptionItem[];
 }
