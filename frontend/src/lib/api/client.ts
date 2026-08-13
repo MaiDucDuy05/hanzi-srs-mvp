@@ -90,6 +90,15 @@ export async function apiFetch<T = unknown>(
     // (không áp dụng cho endpoint public như login/register — auth=false).
     if (res.status === 401 && auth) {
       if (typeof window !== 'undefined') {
+        const rawMessage = (body as { message?: unknown } | null)?.message;
+        const msg = Array.isArray(rawMessage)
+          ? rawMessage.join(', ')
+          : typeof rawMessage === 'string'
+            ? rawMessage
+            : '';
+        if (msg.includes('bị khóa')) {
+          window.alert(msg);
+        }
         window.dispatchEvent(new Event('hanzi:unauthorized'));
       }
     }

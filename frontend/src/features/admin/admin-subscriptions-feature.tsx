@@ -13,35 +13,59 @@ import {
   X
 } from 'lucide-react';
 
-const MOCK_REQUESTS = [
-  {
-    id: 'VR-8821',
-    name: 'Li Wei',
-    avatar: 'https://api.dicebear.com/7.x/notionists/svg?seed=LiWei',
-    status: 'Pending',
-    tier: '12-Month VIP Guardian',
-    submittedOn: 'Oct 24, 2023 14:30',
-    note: 'Paid via WeChat transfer. Please activate soon, want to join the weekend HSK 3 workshop!'
-  },
-  {
-    id: 'VR-8820',
-    name: 'Sarah Jones',
-    avatar: null,
-    initials: 'S',
-    status: 'Verifying',
-    tier: '6-Month Explorer',
-    submittedOn: 'Oct 24, 2023 10:15',
-    note: ''
-  }
-];
+import { useEffect, useState } from 'react';
+import { resourceApi } from '@/lib/api/endpoints/resource';
+import { usersApi } from '@/lib/api/endpoints/users';
+import type { VipUpgradeRequest, User } from '@/lib/api/types';
 
-const RECENT_LOGS = [
-  { id: 1, text: 'Marco P. activated 1-Mo VIP', time: '10 mins ago', subtext: 'Processed by Auto', status: 'success' },
-  { id: 2, text: 'Anna K. activated 6-Mo VIP', time: '1 hour ago', subtext: 'Processed by Admin (You)', status: 'success' },
-  { id: 3, text: 'Request #VR-8819 rejected', time: '2 hours ago', subtext: 'Reason: Blurry Image', status: 'error' },
-];
+// Extended type to include user details
+type EnrichedVipRequest = VipUpgradeRequest & { user?: User };
 
 export function AdminSubscriptionsFeature() {
+  const [requests, setRequests] = useState<EnrichedVipRequest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      // 1. Fetch requests
+      const res = await resourceApi.listVipRequests({ limit: 50 });
+      
+      // 2. Fetch user details for each request
+      const enrichedRequests = await Promise.all(
+        (res || []).map(async (req) => {
+          try {
+            const userRes = await usersApi.getById(req.userId);
+            return { ...req, user: userRes };
+          } catch {
+            return req;
+          }
+        })
+      );
+      setRequests(enrichedRequests);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Error loading requests');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void load();
+  }, []);
+
+  const handleReview = async (id: string, status: 'APPROVED' | 'REJECTED') => {
+    if (!confirm(`Are you sure you want to ${status.toLowerCase()} this request?`)) return;
+    try {
+      await resourceApi.reviewVipRequest(id, { status });
+      void load();
+    } catch (e) {
+      alert(e instanceof Error ? e.message : 'Error reviewing request');
+    }
+  };
+
+  const pendingCount = requests.filter(r => r.status === 'PENDING').length;
   return (
     <div className="space-y-8 pb-10 max-w-[1200px]">
       
@@ -84,13 +108,22 @@ export function AdminSubscriptionsFeature() {
           <div className="flex items-center justify-between border-b-2 border-[#b8c533] pb-3">
             <h2 className="text-xl font-bold text-[#11321e]">New Upgrade Requests</h2>
             <span className="bg-[#e4e2cd] text-[#4a5a3a] px-3 py-1 rounded-md text-xs font-bold shadow-sm">
-              3 Pending
+              {pendingCount} Pending
             </span>
           </div>
 
           <div className="space-y-6">
-            {MOCK_REQUESTS.map((req) => {
-              const isPending = req.status === 'Pending';
+            {loading && <p className="text-sm text-gray-500 py-4">Loading requests...</p>}
+            {error && <p className="text-sm text-red-500 py-4">{error}</p>}
+            
+            {!loading && !error && requests.length === 0 && (
+              <p className="text-sm text-gray-500 py-4 text-center">No upgrade requests found.</p>
+            )}
+
+            {!loading && !error && requests.map((req) => {
+              const isPending = req.status === 'PENDING';
+              const name = req.user?.fullName || 'Unknown User';
+              const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
 
               return (
                 <div key={req.id} className={`bg-white rounded-xl ${isPending ? 'shadow-[0_2px_12px_-4px_rgba(0,0,0,0.1)] border border-gray-100' : 'border-b border-gray-100 pb-6'} relative overflow-hidden`}>
@@ -104,15 +137,15 @@ export function AdminSubscriptionsFeature() {
                       <div className="flex justify-between items-start mb-6">
                         <div className="flex gap-4 items-center">
                           <div className="h-14 w-14 rounded-full bg-[#e3eadd] flex items-center justify-center overflow-hidden shrink-0 shadow-sm border border-white">
-                            {req.avatar ? (
-                              <img src={req.avatar} alt="Avatar" className="h-full w-full object-cover" />
+                            {req.user ? (
+                              <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${req.user.id}`} alt="Avatar" className="h-full w-full object-cover" />
                             ) : (
-                              <span className="text-[#11321e] text-xl font-medium">{req.initials}</span>
+                              <span className="text-[#11321e] text-xl font-medium">{initials}</span>
                             )}
                           </div>
                           <div>
-                            <h3 className="font-bold text-[#11321e] text-[22px] leading-tight">{req.name}</h3>
-                            <p className="text-[13px] text-gray-500 font-medium">Request ID: #{req.id}</p>
+                            <h3 className="font-bold text-[#11321e] text-[22px] leading-tight">{name}</h3>
+                            <p className="text-[13px] text-gray-500 font-medium">Request ID: #{req.id.substring(0,8).toUpperCase()}</p>
                           </div>
                         </div>
                         
@@ -125,11 +158,11 @@ export function AdminSubscriptionsFeature() {
                       <div className="grid grid-cols-2 gap-4 mb-6">
                         <div>
                           <p className="text-[11px] text-gray-400 font-semibold mb-1 tracking-wide">Requested Tier</p>
-                          <p className="text-[15px] font-bold text-[#11321e]">{req.tier}</p>
+                          <p className="text-[15px] font-bold text-[#11321e]">VIP</p>
                         </div>
                         <div>
                           <p className="text-[11px] text-gray-400 font-semibold mb-1 tracking-wide">Submitted On</p>
-                          <p className="text-[15px] font-medium text-gray-700">{req.submittedOn}</p>
+                          <p className="text-[15px] font-medium text-gray-700">{new Date(req.requestedAt).toLocaleDateString()}</p>
                         </div>
                       </div>
 
@@ -137,7 +170,7 @@ export function AdminSubscriptionsFeature() {
                         <div>
                           <p className="text-[11px] text-gray-400 font-semibold mb-2 tracking-wide">Notes from student</p>
                           <div className="bg-[#fbfbe9] text-[#5c6853] px-5 py-4 rounded-[16px] text-[13px] italic font-medium">
-                            "{req.note}"
+                            "{req.note || 'No notes provided.'}"
                           </div>
                         </div>
                       )}
@@ -155,10 +188,14 @@ export function AdminSubscriptionsFeature() {
                           <img src="https://images.unsplash.com/photo-1616077168712-fc6c788db4fa?w=400&q=80" alt="Proof" className="w-full h-full object-cover" />
                         </div>
                         
-                        <button className="w-full py-2 bg-transparent text-[#11321e] font-extrabold text-[15px] flex items-center justify-center gap-2 hover:bg-[#eaf3c5] rounded-full transition-colors mb-2">
+                        <button 
+                          onClick={() => handleReview(req.id, 'APPROVED')}
+                          className="w-full py-2 bg-transparent text-[#11321e] font-extrabold text-[15px] flex items-center justify-center gap-2 hover:bg-[#eaf3c5] rounded-full transition-colors mb-2">
                           <Check className="h-5 w-5" strokeWidth={3} /> Activate VIP
                         </button>
-                        <button className="text-[11px] text-red-500 font-bold hover:underline">
+                        <button 
+                          onClick={() => handleReview(req.id, 'REJECTED')}
+                          className="text-[11px] text-red-500 font-bold hover:underline">
                           Reject Request
                         </button>
                       </div>
@@ -199,17 +236,18 @@ export function AdminSubscriptionsFeature() {
             </div>
             <div className="p-6">
               <div className="space-y-6">
-                {RECENT_LOGS.map((log, index) => (
-                  <div key={log.id} className={`flex gap-4 items-start pb-6 ${index !== RECENT_LOGS.length - 1 ? 'border-b border-gray-100' : ''}`}>
-                    <div className={`mt-0.5 shrink-0 h-8 w-8 rounded-full flex items-center justify-center shadow-sm ${log.status === 'success' ? 'bg-[#a3e670]' : 'bg-[#ffc6c6]'}`}>
-                      {log.status === 'success' ? <Check className="h-4 w-4 text-[#11321e]" strokeWidth={3} /> : <X className="h-4 w-4 text-[#7a1e1e]" strokeWidth={3} />}
+                {/* Log dynamically? Leaving mock for now. */}
+                {requests.slice(0, 3).map((log, index) => (
+                  <div key={log.id} className={`flex gap-4 items-start pb-6 ${index !== 2 ? 'border-b border-gray-100' : ''}`}>
+                    <div className={`mt-0.5 shrink-0 h-8 w-8 rounded-full flex items-center justify-center shadow-sm ${log.status === 'APPROVED' ? 'bg-[#a3e670]' : log.status === 'REJECTED' ? 'bg-[#ffc6c6]' : 'bg-gray-200'}`}>
+                      {log.status === 'APPROVED' ? <Check className="h-4 w-4 text-[#11321e]" strokeWidth={3} /> : <X className="h-4 w-4 text-[#7a1e1e]" strokeWidth={3} />}
                     </div>
                     <div className="flex-1 pt-1">
-                      <p className="text-[13px] font-semibold text-[#11321e] leading-snug">{log.text}</p>
+                      <p className="text-[13px] font-semibold text-[#11321e] leading-snug">Request #{log.id.substring(0,8).toUpperCase()} {log.status.toLowerCase()}</p>
                       <div className="flex items-center gap-1.5 text-[10px] text-gray-400 mt-2 font-medium">
-                        <span>{log.time}</span>
+                        <span>{new Date(log.updatedAt).toLocaleTimeString()}</span>
                         <span className="h-1 w-1 rounded-full bg-gray-300"></span>
-                        <span>{log.subtext}</span>
+                        <span>Processed by Admin</span>
                       </div>
                     </div>
                   </div>

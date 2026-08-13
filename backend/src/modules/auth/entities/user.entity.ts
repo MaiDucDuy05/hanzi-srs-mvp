@@ -39,4 +39,13 @@ export class User extends BaseEntity {
 
   @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true })
   deletedAt: Date | null;
+
+  @Column({ name: 'ban_reason', type: 'text', nullable: true })
+  banReason: string | null;
+
+  @Column({ name: 'banned_at', type: 'timestamptz', nullable: true })
+  bannedAt: Date | null;
+
+  @Column({ name: 'banned_by', type: 'uuid', nullable: true })
+  bannedBy: string | null;
 }
