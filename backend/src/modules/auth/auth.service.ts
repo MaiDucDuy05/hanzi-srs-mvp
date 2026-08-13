@@ -9,7 +9,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
-import { Role } from '../../common/enums/user.enums';
+import { Role, UserStatus } from '../../common/enums/user.enums';
 
 @Injectable()
 export class AuthService {
@@ -34,6 +34,10 @@ export class AuthService {
   async login(dto: LoginDto): Promise<{ accessToken: string; user: User }> {
     const user = await this.userRepo.findOne({ where: { email: dto.email } });
     if (!user) throw new UnauthorizedException('Invalid email or password');
+
+    if (user.status !== UserStatus.ACTIVE) {
+      throw new UnauthorizedException('Account has been suspended');
+    }
 
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid) throw new UnauthorizedException('Invalid email or password');

@@ -17,7 +17,7 @@ export class VocabularyService {
     return paginatedResult(data, total, page, limit);
   }
   async findById(id: string) { return findOrNotFound(this.repo, id, 'Vocabulary'); }
-  async create(dto: CreateVocabularyDto) { return this.repo.save(this.repo.create(dto as any)); }
+  async create(dto: CreateVocabularyDto) { return this.repo.save(this.repo.create(dto)); }
   async update(id: string, dto: UpdateVocabularyDto) { const e = await this.findById(id); Object.assign(e, dto); return this.repo.save(e); }
   async softDelete(id: string) { await this.repo.softRemove(await this.findById(id)); }
 }

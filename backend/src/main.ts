@@ -10,7 +10,16 @@ async function bootstrap() {
   // Auth qua HttpOnly cookie (access_token) — cần credentials: true khi FE gọi
   // cross-origin (NEXT_PUBLIC_API_URL trỏ host khác). Mặc định dev: FE proxy
   // /api/v1 qua Next rewrite nên là same-origin, cookie tự gửi.
-  app.enableCors({ origin: true, credentials: true });
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5000')
+    .split(',')
+    .map((o) => o.trim());
+  app.enableCors({
+    origin: allowedOrigins,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    maxAge: 86400, // Cache preflight for 24 hours
+  });
   app.setGlobalPrefix('api/v1');
   app.use(cookieParser());
   app.useGlobalPipes(

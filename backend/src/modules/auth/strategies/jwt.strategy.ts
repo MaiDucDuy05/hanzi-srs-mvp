@@ -14,9 +14,15 @@ export interface JwtPayload {
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private configService: ConfigService) {
     const secret = configService.get<string>('JWT_SECRET');
-    if (!secret && configService.get<string>('NODE_ENV') === 'production') {
-      throw new InternalServerErrorException('JWT_SECRET is required in production');
+    const nodeEnv = configService.get<string>('NODE_ENV');
+
+    if (!secret) {
+      if (nodeEnv === 'production') {
+        throw new InternalServerErrorException('JWT_SECRET is required in production');
+      }
+      throw new InternalServerErrorException('JWT_SECRET must be set');
     }
+
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         // Auth mới qua HttpOnly cookie (FE không đọc/touch token); giữ Bearer
@@ -25,7 +31,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         ExtractJwt.fromAuthHeaderAsBearerToken(),
       ]),
       ignoreExpiration: false,
-      secretOrKey: secret || 'dev-secret',
+      secretOrKey: secret,
     });
   }
 

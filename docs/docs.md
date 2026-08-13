@@ -58,7 +58,6 @@ Xây dựng nền tảng học và luyện thi HSK (cấp 1--9) và HSKK (phần
 | :--- | :--- | :--- | :--- | :--- |
 | FR-03 | Nối từ Trung--Pinyin--Việt | Bài tập nối từ giữa ba dạng biểu diễn của một từ, có audio phát âm mẫu. | All | Cao |
 | FR-04 | Flashcard | Học viên ôn từ vựng qua flashcard và lật thẻ để xem nghĩa. | All | Cao |
-| FR-05 | Giáo viên tạo bài kiểm tra | Giáo viên tự tạo bài kiểm tra, cấu hình câu hỏi và giao bài cho lớp hoặc học sinh. | Teacher | Cao |
 | FR-08 | Luyện thi nói HSKK | Học viên ghi âm câu trả lời, nghe lại và gửi giáo viên chấm thủ công; file ghi âm lưu trên S3. | All | Cao |
 | FR-09 | Bài tập điền chỗ trống | Điền từ còn thiếu vào câu và chấm điểm tự động. | All | Cao |
 | FR-10 | Bài tập sắp xếp câu | Sắp xếp từ/cụm từ theo đúng trật tự câu và chấm tự động. | All | Cao |
@@ -96,11 +95,36 @@ Xây dựng nền tảng học và luyện thi HSK (cấp 1--9) và HSKK (phần
 
 | Mã | Tên chức năng | Mô tả | Actor | Ưu tiên |
 | :--- | :--- | :--- | :--- | :--- |
+| FR-05 | Tạo và giao bài kiểm tra | Giáo viên tạo bài kiểm tra từ ngân hàng câu hỏi, cấu hình thời gian/số lượt và giao cho lớp hoặc học sinh. | Teacher | Cao |
+| FR-06 | Quản lý ngân hàng câu hỏi | Giáo viên tạo, sửa, xoá và phân loại câu hỏi theo cấp HSK, bài học và dạng bài. | Teacher | Cao |
+| FR-07 | Đăng bài học/bài tập cho lớp | Giáo viên đăng nội dung, tài liệu hoặc bài luyện tập; cấu hình thời gian mở và hạn hoàn thành. | Teacher | Cao |
+| FR-20 | Quản lý lớp và học sinh | Giáo viên tạo lớp, thêm/xoá học sinh và xem danh sách thành viên của lớp. | Teacher | Cao |
 | FR-21 | Đề xuất bài học | Giáo viên nhận gợi ý nội dung buổi học tiếp theo dựa trên dữ liệu học sinh. | Teacher | Trung bình |
 | FR-22 | Lên lịch kiểm tra từ vựng | Tự động mở bài kiểm tra từ vựng đầu giờ theo lịch giáo viên đặt. | Teacher | Trung bình |
 | FR-23 | Theo dõi tiến trình học sinh | Giáo viên xem thống kê và sổ lỗi sai của từng học sinh trong lớp. | Teacher | Cao |
 
-### 2.6. Module: Tài liệu & Thương mại (Resources & Commerce)
+> **Tiêu chí nghiệm thu -- Module giáo viên**
+> * Giáo viên chỉ quản lý được lớp, bài đăng, câu hỏi và bài kiểm tra do mình sở hữu.
+> * Học sinh chỉ xem được nội dung đã được giao cho lớp hoặc tài khoản của mình.
+> * Kết quả bài kiểm tra được chấm phía server và hiển thị trong trang theo dõi của giáo viên.
+
+### 2.6. Module: Quản trị hệ thống (Admin Tools)
+
+| Mã | Tên chức năng | Mô tả | Actor | Ưu tiên |
+| :--- | :--- | :--- | :--- | :--- |
+| FR-27 | Quản lý người dùng và phân quyền | Admin tìm kiếm, khoá/mở tài khoản và gán vai trò Free, VIP, Teacher hoặc Admin. | Admin | Cao |
+| FR-28 | Quản lý nội dung hệ thống | Admin tạo, sửa, xuất bản, ẩn và xoá mềm nội dung HSK, từ vựng, ngữ pháp, chủ đề và câu hỏi dùng chung. | Admin | Cao |
+| FR-29 | Quản lý nội dung giáo viên | Admin xem, ẩn hoặc xoá nội dung vi phạm do giáo viên đăng; không tự ý sửa nội dung chuyên môn. | Admin | Trung bình |
+| FR-30 | Quản lý yêu cầu VIP | Admin xem yêu cầu nâng cấp, kích hoạt, gia hạn hoặc huỷ trạng thái VIP thủ công. | Admin | Cao |
+| FR-31 | Cấu hình hệ thống | Admin cấu hình giới hạn lượt Free, thời điểm reset, nhà cung cấp AI và các feature flag. | Admin | Cao |
+| FR-32 | Dashboard quản trị | Admin xem số người dùng, lượt luyện tập, lỗi hệ thống và tình trạng các tác vụ nền. | Admin | Trung bình |
+
+> **Tiêu chí nghiệm thu -- Module Admin**
+> * Tất cả API quản trị yêu cầu vai trò Admin và kiểm tra quyền phía server.
+> * Các thao tác khoá tài khoản, đổi vai trò, kích hoạt VIP và ẩn nội dung được ghi lại người thực hiện/thời gian.
+> * Admin không xem được mật khẩu, token hoặc API key dạng rõ.
+
+### 2.7. Module: Tài liệu & Thương mại (Resources & Commerce)
 
 | Mã | Tên chức năng | Mô tả | Actor | Ưu tiên |
 | :--- | :--- | :--- | :--- | :--- |
@@ -120,6 +144,11 @@ Xây dựng nền tảng học và luyện thi HSK (cấp 1--9) và HSKK (phần
 | AI tạo câu chuyện | --- | X | X | X |
 | Tài liệu PPT VIP | --- | X | X | X |
 | Tạo đề kiểm tra riêng | --- | --- | X | X |
+| Tạo câu hỏi, đăng/giao bài | --- | --- | X | X |
+| Quản lý lớp và học sinh | --- | --- | X | X |
+| Quản lý người dùng, vai trò | --- | --- | --- | X |
+| Quản lý yêu cầu VIP | --- | --- | --- | X |
+| Cấu hình hệ thống | --- | --- | --- | X |
 | Quản lý nội dung hệ thống | --- | --- | --- | X |
 
 ---
@@ -162,7 +191,7 @@ Xây dựng nền tảng học và luyện thi HSK (cấp 1--9) và HSKK (phần
 
 ### 5.2. Module Backend (NestJS)
 
-`auth / users / curriculum / vocabulary / exam / quiz / game / ai / srs / progress / resources / teacher / subscription / notification`
+`auth / users / curriculum / vocabulary / exam / quiz / game / ai / srs / progress / resources / classroom / assignment / teacher / admin / subscription / notification`
 
 ### 5.3. Ghi chú triển khai theo module
 

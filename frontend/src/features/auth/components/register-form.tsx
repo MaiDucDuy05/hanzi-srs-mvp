@@ -8,6 +8,23 @@ import { Button } from '@/features/ui/components/button';
 import { Field, Input } from '@/features/ui/components/form';
 
 /**
+ * Validate redirect URL to prevent open redirect attacks.
+ * Only allows relative paths starting with / and not // or containing protocols.
+ */
+function isValidRedirect(url: string | undefined): boolean {
+  if (!url) return false;
+  // Must start with / but not // (prevents protocol-relative URLs)
+  // Must not contain :// (prevents URLs like javascript:, https:, etc.)
+  // Must not start with /http or /https
+  return (
+    url.startsWith('/') &&
+    !url.startsWith('//') &&
+    !url.includes('://') &&
+    !url.match(/^\/https?/)
+  );
+}
+
+/**
  * Form đăng ký (client island). `next` = đường dẫn quay lại sau khi đăng ký
  * (chỉ nhận local path — chống open redirect).
  */
@@ -24,8 +41,12 @@ export function RegisterForm({ next }: { next?: string }) {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (password.length < 6) {
-      setError('Mật khẩu phải có ít nhất 6 ký tự.');
+    if (password.length < 8) {
+      setError('Mật khẩu phải có ít nhất 8 ký tự.');
+      return;
+    }
+    if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(password)) {
+      setError('Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt.');
       return;
     }
     if (password !== confirm) {
@@ -35,12 +56,11 @@ export function RegisterForm({ next }: { next?: string }) {
     setSubmitting(true);
     try {
       const user = await register(email.trim(), password, fullName.trim());
-      const target =
-        next && next.startsWith('/') && !next.startsWith('//')
-          ? next
-          : user.role === 'ADMIN'
-            ? '/admin'
-            : '/';
+      const target = isValidRedirect(next)
+        ? (next as string)
+        : user.role === 'ADMIN'
+          ? '/admin'
+          : '/';
       router.replace(target);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Đăng ký thất bại.');
@@ -69,7 +89,7 @@ export function RegisterForm({ next }: { next?: string }) {
           placeholder="you@example.com"
         />
       </Field>
-      <Field label="Mật khẩu" hint="Ít nhất 6 ký tự">
+      <Field label="Mật khẩu" hint="Ít nhất 8 ký tự, gồm chữ hoa, chữ thường, số và ký tự đặc biệt">
         <Input
           type="password"
           required
