@@ -31,7 +31,7 @@ export class SrsController {
   }
 
   /**
-   * GET /srs/progress?lessonId=X — lấy progress map cho user trong một lesson.
+   * GET /srs/progress?lessonId=X&levelId=Y&topicId=Z — lấy progress map cho user trong một lesson / level / topic.
    * Trả về object { vocabularyId: { masteryLevel, nextReviewAt, lastReviewedAt, reviewCount } }
    */
   @Get('progress')
@@ -39,10 +39,10 @@ export class SrsController {
     @Query() q: ProgressQueryDto,
     @CurrentUser('sub') userId: string,
   ) {
-    if (!q.lessonId) {
-      return ok({}, 'No lessonId provided');
+    if (!q.lessonId && !q.levelId && !q.topicId) {
+      return ok({}, 'No lessonId, levelId or topicId provided');
     }
-    const map = await this.srsService.getProgressByLesson(userId, q.lessonId);
+    const map = await this.srsService.getProgress(userId, q.lessonId, q.levelId, q.topicId);
     return ok(Object.fromEntries(map), 'Progress retrieved');
   }
 }

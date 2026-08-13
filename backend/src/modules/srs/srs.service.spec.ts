@@ -5,6 +5,7 @@ import { SrsService } from './srs.service';
 import { UserVocabularyProgress } from './entities/user-vocabulary-progress.entity';
 import { LessonContent } from '../curriculum/entities/lesson-content.entity';
 import { Vocabulary } from '../curriculum/entities/vocabulary.entity';
+import { TopicVocabulary } from '../curriculum/entities/topic-vocabulary.entity';
 import { SrsRating } from './dto/srs.dto';
 
 describe('SrsService', () => {
@@ -32,6 +33,10 @@ describe('SrsService', () => {
         {
           provide: getRepositoryToken(Vocabulary),
           useValue: {},
+        },
+        {
+          provide: getRepositoryToken(TopicVocabulary),
+          useValue: { find: jest.fn() },
         },
       ],
     }).compile();
@@ -162,7 +167,7 @@ describe('SrsService', () => {
     it('creates new progress row and saves updated SM-2 values', async () => {
       progressRepo.findOne.mockResolvedValue(null);
       // Return a fresh object (not the dto reference) so applySm2 mutates a copy.
-      progressRepo.create.mockImplementation((dto) => ({ ...dto }));
+      progressRepo.create.mockImplementation((dto: any) => ({ ...dto } as UserVocabularyProgress));
       progressRepo.save.mockImplementation((e) => Promise.resolve(e as UserVocabularyProgress));
 
       await service.submitReview('u1', { vocabularyId: 'v1', rating: SrsRating.GOOD });

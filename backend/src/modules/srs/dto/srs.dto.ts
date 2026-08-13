@@ -19,6 +19,8 @@ export class SubmitReviewDto {
 
 export class ProgressQueryDto extends PaginationQueryDto {
   @IsOptional() @IsUUID() lessonId?: string;
+  @IsOptional() @IsUUID() levelId?: string;
+  @IsOptional() @IsUUID() topicId?: string;
 }
 
 export class UserVocabProgressDto {

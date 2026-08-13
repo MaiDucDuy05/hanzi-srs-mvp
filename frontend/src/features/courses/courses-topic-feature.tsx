@@ -69,7 +69,7 @@ export function CoursesTopicFeature() {
             return (
               <button
                 key={topic.id}
-                onClick={() => router.push(`/dashboard/courses/topic/${topic.slug}`)}
+                onClick={() => router.push(`/study?topicId=${topic.id}`)}
                 className="group bg-white rounded-[28px] overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 text-left hover:shadow-[0_8px_30px_-4px_rgba(0,0,0,0.1)] hover:-translate-y-0.5 transition-all duration-200"
               >
                 {/* Gradient header */}

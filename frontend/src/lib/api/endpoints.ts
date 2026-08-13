@@ -1,6 +1,7 @@
 export * from './endpoints/auth';
 export * from './endpoints/curriculum';
 export * from './endpoints/practice';
+export * from './endpoints/srs';
 export * from './endpoints/test';
 export * from './endpoints/subscription';
 export * from './endpoints/resource';

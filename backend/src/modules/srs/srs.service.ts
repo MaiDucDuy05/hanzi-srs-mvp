@@ -15,6 +15,7 @@ import { Repository, In } from 'typeorm';
 import { UserVocabularyProgress } from './entities/user-vocabulary-progress.entity';
 import { LessonContent } from '../curriculum/entities/lesson-content.entity';
 import { Vocabulary } from '../curriculum/entities/vocabulary.entity';
+import { TopicVocabulary } from '../curriculum/entities/topic-vocabulary.entity';
 import { SubmitReviewDto, SrsRating, UserVocabProgressDto } from './dto/srs.dto';
 
 @Injectable()
@@ -26,6 +27,8 @@ export class SrsService {
     private contentRepo: Repository<LessonContent>,
     @InjectRepository(Vocabulary)
     private vocabRepo: Repository<Vocabulary>,
+    @InjectRepository(TopicVocabulary)
+    private topicVocabRepo: Repository<TopicVocabulary>,
   ) {}
 
   /**
@@ -60,20 +63,41 @@ export class SrsService {
   }
 
   /**
-   * Lấy progress map cho user trong một lesson.
-   * @param lessonId — nếu truyền, chỉ lấy vocab thuộc lesson đó.
+   * Lấy progress map cho user trong một lesson / level / topic.
+   * @param userId — user từ JWT
+   * @param lessonId — bài học cụ thể (optional)
+   * @param levelId — cấp độ HSK (optional)
+   * @param topicId — chủ đề (optional)
    * @returns Map<vocabularyId, progress>
    */
-  async getProgressByLesson(
+  async getProgress(
     userId: string,
-    lessonId: string,
+    lessonId?: string,
+    levelId?: string,
+    topicId?: string,
   ): Promise<Map<string, UserVocabProgressDto>> {
-    const contents = await this.contentRepo.find({
-      where: { lessonId },
-    });
-    const vocabIds = contents
-      .filter((c) => c.contentType === 'VOCABULARY')
-      .map((c) => c.contentId);
+    let vocabIds: string[] = [];
+
+    if (lessonId) {
+      // Vocabularies from lesson content
+      const contents = await this.contentRepo.find({
+        where: { lessonId },
+      });
+      vocabIds = contents
+        .filter((c) => c.contentType === 'VOCABULARY')
+        .map((c) => c.contentId);
+    } else if (levelId) {
+      // All vocabularies for an HSK level
+      const vocabs = await this.vocabRepo.find({ where: { levelId } });
+      vocabIds = vocabs.map((v) => v.id);
+    } else if (topicId) {
+      // Vocabularies belonging to a topic via join table
+      const topicVocabs = await this.topicVocabRepo.find({
+        where: { topicId },
+        relations: ['vocabulary'],
+      });
+      vocabIds = topicVocabs.map((tv) => tv.vocabularyId);
+    }
 
     if (vocabIds.length === 0) return new Map();
 
@@ -92,6 +116,11 @@ export class SrsService {
       });
     }
     return map;
+  }
+
+  /** @deprecated Use getProgress() directly with lessonId */
+  async getProgressByLesson(userId: string, lessonId: string) {
+    return this.getProgress(userId, lessonId);
   }
 
   /** SM-2: cập nhật mastery, interval, EF, nextReview. */

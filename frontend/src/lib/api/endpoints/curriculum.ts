@@ -32,7 +32,7 @@ export const curriculumApi = {
 
   deleteLesson: (id: string) => apiFetch(`/lessons/${id}`, { method: 'DELETE' }),
 
-  listVocabularies: (params: { levelId?: string; status?: string; search?: string; page?: number; limit?: number } = {}) =>
+  listVocabularies: (params: { levelId?: string; topicId?: string; status?: string; search?: string; page?: number; limit?: number } = {}) =>
     apiFetch<Paginated<Vocabulary>>(`/vocabularies${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
 
   getVocabulary: (id: string) => unwrap(apiFetch<Single<Vocabulary>>(`/vocabularies/${id}`)),

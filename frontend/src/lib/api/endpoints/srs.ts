@@ -14,12 +14,17 @@ export const srsApi = {
     }).then((r) => r.data),
 
   /**
-   * Lấy tiến độ SRS của user cho một bài học.
-   * @param lessonId - ID bài học để lọc progress
+   * Lấy tiến độ SRS của user cho một lesson / level / topic.
+   * @param key - lessonId | levelId | topicId
+   * @param type - 'lesson' | 'level' | 'topic'
    * @returns Record<vocabularyId, UserVocabProgress>
    */
-  getProgress: (lessonId: string): Promise<Record<string, UserVocabProgress>> =>
-    apiFetch<{ data: Record<string, UserVocabProgress> }>(
-      `/srs/progress?lessonId=${lessonId}`,
-    ).then((r) => r.data),
+  getProgress(key: string, type: 'lesson' | 'level' | 'topic'): Promise<Record<string, UserVocabProgress>> {
+    const params = type === 'lesson'
+      ? `lessonId=${key}`
+      : type === 'level'
+        ? `levelId=${key}`
+        : `topicId=${key}`;
+    return apiFetch<{ data: Record<string, UserVocabProgress> }>(`/srs/progress?${params}`).then((r) => r.data);
+  },
 };
