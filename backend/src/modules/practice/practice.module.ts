@@ -18,10 +18,11 @@ import { HanziWritingService } from './hanzi-writing.service';
 import { SubscriptionModule } from '../subscription/subscription.module';
 import { TopicVocabulary } from '../curriculum/entities/topic-vocabulary.entity';
 import { LessonContent } from '../curriculum/entities/lesson-content.entity';
+import { Vocabulary } from '../curriculum/entities/vocabulary.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([PracticeQuestion, PracticeAttempt, TopicVocabulary, LessonContent]),
+    TypeOrmModule.forFeature([PracticeQuestion, PracticeAttempt, TopicVocabulary, LessonContent, Vocabulary]),
     SubscriptionModule,
   ],
   controllers: [
