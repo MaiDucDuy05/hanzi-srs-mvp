@@ -17,10 +17,12 @@ import { UserQueryDto } from './dto/user-query.dto';
 import { Roles } from './decorators/roles.decorator';
 import { Role, UserStatus } from '../../common/enums/user.enums';
 import { CurrentUser } from './decorators/current-user.decorator';
+import { SkipThrottle } from '@nestjs/throttler';
 import type { JwtPayload } from './strategies/jwt.strategy';
 
 @Controller('users')
 @Roles(Role.ADMIN)
+@SkipThrottle({ default: true, auth: true })
 export class UserController {
   constructor(private readonly userService: UserService) {}
 

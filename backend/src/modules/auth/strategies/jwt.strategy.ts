@@ -1,8 +1,9 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import type { Request } from 'express';
+import { RedisService } from '../../redis/redis.service';
 
 export interface JwtPayload {
   sub: string; // user id
@@ -12,7 +13,10 @@ export interface JwtPayload {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private redisService: RedisService,
+  ) {
     const secret = configService.get<string>('JWT_SECRET');
     const nodeEnv = configService.get<string>('NODE_ENV');
 
@@ -25,8 +29,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        // Auth mới qua HttpOnly cookie (FE không đọc/touch token); giữ Bearer
-        // header làm fallback cho client không dùng cookie.
         (req: Request) => req?.cookies?.access_token ?? null,
         ExtractJwt.fromAuthHeaderAsBearerToken(),
       ]),
@@ -36,6 +38,10 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload): Promise<JwtPayload> {
+    const isBanned = await this.redisService.getClient().get(`banned:${payload.sub}`);
+    if (isBanned) {
+      throw new UnauthorizedException(`Tài khoản đã bị khóa. Lý do: ${isBanned}. Liên hệ admin.`);
+    }
     return { sub: payload.sub, email: payload.email, role: payload.role };
   }
 }

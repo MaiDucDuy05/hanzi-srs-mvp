@@ -1,71 +1,73 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { usersApi } from '@/lib/api/endpoints';
+import { useState } from 'react';
+import { adminUsersApi } from '@/lib/api/endpoints';
 import type { User } from '@/lib/api/types';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
-import { AdminUsersFilter } from './components/admin-users-filter';
 import { AdminUsersTable } from './components/admin-users-table';
+import { AdminUsersFilter } from './components/admin-users-filter';
+import { BanModal } from './components/modals/ban-modal';
+import { RoleChangeModal } from './components/modals/role-change-modal';
+import { UserDrawer } from './components/modals/user-drawer';
+import { useApi } from '@/lib/hooks/use-api';
 
 export function AdminUsersFeature() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // Filters & Pagination
   const [page, setPage] = useState(1);
-  const limit = 10;
+  const [limit] = useState(20);
   const [search, setSearch] = useState('');
   const [role, setRole] = useState('');
   const [status, setStatus] = useState('');
 
-  const load = async () => {
-    setLoading(true);
-    try {
-      const response = await usersApi.getAll({
+  // Modal states
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [modalType, setModalType] = useState<'NONE' | 'BAN' | 'ROLE' | 'DRAWER'>('NONE');
+
+  const { data, loading, error, refetch } = useApi(
+    async () => {
+      const response = await adminUsersApi.getAll({
         page,
         limit,
         ...(search ? { search } : {}),
         ...(role && role !== 'All Roles' ? { role: role.toUpperCase() } : {}),
         ...(status && status !== 'All Statuses' ? { status: status.toUpperCase() } : {}),
       });
-      setUsers(response.data || []);
-      setTotal(response.meta?.total || 0);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'Lỗi tải dữ liệu.');
-    } finally {
-      setLoading(false);
+      return response;
+    },
+    [page, limit, search, role, status]
+  );
+
+  const handleBanConfirm = async (reason: string) => {
+    if (!selectedUser) return;
+    if (selectedUser.status === 'BANNED') {
+      await adminUsersApi.unbanUser(selectedUser.id);
+    } else {
+      await adminUsersApi.banUser(selectedUser.id, reason);
     }
+    await refetch();
   };
 
-  useEffect(() => {
-    // Reset page to 1 if search, role, or status changes
-    setPage(1);
-  }, [search, role, status]);
+  const handleRoleConfirm = async (newRole: string, vipDays?: number) => {
+    if (!selectedUser) return;
+    await adminUsersApi.changeRole(selectedUser.id, newRole, vipDays);
+    await refetch();
+  };
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      void load();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [page, search, role, status]);
+  const openModal = (user: User, type: 'BAN' | 'ROLE' | 'DRAWER') => {
+    setSelectedUser(user);
+    setModalType(type);
+  };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to lock/delete this user?')) return;
-    try {
-      await usersApi.delete(id);
-      void load();
-    } catch (e) {
-      alert(e instanceof Error ? e.message : 'Error deleting user');
-    }
+  const closeModal = () => {
+    setModalType('NONE');
+    setTimeout(() => setSelectedUser(null), 300); // delay to clear data after transition
   };
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+      
       <AdminUsersFilter 
-        total={total}
+        total={data?.meta?.total || 0}
         search={search}
         onSearchChange={setSearch}
         role={role}
@@ -73,20 +75,36 @@ export function AdminUsersFeature() {
         status={status}
         onStatusChange={setStatus}
       />
-
-      {loading && <PageLoading label="Đang tải..." />}
-      {error && <ErrorState message={error} onRetry={() => void load()} />}
+      
+      {loading && !data && <PageLoading />}
+      {error && <ErrorState message="Failed to load users" onRetry={refetch} />}
 
       {!loading && !error && (
         <AdminUsersTable 
-          users={users}
-          total={total}
+          users={data?.data || []}
+          total={data?.meta?.total || 0}
           page={page}
           limit={limit}
           onPageChange={setPage}
-          onDelete={handleDelete}
+          onBan={(user) => openModal(user, 'BAN')}
+          onChangeRole={(user) => openModal(user, 'ROLE')}
+          onViewDetails={(user) => openModal(user, 'DRAWER')}
         />
       )}
+
+      {modalType === 'BAN' && selectedUser && (
+        <BanModal user={selectedUser} onClose={closeModal} onConfirm={handleBanConfirm} />
+      )}
+      
+      {modalType === 'ROLE' && selectedUser && (
+        <RoleChangeModal user={selectedUser} onClose={closeModal} onConfirm={handleRoleConfirm} />
+      )}
+
+      <UserDrawer 
+        user={selectedUser as User} 
+        isOpen={modalType === 'DRAWER'} 
+        onClose={closeModal} 
+      />
     </div>
   );
 }

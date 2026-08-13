@@ -15,6 +15,8 @@ import { TestModule } from './modules/test/test.module';
 import { SubscriptionModule } from './modules/subscription/subscription.module';
 import { ResourcesModule } from './modules/resources/resources.module';
 import { AudioModule } from './modules/audio/audio.module';
+import { RedisModule } from './modules/redis/redis.module';
+import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
   imports: [
@@ -46,6 +48,8 @@ import { AudioModule } from './modules/audio/audio.module';
     SubscriptionModule,
     ResourcesModule,
     AudioModule,
+    RedisModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [
