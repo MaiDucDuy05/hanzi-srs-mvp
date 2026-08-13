@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { practiceApi, subscriptionApi } from '@/lib/api/endpoints';
+import { practiceApi, subscriptionApi, hanziWritingApi } from '@/lib/api/endpoints';
 import { ApiError } from '@/lib/api/client';
-import type { DailyUsageCheck, PracticeType, SourceType, SentenceQuestion } from '@/lib/api/types';
+import type { DailyUsageCheck, PracticeType, SourceType, SentenceQuestion, HanziChar } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/auth-context';
 import { activityKey } from '@/lib/utils/constants';
 import { clearSession, loadSession, saveSession } from '@/lib/utils/storage';
@@ -29,6 +29,14 @@ export interface SentenceOrderingSession {
   startedAt: string;
 }
 
+/** PR-13 Session cho hanzi writing. */
+export interface HanziWritingSession {
+  attemptId: string;
+  characters: HanziChar[];
+  modeState: unknown;
+  startedAt: string;
+}
+
 export interface PracticeEngine<TState = unknown> {
   status: EngineStatus;
   error: string | null;
@@ -38,6 +46,8 @@ export interface PracticeEngine<TState = unknown> {
   sentenceQuestions: SentenceQuestion[];
   /** Chỉ set khi practiceType === SENTENCE_ORDERING */
   userAnswers: Record<string, string[]>;
+  /** Chỉ set khi practiceType === HANZI_WRITING */
+  hanziChars: HanziChar[];
   setUserAnswers: (answers: Record<string, string[]>) => void;
   modeState: TState | null;
   setModeState: (state: TState) => void;
@@ -67,6 +77,7 @@ export function usePracticeEngine<TState = unknown>(options: {
   const [items, setItems] = useState<QuestionItem[]>([]);
   const [sentenceQuestions, setSentenceQuestions] = useState<SentenceQuestion[]>([]);
   const [userAnswers, setUserAnswersState] = useState<Record<string, string[]>>({});
+  const [hanziChars, setHanziChars] = useState<HanziChar[]>([]);
   const [modeState, setModeState] = useState<TState | null>(null);
   const [result, setResult] = useState<ModeResult | null>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -131,6 +142,67 @@ export function usePracticeEngine<TState = unknown>(options: {
               return;
             }
             setError(e instanceof Error ? e.message : 'Không thể bắt đầu bài sắp xếp câu.');
+            setStatus('error');
+          }
+        }
+      })();
+      return () => { cancelled = true; };
+    }
+
+    // ── Hanzi Writing: dùng API riêng PR-13 ──
+    if (practiceType === 'HANZI_WRITING') {
+      // Khôi phục session
+      const savedHw = loadSession<HanziWritingSession>(sessionKey);
+      if (savedHw) {
+        attemptIdRef.current = savedHw.attemptId;
+        startedAtRef.current = savedHw.startedAt;
+        setHanziChars(savedHw.characters);
+        setModeState(savedHw.modeState as TState);
+        setStatus('running');
+        return;
+      }
+
+      let cancelled = false;
+      (async () => {
+        try {
+          const check = await subscriptionApi.checkLimit(
+            activityKey(practiceType, sourceType, sourceId),
+          );
+          if (cancelled) return;
+          if (!check.allowed) {
+            setLimit(check);
+            setStatus('limit');
+            return;
+          }
+
+          const res = await hanziWritingApi.start({
+            levelId: sourceType === 'LEVEL' ? sourceId : undefined,
+            lessonId: sourceType === 'LESSON' ? sourceId : undefined,
+            topicId: sourceType === 'TOPIC' ? sourceId : undefined,
+          });
+          if (cancelled) return;
+
+          const startedAt = new Date().toISOString();
+          attemptIdRef.current = res.attemptId;
+          startedAtRef.current = startedAt;
+          setHanziChars(res.characters);
+
+          saveSession<HanziWritingSession>(sessionKey, {
+            attemptId: res.attemptId,
+            characters: res.characters,
+            modeState: null,
+            startedAt,
+          });
+
+          setStatus('running');
+        } catch (e) {
+          if (!cancelled) {
+            if (e instanceof ApiError && e.status === 429) {
+              setLimit({ allowed: false, usedCount: 0 });
+              setStatus('limit');
+              return;
+            }
+            setError(e instanceof Error ? e.message : 'Không thể bắt đầu luyện viết chữ Hán.');
             setStatus('error');
           }
         }
@@ -213,8 +285,15 @@ export function usePracticeEngine<TState = unknown>(options: {
 
   const persistState = (next: TState) => {
     setModeState(next);
+    // Handle PersistedSession
     const saved = loadSession<PersistedSession>(sessionKey);
-    if (saved) saveSession(sessionKey, { ...saved, modeState: next });
+    if (saved) {
+      saveSession(sessionKey, { ...saved, modeState: next });
+      return;
+    }
+    // Handle HanziWritingSession
+    const savedHw = loadSession<HanziWritingSession>(sessionKey);
+    if (savedHw) saveSession(sessionKey, { ...savedHw, modeState: next });
   };
 
   const setUserAnswers = (next: Record<string, string[]>) => {
@@ -252,6 +331,20 @@ export function usePracticeEngine<TState = unknown>(options: {
           score: grading.score,
           answerData: { results: grading.results } as unknown as Record<string, unknown>,
         });
+      } else if (practiceType === 'HANZI_WRITING') {
+        // PR-13: gọi API riêng, kết quả từ client
+        const charResults = (res.answerData as { chars?: Array<{ char: string; mistakes: number; skipped: boolean }> } | undefined)?.chars ?? [];
+        const completed = await hanziWritingApi.complete(attemptIdRef.current, {
+          characters: charResults,
+          durationSeconds: duration,
+        });
+        setResult({
+          correctCount: completed.completedChars,
+          wrongCount: completed.totalMistakes,
+          moveCount: 0,
+          score: completed.completedChars,
+          answerData: res.answerData,
+        });
       } else {
         await practiceApi.submit(attemptIdRef.current, {
           score: res.score,
@@ -276,6 +369,7 @@ export function usePracticeEngine<TState = unknown>(options: {
     items,
     sentenceQuestions,
     userAnswers,
+    hanziChars,
     setUserAnswers,
     modeState,
     setModeState: persistState,

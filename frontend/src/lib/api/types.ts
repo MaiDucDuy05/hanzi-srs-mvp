@@ -461,6 +461,32 @@ export interface SentenceOrderingStartResult {
   totalQuestions: number;
 }
 
+/** PR-13: Một chữ Hán trong phiên luyện viết. */
+export interface HanziChar {
+  char: string;
+  pinyin: string;
+  meaning: string;
+  audioKey: string | null;
+  vocabularyId: string;
+}
+
+export interface HanziWritingStartResult {
+  attemptId: string;
+  characters: HanziChar[];
+  totalCharacters: number;
+}
+
+export interface HanziCharResult {
+  char: string;
+  mistakes: number;
+  skipped: boolean;
+}
+
+export interface HanziWritingCompleteResult {
+  completedChars: number;
+  totalMistakes: number;
+}
+
 export interface SystemHealth {
   healthPercent: number;
   statusLabel: HealthStatus;

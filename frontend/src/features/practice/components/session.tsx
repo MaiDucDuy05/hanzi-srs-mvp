@@ -6,14 +6,16 @@ import { FlashcardMode, type FlashcardState } from './flashcard-mode';
 import { FillBlankMode, type FillBlankState } from './fill-blank-mode';
 import { SentenceOrderingMode, type OrderingState } from './sentence-ordering-mode';
 import { LimitScreen, SummaryCard } from './session-frame';
+import { WritingMode, type WritingState } from '@/features/games/components/writing-mode';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
 import { PRACTICE_TYPE_LABELS, SOURCE_TYPE_LABELS } from '@/lib/utils/constants';
 import { formatDuration } from '@/lib/utils/format';
-import type { PracticeType, SourceType } from '@/lib/api/types';
+import type { PracticeType, SourceType, HanziChar } from '@/lib/api/types';
+import type { QuestionItem } from './practice-models';
 
 /** Trạng thái mode mà engine quản lý — mỗi chế độ có state riêng (P2-7). */
-type PracticeModeState = MatchingState | FlashcardState | FillBlankState | OrderingState;
+type PracticeModeState = MatchingState | FlashcardState | FillBlankState | OrderingState | WritingState;
 
 interface SessionProps {
   practiceType: PracticeType;
@@ -117,6 +119,45 @@ export function PracticeSession({
           onComplete={engine.handleComplete}
         />
       )}
+      {practiceType === 'HANZI_WRITING' && engine.hanziChars.length > 0 && (
+        <HanziWritingModeWrapper
+          chars={engine.hanziChars}
+          initialState={engine.modeState as WritingState | null}
+          onStateChange={engine.setModeState}
+          onComplete={engine.handleComplete}
+        />
+      )}
     </div>
+  );
+}
+
+/** PR-13: Map HanziChar[] → QuestionItem[] rồi render WritingMode. */
+function HanziWritingModeWrapper({
+  chars,
+  initialState,
+  onStateChange,
+  onComplete,
+}: {
+  chars: HanziChar[];
+  initialState: WritingState | null;
+  onStateChange: (s: WritingState) => void;
+  onComplete: (r: import('./practice-models').ModeResult) => void;
+}) {
+  // Map HanziChar → QuestionItem (WritingMode expects QuestionItem[])
+  const items: QuestionItem[] = chars.map((c) => ({
+    id: c.vocabularyId,
+    hanzi: c.char,
+    pinyin: c.pinyin,
+    meaning: c.meaning,
+    audioKey: c.audioKey,
+  }));
+
+  return (
+    <WritingMode
+      items={items}
+      initialState={initialState}
+      onStateChange={onStateChange}
+      onComplete={onComplete}
+    />
   );
 }

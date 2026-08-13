@@ -9,4 +9,5 @@ export * from './endpoints/courses';
 export * from './endpoints/speaking';
 export * from './endpoints/admin';
 export * from './endpoints/student';
+export * from './endpoints/hanzi-writing';
 export { type StartPracticeInput, type SubmitPracticeInput } from './endpoints/practice';
