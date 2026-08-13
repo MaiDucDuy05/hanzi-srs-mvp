@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import type { Request } from 'express';
-import { RedisService } from '../../redis/redis.service';
+import { UserService } from '../user.service';
 
 export interface JwtPayload {
   sub: string; // user id
@@ -15,7 +15,7 @@ export interface JwtPayload {
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
     private configService: ConfigService,
-    private redisService: RedisService,
+    private userService: UserService,
   ) {
     const secret = configService.get<string>('JWT_SECRET');
     const nodeEnv = configService.get<string>('NODE_ENV');
@@ -38,10 +38,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: JwtPayload): Promise<JwtPayload> {
-    const isBanned = await this.redisService.getClient().get(`banned:${payload.sub}`);
-    if (isBanned) {
-      throw new UnauthorizedException(`Tài khoản đã bị khóa. Lý do: ${isBanned}. Liên hệ admin.`);
+    try {
+      const user = await this.userService.findById(payload.sub);
+      if (user.status === 'BANNED') {
+        throw new UnauthorizedException(`Tài khoản đã bị khóa. Lý do: ${user.banReason || 'Không xác định'}. Liên hệ admin.`);
+      }
+    } catch (err) {
+      if (err instanceof UnauthorizedException) throw err;
+      throw new UnauthorizedException('Token không hợp lệ hoặc người dùng không tồn tại');
     }
+    
     return { sub: payload.sub, email: payload.email, role: payload.role };
   }
 }

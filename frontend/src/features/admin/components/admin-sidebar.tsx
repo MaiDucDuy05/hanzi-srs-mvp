@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   BookOpen,
@@ -26,6 +26,7 @@ const NAV_ITEMS = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { logout, user } = useAuth();
 
   return (
@@ -67,7 +68,10 @@ export function AdminSidebar() {
         </div>
         
         <button 
-          onClick={() => logout()}
+          onClick={async () => {
+            await logout();
+            router.push('/login');
+          }}
           className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-600 hover:text-forest hover:bg-light-bamboo transition-colors rounded-full"
         >
           <LogOut className="h-5 w-5" strokeWidth={2.5} />

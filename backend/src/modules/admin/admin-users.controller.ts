@@ -5,11 +5,11 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../../common/enums/user.enums';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { ChangeRoleDto } from './dto/change-role.dto';
-import { SkipThrottle } from '@nestjs/throttler';
+
 
 @Controller('admin/users')
 @Roles(Role.ADMIN)
-@SkipThrottle({ default: true, auth: true })
+
 export class AdminUsersController {
   constructor(
     private readonly adminUsersService: AdminUsersService,

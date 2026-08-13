@@ -15,7 +15,7 @@ import { TestModule } from './modules/test/test.module';
 import { SubscriptionModule } from './modules/subscription/subscription.module';
 import { ResourcesModule } from './modules/resources/resources.module';
 import { AudioModule } from './modules/audio/audio.module';
-import { RedisModule } from './modules/redis/redis.module';
+
 import { AdminModule } from './modules/admin/admin.module';
 
 @Module({
@@ -29,12 +29,12 @@ import { AdminModule } from './modules/admin/admin.module';
           {
             name: 'default',
             ttl: 60000, // 1 minute
-            limit: 100, // 100 requests per minute
+            limit: 1000, // Tăng lên 1000 requests/minute cho dev
           },
           {
             name: 'auth',
             ttl: 60000, // 1 minute
-            limit: 10, // 10 attempts per minute for auth endpoints
+            limit: 100, // Tăng lên 100 attempts/minute cho dev
           },
         ],
       }),
@@ -48,7 +48,7 @@ import { AdminModule } from './modules/admin/admin.module';
     SubscriptionModule,
     ResourcesModule,
     AudioModule,
-    RedisModule,
+
     AdminModule,
   ],
   controllers: [AppController],

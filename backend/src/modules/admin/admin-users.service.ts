@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
 import { Role, UserStatus } from '../../common/enums/user.enums';
-import { RedisService } from '../redis/redis.service';
+
 import { AuditLogService } from './audit-log.service';
 import { Subscription } from '../subscription/entities/subscription.entity';
 import { SubscriptionPlan, SubscriptionStatus } from '../../common/enums/subscription.enums';
@@ -13,7 +13,7 @@ export class AdminUsersService {
   constructor(
     @InjectRepository(User) private readonly userRepo: Repository<User>,
     @InjectRepository(Subscription) private readonly subRepo: Repository<Subscription>,
-    private readonly redisService: RedisService,
+
     private readonly auditLogService: AuditLogService,
   ) {}
 
@@ -120,6 +120,7 @@ export class AdminUsersService {
           userId: targetId,
           plan: SubscriptionPlan.VIP,
           status: SubscriptionStatus.ACTIVE,
+          startsAt: new Date(),
           expiresAt: expiresAt,
         });
         await this.subRepo.save(newSub);
@@ -161,9 +162,7 @@ export class AdminUsersService {
     user.bannedBy = adminId;
     await this.userRepo.save(user);
 
-    // Invalidate token
-    // Lưu vào Redis, TTL 7 ngày (vì JWT mặc định của hệ thống thường là 7d)
-    await this.redisService.getClient().setex(`banned:${targetId}`, 7 * 24 * 60 * 60, reason);
+    // Đã gỡ Redis: Việc ban dựa hoàn toàn vào DB thông qua JWT Strategy
 
     await this.auditLogService.logAction(
       adminId, 'BAN_USER', 'USER', targetId, ipAddress,
@@ -184,8 +183,7 @@ export class AdminUsersService {
     user.bannedBy = null;
     await this.userRepo.save(user);
 
-    // Xóa khỏi Redis blacklist
-    await this.redisService.getClient().del(`banned:${targetId}`);
+    // Đã gỡ Redis
 
     await this.auditLogService.logAction(
       adminId, 'UNBAN_USER', 'USER', targetId, ipAddress,

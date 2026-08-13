@@ -4,12 +4,12 @@ import * as DTO from './dto/resources.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../../common/enums/user.enums';
-import { SkipThrottle } from '@nestjs/throttler';
+
 
 function ok(data: any, msg: string) { return data?.meta ? { ...data, message: msg } : { data, message: msg }; }
 
 @Controller('vip-upgrade-requests')
-@SkipThrottle({ default: true, auth: true })
+
 export class VipUpgradeController {
   constructor(private readonly svc: VipUpgradeService) {}
   
