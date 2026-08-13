@@ -6,7 +6,6 @@ import {
   Delete,
   Param,
   Body,
-  Query,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -24,6 +23,7 @@ import {
 } from './dto/practice.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy';
+import { ContentStatus } from '../../common/enums/curriculum.enums';
 
 function ok(data: any, msg: string) {
   return data?.meta ? { ...data, message: msg } : { data, message: msg };
@@ -53,6 +53,13 @@ export class PracticeQuestionController {
     @Param('id') id: string,
   ) {
     await this.svc.softDelete(id);
+  }
+
+  /** POST /practice-questions/:id/publish — xuất bản câu hỏi */
+  @Post(':id/publish')
+  @HttpCode(HttpStatus.OK)
+  async publish(@Param('id') id: string) {
+    return ok(await this.svc.update(id, { status: ContentStatus.PUBLISHED }), 'Practice question published');
   }
 }
 
