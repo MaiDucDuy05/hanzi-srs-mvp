@@ -34,7 +34,7 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
 
   // Fetch SRS progress
   useEffect(() => {
-    srsApi.getProgress(lessonId).then(setProgressMap).catch(console.error);
+    srsApi.getProgress(lessonId, 'lesson').then(setProgressMap).catch(console.error);
   }, [lessonId]);
 
   // Filtered vocabularies by search
@@ -52,7 +52,7 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
   const handleComplete = () => {
     setMode('list');
     // Refresh progress after completing flashcards
-    srsApi.getProgress(lessonId).then(setProgressMap);
+    srsApi.getProgress(lessonId, 'lesson').then(setProgressMap);
   };
 
   if (mode === 'list') {

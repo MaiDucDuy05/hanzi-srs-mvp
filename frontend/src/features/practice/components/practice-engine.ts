@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { practiceApi, subscriptionApi } from '@/lib/api/endpoints';
 import { ApiError } from '@/lib/api/client';
-import type { DailyUsageCheck, PracticeType, SourceType } from '@/lib/api/types';
+import type { DailyUsageCheck, PracticeType, SourceType, SentenceQuestion } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/auth-context';
 import { activityKey } from '@/lib/utils/constants';
 import { clearSession, loadSession, saveSession } from '@/lib/utils/storage';
 import { uuid } from '@/lib/utils/format';
 import { loadSourceVocab } from './source-loader';
-import { buildQuestions, splitChars, type ModeResult, type QuestionItem } from './practice-models';
+import { buildQuestions, type ModeResult, type QuestionItem } from './practice-models';
 
 export type EngineStatus = 'loading' | 'limit' | 'error' | 'running' | 'finished';
 
@@ -20,11 +20,25 @@ export interface PersistedSession {
   startedAt: string;
 }
 
+/** Session cho sentence ordering — lưu trữ token-level items thay vì QuestionItem. */
+export interface SentenceOrderingSession {
+  attemptId: string;
+  questions: SentenceQuestion[];
+  userAnswers: Record<string, string[]>;
+  modeState: unknown;
+  startedAt: string;
+}
+
 export interface PracticeEngine<TState = unknown> {
   status: EngineStatus;
   error: string | null;
   limit: DailyUsageCheck | null;
   items: QuestionItem[];
+  /** Chỉ set khi practiceType === SENTENCE_ORDERING */
+  sentenceQuestions: SentenceQuestion[];
+  /** Chỉ set khi practiceType === SENTENCE_ORDERING */
+  userAnswers: Record<string, string[]>;
+  setUserAnswers: (answers: Record<string, string[]>) => void;
   modeState: TState | null;
   setModeState: (state: TState) => void;
   result: ModeResult | null;
@@ -51,6 +65,8 @@ export function usePracticeEngine<TState = unknown>(options: {
   const [error, setError] = useState<string | null>(null);
   const [limit, setLimit] = useState<DailyUsageCheck | null>(null);
   const [items, setItems] = useState<QuestionItem[]>([]);
+  const [sentenceQuestions, setSentenceQuestions] = useState<SentenceQuestion[]>([]);
+  const [userAnswers, setUserAnswersState] = useState<Record<string, string[]>>({});
   const [modeState, setModeState] = useState<TState | null>(null);
   const [result, setResult] = useState<ModeResult | null>(null);
   const [elapsed, setElapsed] = useState(0);
@@ -60,6 +76,69 @@ export function usePracticeEngine<TState = unknown>(options: {
 
   useEffect(() => {
     if (!user) return;
+
+    // ── Sentence Ordering: dùng API riêng PR-10 ──
+    if (practiceType === 'SENTENCE_ORDERING') {
+      let cancelled = false;
+      (async () => {
+        try {
+          // Kiểm tra giới hạn lượt PR-14
+          const check = await subscriptionApi.checkLimit(
+            activityKey(practiceType, sourceType, sourceId),
+          );
+          if (cancelled) return;
+          if (!check.allowed) {
+            setLimit(check);
+            setStatus('limit');
+            return;
+          }
+
+          // Gọi API sentence-ordering/start — tạo attempt + shuffle
+          const res = await practiceApi.sentenceOrderingStart({
+            levelId: sourceType === 'LEVEL' ? sourceId : undefined,
+            lessonId: sourceType === 'LESSON' ? sourceId : undefined,
+            topicId: sourceType === 'TOPIC' ? sourceId : undefined,
+            questionCount: 5,
+            idempotencyKey: uuid(),
+          });
+
+          if (cancelled) return;
+
+          const startedAt = new Date().toISOString();
+          attemptIdRef.current = res.attemptId;
+          startedAtRef.current = startedAt;
+          setSentenceQuestions(res.questions);
+
+          // Init userAnswers: mỗi câu bắt đầu với mảng rỗng
+          const initAnswers: Record<string, string[]> = {};
+          res.questions.forEach((q: import('@/lib/api/types').SentenceQuestion) => { initAnswers[q.questionId] = []; });
+          setUserAnswersState(initAnswers);
+
+          saveSession<SentenceOrderingSession>(sessionKey, {
+            attemptId: res.attemptId,
+            questions: res.questions,
+            userAnswers: initAnswers,
+            modeState: null,
+            startedAt,
+          });
+
+          setStatus('running');
+        } catch (e) {
+          if (!cancelled) {
+            if (e instanceof ApiError && e.status === 429) {
+              setLimit({ allowed: false, usedCount: 0 });
+              setStatus('limit');
+              return;
+            }
+            setError(e instanceof Error ? e.message : 'Không thể bắt đầu bài sắp xếp câu.');
+            setStatus('error');
+          }
+        }
+      })();
+      return () => { cancelled = true; };
+    }
+
+    // ── Các practice type khác: dùng từ vựng ──
     const saved = loadSession<PersistedSession>(sessionKey);
     if (saved) {
       attemptIdRef.current = saved.attemptId;
@@ -74,10 +153,7 @@ export function usePracticeEngine<TState = unknown>(options: {
     (async () => {
       try {
         const vocab = await loadSourceVocab(sourceType, sourceId);
-        let qs = buildQuestions(vocab);
-        if (practiceType === 'SENTENCE_ORDERING') {
-          qs = qs.filter((q) => splitChars(q.hanzi).length >= 2);
-        }
+        const qs = buildQuestions(vocab);
         if (qs.length < 2) {
           if (!cancelled) {
             setError('Nguồn này chưa đủ từ vựng để luyện tập.');
@@ -114,8 +190,6 @@ export function usePracticeEngine<TState = unknown>(options: {
         });
       } catch (e) {
         if (!cancelled) {
-          // PR-14 §3.2: backend chốt lượt atomic ngay lúc start; nếu hết lượt (429)
-          // do race với tab/thiết bị khác thì hiện limit screen thay vì lỗi chung.
           if (e instanceof ApiError && e.status === 429) {
             setLimit({ allowed: false, usedCount: 0 });
             setStatus('limit');
@@ -126,9 +200,7 @@ export function usePracticeEngine<TState = unknown>(options: {
         }
       }
     })();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [user, practiceType, sourceType, sourceId, sessionKey]);
 
   useEffect(() => {
@@ -145,6 +217,12 @@ export function usePracticeEngine<TState = unknown>(options: {
     if (saved) saveSession(sessionKey, { ...saved, modeState: next });
   };
 
+  const setUserAnswers = (next: Record<string, string[]>) => {
+    setUserAnswersState(next);
+    const saved = loadSession<SentenceOrderingSession>(sessionKey);
+    if (saved) saveSession(sessionKey, { ...saved, userAnswers: next });
+  };
+
   const handleComplete = async (res: ModeResult) => {
     if (submittingRef.current) return;
     submittingRef.current = true;
@@ -154,7 +232,27 @@ export function usePracticeEngine<TState = unknown>(options: {
       : 0;
     setElapsed(duration);
     try {
-      if (attemptIdRef.current) {
+      if (!attemptIdRef.current) return;
+
+      // ── Sentence Ordering: gọi API submit riêng PR-10 ──
+      if (practiceType === 'SENTENCE_ORDERING') {
+        const answers = Object.entries(userAnswers).map(([questionId, tokenIds]) => ({
+          questionId,
+          tokenIds,
+        }));
+        const grading = await practiceApi.sentenceOrderingSubmit(attemptIdRef.current, {
+          answers,
+          durationSeconds: duration,
+        });
+        // Override result = kết quả backend đã chấm (đáng tin cậy hơn)
+        setResult({
+          correctCount: grading.totalCorrect,
+          wrongCount: grading.totalWrong,
+          moveCount: 0,
+          score: grading.score,
+          answerData: { results: grading.results } as unknown as Record<string, unknown>,
+        });
+      } else {
         await practiceApi.submit(attemptIdRef.current, {
           score: res.score,
           correctCount: res.correctCount,
@@ -176,6 +274,9 @@ export function usePracticeEngine<TState = unknown>(options: {
     error,
     limit,
     items,
+    sentenceQuestions,
+    userAnswers,
+    setUserAnswers,
     modeState,
     setModeState: persistState,
     result,

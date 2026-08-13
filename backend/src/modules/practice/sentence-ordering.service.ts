@@ -13,6 +13,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { PracticeQuestion } from './entities/practice-question.entity';
 import { PracticeAttempt } from './entities/practice-attempt.entity';
+import { TopicVocabulary } from '../curriculum/entities/topic-vocabulary.entity';
+import { Vocabulary } from '../curriculum/entities/vocabulary.entity';
+import { SourceType } from '../../common/enums/practice.enums';
 
 export interface SentenceToken {
   id: string;
@@ -39,6 +42,8 @@ export class SentenceOrderingService {
     private qRepo: Repository<PracticeQuestion>,
     @InjectRepository(PracticeAttempt)
     private attemptRepo: Repository<PracticeAttempt>,
+    @InjectRepository(TopicVocabulary)
+    private tvRepo: Repository<TopicVocabulary>,
   ) {}
 
   /**
@@ -84,31 +89,58 @@ export class SentenceOrderingService {
   /**
    * Bắt đầu bài sắp xếp câu — shuffle tokens và lưu snapshot vào attempt.
    *
-   * @param attemptId — ID của attempt đã được tạo bởi PracticeAttemptService.start()
-   * @param count     — số câu hỏi muốn lấy (mặc định 5, max 10 theo spec)
+   * @param attemptId  — ID của attempt đã được tạo bởi PracticeAttemptService.start()
+   * @param sourceId   — lessonId / levelId / topicId (tùy sourceType)
+   * @param sourceType — LESSON / LEVEL / TOPIC
+   * @param topicId    — nếu sourceType = TOPIC, truyền topicId
+   * @param count      — số câu hỏi muốn lấy (mặc định 5, max 10)
    * @returns danh sách câu đã shuffle + snapshot để lưu vào attempt
    */
   async startSentenceOrdering(
     attemptId: string,
+    sourceId: string,
+    sourceType: SourceType,
+    topicId?: string,
     count = 5,
   ): Promise<{ questions: SentenceQuestion[]; snapshot: SentenceOrderingSnapshot }> {
     const attempt = await this.attemptRepo.findOne({ where: { id: attemptId } });
     if (!attempt) throw new NotFoundException('Attempt not found');
 
-    // Lấy câu hỏi đã xuất bản
-    const questions = await this.qRepo.find({
-      where: {
-        questionType: 'SENTENCE_ORDERING' as any,
-        status: 'PUBLISHED' as any,
-        ...(attempt.lessonId
-          ? { lessonId: attempt.lessonId }
-          : attempt.levelId
-            ? { levelId: attempt.levelId }
-            : {}),
-      },
-      order: { createdAt: 'DESC' },
-      take: Math.min(count, 10),
-    });
+    let questions: PracticeQuestion[];
+
+    if (topicId) {
+      // TOPIC: lấy vocabularyIds của topic → filter PracticeQuestion theo lessonId/levelId
+      const tvRecords = await this.tvRepo.find({ where: { topicId } });
+      const vocabIds = [...new Set(tvRecords.map((r) => r.vocabularyId))];
+
+      // Lấy vocabularies để biết levelId của chúng (vocab không có lessonId)
+      const vocabRepo = this.tvRepo.manager.getRepository(Vocabulary);
+      const vocabs = await vocabRepo.find({ where: { id: In(vocabIds) } });
+      const levelIds = [...new Set(vocabs.map((v) => v.levelId).filter(Boolean) as string[])];
+
+      questions = await this.qRepo.find({
+        where: {
+          questionType: 'SENTENCE_ORDERING' as any,
+          status: 'PUBLISHED' as any,
+          ...(levelIds.length ? { levelId: In(levelIds) } : {}),
+        } as any,
+        order: { createdAt: 'DESC' },
+        take: Math.min(count, 10),
+      });
+    } else {
+      // LESSON hoặc LEVEL
+      questions = await this.qRepo.find({
+        where: {
+          questionType: 'SENTENCE_ORDERING' as any,
+          status: 'PUBLISHED' as any,
+          ...(sourceType === SourceType.LESSON
+            ? { lessonId: sourceId }
+            : { levelId: sourceId }),
+        } as any,
+        order: { createdAt: 'DESC' },
+        take: Math.min(count, 10),
+      });
+    }
 
     // Nếu không đủ câu → dùng số câu hiện có (PR-10 §3.5)
     const snapshot: SentenceOrderingSnapshot = { questions: [], correctAnswers: {} };

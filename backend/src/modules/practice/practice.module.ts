@@ -14,10 +14,11 @@ import { SentenceOrderingController } from './sentence-ordering.controller';
 import { SentenceOrderingService } from './sentence-ordering.service';
 import { GradingService } from './grading.service';
 import { SubscriptionModule } from '../subscription/subscription.module';
+import { TopicVocabulary } from '../curriculum/entities/topic-vocabulary.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([PracticeQuestion, PracticeAttempt]),
+    TypeOrmModule.forFeature([PracticeQuestion, PracticeAttempt, TopicVocabulary]),
     SubscriptionModule,
   ],
   controllers: [

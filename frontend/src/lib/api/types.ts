@@ -419,6 +419,48 @@ export interface RevenueMetrics {
 
 export type HealthStatus = 'Optimal' | 'Degraded' | 'Critical';
 
+// ── Sentence Ordering (PR-10) ──
+export interface SentenceToken {
+  id: string;
+  text: string;
+}
+
+export interface SentenceQuestion {
+  questionId: string;
+  tokens: SentenceToken[];
+  translation: string | null;
+  explanation: string | null;
+}
+
+export interface SentenceAnswer {
+  questionId: string;
+  tokenIds: string[];
+}
+
+export interface QuestionGradingResult {
+  questionId: string;
+  isCorrect: boolean;
+  submittedOrder: string[];
+  correctOrder: string[];
+  missingTokenIds: string[];
+  extraTokenIds: string[];
+  wrongPositionIds: string[];
+}
+
+export interface SentenceGradingResult {
+  totalQuestions: number;
+  totalCorrect: number;
+  totalWrong: number;
+  score: number;
+  results: QuestionGradingResult[];
+}
+
+export interface SentenceOrderingStartResult {
+  attemptId: string;
+  questions: SentenceQuestion[];
+  totalQuestions: number;
+}
+
 export interface SystemHealth {
   healthPercent: number;
   statusLabel: HealthStatus;

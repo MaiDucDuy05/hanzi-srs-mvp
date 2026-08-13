@@ -46,15 +46,33 @@ const QUESTIONS: PQ[] = [
     accepted: ['不是'], answerType: PracticeAnswerType.HANZI,
     translation: 'Anh ấy không phải giáo viên.', explain: '不 + 是 = 不是 (phủ định danh từ).',
   },
-  // ======== SENTENCE_ORDERING (HSK2) ========
+  // ======== SENTENCE_ORDERING (HSK1 & HSK2) ========
+  {
+    type: PracticeQuestionType.SENTENCE_ORDERING, levelCode: 'HSK1', lessonMatch: /Bài 2/,
+    prompt: 'Sắp xếp thành câu đúng: 我 / 喜 / 欢 / 喝 / 茶',
+    qData: { tokens: [
+      { id: 't1', text: '我' }, { id: 't2', text: '喜' }, { id: 't3', text: '欢' }, { id: 't4', text: '喝' }, { id: 't5', text: '茶' },
+    ]},
+    aData: { orderedTokenIds: ['t1','t2','t3','t4','t5'] },
+    translation: 'Tôi thích uống trà.', explain: 'Cấu trúc S + V + O.',
+  },
   {
     type: PracticeQuestionType.SENTENCE_ORDERING, levelCode: 'HSK2', lessonMatch: /Bài 4/,
     prompt: 'Sắp xếp thành câu đúng: 你 / 学生 / 是 / 吗？',
     qData: { tokens: [
-      { id: 't1', txt: '你' }, { id: 't2', txt: '学生' }, { id: 't3', txt: '是' }, { id: 't4', txt: '吗？' },
+      { id: 't1', text: '你' }, { id: 't2', text: '学生' }, { id: 't3', text: '是' }, { id: 't4', text: '吗？' },
     ]},
     aData: { orderedTokenIds: ['t1','t3','t2','t4'] },
     translation: 'Bạn có phải học sinh không？', explain: 'Cấu trúc S + 是 + N + 吗？',
+  },
+  {
+    type: PracticeQuestionType.SENTENCE_ORDERING, levelCode: 'HSK2', lessonMatch: /Bài 4/,
+    prompt: 'Sắp xếp thành câu đúng: 昨天 / 北京 / 去 / 他 / 了',
+    qData: { tokens: [
+      { id: 't1', text: '昨天' }, { id: 't2', text: '北京' }, { id: 't3', text: '去' }, { id: 't4', text: '他' }, { id: 't5', text: '了' },
+    ]},
+    aData: { orderedTokenIds: ['t4','t1','t3','t2','t5'] }, // 他 昨天 去 北京 了
+    translation: 'Hôm qua anh ấy đã đi Bắc Kinh.', explain: 'Trạng từ chỉ thời gian thường đứng sau chủ ngữ và trước động từ.',
   },
   // ======== FILL_BLANK (HSK3) ========
   {

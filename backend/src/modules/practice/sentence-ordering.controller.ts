@@ -51,28 +51,38 @@ export class SentenceOrderingController {
     @Body() dto: StartSentenceOrderingDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    if (!dto.lessonId && !dto.levelId) {
-      throw new BadRequestException('Must provide lessonId or levelId');
+    if (!dto.lessonId && !dto.levelId && !dto.topicId) {
+      throw new BadRequestException('Must provide lessonId, levelId, or topicId');
     }
 
     const userId = user?.sub ?? '';
     const role = user?.role;
 
+    // Resolve source type and id from DTO
+    const hasLesson = !!dto.lessonId;
+    const hasLevel = !!dto.levelId;
+    const hasTopic = !!dto.topicId;
+    const sourceType = hasLesson ? SourceType.LESSON : hasLevel ? SourceType.LEVEL : SourceType.TOPIC;
+    const sourceId = dto.lessonId ?? dto.levelId ?? dto.topicId!;
+
     // Tạo attempt generic trước (consume lượt PR-14)
-    const attempt = await this.attemptService.start(
+    const attempt = (await this.attemptService.start(
       {
         practiceType: PracticeType.SENTENCE_ORDERING,
-        sourceType: dto.lessonId ? SourceType.LESSON : SourceType.LEVEL,
-        sourceId: dto.lessonId ?? dto.levelId!,
+        sourceType,
+        sourceId,
         idempotencyKey: dto.idempotencyKey,
       },
       userId,
       role,
-    );
+    )) as import('../practice/entities/practice-attempt.entity').PracticeAttempt;
 
     // Shuffle tokens + lưu snapshot
     const { questions, snapshot } = await this.soService.startSentenceOrdering(
       attempt.id,
+      sourceId,
+      sourceType,
+      dto.topicId ?? undefined,
       dto.questionCount ?? 5,
     );
 

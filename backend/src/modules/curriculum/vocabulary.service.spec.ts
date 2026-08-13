@@ -99,8 +99,8 @@ describe('VocabularyService', () => {
       expect(result.meta.page).toBe(3);
       expect(result.meta.limit).toBe(10);
       expect(result.meta.totalPages).toBe(10);
-      expect(mockQb.skip).toHaveBeenCalledWith(20));
-      expect(mockQb.take).toHaveBeenCalledWith(10));
+      expect(mockQb.skip).toHaveBeenCalledWith(20);
+      expect(mockQb.take).toHaveBeenCalledWith(10);
     });
 
     it('should filter by topicId using innerJoin', async () => {

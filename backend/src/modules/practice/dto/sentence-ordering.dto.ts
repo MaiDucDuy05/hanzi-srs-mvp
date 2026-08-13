@@ -9,6 +9,7 @@ import { IsArray, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validat
 export class StartSentenceOrderingDto {
   @IsOptional() @IsUUID() lessonId?: string | null;
   @IsOptional() @IsUUID() levelId?: string | null;
+  @IsOptional() @IsUUID() topicId?: string | null;
   @IsOptional() @IsInt() @Min(1) questionCount?: number;
   @IsOptional() @IsString() idempotencyKey?: string | null;
 }

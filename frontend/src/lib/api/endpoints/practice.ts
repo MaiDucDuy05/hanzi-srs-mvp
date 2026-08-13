@@ -1,5 +1,16 @@
 import { apiFetch, unwrap } from '../client';
-import type { Paginated, Single, PracticeQuestion, PracticeAttempt, PracticeType, SourceType } from '../types';
+import type {
+  Paginated,
+  Single,
+  PracticeQuestion,
+  PracticeAttempt,
+  PracticeType,
+  SourceType,
+  SentenceQuestion,
+  SentenceAnswer,
+  SentenceGradingResult,
+  SentenceOrderingStartResult,
+} from '../types';
 import { toQuery } from './utils';
 
 export interface StartPracticeInput {
@@ -43,4 +54,44 @@ export const practiceApi = {
 
   submit: (id: string, data: SubmitPracticeInput) =>
     unwrap(apiFetch<Single<PracticeAttempt>>(`/practice-attempts/${id}`, { method: 'PATCH', body: JSON.stringify(data) })),
+
+  // ── Sentence Ordering (PR-10) ──
+
+  /**
+   * POST /practice/sentence-ordering/start
+   * Tạo attempt + shuffle tokens (Fisher-Yates), trả shuffled tokens.
+   * Trả về attemptId + danh sách câu hỏi đã xáo trộn.
+   */
+  sentenceOrderingStart: (params: {
+    levelId?: string;
+    lessonId?: string;
+    topicId?: string;
+    questionCount?: number;
+    idempotencyKey?: string;
+  }) =>
+    unwrap(
+      apiFetch<Single<SentenceOrderingStartResult>>('/practice/sentence-ordering/start', {
+        method: 'POST',
+        body: JSON.stringify(params),
+      }),
+    ),
+
+  /**
+   * POST /practice/sentence-ordering/:attemptId/submit
+   * Gửi mảng { questionId, tokenIds[] } → backend chấm điểm.
+   */
+  sentenceOrderingSubmit: (attemptId: string, data: { answers: SentenceAnswer[]; durationSeconds: number }) =>
+    unwrap(
+      apiFetch<Single<SentenceGradingResult>>(`/practice/sentence-ordering/${attemptId}/submit`, {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+    ),
+
+  /**
+   * POST /practice-questions/:id/publish
+   * Xuất bản câu hỏi sắp xếp câu (admin).
+   */
+  publishQuestion: (id: string) =>
+    unwrap(apiFetch<Single<PracticeQuestion>>(`/practice-questions/${id}/publish`, { method: 'POST' })),
 };

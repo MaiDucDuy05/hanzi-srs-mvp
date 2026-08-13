@@ -109,11 +109,11 @@ export function PracticeSession({
           onComplete={engine.handleComplete}
         />
       )}
-      {practiceType === 'SENTENCE_ORDERING' && (
+      {practiceType === 'SENTENCE_ORDERING' && engine.sentenceQuestions.length > 0 && (
         <SentenceOrderingMode
-          items={engine.items}
+          questions={engine.sentenceQuestions}
           initialState={engine.modeState as OrderingState | null}
-          onStateChange={engine.setModeState}
+          onAnswersChange={engine.setUserAnswers}
           onComplete={engine.handleComplete}
         />
       )}
