@@ -25,13 +25,18 @@ export function LoginForm({ next }: { next?: string }) {
     setSubmitting(true);
     try {
       const user = await login(email.trim(), password);
+      console.log('Login success:', user);
       const target =
-        next && next.startsWith('/') && !next.startsWith('//')
-          ? next
-          : user.role === 'ADMIN'
-            ? '/admin'
-            : '/';
+        user.role === 'ADMIN'
+          ? '/admin'
+          : user.role === 'TEACHER'
+            ? '/teacher'
+            : next && next.startsWith('/') && !next.startsWith('//')
+              ? next
+              : '/';
+      console.log('Navigating to target:', target);
       router.replace(target);
+      console.log('Router.replace called');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Đăng nhập thất bại.');
     } finally {

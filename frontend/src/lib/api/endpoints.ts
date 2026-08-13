@@ -6,4 +6,5 @@ export * from './endpoints/subscription';
 export * from './endpoints/resource';
 export * from './endpoints/courses';
 export * from './endpoints/speaking';
+export * from './endpoints/users';
 export { type StartPracticeInput, type SubmitPracticeInput } from './endpoints/practice';
