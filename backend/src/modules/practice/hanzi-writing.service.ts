@@ -91,7 +91,12 @@ export class HanziWritingService {
       }
     }
 
-    return Array.from(charMap.values());
+    const resolved = Array.from(charMap.values());
+    if (dto.chars && dto.chars.length > 0) {
+      const allowed = new Set(dto.chars);
+      return resolved.filter((c) => allowed.has(c.char));
+    }
+    return resolved;
   }
 
   /**

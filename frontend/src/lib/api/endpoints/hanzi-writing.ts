@@ -8,9 +8,26 @@ import type {
   HanziWritingStartResult,
   HanziWritingCompleteResult,
   HanziCharResult,
+  HanziChar,
 } from '../types';
 
 export const hanziWritingApi = {
+  /**
+   * POST /practice/hanzi-writing/preview
+   * Xem trước danh sách chữ Hán (không tạo attempt).
+   */
+  preview: (params: {
+    levelId?: string;
+    lessonId?: string;
+    topicId?: string;
+  }) =>
+    unwrap(
+      apiFetch<Single<HanziChar[]>>('/practice/hanzi-writing/preview', {
+        method: 'POST',
+        body: JSON.stringify(params),
+      }),
+    ),
+
   /**
    * POST /practice/hanzi-writing/start
    * Tạo phiên luyện viết + trả danh sách chữ Hán.
@@ -19,6 +36,7 @@ export const hanziWritingApi = {
     levelId?: string;
     lessonId?: string;
     topicId?: string;
+    chars?: string[];
   }) =>
     unwrap(
       apiFetch<Single<HanziWritingStartResult>>('/practice/hanzi-writing/start', {

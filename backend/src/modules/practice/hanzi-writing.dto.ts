@@ -9,6 +9,9 @@ export class StartHanziWritingDto {
   @IsOptional() @IsUUID() levelId?: string | null;
   @IsOptional() @IsUUID() lessonId?: string | null;
   @IsOptional() @IsUUID() topicId?: string | null;
+
+  @IsOptional() @IsArray() @IsString({ each: true })
+  chars?: string[];
 }
 
 /**

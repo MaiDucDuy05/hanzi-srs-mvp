@@ -10,16 +10,21 @@ import type { PracticeType, SourceType } from '@/lib/api/types';
 
 interface PageProps {
   params: Promise<{ attemptId: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default function HanziWritingPracticePage({ params }: PageProps) {
+export default function HanziWritingPracticePage({ params, searchParams }: PageProps) {
   const { attemptId } = use(params);
+  const search = use(searchParams);
   const router = useRouter();
+
+  const queryString = new URLSearchParams(search as Record<string, string>).toString();
+  const backUrl = queryString ? `/games/stroke?${queryString}` : '/games/stroke';
 
   return (
     <PracticeSessionLoader
       attemptId={attemptId}
-      onExit={() => router.push('/practice/hanzi-writing')}
+      onExit={() => router.push(backUrl)}
     />
   );
 }
@@ -32,9 +37,11 @@ function PracticeSessionLoader({
   onExit: () => void;
 }) {
   const [attempt, setAttempt] = useState<{
+    id: string;
     practiceType: string;
     sourceType: string;
     sourceId: string;
+    questionData?: any;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,6 +80,8 @@ function PracticeSessionLoader({
       sourceId={attempt.sourceId}
       sourceLabel={sourceLabel}
       onExit={onExit}
+      attemptId={attempt.id}
+      hanziChars={attempt.questionData?.characters}
     />
   );
 }

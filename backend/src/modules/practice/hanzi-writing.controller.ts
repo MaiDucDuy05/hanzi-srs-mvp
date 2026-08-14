@@ -33,6 +33,25 @@ export class HanziWritingController {
   ) {}
 
   /**
+   * POST /practice/hanzi-writing/preview
+   * Lấy trước danh sách chữ Hán mà không tạo session (không tốn attempt).
+   */
+  @Post('preview')
+  @HttpCode(HttpStatus.OK)
+  async preview(@Body() dto: StartHanziWritingDto) {
+    if (!dto.levelId && !dto.lessonId && !dto.topicId) {
+      throw new BadRequestException('Must provide levelId, lessonId, or topicId');
+    }
+
+    const chars = await this.hwService.resolveChars(dto);
+
+    return {
+      data: chars as HanziChar[],
+      message: 'Hanzi characters preview retrieved',
+    };
+  }
+
+  /**
    * POST /practice/hanzi-writing/start
    *
    * 1. Resolve source → characters from vocabulary.
@@ -52,7 +71,6 @@ export class HanziWritingController {
 
     const userId = user?.sub ?? '';
     const role = user?.role;
-
     // Resolve characters from vocabulary source
     const chars = await this.hwService.resolveChars(dto);
     if (chars.length === 0) {

@@ -67,8 +67,10 @@ export function usePracticeEngine<TState = unknown>(options: {
   sourceType: SourceType;
   sourceId: string;
   sessionKey: string;
+  initialAttemptId?: string;
+  initialHanziChars?: HanziChar[];
 }): PracticeEngine<TState> {
-  const { practiceType, sourceType, sourceId, sessionKey } = options;
+  const { practiceType, sourceType, sourceId, sessionKey, initialAttemptId, initialHanziChars } = options;
   const { user } = useAuth();
 
   const [status, setStatus] = useState<EngineStatus>('loading');
@@ -151,7 +153,36 @@ export function usePracticeEngine<TState = unknown>(options: {
 
     // ── Hanzi Writing: dùng API riêng PR-13 ──
     if (practiceType === 'HANZI_WRITING') {
-      // Khôi phục session
+      if (initialAttemptId && initialHanziChars) {
+        const savedHw = loadSession<HanziWritingSession>(sessionKey);
+        // Khôi phục session nếu trùng attemptId
+        if (savedHw && savedHw.attemptId === initialAttemptId) {
+          attemptIdRef.current = savedHw.attemptId;
+          startedAtRef.current = savedHw.startedAt;
+          setHanziChars(savedHw.characters);
+          setModeState(savedHw.modeState as TState);
+          setStatus('running');
+          return;
+        }
+
+        // Nếu chưa có session (hoặc attemptId mới), tạo session mới từ dữ liệu ban đầu
+        const startedAt = new Date().toISOString();
+        attemptIdRef.current = initialAttemptId;
+        startedAtRef.current = startedAt;
+        setHanziChars(initialHanziChars);
+
+        saveSession<HanziWritingSession>(sessionKey, {
+          attemptId: initialAttemptId,
+          characters: initialHanziChars,
+          modeState: null,
+          startedAt,
+        });
+
+        setStatus('running');
+        return;
+      }
+
+      // Fallback: nếu gọi mà không truyền initialAttemptId (không khuyên dùng cho Hanzi Writing nữa)
       const savedHw = loadSession<HanziWritingSession>(sessionKey);
       if (savedHw) {
         attemptIdRef.current = savedHw.attemptId;
