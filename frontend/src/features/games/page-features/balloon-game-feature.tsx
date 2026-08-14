@@ -26,9 +26,8 @@ const MOCK_ITEMS: QuestionItem[] = [
 export function BalloonGameFeature() {
   return (
     <div className="flex-1 flex flex-col w-full h-[calc(100vh-80px)] min-h-[600px] relative z-10">
-      <BalloonMode 
-        items={MOCK_ITEMS} 
-        onStateChange={() => {}}
+      <BalloonMode
+        items={MOCK_ITEMS}
         onComplete={(res) => {
           console.log('Game complete!', res);
         }}
