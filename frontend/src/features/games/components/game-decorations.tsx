@@ -1,10 +1,10 @@
 'use client';
-
 /**
  * Decorative backgrounds for game components.
  * Extracted to avoid cluttering game logic files.
  */
 import { cn } from '@/lib/utils/cn';
+import React from 'react';
 
 // ── Bamboo Grove ──────────────────────────────────────────────
 
@@ -119,7 +119,7 @@ const LEAF_SRCS = [
   '/assets/nature/leaves/leaf_14.svg',
 ];
 
-export function FloatingLeaves({ count = 8 }: { count?: number }) {
+export const FloatingLeaves = React.memo(function FloatingLeaves({ count = 8 }: { count?: number }) {
   return (
     <>
       {Array.from({ length: count }, (_, i) => (
@@ -127,24 +127,22 @@ export function FloatingLeaves({ count = 8 }: { count?: number }) {
           key={i}
           src={LEAF_SRCS[i % LEAF_SRCS.length]}
           alt=""
-          className="pointer-events-none absolute opacity-20 animate-pulse"
+          className="pointer-events-none absolute opacity-20"
           style={{
             width: 28,
             height: 28,
             left: `${(i * 13 + 7) % 95}%`,
             top: `${(i * 17 + 5) % 85}%`,
-            animationDelay: `${i * 0.8}s`,
-            animationDuration: `${6 + (i % 4)}s`,
           }}
         />
       ))}
     </>
   );
-}
+});
 
 // ── Panda mascot ──────────────────────────────────────────────
 
-export const PANDA_LEFT = '/assets/illustrations/panda/panda-sprite.svg';
+export const PANDA_LEFT = '/assets/illustrations/panda/panda_shoot.png';
 export const PANDA_BALANCE = '/assets/illustrations/panda/panda-holding-ball.svg';
 export const PANDA_EATING = '/assets/illustrations/panda/panda-eating.svg';
 

@@ -21,7 +21,7 @@ interface GameHUDProps {
   onPause: () => void; onToggleFs: () => void;
 }
 
-export function GameHUD({ hp, maxHp, score, combo, showCombo, isFullscreen, isPaused, onPause, onToggleFs }: GameHUDProps) {
+export const GameHUD = React.memo(function GameHUD({ hp, maxHp, score, combo, showCombo, isFullscreen, isPaused, onPause, onToggleFs }: GameHUDProps) {
   return (
     <div className="absolute top-0 left-0 right-0 z-10 flex items-start justify-between px-5 py-4">
       <div className="flex gap-1.5">
@@ -34,7 +34,7 @@ export function GameHUD({ hp, maxHp, score, combo, showCombo, isFullscreen, isPa
             <div className="text-xs font-semibold text-emerald-500 tracking-wide">ĐIỂM</div>
           </div>
           {showCombo && combo > 1 && (
-            <div className="absolute right-0 top-16 animate-bounce pointer-events-none whitespace-nowrap">
+            <div className="absolute right-0 top-16 pointer-events-none whitespace-nowrap animate-in zoom-in fade-in slide-in-from-top-4 duration-300 fill-mode-forwards">
               <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-white font-black text-xl px-4 py-1.5 rounded-full shadow-lg">
                 {combo}x Combo! 🔥
               </span>
@@ -52,9 +52,9 @@ export function GameHUD({ hp, maxHp, score, combo, showCombo, isFullscreen, isPa
       </div>
     </div>
   );
-}
+});
 
-export function ProgressBar({ correct, total }: { correct: number; total: number }) {
+export const ProgressBar = React.memo(function ProgressBar({ correct, total }: { correct: number; total: number }) {
   const pct = Math.min(100, (correct / Math.max(total, 1)) * 100);
   return (
     <div className="absolute top-16 left-4 right-4 z-10">
@@ -64,4 +64,4 @@ export function ProgressBar({ correct, total }: { correct: number; total: number
       <div className="text-xs text-emerald-700/70 font-semibold mt-0.5 ml-1">{correct} / {total} từ</div>
     </div>
   );
-}
+});

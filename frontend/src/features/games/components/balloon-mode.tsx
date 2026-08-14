@@ -5,7 +5,7 @@ import type { QuestionItem, ModeResult } from '../../practice/components/practic
 import { ShooterSec, type ShooterCtx } from '../sec/shooter-sec';
 import { Button } from '@/features/ui/components/button';
 import { cn } from '@/lib/utils/cn';
-import { BambooBackground, FloatingLeaves, PANDA_LEFT, PANDA_BALANCE, PANDA_EATING } from './game-decorations';
+import { FloatingLeaves, PANDA_LEFT, PANDA_BALANCE, PANDA_EATING } from './game-decorations';
 import { GameHUD, ProgressBar } from './balloon-hud';
 import { Balloon, BulletsLayer, ParticlesLayer } from './balloon-game-elements';
 
@@ -53,17 +53,95 @@ interface BalloonModeProps {
   onComplete: (result: ModeResult) => void;
 }
 
+const GameCanvas = React.memo(function GameCanvas({ secRef }: { secRef: React.RefObject<ShooterSec | null> }) {
+  const [, setTick] = useState(0);
+  const lastTimeRef = useRef<number>(0);
+
+  useEffect(() => {
+    let raf: number;
+    const loop = (time: number) => {
+      if (!lastTimeRef.current) lastTimeRef.current = time;
+      const dt = time - lastTimeRef.current;
+      lastTimeRef.current = time;
+
+      if (secRef.current) {
+        const state = secRef.current.getState();
+        if (state.phase === 'playing') secRef.current.tick(dt);
+      }
+
+      setTick(t => t + 1);
+      const phase = secRef.current?.getState().phase;
+      if (phase !== 'gameover' && phase !== 'completed') {
+        raf = requestAnimationFrame(loop);
+      }
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [secRef]);
+
+  const ctx = secRef.current?.getState();
+  if (!ctx) return null;
+
+  return (
+    <>
+      {ctx.targets.map(t => <Balloon key={t.id} target={t} />)}
+      <BulletsLayer bullets={ctx.bullets} />
+      <ParticlesLayer particles={ctx.particles} />
+    </>
+  );
+});
+
+const GameHUDLayer = React.memo(function GameHUDLayer({ secRef, totalItems, toggleFullscreen, isFullscreen }: { secRef: React.RefObject<ShooterSec | null>, totalItems: number, toggleFullscreen: () => void, isFullscreen: boolean }) {
+  const [ctx, setCtx] = useState<ShooterCtx | null>(null);
+  const [showCombo, setShowCombo] = useState(false);
+  const comboTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!secRef.current) return;
+    const update = () => setCtx({ ...secRef.current!.getState() });
+    const u1 = secRef.current.onScore.addListener(update);
+    const u2 = secRef.current.onDamage.addListener(update);
+    const u3 = secRef.current.onWrongKey.addListener(update);
+    update();
+    return () => { u1(); u2(); u3(); };
+  }, [secRef]);
+
+  useEffect(() => {
+    if (ctx && ctx.combo > 1) {
+      setShowCombo(true);
+      if (comboTimerRef.current) clearTimeout(comboTimerRef.current);
+      comboTimerRef.current = setTimeout(() => setShowCombo(false), 1500);
+    } else {
+      setShowCombo(false);
+    }
+  }, [ctx?.combo]);
+
+  const handlePauseToggle = useCallback(() => {
+    if (!secRef.current) return;
+    const state = secRef.current.getState();
+    if (state.phase === 'playing') secRef.current.pause();
+    else if (state.phase === 'paused') secRef.current.resume();
+    setCtx({ ...secRef.current.getState() });
+  }, [secRef]);
+
+  if (!ctx) return null;
+
+  return (
+    <>
+      <GameHUD hp={ctx.hp} maxHp={ctx.maxHp} score={ctx.score} combo={ctx.combo} showCombo={showCombo} isFullscreen={isFullscreen} isPaused={ctx.phase === 'paused'} onPause={handlePauseToggle} onToggleFs={toggleFullscreen} />
+      <ProgressBar correct={ctx.correctKeystrokes ?? 0} total={totalItems} />
+    </>
+  );
+});
+
 export function BalloonMode({ items, onComplete }: BalloonModeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const secRef = useRef<ShooterSec | null>(null);
-  const rafRef = useRef<number | null>(null);
-  const lastTimeRef = useRef<number>(0);
-  const comboTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [ctx, setCtx] = useState<ShooterCtx | null>(null);
   const [flashError, setFlashError] = useState(false);
-  const [showCombo, setShowCombo] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const [gameOverStats, setGameOverStats] = useState<{score: number, correct: number, maxCombo: number} | null>(null);
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) containerRef.current?.requestFullscreen().catch(console.error);
@@ -80,31 +158,15 @@ export function BalloonMode({ items, onComplete }: BalloonModeProps) {
   useEffect(() => {
     const sec = new ShooterSec([...items]);
     secRef.current = sec;
+    setIsReady(true);
     const unsubGameOver = sec.onGameOver.addListener((res) => {
       onComplete({ correctCount: res.correct, wrongCount: res.wrong, moveCount: res.correct + res.wrong, score: res.score, answerData: { maxCombo: res.maxCombo } });
+      setGameOverStats({ score: res.score, correct: res.correct, maxCombo: res.maxCombo });
     });
     const unsubWrongKey = sec.onWrongKey.addListener(() => { setFlashError(true); setTimeout(() => setFlashError(false), 250); });
     sec.start();
-    setCtx(sec.getState());
     return () => { unsubGameOver(); unsubWrongKey(); sec.destroy(); };
   }, [items, onComplete]);
-
-  // Game loop
-  useEffect(() => {
-    const loop = (time: number) => {
-      if (!lastTimeRef.current) lastTimeRef.current = time;
-      const dt = time - lastTimeRef.current;
-      lastTimeRef.current = time;
-      if (secRef.current) {
-        const state = secRef.current.getState();
-        if (state.phase === 'playing') secRef.current.tick(dt);
-        if (state.phase !== 'gameover' && state.phase !== 'completed') rafRef.current = requestAnimationFrame(loop);
-        setCtx({ ...secRef.current.getState() });
-      }
-    };
-    rafRef.current = requestAnimationFrame(loop);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
-  }, []);
 
   // Keyboard
   useEffect(() => {
@@ -113,7 +175,6 @@ export function BalloonMode({ items, onComplete }: BalloonModeProps) {
         const state = secRef.current.getState();
         if (state.phase === 'playing') secRef.current.pause();
         else if (state.phase === 'paused') secRef.current.resume();
-        setCtx({ ...secRef.current.getState() });
         return;
       }
       if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && secRef.current) secRef.current.handleKeystroke(e.key);
@@ -122,39 +183,23 @@ export function BalloonMode({ items, onComplete }: BalloonModeProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const handlePauseToggle = useCallback(() => {
-    if (!secRef.current) return;
-    const state = secRef.current.getState();
-    if (state.phase === 'playing') secRef.current.pause();
-    else if (state.phase === 'paused') secRef.current.resume();
-    setCtx({ ...secRef.current.getState() });
-  }, []);
-
-  useEffect(() => {
-    if (ctx && ctx.combo > 1) {
-      setShowCombo(true);
-      if (comboTimerRef.current) clearTimeout(comboTimerRef.current);
-      comboTimerRef.current = setTimeout(() => setShowCombo(false), 1500);
-    } else {
-      setShowCombo(false);
-    }
-  }, [ctx?.combo]);
-
-  if (!ctx) return null;
-  if (ctx.phase === 'gameover') {
-    return <GameOverScreen score={ctx.score} correctKeystrokes={ctx.correctKeystrokes ?? 0} maxCombo={ctx.maxCombo} />;
+  if (gameOverStats) {
+    return <GameOverScreen score={gameOverStats.score} correctKeystrokes={gameOverStats.correct} maxCombo={gameOverStats.maxCombo} />;
   }
 
   return (
     <div ref={containerRef} className={cn('relative w-full h-full overflow-hidden select-none bg-black', flashError && 'ring-4 ring-rose-400 ring-inset')}>
-      <BambooBackground />
+      <img src="/assets/game/backgroung/backgroung_game_shoot.png" alt="Background" className="absolute inset-0 w-full h-full object-cover pointer-events-none z-0" />
       <FloatingLeaves count={8} />
-      <GameHUD hp={ctx.hp} maxHp={ctx.maxHp} score={ctx.score} combo={ctx.combo} showCombo={showCombo} isFullscreen={isFullscreen} isPaused={ctx.phase === 'paused'} onPause={handlePauseToggle} onToggleFs={toggleFullscreen} />
-      <ProgressBar correct={ctx.correctKeystrokes ?? 0} total={items.length} />
-      {ctx.targets.map(t => <Balloon key={t.id} target={t} />)}
-      <BulletsLayer bullets={ctx.bullets} />
-      <ParticlesLayer particles={ctx.particles} />
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center pointer-events-none">
+      
+      {isReady && (
+        <>
+          <GameHUDLayer secRef={secRef} totalItems={items.length} toggleFullscreen={toggleFullscreen} isFullscreen={isFullscreen} />
+          <GameCanvas secRef={secRef} />
+        </>
+      )}
+      
+      <div className="absolute bottom-[8%] left-1/2 -translate-x-1/2 z-20 flex flex-col items-center pointer-events-none">
         <img src={PANDA_LEFT} alt="Panda" className="w-36 h-36 object-contain drop-shadow-lg" />
       </div>
     </div>
