@@ -25,17 +25,14 @@ const MOCK_ITEMS: QuestionItem[] = [
  
 export function BalloonGameFeature() {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center w-full max-w-5xl mx-auto px-4 py-6 sm:py-8 relative z-10 h-full">
-      <h1 className="text-3xl font-black text-[#215b3b] font-heading mb-8 drop-shadow-sm">Pinyin Balloon</h1>
-      <div className="w-full max-w-2xl bg-white p-6 rounded-3xl shadow-sm border-4 border-[#eef7e9]">
-        <BalloonMode 
-          items={MOCK_ITEMS} 
-          onStateChange={() => {}}
-          onComplete={(res) => {
-            console.log('Game complete!', res);
-          }}
-        />
-      </div>
+    <div className="flex-1 flex flex-col w-full h-[calc(100vh-80px)] min-h-[600px] relative z-10">
+      <BalloonMode 
+        items={MOCK_ITEMS} 
+        onStateChange={() => {}}
+        onComplete={(res) => {
+          console.log('Game complete!', res);
+        }}
+      />
     </div>
   );
 }
