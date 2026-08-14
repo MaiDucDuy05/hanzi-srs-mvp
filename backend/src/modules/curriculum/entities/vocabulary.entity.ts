@@ -30,6 +30,9 @@ export class Vocabulary extends BaseEntity {
   @Column({ type: 'varchar', length: 20, default: ContentStatus.DRAFT })
   status: ContentStatus;
 
+  @Column({ name: 'is_active', type: 'boolean', default: true })
+  isActive: boolean;
+
   @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true })
   deletedAt: Date | null;
 

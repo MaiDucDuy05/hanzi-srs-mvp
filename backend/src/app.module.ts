@@ -19,6 +19,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { SrsModule } from './modules/srs/srs.module';
 import { LessonSelectionModule } from './modules/lesson-selection/lesson-selection.module';
 import { StudentModule } from './modules/student/student.module';
+import { AdminContentModule } from './modules/admin-content/admin-content.module';
 
 
 @Module({
@@ -55,6 +56,7 @@ import { StudentModule } from './modules/student/student.module';
     SrsModule,
     LessonSelectionModule,
     StudentModule,
+    AdminContentModule,
   ],
   controllers: [AppController],
   providers: [

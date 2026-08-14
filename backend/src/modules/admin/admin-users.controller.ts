@@ -5,6 +5,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../../common/enums/user.enums';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { ChangeRoleDto } from './dto/change-role.dto';
+import { CreateAdminUserDto } from './dto/create-admin-user.dto';
 
 
 @Controller('admin/users')
@@ -26,6 +27,16 @@ export class AdminUsersController {
   async getAuditLogs(@Query() query: any) {
     const result = await this.auditLogService.getLogs(query);
     return { ...result, message: 'Audit logs retrieved successfully' };
+  }
+
+  @Post()
+  async createUser(
+    @Body() dto: CreateAdminUserDto,
+    @CurrentUser() admin: any,
+    @Ip() ip: string
+  ) {
+    const result = await this.adminUsersService.createUser(dto, admin.sub, ip);
+    return { data: result, message: 'User created successfully' };
   }
 
   @Get(':id')

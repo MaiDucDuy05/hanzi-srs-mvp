@@ -49,6 +49,9 @@ export interface User {
   role: Role;
   status: string;
   dailyGoal?: number;
+  vipValidUntil?: string | null;
+  banReason?: string | null;
+  bannedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
