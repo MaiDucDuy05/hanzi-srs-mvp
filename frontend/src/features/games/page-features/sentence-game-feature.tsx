@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePracticeEngine } from '@/features/practice/components/practice-engine';
-import { SentenceResults, SentenceGameBoard } from '@/features/games/components/sentence-game-board';
+import { GameSummary } from '@/features/games/components/game-summary';
+import { SentenceGameBoard } from '@/features/games/components/sentence-game-board';
 import { Loader2, XCircle } from 'lucide-react';
 import type { SourceType } from '@/lib/api/types';
 
@@ -56,10 +57,16 @@ export function SentenceGameFeature({ sourceType, sourceId }: { sourceType: Sour
 
   if (engine.status === 'finished' && engine.result) {
     return (
-      <SentenceResults
-        engine={{ result: engine.result, sentenceQuestions: engine.sentenceQuestions, elapsed: engine.elapsed }}
-        onExit={() => router.push('/dashboard')}
-      />
+      <div className="flex-1 flex flex-col items-center justify-center p-4">
+        <GameSummary
+          title="Tuyệt vời! 🎉"
+          subtitle="Hoàn thành Sắp xếp câu (Sentence Game)"
+          result={engine.result}
+          elapsed={engine.elapsed}
+          onReplay={() => window.location.reload()}
+          onExit={() => router.push('/dashboard')}
+        />
+      </div>
     );
   }
 

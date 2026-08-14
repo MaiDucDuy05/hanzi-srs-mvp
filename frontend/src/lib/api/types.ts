@@ -428,8 +428,9 @@ export interface SentenceToken {
 export interface SentenceQuestion {
   questionId: string;
   tokens: SentenceToken[];
-  translation: string | null;
-  explanation: string | null;
+  prompt?: string | null;
+  translation?: string | null;
+  explanation?: string | null;
 }
 
 export interface SentenceAnswer {

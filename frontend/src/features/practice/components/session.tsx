@@ -5,7 +5,8 @@ import { MatchingMode, type MatchingState } from './matching-mode';
 import { FlashcardMode, type FlashcardState } from './flashcard-mode';
 import { FillBlankMode, type FillBlankState } from './fill-blank-mode';
 import { SentenceOrderingMode, type OrderingState } from './sentence-ordering-mode';
-import { LimitScreen, SummaryCard } from './session-frame';
+import { LimitScreen } from './session-frame';
+import { GameSummary } from '@/features/games/components/game-summary';
 import { WritingMode, type WritingState } from '@/features/games/components/writing-mode';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
@@ -66,13 +67,16 @@ export function PracticeSession({
 
   if (engine.status === 'finished' && engine.result) {
     return (
-      <SummaryCard
-        title="Hoàn thành! 🎉"
-        subtitle={PRACTICE_TYPE_LABELS[practiceType]}
-        result={engine.result}
-        elapsed={engine.elapsed}
-        onExit={onExit}
-      />
+      <div className="flex-1 flex flex-col items-center justify-center p-4">
+        <GameSummary
+          title="Tuyệt vời! 🎉"
+          subtitle={`Hoàn thành ${PRACTICE_TYPE_LABELS[practiceType]}`}
+          result={engine.result}
+          elapsed={engine.elapsed}
+          onReplay={() => window.location.reload()}
+          onExit={onExit}
+        />
+      </div>
     );
   }
 

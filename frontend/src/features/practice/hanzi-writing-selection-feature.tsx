@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { hanziWritingApi } from '@/lib/api/endpoints';
 import { SourcePicker, type PickedSource } from '@/features/practice/components/source-picker';
 import { Button } from '@/features/ui/components/button';
-import { Card, CardBody } from '@/features/ui/components/card';
 import { PageLoading } from '@/features/ui/components/spinner';
 import type { HanziChar } from '@/lib/api/types';
 import { AudioButton } from '@/features/ui/components/audio-button';

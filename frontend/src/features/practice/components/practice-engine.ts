@@ -117,6 +117,12 @@ export function usePracticeEngine<TState = unknown>(options: {
 
           if (cancelled) return;
 
+          if (!res.questions || res.questions.length === 0) {
+            setError('Nguồn này chưa có bài tập sắp xếp câu.');
+            setStatus('error');
+            return;
+          }
+
           const startedAt = new Date().toISOString();
           attemptIdRef.current = res.attemptId;
           startedAtRef.current = startedAt;
@@ -369,11 +375,16 @@ export function usePracticeEngine<TState = unknown>(options: {
           characters: charResults,
           durationSeconds: duration,
         });
+        
+        const totalChars = charResults.length;
+        const percentageScore = totalChars === 0 ? 0 : Math.round((completed.completedChars / totalChars) * 100);
+        const skippedChars = charResults.filter(c => c.skipped).length;
+
         setResult({
           correctCount: completed.completedChars,
-          wrongCount: completed.totalMistakes,
-          moveCount: 0,
-          score: completed.completedChars,
+          wrongCount: skippedChars,
+          moveCount: completed.totalMistakes, // We can store totalMistakes in moveCount or just ignore it
+          score: percentageScore,
           answerData: res.answerData,
         });
       } else {

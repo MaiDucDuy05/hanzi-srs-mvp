@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { SentenceToken, SwapArrow } from './sentence-token';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Info } from 'lucide-react';
 import type { ModeResult, QuestionItem } from '@/features/practice/components/practice-models';
 import type { SentenceQuestion } from '@/lib/api/types';
 
@@ -98,17 +98,41 @@ export function SentenceGameBoard({
     <div className="flex-1 flex flex-col items-center justify-center w-full max-w-5xl mx-auto px-4 py-6 sm:py-8 relative z-10 h-full min-h-screen">
 
       {/* Header */}
-      <div className="w-full flex justify-between items-center mb-8 max-w-2xl">
+      <div className="w-full flex justify-between items-center mb-6 max-w-2xl">
         <h1 className="text-3xl font-black text-[#215b3b] font-heading drop-shadow-sm">Sentence Forest</h1>
         <div className="bg-[#eef7e9] border-2 border-[#8BC34A] text-[#215b3b] px-5 py-2 rounded-full font-bold shadow-sm">
           Câu {currentIndex + 1} / {questions.length}
         </div>
       </div>
 
+      {q.prompt && (
+        <p className="text-lg text-gray-600 mb-2 font-medium text-center">
+          {q.prompt}
+        </p>
+      )}
+
+      {q.translation && (
+        <p className={`text-xl sm:text-2xl text-[#4a6b38] ${q.explanation ? 'mb-4' : 'mb-6'} font-medium text-center italic drop-shadow-sm`}>
+          &quot;{q.translation}&quot;
+        </p>
+      )}
+
+      {q.explanation && (
+        <details className="mb-6 group w-full max-w-2xl bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <summary className="flex items-center gap-2 cursor-pointer p-4 text-[#215b3b] font-medium hover:bg-gray-50/50 transition-colors list-none">
+            <Info className="w-5 h-5" />
+            <span>Gợi ý / Giải thích</span>
+          </summary>
+          <div className="p-4 pt-0 text-gray-600 border-t border-gray-100 mt-2 text-sm">
+            {q.explanation}
+          </div>
+        </details>
+      )}
+
       {/* Drop Zone */}
-      <div className="w-full max-w-2xl min-h-[160px] bg-white rounded-3xl border-4 border-dashed border-[#8BC34A] p-6 flex flex-wrap gap-4 items-center justify-center mb-12 transition-all shadow-inner relative">
+      <div className="w-full max-w-2xl min-h-[160px] bg-white rounded-3xl border-4 border-dashed border-[#8BC34A] p-6 flex flex-wrap gap-4 items-center justify-center mb-8 transition-all shadow-inner relative">
         {currentAnswers.length === 0 && (
-          <span className="text-gray-400 font-medium text-lg">Bấm chọn các từ bên dưới để ghép thành câu</span>
+          <span className="text-gray-400 font-medium text-lg text-center">Bấm chọn các từ bên dưới để ghép thành câu</span>
         )}
         {currentAnswers.map((tokenId, idx) => {
           const token = q.tokens.find(t => t.id === tokenId);
@@ -131,7 +155,7 @@ export function SentenceGameBoard({
       </div>
 
       {/* Navigation */}
-      <div className="mt-16 h-16 flex items-center justify-center w-full max-w-2xl">
+      <div className="mt-8 h-16 flex items-center justify-center w-full max-w-2xl">
         <div className="flex justify-between w-full">
           <button
             onClick={onPrev}

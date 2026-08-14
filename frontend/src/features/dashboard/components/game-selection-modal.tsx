@@ -1,13 +1,12 @@
-import React from 'react';
-import { LeafIcon, BambooIcon, TreeIcon, SproutIcon, BrushIcon, BirdIcon, DecorativeLeaves } from './game-icons';
+import { DecorativeLeaves } from './game-icons';
 
 export const GAMES = [
-  { id: 'balloon', title: 'Balloon', icon: <LeafIcon /> },
-  { id: 'match', title: 'Match', icon: <BambooIcon /> },
-  { id: 'memory', title: 'Memory', icon: <TreeIcon /> },
-  { id: 'sentence', title: 'Sentence', icon: <SproutIcon /> },
-  { id: 'stroke', title: 'Stroke', icon: <BrushIcon /> },
-  { id: 'listening', title: 'Listening', icon: <BirdIcon /> },
+  { id: 'balloon', title: 'Balloon', icon: <img src="/assets/game/ballon.png" alt="Balloon" className="w-full h-full object-contain" /> },
+  { id: 'match', title: 'Match', icon: <img src="/assets/game/match.png" alt="Match" className="w-full h-full object-contain" /> },
+  { id: 'memory', title: 'Memory', icon: <img src="/assets/game/memory.png" alt="Memory" className="w-full h-full object-contain" /> },
+  { id: 'sentence', title: 'Sentence', icon: <img src="/assets/game/sentence.png" alt="Sentence" className="w-full h-full object-contain" /> },
+  { id: 'stroke', title: 'Stroke', icon: <img src="/assets/game/stroke.png" alt="Stroke" className="w-full h-full object-contain" /> },
+  { id: 'listening', title: 'Listening', icon: <img src="/assets/game/listen.png" alt="Listening" className="w-full h-full object-contain" /> },
 ];
 
 interface GameSelectionModalProps {

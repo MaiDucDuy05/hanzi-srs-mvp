@@ -60,7 +60,7 @@ export class StudentProgressService {
       100,
     );
 
-    const streak = await this.calculateStreak(userId, user);
+    const streak = await this.calculateStreak(userId);
 
     return { dailyXp, dailyGoal, progressPercent, currentStreak: streak };
   }
@@ -139,47 +139,59 @@ export class StudentProgressService {
     return lessonProgress;
   }
 
-  private async calculateStreak(userId: string, user: User): Promise<number> {
+  private async calculateStreak(userId: string): Promise<number> {
     const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const todayStr = this.toDateStr(today);
-    const yesterdayStr = this.toDateStr(yesterday);
+    
+    // Check today
+    const hasActivityToday = await this.hasActivityOnDate(userId, today);
+    let streak = 0;
+    let cursor = new Date(today);
 
-    if (
-      user.lastActivityDate !== todayStr &&
-      user.lastActivityDate !== yesterdayStr
-    ) {
-      return 0;
+    if (hasActivityToday) {
+      streak = 1;
+      cursor.setDate(cursor.getDate() - 1);
+    } else {
+      // If no activity today, check yesterday
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const hasActivityYesterday = await this.hasActivityOnDate(userId, yesterday);
+      
+      if (hasActivityYesterday) {
+        streak = 1;
+        cursor = yesterday;
+        cursor.setDate(cursor.getDate() - 1);
+      } else {
+        // Neither today nor yesterday has activity -> streak is 0
+        return 0;
+      }
     }
 
-    let streak = 0;
-    const cursor = new Date(today);
-
+    // Loop backwards from cursor to count continuous streak
     while (true) {
-      const dayStart = new Date(cursor);
-      dayStart.setHours(0, 0, 0, 0);
-      const dayEnd = new Date(cursor);
-      dayEnd.setHours(23, 59, 59, 999);
-
-      const hasActivity = await this.attemptRepo
-        .createQueryBuilder('pa')
-        .select('1')
-        .where('pa.user_id = :userId', { userId })
-        .andWhere('pa.status = :status', {
-          status: PracticeAttemptStatus.COMPLETED,
-        })
-        .andWhere('pa.created_at >= :start', { start: dayStart })
-        .andWhere('pa.created_at <= :end', { end: dayEnd })
-        .limit(1)
-        .getExists();
-
+      const hasActivity = await this.hasActivityOnDate(userId, cursor);
       if (!hasActivity) break;
       streak++;
       cursor.setDate(cursor.getDate() - 1);
     }
 
     return streak;
+  }
+
+  private async hasActivityOnDate(userId: string, date: Date): Promise<boolean> {
+    const dayStart = new Date(date);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(date);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    return await this.attemptRepo
+      .createQueryBuilder('pa')
+      .select('1')
+      .where('pa.user_id = :userId', { userId })
+      .andWhere('pa.status = :status', { status: PracticeAttemptStatus.COMPLETED })
+      .andWhere('pa.created_at >= :start', { start: dayStart })
+      .andWhere('pa.created_at <= :end', { end: dayEnd })
+      .limit(1)
+      .getExists();
   }
 
   async recordActivity(userId: string): Promise<void> {

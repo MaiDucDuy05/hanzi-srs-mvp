@@ -25,6 +25,7 @@ export interface SentenceToken {
 export interface SentenceQuestion {
   questionId: string;
   tokens: SentenceToken[];       // shuffled — gửi cho frontend
+  prompt: string | null;
   translation: string | null;
   explanation: string | null | null;
 }
@@ -57,7 +58,7 @@ export class SentenceOrderingService {
     // Simple deterministic seed from string
     let seedNum = this.hashString(seed);
     while (m > 0) {
-      const i = Math.floor(this.seededRandom(seedNum) * m);
+      const i = Math.floor(this.seededRandom(seedNum++) * m);
       m--;
       [a[m], a[i]] = [a[i], a[m]];
     }
@@ -148,9 +149,9 @@ export class SentenceOrderingService {
 
     for (const q of questions) {
       const qData = (q.questionData ?? {}) as { tokens?: SentenceToken[] };
-      const aData = (q.answerData ?? {}) as { correctOrder?: string[] };
+      const aData = (q.answerData ?? {}) as { correctOrder?: string[]; orderedTokenIds?: string[] };
       const tokens: SentenceToken[] = qData.tokens ?? [];
-      const correctIds: string[] = aData.correctOrder ?? [];
+      const correctIds: string[] = aData.orderedTokenIds ?? aData.correctOrder ?? [];
 
       if (tokens.length === 0 || correctIds.length === 0) continue;
 
@@ -166,6 +167,7 @@ export class SentenceOrderingService {
       shuffledQuestions.push({
         questionId: q.id,
         tokens: shuffled,
+        prompt: q.prompt,
         translation: q.translation,
         explanation: q.explanation,
       });
