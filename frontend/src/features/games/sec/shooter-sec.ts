@@ -46,6 +46,7 @@ export interface ShooterCtx {
   maxCombo: number;
   correctKeystrokes: number;
   wrongKeystrokes: number;
+  completedWords: number;
   timeElapsed: number;
   difficulty: number;
 }
@@ -106,6 +107,7 @@ export class ShooterSec {
       maxCombo: 0,
       correctKeystrokes: 0,
       wrongKeystrokes: 0,
+      completedWords: 0,
       timeElapsed: 0,
       difficulty: 1,
     };
@@ -344,6 +346,7 @@ export class ShooterSec {
 
       if (target.typedCount === target.pinyinTyped.length) {
         target.fullyTyped = true;
+        this.ctx.completedWords++;
         // Bonus score for full word
         const completionBonus = 50 * (1 + Math.floor(this.ctx.combo / 10));
         this.ctx.score += completionBonus;

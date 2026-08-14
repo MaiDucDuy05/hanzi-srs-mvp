@@ -59,17 +59,24 @@ const GameCanvas = React.memo(function GameCanvas({ secRef }: { secRef: React.Re
 
   useEffect(() => {
     let raf: number;
+    let accumulatedDt = 0;
     const loop = (time: number) => {
       if (!lastTimeRef.current) lastTimeRef.current = time;
       const dt = time - lastTimeRef.current;
       lastTimeRef.current = time;
+      accumulatedDt += dt;
 
       if (secRef.current) {
         const state = secRef.current.getState();
         if (state.phase === 'playing') secRef.current.tick(dt);
       }
 
-      setTick(t => t + 1);
+      // Cap React rendering to ~30 FPS (every 33ms) to save CPU/GPU and bypass react-scan lag
+      if (accumulatedDt >= 33) {
+        setTick(t => t + 1);
+        accumulatedDt = 0;
+      }
+
       const phase = secRef.current?.getState().phase;
       if (phase !== 'gameover' && phase !== 'completed') {
         raf = requestAnimationFrame(loop);
@@ -129,7 +136,7 @@ const GameHUDLayer = React.memo(function GameHUDLayer({ secRef, totalItems, togg
   return (
     <>
       <GameHUD hp={ctx.hp} maxHp={ctx.maxHp} score={ctx.score} combo={ctx.combo} showCombo={showCombo} isFullscreen={isFullscreen} isPaused={ctx.phase === 'paused'} onPause={handlePauseToggle} onToggleFs={toggleFullscreen} />
-      <ProgressBar correct={ctx.correctKeystrokes ?? 0} total={totalItems} />
+      <ProgressBar correct={ctx.completedWords ?? 0} total={totalItems} />
     </>
   );
 });
@@ -154,19 +161,22 @@ export function BalloonMode({ items, onComplete }: BalloonModeProps) {
     return () => document.removeEventListener('fullscreenchange', handler);
   }, []);
 
+  const onCompleteRef = useRef(onComplete);
+  onCompleteRef.current = onComplete;
+
   // Init game
   useEffect(() => {
     const sec = new ShooterSec([...items]);
     secRef.current = sec;
     setIsReady(true);
     const unsubGameOver = sec.onGameOver.addListener((res) => {
-      onComplete({ correctCount: res.correct, wrongCount: res.wrong, moveCount: res.correct + res.wrong, score: res.score, answerData: { maxCombo: res.maxCombo } });
+      onCompleteRef.current({ correctCount: res.correct, wrongCount: res.wrong, moveCount: res.correct + res.wrong, score: res.score, answerData: { maxCombo: res.maxCombo } });
       setGameOverStats({ score: res.score, correct: res.correct, maxCombo: res.maxCombo });
     });
     const unsubWrongKey = sec.onWrongKey.addListener(() => { setFlashError(true); setTimeout(() => setFlashError(false), 250); });
     sec.start();
     return () => { unsubGameOver(); unsubWrongKey(); sec.destroy(); };
-  }, [items, onComplete]);
+  }, [items]);
 
   // Keyboard
   useEffect(() => {

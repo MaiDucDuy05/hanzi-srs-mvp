@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { Pause, Play, Maximize2, Minimize2 } from 'lucide-react';
 import { PawHP } from './game-decorations';
-import { cn } from '@/lib/utils/cn';
+
 
 const IconButton = ({ onClick, title, children }: React.PropsWithChildren<{ onClick: () => void; title: string }>) => (
   <button
