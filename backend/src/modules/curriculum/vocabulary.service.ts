@@ -17,6 +17,11 @@ export class VocabularyService {
 
     let qb = this.repo.createQueryBuilder('v');
 
+    // Apply exact match filters first
+    if (Object.keys(where).length > 0) {
+      qb = qb.where(where);
+    }
+
     if (topicId) {
       // Vocabularies belonging to a topic via the join table
       qb = qb
@@ -25,7 +30,7 @@ export class VocabularyService {
         .orderBy('tv.displayOrder', 'ASC');
     } else if (search) {
       qb = qb
-        .where(
+        .andWhere(
           `(LOWER(v.hanzi) LIKE LOWER(:search) OR LOWER(v.pinyin) LIKE LOWER(:search) OR LOWER(v.meaningVi) LIKE LOWER(:search))`,
           { search: `%${search}%` },
         )

@@ -77,8 +77,8 @@ export function PracticeSession({
   }
 
   return (
-    <div className="space-y-4">
-      {practiceType !== 'HANZI_WRITING' && (
+    <div className="space-y-4 h-full flex flex-col">
+      {practiceType !== 'HANZI_WRITING' && practiceType !== 'WORD_MATCHING' && (
         <header className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <button onClick={onExit} className="text-sm text-brand hover:underline">
