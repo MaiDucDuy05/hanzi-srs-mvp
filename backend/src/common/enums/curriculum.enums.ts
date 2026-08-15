@@ -2,6 +2,7 @@
 export enum ContentStatus {
   DRAFT = 'DRAFT',
   PUBLISHED = 'PUBLISHED',
+  HIDDEN = 'HIDDEN',
 }
 
 /** Loại nội dung trong lesson_contents (polymorphic join). */

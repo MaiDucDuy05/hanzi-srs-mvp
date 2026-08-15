@@ -10,6 +10,7 @@ import { AdminUsersFilter } from './components/admin-users-filter';
 import { BanModal } from './components/modals/ban-modal';
 import { RoleChangeModal } from './components/modals/role-change-modal';
 import { UserDrawer } from './components/modals/user-drawer';
+import { AddUserModal } from './components/modals/add-user-modal';
 import { useApi } from '@/lib/hooks/use-api';
 
 export function AdminUsersFeature() {
@@ -18,10 +19,12 @@ export function AdminUsersFeature() {
   const [search, setSearch] = useState('');
   const [role, setRole] = useState('');
   const [status, setStatus] = useState('');
+  const [plan, setPlan] = useState('');
 
   // Modal states
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [modalType, setModalType] = useState<'NONE' | 'BAN' | 'ROLE' | 'DRAWER'>('NONE');
+  const [modalType, setModalType] = useState<'NONE' | 'BAN' | 'ROLE' | 'DRAWER' | 'ADD_USER'>('NONE');
+  const [isAddingUser, setIsAddingUser] = useState(false);
 
   const { data, loading, error, refetch } = useApi(
     async () => {
@@ -31,10 +34,11 @@ export function AdminUsersFeature() {
         ...(search ? { search } : {}),
         ...(role && role !== 'All Roles' ? { role: role.toUpperCase() } : {}),
         ...(status && status !== 'All Statuses' ? { status: status.toUpperCase() } : {}),
+        ...(plan && plan !== 'All Plans' ? { plan: plan.toUpperCase() } : {}),
       });
       return response;
     },
-    [page, limit, search, role, status]
+    [page, limit, search, role, status, plan]
   );
 
   const handleBanConfirm = async (reason: string) => {
@@ -53,7 +57,20 @@ export function AdminUsersFeature() {
     await refetch();
   };
 
-  const openModal = (user: User, type: 'BAN' | 'ROLE' | 'DRAWER') => {
+  const handleAddUserConfirm = async (data: any) => {
+    setIsAddingUser(true);
+    try {
+      await adminUsersApi.createUser(data);
+      await refetch();
+      closeModal();
+    } catch (err: any) {
+      alert(err.message || 'Lỗi khi tạo tài khoản');
+    } finally {
+      setIsAddingUser(false);
+    }
+  };
+
+  const openModal = (user: User | null, type: 'BAN' | 'ROLE' | 'DRAWER' | 'ADD_USER') => {
     setSelectedUser(user);
     setModalType(type);
   };
@@ -74,6 +91,9 @@ export function AdminUsersFeature() {
         onRoleChange={setRole}
         status={status}
         onStatusChange={setStatus}
+        plan={plan}
+        onPlanChange={setPlan}
+        onAddUser={() => openModal(null, 'ADD_USER')}
       />
       
       {loading && !data && <PageLoading />}
@@ -104,6 +124,13 @@ export function AdminUsersFeature() {
         user={selectedUser as User} 
         isOpen={modalType === 'DRAWER'} 
         onClose={closeModal} 
+      />
+
+      <AddUserModal
+        isOpen={modalType === 'ADD_USER'}
+        onClose={closeModal}
+        onSubmit={handleAddUserConfirm}
+        loading={isAddingUser}
       />
     </div>
   );

@@ -21,6 +21,7 @@ import { SrsModule } from './modules/srs/srs.module';
 import { LessonSelectionModule } from './modules/lesson-selection/lesson-selection.module';
 import { StudentModule } from './modules/student/student.module';
 import { AchievementsModule } from './modules/achievements/achievements.module';
+import { AdminContentModule } from './modules/admin-content/admin-content.module';
 
 
 @Module({
@@ -59,6 +60,7 @@ import { AchievementsModule } from './modules/achievements/achievements.module';
     LessonSelectionModule,
     StudentModule,
     AchievementsModule,
+    AdminContentModule,
   ],
   controllers: [AppController],
   providers: [

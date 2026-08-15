@@ -1,0 +1,238 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+'use client';
+import { useState, useEffect } from 'react';
+import { adminContentApi } from '@/lib/api/endpoints/admin-content';
+import { Edit2, Trash2, Search, Plus, X } from 'lucide-react';
+
+export const AdminGrammarsTable = () => {
+  const [grammars, setGrammars] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState<any>({});
+
+  const fetchGrammars = async () => {
+    try {
+      setLoading(true);
+      const res = await adminContentApi.getGrammars() as any;
+      setGrammars(res.data?.items || res.data || []);
+    } catch (error) {
+      console.error('Failed to fetch grammars:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa ngữ pháp này?')) return;
+    try {
+      await adminContentApi.deleteGrammar(id);
+      fetchGrammars();
+    } catch (error) {
+      console.error('Failed to delete grammar:', error);
+      alert('Lỗi khi xóa ngữ pháp');
+    }
+  };
+
+  useEffect(() => {
+    fetchGrammars();
+  }, []);
+
+  const handleOpenModal = (grammar?: any) => {
+    if (grammar) {
+      setEditForm({ ...grammar });
+    } else {
+      setEditForm({ title: '', structure: '', explanation: '', status: 'DRAFT', isActive: true });
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditForm({});
+  };
+
+  const handleSave = async () => {
+    try {
+      if (editForm.id) {
+        await adminContentApi.updateGrammar(editForm.id, editForm);
+        alert('Cập nhật thành công!');
+      } else {
+        await adminContentApi.createGrammar(editForm);
+        alert('Tạo mới thành công!');
+      }
+      handleCloseModal();
+      fetchGrammars();
+    } catch (error) {
+      alert('Lưu thất bại!');
+      console.error(error);
+    }
+  };
+
+  const filteredGrammars = grammars.filter((g: any) => 
+    g.title?.toLowerCase().includes(search.toLowerCase()) || 
+    g.structure?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 relative">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-xl font-bold text-[#11321e]">Quản lý Ngữ pháp</h3>
+        <div className="flex gap-3">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="text-gray-400 w-4 h-4" />
+            </div>
+            <input
+              type="text"
+              className="pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c7cf35] transition-all"
+              placeholder="Tìm theo tiêu đề..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <button 
+            onClick={() => handleOpenModal()}
+            className="bg-[#11321e] text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-[#1f4e31]"
+          >
+            <Plus className="w-4 h-4" /> Tạo mới
+          </button>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-100">
+              <th className="p-4 font-semibold text-gray-600 rounded-tl-xl">Tiêu đề</th>
+              <th className="p-4 font-semibold text-gray-600">Cấu trúc</th>
+              <th className="p-4 font-semibold text-gray-600">Trạng thái</th>
+              <th className="p-4 font-semibold text-gray-600">Hiển thị</th>
+              <th className="p-4 font-semibold text-gray-600 rounded-tr-xl">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={5} className="text-center p-8 text-gray-400">Đang tải dữ liệu...</td>
+              </tr>
+            ) : filteredGrammars.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="text-center p-8 text-gray-400">Không tìm thấy ngữ pháp</td>
+              </tr>
+            ) : (
+              filteredGrammars.map((grammar: any) => (
+                <tr key={grammar.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                  <td className="p-4 font-bold text-[#11321e]">{grammar.title}</td>
+                  <td className="p-4 text-gray-600 text-sm max-w-xs truncate">{grammar.structure}</td>
+                  <td className="p-4">
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${grammar.status === 'PUBLISHED' ? 'bg-green-100 text-green-700' : grammar.status === 'HIDDEN' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
+                      {grammar.status}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    <span className={grammar.isActive ? 'text-green-600' : 'text-red-500'}>
+                      {grammar.isActive ? 'Bật' : 'Tắt'}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    <div className="flex space-x-2">
+                      <button onClick={() => handleOpenModal(grammar)} className="p-2 text-gray-400 hover:text-[#11321e] hover:bg-gray-100 rounded-lg">
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button onClick={() => handleDelete(grammar.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl">
+            <div className="p-6 border-b flex justify-between items-center">
+              <h2 className="text-xl font-bold text-[#11321e]">
+                {editForm.id ? 'Sửa Ngữ Pháp' : 'Thêm Ngữ Pháp Mới'}
+              </h2>
+              <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-700 p-2">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Tiêu đề</label>
+                <input 
+                  className="w-full border p-2 rounded-xl focus:ring-2 focus:ring-[#c7cf35] outline-none" 
+                  value={editForm.title || ''} 
+                  onChange={e => setEditForm({...editForm, title: e.target.value})} 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Cấu trúc</label>
+                <textarea 
+                  className="w-full border p-2 rounded-xl focus:ring-2 focus:ring-[#c7cf35] outline-none min-h-[80px]" 
+                  value={editForm.structure || ''} 
+                  onChange={e => setEditForm({...editForm, structure: e.target.value})} 
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">Giải thích (Markdown)</label>
+                <textarea 
+                  className="w-full border p-2 rounded-xl focus:ring-2 focus:ring-[#c7cf35] outline-none min-h-[150px]" 
+                  value={editForm.explanation || ''} 
+                  onChange={e => setEditForm({...editForm, explanation: e.target.value})} 
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Trạng thái</label>
+                  <select 
+                    className="w-full border p-2 rounded-xl focus:ring-2 focus:ring-[#c7cf35] outline-none bg-white"
+                    value={editForm.status || 'DRAFT'} 
+                    onChange={e => setEditForm({...editForm, status: e.target.value})}
+                  >
+                    <option value="DRAFT">Nháp (Draft)</option>
+                    <option value="PUBLISHED">Công khai (Published)</option>
+                    <option value="HIDDEN">Ẩn (Hidden)</option>
+                  </select>
+                </div>
+                <div className="flex items-center gap-2 pt-6">
+                  <input 
+                    type="checkbox" 
+                    id="isActive"
+                    className="w-4 h-4 text-[#c7cf35] rounded border-gray-300 focus:ring-[#c7cf35]"
+                    checked={editForm.isActive ?? true} 
+                    onChange={e => setEditForm({...editForm, isActive: e.target.checked})} 
+                  />
+                  <label htmlFor="isActive" className="text-sm font-semibold text-gray-700">Kích hoạt (Hiển thị)</label>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
+              <button 
+                onClick={handleCloseModal}
+                className="px-6 py-2 rounded-xl font-bold text-gray-600 hover:bg-gray-200 transition-colors"
+              >
+                Hủy
+              </button>
+              <button 
+                onClick={handleSave}
+                className="px-6 py-2 rounded-xl font-bold bg-[#c7cf35] text-[#11321e] hover:bg-[#dde8a6] shadow-sm transition-colors"
+              >
+                Lưu Ngữ Pháp
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};

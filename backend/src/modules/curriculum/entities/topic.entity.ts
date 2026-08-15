@@ -23,6 +23,9 @@ export class Topic extends BaseEntity {
   @Column({ type: 'varchar', length: 20, default: ContentStatus.DRAFT })
   status: ContentStatus;
 
+  @Column({ name: 'is_active', type: 'boolean', default: true })
+  isActive: boolean;
+
   @Column({ name: 'display_order', type: 'int', default: 0 })
   displayOrder: number;
 

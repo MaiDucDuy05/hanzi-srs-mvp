@@ -16,6 +16,9 @@ interface AdminUsersFilterProps {
   onRoleChange: (val: string) => void;
   status: string;
   onStatusChange: (val: string) => void;
+  plan: string;
+  onPlanChange: (val: string) => void;
+  onAddUser: () => void;
 }
 
 export function AdminUsersFilter({
@@ -25,7 +28,10 @@ export function AdminUsersFilter({
   role,
   onRoleChange,
   status,
-  onStatusChange
+  onStatusChange,
+  plan,
+  onPlanChange,
+  onAddUser
 }: AdminUsersFilterProps) {
   return (
     <>
@@ -59,7 +65,10 @@ export function AdminUsersFilter({
         <Card className="p-6 col-span-1 shadow-sm border-2 border-transparent hover:border-pale-green transition-colors">
           <h2 className="text-2xl font-bold text-forest mb-2">User<br/>Management</h2>
           <p className="text-sm text-gray-500 mb-6 w-4/5">Manage guardians, guides, and explorers of the forest.</p>
-          <button className="bg-forest text-white px-4 py-2.5 rounded-full text-sm font-medium hover:bg-brand-dark transition-colors flex items-center gap-2">
+          <button 
+            onClick={onAddUser}
+            className="bg-forest text-white px-4 py-2.5 rounded-full text-sm font-medium hover:bg-brand-dark transition-colors flex items-center gap-2"
+          >
             <UserPlus className="h-4 w-4" />
             Add User
           </button>
@@ -112,10 +121,14 @@ export function AdminUsersFilter({
             <div className="flex-1">
               <label className="block text-xs font-medium text-gray-400 mb-1.5">Plan</label>
               <div className="relative">
-                <select className="appearance-none w-full bg-pale-green/50 border-none text-forest text-sm font-medium rounded-full py-2.5 pl-4 pr-10 focus:outline-none focus:ring-2 focus:ring-forest/20">
-                  <option>All Plans</option>
-                  <option>Free</option>
-                  <option>VIP</option>
+                <select 
+                  value={plan}
+                  onChange={(e) => onPlanChange(e.target.value)}
+                  className="appearance-none w-full bg-pale-green/50 border-none text-forest text-sm font-medium rounded-full py-2.5 pl-4 pr-10 focus:outline-none focus:ring-2 focus:ring-forest/20"
+                >
+                  <option value="All Plans">All Plans</option>
+                  <option value="FREE">Free</option>
+                  <option value="VIP">VIP</option>
                 </select>
                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-forest pointer-events-none" />
               </div>
