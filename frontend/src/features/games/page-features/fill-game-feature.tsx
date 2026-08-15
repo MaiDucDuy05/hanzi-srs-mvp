@@ -1,21 +1,36 @@
 'use client';
 
+/**
+ * FillGameFeature — orchestrator for the "Điền từ" (fill-in-the-blank) game page.
+ * Handles engine status states (loading / error / limit / running / finished),
+ * renders the game header (title + timer + bamboo progress) while running, and
+ * delegates the board / results to FillGameBoard / FillResults.
+ */
 import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePracticeEngine } from '@/features/practice/components/practice-engine';
-import { activityKey } from '@/lib/utils/constants';
 import type { SourceType } from '@/lib/api/types';
 import { BambooBackground } from '../components/game-decorations';
-import { FillGameBoard, FillResults } from '../components/fill-game-board';
+import { BambooProgressBar } from '@/features/ui/components/bamboo-progress-bar';
+import { FillGameBoard } from '../components/fill-game-board';
+import { FillResults } from '../components/fill-results';
+import { Loader2, XCircle, Clock } from 'lucide-react';
 
 interface FillGameFeatureProps {
   sourceId: string;
   sourceType: SourceType;
 }
 
+/** mm:ss formatter for the timer pill. */
+function formatDuration(totalSeconds: number) {
+  const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+  const s = (totalSeconds % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
+}
+
 export function FillGameFeature({ sourceId, sourceType }: FillGameFeatureProps) {
   const router = useRouter();
-  
+
   const {
     status,
     error,
@@ -38,7 +53,7 @@ export function FillGameFeature({ sourceId, sourceType }: FillGameFeatureProps) 
   const handleAnswer = useCallback((questionId: string, tokenId: string, isLast: boolean) => {
     const newAnswers = { ...fillBlankAnswers, [questionId]: tokenId };
     setFillBlankAnswers(newAnswers);
-    
+
     if (isLast) {
       handleComplete({
         correctCount: 0,
@@ -52,87 +67,122 @@ export function FillGameFeature({ sourceId, sourceType }: FillGameFeatureProps) 
     }
   }, [fillBlankAnswers, setFillBlankAnswers, handleComplete]);
 
+  // ── Loading ──
   if (status === 'loading') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-[#8bc34a] border-t-transparent"></div>
-        <p className="mt-4 text-[#215b3b] font-bold">Đang tải bài tập...</p>
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[400px]">
+        <img
+          src="/assets/illustrations/panda/panda-holding-ball.svg"
+          alt=""
+          className="w-24 h-24 mb-4 animate-panda-idle drop-shadow-md"
+        />
+        <Loader2 className="w-8 h-8 animate-spin text-[#5e7f26] mb-2" />
+        <p className="text-[#215b3b] font-bold">Đang tải bài tập...</p>
       </div>
     );
   }
 
+  // ── Error ──
   if (status === 'error') {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-6">
-        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4 text-red-500">
-          <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] text-center p-6">
+        <div className="w-16 h-16 bg-[#fdeaea] rounded-full flex items-center justify-center mb-4">
+          <XCircle className="w-8 h-8 text-[#c0392b]" />
         </div>
-        <h3 className="text-xl font-bold text-gray-800 mb-2">Không thể bắt đầu</h3>
-        <p className="text-gray-500 mb-6">{error || 'Có lỗi xảy ra khi tải dữ liệu.'}</p>
-        <button onClick={() => router.back()} className="px-6 py-2 bg-[#215b3b] text-white rounded-xl font-bold">Quay lại</button>
+        <h3 className="text-xl font-black text-[#215b3b] mb-2 font-heading">Không thể bắt đầu</h3>
+        <p className="text-[#4a5a3a]/70 mb-6">{error || 'Có lỗi xảy ra khi tải dữ liệu.'}</p>
+        <button
+          onClick={() => router.back()}
+          className="px-6 py-2.5 bg-[#5e7f26] text-white rounded-full font-bold shadow-md hover:bg-[#4a6520] transition-colors active:scale-95"
+        >
+          Quay lại
+        </button>
       </div>
     );
   }
 
+  // ── Daily limit reached ──
   if (status === 'limit' && limit) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-6">
-        <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mb-4 text-orange-500">
-          <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-        </div>
-        <h3 className="text-xl font-bold text-gray-800 mb-2">Hết lượt chơi</h3>
-        <p className="text-gray-500 mb-6">Bạn đã hết lượt chơi hôm nay.</p>
-        <button onClick={() => router.back()} className="px-6 py-2 bg-[#215b3b] text-white rounded-xl font-bold">Trở về</button>
+      <div className="flex-1 flex flex-col items-center justify-center min-h-[400px] text-center p-6">
+        <div className="w-16 h-16 bg-[#fff4d6] rounded-full flex items-center justify-center mb-4 text-3xl">⏰</div>
+        <h3 className="text-xl font-black text-[#215b3b] mb-2 font-heading">Hết lượt chơi</h3>
+        <p className="text-[#4a5a3a]/70 mb-6">Bạn đã hết lượt chơi hôm nay. Quay lại sau nhé!</p>
+        <button
+          onClick={() => router.push('/dashboard/practice')}
+          className="px-6 py-2.5 bg-[#5e7f26] text-white rounded-full font-bold shadow-md hover:bg-[#4a6520] transition-colors active:scale-95"
+        >
+          Về trang luyện tập
+        </button>
       </div>
     );
   }
 
+  // ── Finished ──
   if (status === 'finished' && result) {
     return (
-      <div className="relative w-full min-h-[600px] flex flex-col">
+      <div className="relative w-full flex-1 flex flex-col">
         <BambooBackground />
         <FillResults
           result={result}
           fillBlankQuestions={fillBlankQuestions}
           elapsed={elapsed}
-          onExit={() => router.back()}
+          onReplay={() => window.location.reload()}
+          onExit={() => router.push('/dashboard/practice')}
         />
       </div>
     );
   }
 
+  // ── Running ──
   const currentQuestion = fillBlankQuestions[currentIndex];
   if (!currentQuestion) return null;
 
+  const total = fillBlankQuestions.length;
+  const progressPct = total > 0 ? (currentIndex / total) * 100 : 0;
+
   return (
-    <div className="relative max-w-4xl mx-auto min-h-[600px] bg-white rounded-3xl shadow-xl overflow-hidden border border-gray-100 flex flex-col">
+    <div className="relative w-full flex-1 flex flex-col">
       <BambooBackground />
-      <div className="absolute top-0 left-0 w-full h-2 bg-gray-100">
-        <div
-          className="h-full bg-gradient-to-r from-[#8bc34a] to-[#215b3b] transition-all duration-300"
-          style={{ width: `${(currentIndex / fillBlankQuestions.length) * 100}%` }}
+
+      {/* Header: title + timer + question counter */}
+      <div className="relative z-10 flex items-center justify-between gap-3 px-2 sm:px-4 mb-1 shrink-0">
+        <h1 className="text-xl sm:text-2xl font-black text-[#215b3b] font-heading drop-shadow-sm flex items-center gap-2">
+          <span className="text-2xl">✍️</span> Điền từ
+        </h1>
+        <div className="flex items-center gap-2">
+          <div className="bg-white/80 backdrop-blur text-[#215b3b] font-bold text-sm px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm border border-[#eaf3c5]">
+            <Clock className="w-4 h-4" />
+            {formatDuration(elapsed)}
+          </div>
+          <div className="bg-white/80 backdrop-blur text-[#5e7f26] font-bold text-sm px-3 py-1.5 rounded-full shadow-sm border border-[#eaf3c5]">
+            {currentIndex + 1}/{total}
+          </div>
+        </div>
+      </div>
+
+      {/* Bamboo progress bar */}
+      <div className="relative z-10 w-full px-2 sm:px-4 mb-1 shrink-0">
+        <BambooProgressBar
+          progress={progressPct}
+          hidePanda
+          className="!h-[56px] sm:!h-[72px]"
+          labelClassName="top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[10px] sm:text-sm text-[#215b3b] bg-white/70 px-1 py-0.5 rounded"
         />
       </div>
 
-      <div className="flex-1 p-6 md:p-10 z-10 flex flex-col">
-        <div className="flex justify-between items-center mb-8">
-          <span className="px-4 py-1.5 bg-[#eef7e9] text-[#215b3b] font-bold rounded-full text-sm">
-            Câu {currentIndex + 1} / {fillBlankQuestions.length}
-          </span>
-          <button
-            onClick={() => router.back()}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            Đóng
-          </button>
-        </div>
-
-        <div className="flex-1 flex flex-col justify-center">
-          <FillGameBoard
-            question={currentQuestion}
-            onAnswer={(tokenId) => handleAnswer(currentQuestion.questionId, tokenId, currentIndex === fillBlankQuestions.length - 1)}
-          />
-        </div>
+      {/* Board */}
+      <div className="relative z-10 flex-1 flex flex-col overflow-y-auto">
+        <FillGameBoard
+          question={currentQuestion}
+          onAnswer={(tokenId) =>
+            handleAnswer(
+              currentQuestion.questionId,
+              tokenId,
+              currentIndex === total - 1,
+            )
+          }
+        />
       </div>
     </div>
   );

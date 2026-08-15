@@ -81,13 +81,8 @@ export function WriteSentenceFeature({ sourceId, sourceType }: WriteSentenceFeat
         questions={engine.sentenceQuestions}
         currentIndex={currentIndex}
         userAnswers={engine.userAnswers}
-        onSelectToken={(tokenId) => {
-          const curr = engine.userAnswers[currentQuestion.questionId] || [];
-          engine.setUserAnswers({ ...engine.userAnswers, [currentQuestion.questionId]: [...curr, tokenId] });
-        }}
-        onDeselectToken={(tokenId) => {
-          const curr = engine.userAnswers[currentQuestion.questionId] || [];
-          engine.setUserAnswers({ ...engine.userAnswers, [currentQuestion.questionId]: curr.filter((id) => id !== tokenId) });
+        onUpdateAnswers={(tokenIds) => {
+          engine.setUserAnswers({ ...engine.userAnswers, [currentQuestion.questionId]: tokenIds });
         }}
         onPrev={() => setCurrentIndex((i) => Math.max(0, i - 1))}
         onNext={() => {

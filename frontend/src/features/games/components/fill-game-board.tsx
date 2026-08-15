@@ -1,18 +1,25 @@
 'use client';
 
+/**
+ * FillGameBoard — playing screen for the "Điền từ" (fill-in-the-blank) game.
+ * Cute Panda Forest aesthetic: speech-bubble question card with a highlighted
+ * blank slot, a peeking panda mascot, and letter-badged option cards.
+ */
 import React, { useState, useEffect } from 'react';
 import type { FillBlankQuestion } from '@/lib/api/types';
-import { CheckCircle, XCircle } from 'lucide-react';
-import type { ModeResult } from '@/features/practice/components/practice-models';
 
 interface FillGameBoardProps {
   question: FillBlankQuestion;
   onAnswer: (answerText: string) => void;
 }
 
+/** Letter badges for options (A, B, C, …). */
+const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
+
 export function FillGameBoard({ question, onAnswer }: FillGameBoardProps) {
   const [selected, setSelected] = useState<string | null>(null);
 
+  // Reset selection whenever the question changes.
   useEffect(() => {
     setSelected(null);
   }, [question.questionId]);
@@ -20,34 +27,45 @@ export function FillGameBoard({ question, onAnswer }: FillGameBoardProps) {
   if (!question) return null;
 
   const handleSelect = (text: string) => {
-    if (selected) return;
+    if (selected) return; // lock once chosen
     setSelected(text);
-    setTimeout(() => {
-      onAnswer(text);
-    }, 900);
+    // Brief reveal pause before advancing (server grades correctness).
+    setTimeout(() => onAnswer(text), 850);
   };
 
-  // Render the prompt by replacing ______ with the blank or selected text
+  // Split the prompt around the blank marker and render a live slot.
   const parts = question.prompt.split('______');
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center w-full max-w-2xl mx-auto px-4 py-8 relative z-10">
-      {/* Header */}
-      <div className="w-full flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-black text-[#215b3b] font-heading drop-shadow-sm">Điền từ</h1>
-      </div>
+    <div className="flex-1 flex flex-col items-center justify-center w-full max-w-2xl mx-auto px-4 py-4 relative z-10 gap-5">
+      {/* ── Question card (speech-bubble style) ── */}
+      <div className="w-full relative bg-[#eaf3c5] rounded-[2rem] p-6 sm:p-8 shadow-[0_8px_24px_rgba(94,127,38,0.10)] border-2 border-white/70">
+        {/* Peeking panda mascot (decorative) */}
+        <img
+          src="/assets/illustrations/panda/panda-holding-ball.svg"
+          alt=""
+          aria-hidden="true"
+          className="hidden sm:block absolute -top-9 -right-5 w-20 h-20 drop-shadow-md animate-panda-idle pointer-events-none"
+        />
 
-      {/* Question card */}
-      <div className="w-full bg-white rounded-3xl shadow-lg p-8 mb-8 text-center border border-gray-100">
-        <p className="text-sm font-bold text-[#8BC34A] uppercase tracking-widest mb-4">Chọn từ đúng để điền vào chỗ trống</p>
-        
-        <div className="flex items-center justify-center flex-wrap gap-2 mb-6 text-3xl font-serif text-gray-800 leading-loose">
+        <p className="text-xs font-black text-[#78993a] uppercase tracking-[0.2em] mb-4 text-center">
+          Chọn từ đúng để điền vào chỗ trống
+        </p>
+
+        {/* Prompt with the live blank slot */}
+        <div className="flex items-center justify-center flex-wrap gap-x-2 gap-y-1 mb-4 text-2xl sm:text-3xl font-serif text-[#215b3b] leading-loose">
           {parts.map((part, i) => (
             <React.Fragment key={i}>
-              {part}
+              <span>{part}</span>
               {i < parts.length - 1 && (
-                <span className="px-4 text-3xl font-bold font-serif text-[#215b3b] border-b-2 border-dashed border-[#8bc34a] min-w-[3rem] text-center transition-all duration-300 inline-block mx-2">
-                  {selected ? selected : ' '}
+                <span
+                  className={`inline-flex items-center justify-center min-w-[3.5rem] px-3 py-0.5 rounded-xl text-2xl sm:text-3xl font-bold font-serif transition-all duration-300 ${
+                    selected
+                      ? 'bg-[#c7cf35] text-[#215b3b] border-2 border-[#78993a] scale-105'
+                      : 'bg-white/70 text-[#78993a] border-2 border-dashed border-[#78993a]'
+                  }`}
+                >
+                  {selected || '＿'}
                 </span>
               )}
             </React.Fragment>
@@ -55,22 +73,26 @@ export function FillGameBoard({ question, onAnswer }: FillGameBoardProps) {
         </div>
 
         {question.translation && (
-          <p className="text-lg text-gray-500 font-medium leading-relaxed">
+          <p className="text-base sm:text-lg text-[#4a5a3a]/70 font-medium leading-relaxed text-center italic">
             {question.translation}
           </p>
         )}
       </div>
 
-      {/* Options */}
-      <div className="w-full grid grid-cols-2 gap-4">
+      {/* ── Options ── */}
+      <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
         {question.options.map((opt, i) => {
           const isSelected = selected === opt;
+          const letter = OPTION_LETTERS[i] ?? String(i + 1);
 
-          let btnClass = 'bg-white border-2 border-gray-100 hover:border-[#8BC34A] hover:bg-[#f1f8ed] text-gray-700';
+          let btnClass = 'bg-white border-2 border-[#dde8a6] hover:border-[#78993a] hover:bg-[#f3f8d7] text-[#215b3b]';
+          let badgeClass = 'bg-[#eaf3c5] text-[#5e7f26]';
           if (isSelected) {
-            btnClass = 'bg-[#8BC34A] border-[#8BC34A] text-white transform scale-105 shadow-md';
+            btnClass = 'bg-[#5e7f26] border-[#4a6520] text-white scale-[1.03] shadow-lg';
+            badgeClass = 'bg-[#c7cf35] text-[#215b3b]';
           } else if (selected && !isSelected) {
-            btnClass = 'bg-gray-50 border-gray-100 text-gray-400 opacity-60';
+            btnClass = 'bg-[#f3f8d7] border-[#dde8a6] text-[#4a5a3a]/40 opacity-60';
+            badgeClass = 'bg-[#dde8a6] text-[#78993a]/50';
           }
 
           return (
@@ -78,75 +100,18 @@ export function FillGameBoard({ question, onAnswer }: FillGameBoardProps) {
               key={`${opt}-${i}`}
               onClick={() => handleSelect(opt)}
               disabled={!!selected}
-              className={`relative flex items-center justify-center p-6 rounded-2xl font-bold text-2xl font-serif transition-all duration-200 active:scale-95 ${btnClass}`}
+              className={`relative flex items-center gap-3 sm:gap-4 p-4 sm:p-5 rounded-2xl font-bold text-xl sm:text-2xl font-serif transition-all duration-200 active:scale-95 ${btnClass}`}
             >
-              {opt}
+              <span
+                className={`flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm font-black transition-colors ${badgeClass}`}
+              >
+                {letter}
+              </span>
+              <span className="flex-1 text-center sm:pr-10">{opt}</span>
             </button>
           );
         })}
       </div>
-    </div>
-  );
-}
-
-interface FillResultsProps {
-  result: ModeResult | null;
-  fillBlankQuestions: FillBlankQuestion[];
-  elapsed: number;
-  onExit: () => void;
-}
-
-export function FillResults({ result, fillBlankQuestions, elapsed, onExit }: FillResultsProps) {
-  const resultsData = (result?.answerData as any)?.results || [];
-
-  return (
-    <div className="flex-1 flex flex-col items-center w-full max-w-4xl mx-auto px-4 py-8 relative z-10">
-      <h1 className="text-3xl font-black text-[#215b3b] mb-6 font-heading">Kết quả làm bài</h1>
-      <div className="bg-white rounded-3xl shadow-sm p-6 w-full max-w-2xl mb-10 text-center border-4 border-[#8BC34A]">
-        <p className="text-3xl font-bold mb-3 text-[#215b3b]">
-          Điểm số: {result?.score ?? 0}/10
-        </p>
-        <p className="text-[#4a6b38] font-medium text-lg">
-          Số câu đúng: {result?.correctCount ?? 0} / {(result?.correctCount ?? 0) + (result?.wrongCount ?? 0)}
-        </p>
-      </div>
-
-      <div className="w-full max-w-3xl space-y-6">
-        {fillBlankQuestions.map((q, idx) => {
-          const qResult = resultsData.find((r: any) => r.questionId === q.questionId);
-          const isCorrect = qResult?.isCorrect;
-          const correctAns = qResult?.correctTokenId || '';
-          
-          return (
-            <div key={q.questionId} className={`p-6 rounded-2xl border-2 shadow-sm ${isCorrect ? 'border-green-300 bg-green-50' : 'border-red-300 bg-red-50'}`}>
-              <div className="flex items-start justify-between mb-3">
-                <h3 className="font-bold text-lg text-gray-800">Câu {idx + 1}</h3>
-                <div className={`flex items-center gap-1 font-bold ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
-                  {isCorrect ? <><CheckCircle className="w-5 h-5" /> Đúng</> : <><XCircle className="w-5 h-5" /> Sai</>}
-                </div>
-              </div>
-              
-              <p className="text-xl font-bold font-serif mb-3 text-gray-900 tracking-wider">
-                {q.prompt.replace('______', `[ ${correctAns || '???'} ]`)}
-              </p>
-              
-              {q.translation && <p className="text-gray-700 italic mb-2"><span className="font-semibold not-italic">Dịch:</span> {q.translation}</p>}
-              {q.explanation && (
-                <p className="text-sm text-gray-600 bg-white/50 p-3 rounded-lg border border-gray-200 mt-2">
-                  <span className="font-semibold">Giải thích:</span> {q.explanation}
-                </p>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      <button
-        onClick={onExit}
-        className="mt-10 px-10 py-4 bg-[#215b3b] text-white font-bold text-lg rounded-full shadow-lg hover:bg-[#1a4a2f] transition-all transform hover:-translate-y-1"
-      >
-        Trở về trang chủ
-      </button>
     </div>
   );
 }
