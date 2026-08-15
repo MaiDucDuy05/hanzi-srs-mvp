@@ -8,7 +8,7 @@
  */
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager } from 'typeorm';
 import { PracticeAttempt } from './entities/practice-attempt.entity';
 
 export interface SentenceAnswer {
@@ -149,5 +149,38 @@ export class GradingService {
       }
     }
     return { valid: true };
+  }
+
+  async gradeFillBlank(
+    em: EntityManager,
+    attemptId: string,
+    answers: { questionId: string; tokenId: string }[],
+    userId: string,
+  ) {
+    const attempt = await em.getRepository(PracticeAttempt).findOne({ where: { id: attemptId } });
+    if (!attempt) throw new BadRequestException('Attempt not found');
+    const qData = attempt.questionData as unknown as { correctAnswers?: Record<string, string> };
+    const correctMap = qData?.correctAnswers || {};
+
+    let totalCorrect = 0;
+    const results = answers.map((ans) => {
+      const correctId = correctMap[ans.questionId];
+      const isCorrect = ans.tokenId === correctId;
+      if (isCorrect) totalCorrect++;
+      return {
+        questionId: ans.questionId,
+        isCorrect,
+        submittedTokenId: ans.tokenId,
+        correctTokenId: correctId,
+      };
+    });
+
+    return {
+      totalQuestions: Object.keys(correctMap).length,
+      totalCorrect,
+      totalWrong: Object.keys(correctMap).length - totalCorrect,
+      score: totalCorrect,
+      results,
+    };
   }
 }

@@ -108,7 +108,7 @@ export function SentenceGameFeature({ sourceType, sourceId }: { sourceType: Sour
     if (currentIndex < engine.sentenceQuestions.length - 1) {
       setCurrentIndex(i => i + 1);
     } else {
-      engine.handleComplete({ correctCount: 0, wrongCount: 0, moveCount: 0, score: 0, answerData: {} });
+      engine.handleComplete({ correctCount: 0, wrongCount: 0, moveCount: 0, score: 0, answerData: engine.userAnswers });
     }
   };
 

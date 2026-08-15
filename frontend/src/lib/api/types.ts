@@ -48,6 +48,9 @@ export interface User {
   fullName: string;
   role: Role;
   status: string;
+  vipValidUntil?: string | null;
+  banReason?: string | null;
+  bannedAt?: string | null;
   dailyGoal?: number;
   createdAt: string;
   updatedAt: string;
@@ -432,6 +435,15 @@ export interface SentenceQuestion {
   translation?: string | null;
   explanation?: string | null;
 }
+
+export interface FillBlankQuestion {
+  questionId: string;
+  prompt: string;
+  options: string[];
+  translation?: string | null;
+  explanation?: string | null;
+}
+
 
 export interface SentenceAnswer {
   questionId: string;

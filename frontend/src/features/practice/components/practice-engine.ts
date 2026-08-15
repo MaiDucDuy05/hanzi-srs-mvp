@@ -46,9 +46,14 @@ export interface PracticeEngine<TState = unknown> {
   sentenceQuestions: SentenceQuestion[];
   /** Chỉ set khi practiceType === SENTENCE_ORDERING */
   userAnswers: Record<string, string[]>;
+  /** Chỉ set khi practiceType === FILL_BLANK */
+  fillBlankQuestions: import('@/lib/api/types').FillBlankQuestion[];
+  /** Chỉ set khi practiceType === FILL_BLANK */
+  fillBlankAnswers: Record<string, string>;
   /** Chỉ set khi practiceType === HANZI_WRITING */
   hanziChars: HanziChar[];
   setUserAnswers: (answers: Record<string, string[]>) => void;
+  setFillBlankAnswers: (answers: Record<string, string>) => void;
   modeState: TState | null;
   setModeState: (state: TState) => void;
   result: ModeResult | null;
@@ -78,7 +83,9 @@ export function usePracticeEngine<TState = unknown>(options: {
   const [limit, setLimit] = useState<DailyUsageCheck | null>(null);
   const [items, setItems] = useState<QuestionItem[]>([]);
   const [sentenceQuestions, setSentenceQuestions] = useState<SentenceQuestion[]>([]);
+  const [fillBlankQuestions, setFillBlankQuestions] = useState<import('@/lib/api/types').FillBlankQuestion[]>([]);
   const [userAnswers, setUserAnswersState] = useState<Record<string, string[]>>({});
+  const [fillBlankAnswers, setFillBlankAnswers] = useState<Record<string, string>>({});
   const [hanziChars, setHanziChars] = useState<HanziChar[]>([]);
   const [modeState, setModeState] = useState<TState | null>(null);
   const [result, setResult] = useState<ModeResult | null>(null);
@@ -247,6 +254,69 @@ export function usePracticeEngine<TState = unknown>(options: {
       return () => { cancelled = true; };
     }
 
+    // ── Fill in the Blank (PR-09) ──
+    if (practiceType === 'FILL_BLANK') {
+      let cancelled = false;
+      (async () => {
+        try {
+          const check = await subscriptionApi.checkLimit(
+            activityKey(practiceType, sourceType, sourceId),
+          );
+          if (cancelled) return;
+          if (!check.allowed) {
+            setLimit(check);
+            setStatus('limit');
+            return;
+          }
+
+          const res = await practiceApi.fillBlankStart({
+            levelId: sourceType === 'LEVEL' ? sourceId : undefined,
+            lessonId: sourceType === 'LESSON' ? sourceId : undefined,
+            topicId: sourceType === 'TOPIC' ? sourceId : undefined,
+            questionCount: 5,
+            idempotencyKey: uuid(),
+          });
+
+          if (cancelled) return;
+
+          if (!res.questions || res.questions.length === 0) {
+            setError('Nguồn này chưa có bài tập điền từ.');
+            setStatus('error');
+            return;
+          }
+
+          const startedAt = new Date().toISOString();
+          attemptIdRef.current = res.attemptId;
+          startedAtRef.current = startedAt;
+          setFillBlankQuestions(res.questions);
+
+          const initAnswers: Record<string, string> = {};
+          setFillBlankAnswers(initAnswers);
+
+          saveSession<{ attemptId: string; questions: import('@/lib/api/types').FillBlankQuestion[]; userAnswers: Record<string, string>; modeState: TState | null; startedAt: string; }>(sessionKey, {
+            attemptId: res.attemptId,
+            questions: res.questions,
+            userAnswers: initAnswers,
+            modeState: null,
+            startedAt,
+          });
+
+          setStatus('running');
+        } catch (e) {
+          if (!cancelled) {
+            if (e instanceof ApiError && e.status === 429) {
+              setLimit({ allowed: false, usedCount: 0 });
+              setStatus('limit');
+              return;
+            }
+            setError(e instanceof Error ? e.message : 'Lỗi lấy danh sách câu hỏi.');
+            setStatus('error');
+          }
+        }
+      })();
+      return () => { cancelled = true; };
+    }
+
     // ── Các practice type khác: dùng từ vựng ──
     const saved = loadSession<PersistedSession>(sessionKey);
     if (saved) {
@@ -352,15 +422,33 @@ export function usePracticeEngine<TState = unknown>(options: {
 
       // ── Sentence Ordering: gọi API submit riêng PR-10 ──
       if (practiceType === 'SENTENCE_ORDERING') {
-        const answers = Object.entries(userAnswers).map(([questionId, tokenIds]) => ({
+        const answersMap = (res.answerData && Object.keys(res.answerData).length > 0) ? res.answerData : userAnswers;
+        const answers = Object.entries(answersMap).map(([questionId, tokenIds]) => ({
           questionId,
-          tokenIds,
+          tokenIds: tokenIds as string[],
         }));
         const grading = await practiceApi.sentenceOrderingSubmit(attemptIdRef.current, {
           answers,
           durationSeconds: duration,
         });
         // Override result = kết quả backend đã chấm (đáng tin cậy hơn)
+        setResult({
+          correctCount: grading.totalCorrect,
+          wrongCount: grading.totalWrong,
+          moveCount: 0,
+          score: grading.score,
+          answerData: { results: grading.results } as unknown as Record<string, unknown>,
+        });
+      } else if (practiceType === 'FILL_BLANK') {
+        const answersMap = (res.answerData && Object.keys(res.answerData).length > 0) ? res.answerData : fillBlankAnswers;
+        const answers = Object.entries(answersMap).map(([questionId, tokenId]) => ({
+          questionId,
+          tokenId: tokenId as string,
+        }));
+        const grading = await practiceApi.fillBlankSubmit(attemptIdRef.current, {
+          answers,
+          durationSeconds: duration,
+        });
         setResult({
           correctCount: grading.totalCorrect,
           wrongCount: grading.totalWrong,
@@ -410,9 +498,12 @@ export function usePracticeEngine<TState = unknown>(options: {
     limit,
     items,
     sentenceQuestions,
+    fillBlankQuestions,
     userAnswers,
+    fillBlankAnswers,
     hanziChars,
     setUserAnswers,
+    setFillBlankAnswers,
     modeState,
     setModeState: persistState,
     result,

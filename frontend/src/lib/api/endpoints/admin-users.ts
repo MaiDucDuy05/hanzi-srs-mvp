@@ -1,30 +1,42 @@
-import { apiFetch } from '../client';
-import { User, PaginatedResponse, ApiResponse } from '../types';
+﻿import { apiFetch, unwrap } from '../client';
+import { User, Paginated, Single } from '../types';
+
+function toQuery(params?: Record<string, string | number>) {
+  if (!params) return '';
+  const searchParams = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined && v !== null) {
+      searchParams.append(k, String(v));
+    }
+  }
+  const q = searchParams.toString();
+  return q ? `?${q}` : '';
+}
 
 export const adminUsersApi = {
   getAll: (params?: Record<string, string | number>) =>
-    apiFetch<PaginatedResponse<User>>('/admin/users', { params }),
+    unwrap(apiFetch<Single<Paginated<User>>>(`/admin/users${toQuery(params)}`)),
   
   getAuditLogs: (params?: Record<string, string | number>) =>
-    apiFetch<PaginatedResponse<any>>('/admin/users/audit-logs', { params }),
+    unwrap(apiFetch<Single<Paginated<any>>>(`/admin/users/audit-logs${toQuery(params)}`)),
 
   getById: (id: string) => 
-    apiFetch<ApiResponse<User>>(`/admin/users/${id}`),
+    unwrap(apiFetch<Single<User>>(`/admin/users/${id}`)),
 
   changeRole: (id: string, role: string, vipDays?: number) =>
-    apiFetch<ApiResponse<User>>(`/admin/users/${id}/role`, {
+    unwrap(apiFetch<Single<User>>(`/admin/users/${id}/role`, {
       method: 'PUT',
       body: JSON.stringify({ role, vipDays }),
-    }),
+    })),
 
   banUser: (id: string, reason: string) =>
-    apiFetch<ApiResponse<User>>(`/admin/users/${id}/ban`, {
+    unwrap(apiFetch<Single<User>>(`/admin/users/${id}/ban`, {
       method: 'POST',
       body: JSON.stringify({ reason }),
-    }),
+    })),
 
   unbanUser: (id: string) =>
-    apiFetch<ApiResponse<User>>(`/admin/users/${id}/unban`, {
+    unwrap(apiFetch<Single<User>>(`/admin/users/${id}/unban`, {
       method: 'POST',
-    }),
+    })),
 };

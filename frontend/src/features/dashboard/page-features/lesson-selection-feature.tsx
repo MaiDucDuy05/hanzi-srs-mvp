@@ -85,6 +85,8 @@ export function LessonSelectionFeature() {
     }
   }, [mode, router]);
 
+  const category = (searchParams.get('category') as 'vocab' | 'sentence') || 'vocab';
+
   const handleGameSelect = useCallback((gameId: string) => {
     if (selectedLesson) {
       router.push(`/games/${gameId}?mode=${mode}&lesson=${selectedLesson.id}`);
