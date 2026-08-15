@@ -45,11 +45,11 @@ function canSeeAnswer(role: string | undefined): boolean {
 @Controller('tests')
 export class TestController {
   constructor(private readonly svc: TestService) {}
-  @Get() async findAll(@Query() q: TestQueryDto) {
-    return ok(await this.svc.findAll(q), 'Tests retrieved');
+  @Get() async findAll(@Query() q: TestQueryDto, @CurrentUser() user: JwtPayload) {
+    return ok(await this.svc.findAll(q, user?.role), 'Tests retrieved');
   }
-  @Get(':id') async findOne(@Param('id') id: string) {
-    return ok(await this.svc.findById(id), 'Test retrieved');
+  @Get(':id') async findOne(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return ok(await this.svc.findById(id, user?.role), 'Test retrieved');
   }
   @Post()
   @Roles(Role.TEACHER, Role.ADMIN)

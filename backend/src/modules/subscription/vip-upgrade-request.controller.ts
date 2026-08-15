@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Patch, Param, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { VipUpgradeService } from './vip-upgrade-request.service';
-import * as DTO from './dto/resources.dto';
+import * as DTO from './dto/subscription.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../../common/enums/user.enums';

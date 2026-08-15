@@ -1,18 +1,12 @@
-/**
- * RevenueService — doanh thu tháng = (số VIP active) × VIP_PRICE_MONTHLY (env).
- * Không có bảng payment trong MVP → tính xấp xỉ từ subscription count × giá.
- * revenueTarget đọc từ env REVENUE_TARGET_MONTHLY.
- */
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between } from 'typeorm';
 import { Subscription } from '../../subscription/entities/subscription.entity';
 import {
   SubscriptionPlan,
   SubscriptionStatus,
 } from '../../../common/enums/subscription.enums';
-import { RevenueMetrics } from '../dto/admin.dto';
 
 @Injectable()
 export class RevenueService {
@@ -21,31 +15,35 @@ export class RevenueService {
     private configService: ConfigService,
   ) {}
 
-  async getMetrics(): Promise<RevenueMetrics> {
-    const activeVipCount = await this.countActiveVip();
-    const price = Number(
-      this.configService.get<string>('VIP_PRICE_MONTHLY') ?? 9.99,
-    );
-    const target = Number(
-      this.configService.get<string>('REVENUE_TARGET_MONTHLY') ?? 45000,
-    );
+  async getSummaryRevenue(): Promise<{ value: number; lastMonth: number }> {
+    const price = Number(this.configService.get<string>('VIP_PRICE_MONTHLY') ?? 9.99);
+
+    const now = new Date();
+    const firstDayThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    const firstDayLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const firstDayNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    // active sub created this month
+    const thisMonthSubs = await this.subRepo.count({
+      where: {
+        plan: SubscriptionPlan.VIP,
+        status: SubscriptionStatus.ACTIVE,
+        createdAt: Between(firstDayThisMonth, firstDayNextMonth),
+      }
+    });
+
+    const lastMonthSubs = await this.subRepo.count({
+      where: {
+        plan: SubscriptionPlan.VIP,
+        status: SubscriptionStatus.ACTIVE,
+        createdAt: Between(firstDayLastMonth, firstDayThisMonth),
+      }
+    });
 
     return {
-      monthlyRevenue: Math.round(activeVipCount * price * 100) / 100,
-      revenueTarget: target,
-      currency: 'USD',
+      value: Math.round(thisMonthSubs * price * 100) / 100,
+      lastMonth: Math.round(lastMonthSubs * price * 100) / 100,
     };
-  }
-
-  /** DISTINCT users có VIP ACTIVE chưa hết hạn. */
-  private async countActiveVip(): Promise<number> {
-    const row = await this.subRepo
-      .createQueryBuilder('s')
-      .select('COUNT(DISTINCT s.userId)', 'count')
-      .where('s.plan = :plan', { plan: SubscriptionPlan.VIP })
-      .andWhere('s.status = :status', { status: SubscriptionStatus.ACTIVE })
-      .andWhere('(s.expiresAt IS NULL OR s.expiresAt > now())')
-      .getRawOne<{ count: string }>();
-    return Number(row?.count ?? 0);
   }
 }

@@ -189,7 +189,7 @@ export class AdminUsersService {
       }
     } else if (!isUpgradingToVip && existingSub) {
       // Đổi sang FREE, TEACHER, ADMIN -> Xoá gói VIP hiện tại (hạ quyền)
-      existingSub.status = SubscriptionStatus.CANCELLED;
+      existingSub.status = SubscriptionStatus.EXPIRED;
       await this.subRepo.save(existingSub);
     }
 

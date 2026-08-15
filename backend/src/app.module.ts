@@ -20,6 +20,7 @@ import { SrsModule } from './modules/srs/srs.module';
 import { LessonSelectionModule } from './modules/lesson-selection/lesson-selection.module';
 import { StudentModule } from './modules/student/student.module';
 import { AdminContentModule } from './modules/admin-content/admin-content.module';
+import { SystemConfigModule } from './modules/config/config.module';
 
 
 @Module({
@@ -57,6 +58,7 @@ import { AdminContentModule } from './modules/admin-content/admin-content.module
     LessonSelectionModule,
     StudentModule,
     AdminContentModule,
+    SystemConfigModule,
   ],
   controllers: [AppController],
   providers: [

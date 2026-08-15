@@ -1,18 +1,21 @@
-/**
- * HealthService — kiểm tra tình trạng hệ thống qua DB ping + uptime.
- * - DB ping: SELECT 1 qua DataSource. Lỗi → Critical.
- * - Uptime: process.uptime() — thời gian process NestJS chạy liên tục.
- */
 import { Injectable } from '@nestjs/common';
-import { InjectDataSource } from '@nestjs/typeorm';
-import { DataSource } from 'typeorm';
-import { SystemHealth, HealthStatus } from '../dto/admin.dto';
+import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository, Between } from 'typeorm';
+import { DashboardSystemHealth, HealthStatus, CronJobStatus } from '../dto/admin.dto';
+import { SystemJobLog } from '../entities/system-job-log.entity';
+import { Resource } from '../../resources/entities/resource.entity';
+import { AiGenerationJob } from '../../resources/entities/ai-generation-job.entity';
 
 @Injectable()
 export class HealthService {
-  constructor(@InjectDataSource() private dataSource: DataSource) {}
+  constructor(
+    @InjectDataSource() private dataSource: DataSource,
+    @InjectRepository(SystemJobLog) private jobLogRepo: Repository<SystemJobLog>,
+    @InjectRepository(Resource) private resourceRepo: Repository<Resource>,
+    @InjectRepository(AiGenerationJob) private aiJobRepo: Repository<AiGenerationJob>,
+  ) {}
 
-  async getHealth(): Promise<SystemHealth> {
+  async getSystemHealth(): Promise<DashboardSystemHealth> {
     const dbUp = await this.pingDb();
     const uptimeSeconds = Math.floor(process.uptime());
     const lastCheckedAt = new Date().toISOString();
@@ -23,10 +26,57 @@ export class HealthService {
       ? `Hệ thống hoạt động bình thường. Uptime ${this.formatUptime(uptimeSeconds)}.`
       : 'Không kết nối được cơ sở dữ liệu.';
 
-    return { healthPercent, statusLabel, statusMessage, lastCheckedAt };
+    // Lấy dung lượng S3 (MB)
+    const { sum } = await this.resourceRepo
+      .createQueryBuilder('r')
+      .select('SUM(r.file_size)', 'sum')
+      .getRawOne();
+    
+    const storageUsedMb = sum ? Math.round(Number(sum) / (1024 * 1024)) : 0;
+
+    // Đếm số AI calls hôm nay
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const aiCallsToday = await this.aiJobRepo.count({
+      where: {
+        createdAt: Between(today, tomorrow),
+      }
+    });
+
+    // Lấy trạng thái cron jobs
+    const cronJobs = await this.getCronJobsStatus();
+
+    return { 
+      healthPercent, 
+      statusLabel, 
+      statusMessage, 
+      lastCheckedAt,
+      aiCallsToday,
+      storageUsedMb,
+      cronJobs
+    };
   }
 
-  /** Ping DB — trả false nếu SELECT 1 throw. */
+  private async getCronJobsStatus(): Promise<CronJobStatus[]> {
+    // Lấy log mới nhất của mỗi job_name
+    const logs = await this.jobLogRepo
+      .createQueryBuilder('log')
+      .distinctOn(['log.job_name'])
+      .orderBy('log.job_name', 'ASC')
+      .addOrderBy('log.last_run', 'DESC')
+      .getMany();
+
+    return logs.map(l => ({
+      name: l.jobName,
+      lastRun: l.lastRun.toISOString(),
+      status: l.status,
+      errorMessage: l.errorMessage || undefined,
+    }));
+  }
+
   private async pingDb(): Promise<boolean> {
     try {
       await this.dataSource.query('SELECT 1');
@@ -36,7 +86,6 @@ export class HealthService {
     }
   }
 
-  /** Format uptime thành dạng đọc được: "1d 2h 3m" / "2h 3m" / "3m". */
   private formatUptime(seconds: number): string {
     const d = Math.floor(seconds / 86400);
     const h = Math.floor((seconds % 86400) / 3600);

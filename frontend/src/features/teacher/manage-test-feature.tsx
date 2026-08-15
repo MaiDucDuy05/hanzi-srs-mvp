@@ -14,6 +14,7 @@ import { ErrorState } from '@/features/ui/components/error-state';
 import { Badge } from '@/features/ui/components/badge';
 import { formatDateTime } from '@/lib/utils/format';
 import { cn } from '@/lib/utils/cn';
+import { AdminViolationBadge } from '@/components/shared/admin-violation-badge';
 
 export function ManageTestFeature() {
   const { testId } = useParams<{ testId: string }>();
@@ -128,6 +129,11 @@ export function ManageTestFeature() {
           </Button>
         </div>
       </header>
+
+      <AdminViolationBadge 
+        hiddenByAdmin={(test as any).hiddenByAdmin} 
+        hideReason={(test as any).hideReason} 
+      />
 
       <Tabs
         tabs={[

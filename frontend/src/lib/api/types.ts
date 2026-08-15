@@ -408,19 +408,82 @@ export interface AiJob {
 }
 
 // ── Admin Dashboard ──
-export interface UserStats {
-  total: number;
-  byRole: { FREE: number; TEACHER: number; ADMIN: number };
-  vipCount: number;
+export interface MetricWithChange {
+  value: number;
+  changePercent?: number;
+  changeValue?: number;
 }
 
-export interface RevenueMetrics {
-  monthlyRevenue: number;
-  revenueTarget: number;
-  currency: string;
+export interface DashboardSummary {
+  totalUsers: MetricWithChange;
+  activeVip: MetricWithChange;
+  todayAttempts: { value: number; yesterday: number };
+  monthlyRevenue: { value: number; lastMonth: number };
+}
+
+export interface ChartDataPoint {
+  date: string;
+  count: number;
+}
+
+export interface DashboardCharts {
+  registrations: ChartDataPoint[];
+  attempts: ChartDataPoint[];
+}
+
+export interface PendingVipItem {
+  id: string;
+  userFullName: string;
+  plan: SubscriptionPlan;
+  createdAt: string;
+}
+
+export interface ExpiringVipItem {
+  id: string;
+  userFullName: string;
+  expiresAt: string;
+}
+
+export interface PendingContactItem {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  createdAt: string;
+}
+
+export interface SystemErrorItem {
+  id: string;
+  jobName: string;
+  errorMessage: string;
+  createdAt: string;
+}
+
+export interface DashboardPendingItems {
+  pendingVip: PendingVipItem[];
+  expiringVip: ExpiringVipItem[];
+  pendingContacts: PendingContactItem[];
+  recentSystemErrors: SystemErrorItem[];
 }
 
 export type HealthStatus = 'Optimal' | 'Degraded' | 'Critical';
+
+export interface CronJobStatus {
+  name: string;
+  lastRun: string;
+  status: 'OK' | 'ERROR';
+  errorMessage?: string;
+}
+
+export interface DashboardSystemHealth {
+  healthPercent: number;
+  statusLabel: HealthStatus;
+  statusMessage: string;
+  lastCheckedAt: string;
+  aiCallsToday: number;
+  storageUsedMb: number;
+  cronJobs: CronJobStatus[];
+}
 
 // ── Sentence Ordering (PR-10) ──
 export interface SentenceToken {
@@ -490,24 +553,3 @@ export interface HanziWritingCompleteResult {
   totalMistakes: number;
 }
 
-export interface SystemHealth {
-  healthPercent: number;
-  statusLabel: HealthStatus;
-  statusMessage: string;
-  lastCheckedAt: string;
-}
-
-export interface PendingSubscriptionItem {
-  id: string;
-  userId: string;
-  userFullName: string;
-  plan: SubscriptionPlan;
-}
-
-export interface DashboardOverview {
-  userStats: UserStats;
-  pendingVipCount: number;
-  revenue: RevenueMetrics;
-  health: SystemHealth;
-  pendingSubscriptions: PendingSubscriptionItem[];
-}

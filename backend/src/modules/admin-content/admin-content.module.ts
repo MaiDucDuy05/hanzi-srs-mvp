@@ -17,6 +17,7 @@ import { AdminGrammarsController } from './controllers/admin-grammars.controller
 import { AdminTopicsController } from './controllers/admin-topics.controller';
 import { AdminQuestionsController } from './controllers/admin-questions.controller';
 import { AdminUploadsController } from './controllers/admin-uploads.controller';
+import { AdminTeacherContentController } from './controllers/admin-teacher-content.controller';
 
 import { AdminCoursesService } from './services/admin-courses.service';
 import { AdminLessonsService } from './services/admin-lessons.service';
@@ -26,6 +27,7 @@ import { AdminTopicsService } from './services/admin-topics.service';
 import { AdminQuestionsService } from './services/admin-questions.service';
 import { S3UploadService } from './services/s3-upload.service';
 import { CsvImportService } from './services/csv-import.service';
+import { AdminTeacherContentService } from './services/admin-teacher-content.service';
 
 @Module({
   imports: [
@@ -48,6 +50,7 @@ import { CsvImportService } from './services/csv-import.service';
     AdminTopicsController,
     AdminQuestionsController,
     AdminUploadsController,
+    AdminTeacherContentController,
   ],
   providers: [
     AdminCoursesService,
@@ -58,6 +61,7 @@ import { CsvImportService } from './services/csv-import.service';
     AdminQuestionsService,
     S3UploadService,
     CsvImportService,
+    AdminTeacherContentService,
   ],
 })
 export class AdminContentModule {}
