@@ -171,13 +171,13 @@ export class AdminUsersService {
     });
 
     if (isUpgradingToVip && vipDays) {
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + vipDays);
-
       if (existingSub) {
-        existingSub.expiresAt = expiresAt;
+        const base = existingSub.expiresAt && existingSub.expiresAt > new Date() ? existingSub.expiresAt : new Date();
+        existingSub.expiresAt = new Date(base.getTime() + vipDays * 24 * 60 * 60 * 1000);
         await this.subRepo.save(existingSub);
       } else {
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + vipDays);
         const newSub = this.subRepo.create({
           userId: targetId,
           plan: SubscriptionPlan.VIP,

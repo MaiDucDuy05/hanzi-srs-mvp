@@ -1,5 +1,4 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { InjectEntityManager } from '@nestjs/typeorm';
 import { EntityManager } from 'typeorm';
 import { ExpTransaction } from './entities/exp-transaction.entity';
@@ -24,16 +23,11 @@ export interface AttemptExpInput {
  */
 @Injectable()
 export class ExpService {
-  private readonly maxDailyExp: number;
-
   constructor(
     @InjectEntityManager()
     private readonly em: EntityManager,
-    private configService: ConfigService,
     private configCache: ConfigCacheService,
-  ) {
-    this.maxDailyExp = Number(this.configService.get<string>('MAX_DAILY_EXP') ?? 200);
-  }
+  ) {}
 
   /**
    * Cộng EXP generic. Áp daily cap (trừ streak type bypass).
@@ -158,13 +152,15 @@ export class ExpService {
   /** Áp daily cap, trả về amount thực tế được cộng. */
   private async applyCap(em: EntityManager, userId: string, amount: number): Promise<number> {
     const today = new Date().toISOString().slice(0, 10);
+    const maxDailyExp = await this.configCache.get('max_daily_exp', 200);
+
     // Lock daily earnings row (insert if missing).
     const rows = await em.query(
       `SELECT earned FROM exp_daily_earnings WHERE user_id = $1 AND date = $2 FOR UPDATE`,
       [userId, today],
     );
     const earned = rows.length ? Number(rows[0].earned) : 0;
-    const remaining = this.maxDailyExp - earned;
+    const remaining = maxDailyExp - earned;
     return Math.min(amount, Math.max(0, remaining));
   }
 
