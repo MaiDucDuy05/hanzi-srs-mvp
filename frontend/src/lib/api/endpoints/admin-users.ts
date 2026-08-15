@@ -15,8 +15,6 @@ export const adminUsersApi = {
       body: JSON.stringify(data),
     }),
 
-  getUser: (id: string) => apiFetch(`/admin/users/${id}`),
-
   getById: (id: string) => 
     apiFetch<Single<User>>(`/admin/users/${id}`),
 
