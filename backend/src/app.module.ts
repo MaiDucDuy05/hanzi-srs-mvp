@@ -22,6 +22,7 @@ import { LessonSelectionModule } from './modules/lesson-selection/lesson-selecti
 import { StudentModule } from './modules/student/student.module';
 import { AchievementsModule } from './modules/achievements/achievements.module';
 import { AdminContentModule } from './modules/admin-content/admin-content.module';
+import { SystemConfigModule } from './modules/config/config.module';
 
 
 @Module({
@@ -61,6 +62,7 @@ import { AdminContentModule } from './modules/admin-content/admin-content.module
     StudentModule,
     AchievementsModule,
     AdminContentModule,
+    SystemConfigModule,
   ],
   controllers: [AppController],
   providers: [

@@ -50,6 +50,15 @@ export class PracticeQuestion extends BaseEntity {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
+  @Column({ name: 'hidden_by_admin', type: 'boolean', default: false })
+  hiddenByAdmin: boolean;
+
+  @Column({ name: 'hide_reason', type: 'text', nullable: true })
+  hideReason: string | null;
+
+  @Column({ name: 'hidden_at', type: 'timestamptz', nullable: true })
+  hiddenAt: Date | null;
+
   @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true })
   deletedAt: Date | null;
 }

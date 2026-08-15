@@ -15,6 +15,7 @@ import {
 import { Subscription } from './entities/subscription.entity';
 import { DailyPracticeUsage } from './entities/daily-practice-usage.entity';
 import { PracticeLimitSettings } from './entities/practice-limit-settings.entity';
+import { ConfigCacheService } from '../config/config-cache.service';
 import {
   CreateSubscriptionDto,
   UpdateSubscriptionDto,
@@ -114,6 +115,7 @@ export class DailyUsageService {
     @InjectRepository(PracticeLimitSettings)
     private settingsRepo: Repository<PracticeLimitSettings>,
     private subscriptionSvc: SubscriptionService,
+    private configCache: ConfigCacheService,
   ) {}
 
   async findAll(q: DailyUsageQueryDto) {
@@ -131,10 +133,11 @@ export class DailyUsageService {
   }
 
   private async getFreeLimit(em?: EntityManager): Promise<number> {
-    const settings = em
-      ? await em.getRepository(PracticeLimitSettings).findOne({ where: {} })
-      : await this.settingsRepo.findOne({ where: {} });
-    return settings?.enabled !== false ? (settings?.freeLimit ?? 3) : 999;
+    // Read from central SystemConfig via cache
+    // The previous PracticeLimitSettings entity is kept for backward compatibility if needed,
+    // but the system config takes precedence in PR-31.
+    const limit = await this.configCache.get('free_attempt_limit', 3);
+    return Number(limit);
   }
 
   /**

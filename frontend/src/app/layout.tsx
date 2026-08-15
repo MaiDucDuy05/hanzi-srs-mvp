@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist_Mono, Inter, Poppins, Nunito } from "next/font/google";
 import { AuthProvider } from "@/lib/auth/auth-context";
 import { AppShell } from "@/features/layout/components/app-shell";
+import { MaintenanceBanner } from "@/features/layout/components/maintenance-banner";
 import "./globals.css";
 import { ReactScanScript } from "@/features/layout/components/react-scan-script";
 

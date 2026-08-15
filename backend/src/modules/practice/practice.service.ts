@@ -31,7 +31,7 @@ export class PracticeQuestionService {
     @InjectRepository(PracticeQuestion)
     private repo: Repository<PracticeQuestion>,
   ) {}
-  async findAll(q: PracticeQuestionQueryDto) {
+  async findAll(q: PracticeQuestionQueryDto, role?: string) {
     const {
       page = 1,
       limit = 20,
@@ -45,6 +45,9 @@ export class PracticeQuestionService {
     if (questionType) where.questionType = questionType;
     if (levelId) where.levelId = levelId;
     if (status) where.status = status;
+    if (role !== Role.ADMIN && role !== Role.TEACHER) {
+      where.hiddenByAdmin = false;
+    }
     const [data, total] = await this.repo.findAndCount({
       where,
       skip: (page - 1) * limit,
@@ -53,19 +56,23 @@ export class PracticeQuestionService {
     });
     return paginatedResult(data, total, page, limit);
   }
-  async findById(id: string) {
-    return findOrNotFound(this.repo, id, 'Practice question');
+  async findById(id: string, role?: string) {
+    const question = await findOrNotFound(this.repo, id, 'Practice question');
+    if (role !== Role.ADMIN && role !== Role.TEACHER && question.hiddenByAdmin) {
+      throw new ForbiddenException('This question has been hidden by administrator');
+    }
+    return question;
   }
   async create(dto: CreatePracticeQuestionDto) {
     return this.repo.save(this.repo.create(dto as any));
   }
   async update(id: string, dto: UpdatePracticeQuestionDto) {
-    const e = await this.findById(id);
+    const e = await this.findById(id, Role.ADMIN);
     Object.assign(e, dto);
     return this.repo.save(e);
   }
   async softDelete(id: string) {
-    await this.repo.softRemove(await this.findById(id));
+    await this.repo.softRemove(await this.findById(id, Role.ADMIN));
   }
 }
 

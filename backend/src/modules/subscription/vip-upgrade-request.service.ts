@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { VipUpgradeRequest } from './entities/vip-upgrade-request.entity';
-import * as DTO from './dto/resources.dto';
+import * as DTO from './dto/subscription.dto';
 import { paginatedResult, findOrNotFound } from '../../common/helpers/query-helpers';
 
 @Injectable()

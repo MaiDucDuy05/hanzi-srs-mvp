@@ -9,7 +9,6 @@ import {
 import {
   ResourceTier,
   AiJobType,
-  UpgradeRequestStatus,
   ContactStatus,
   SpeakingStatus,
 } from '../../../common/enums/resources.enums';
@@ -44,10 +43,6 @@ export class SpeakingAttemptQueryDto extends PaginationQueryDto {
   @IsOptional() @IsEnum(SpeakingStatus) status?: SpeakingStatus;
 }
 
-export class VipUpgradeRequestQueryDto extends PaginationQueryDto {
-  @IsOptional() @IsUUID() userId?: string;
-  @IsOptional() @IsEnum(UpgradeRequestStatus) status?: UpgradeRequestStatus;
-}
 
 // ── Create/Update DTOs ──
 
@@ -103,12 +98,3 @@ export class GradeSpeakingDto {
   @IsOptional() @IsString() feedback?: string | null;
 }
 
-export class CreateVipUpgradeRequestDto {
-  @IsUUID() userId: string;
-  @IsOptional() @IsString() note?: string | null;
-}
-
-export class ReviewVipUpgradeDto {
-  @IsEnum(UpgradeRequestStatus) status: UpgradeRequestStatus;
-  @IsOptional() @IsString() note?: string | null;
-}
