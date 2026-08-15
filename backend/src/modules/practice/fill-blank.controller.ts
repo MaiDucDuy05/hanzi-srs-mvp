@@ -16,6 +16,10 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy';
 import { PracticeType, SourceType } from '../../common/enums/practice.enums';
 import { PracticeAttempt } from './entities/practice-attempt.entity';
+import { ExpService } from '../achievements/exp.service';
+import { ActivityService } from '../achievements/activity.service';
+import { StreakService } from '../achievements/streak.service';
+import { ActivityType, ExpRefType } from '../../common/enums/achievements.enums';
 
 function ok(data: unknown, msg: string) {
   return { data, message: msg };
@@ -28,6 +32,9 @@ export class FillBlankController {
     private readonly gradingService: GradingService,
     private readonly attemptService: PracticeAttemptService,
     private readonly dataSource: DataSource,
+    private readonly expService: ExpService,
+    private readonly activityService: ActivityService,
+    private readonly streakService: StreakService,
   ) {}
 
   @Post('start')
@@ -93,7 +100,22 @@ export class FillBlankController {
         userId,
       );
 
-      return ok(result, 'Fill-blank answers graded and submitted');
+      // PR-33: Award EXP + log activity + update streak (cùng tx).
+      const expAwarded = await this.expService.awardFromAttempt(
+        em, userId,
+        { correct: result.totalCorrect, total: result.totalQuestions, combo: 0, refId: attemptId },
+        `${attemptId}:fill`,
+      );
+      if (expAwarded > 0) {
+        await this.activityService.log(
+          em, userId, ActivityType.PRACTICE_COMPLETED,
+          { attemptId, type: 'FILL_BLANK', correct: result.totalCorrect, total: result.totalQuestions },
+          expAwarded,
+        );
+      }
+      await this.streakService.recordActivityAndCheckMilestones(em, userId);
+
+      return ok({ ...result, expAwarded }, 'Fill-blank answers graded and submitted');
     });
   }
 }

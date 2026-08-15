@@ -23,6 +23,10 @@ import { StartHanziWritingDto, CompleteHanziWritingDto } from './hanzi-writing.d
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy';
 import { PracticeType, SourceType } from '../../common/enums/practice.enums';
+import { ExpService } from '../achievements/exp.service';
+import { ActivityService } from '../achievements/activity.service';
+import { StreakService } from '../achievements/streak.service';
+import { ActivityType } from '../../common/enums/achievements.enums';
 
 @Controller('practice/hanzi-writing')
 export class HanziWritingController {
@@ -30,6 +34,9 @@ export class HanziWritingController {
     private readonly hwService: HanziWritingService,
     private readonly attemptService: PracticeAttemptService,
     private readonly dataSource: DataSource,
+    private readonly expService: ExpService,
+    private readonly activityService: ActivityService,
+    private readonly streakService: StreakService,
   ) {}
 
   /**
@@ -125,8 +132,29 @@ export class HanziWritingController {
     @CurrentUser('sub') userId: string,
   ) {
     const result = await this.hwService.complete(attemptId, userId, dto);
+
+    // PR-33: Award EXP + log activity + update streak.
+    // Hanzi-writing service chưa dùng em → award trong tx riêng.
+    // Idempotency key (attemptId) chống double-award nếu retry.
+    const expAwarded = await this.dataSource.transaction(async (em) => {
+      const awarded = await this.expService.awardFromAttempt(
+        em, userId,
+        { correct: result.completedChars, total: dto.characters.length, combo: 0, refId: attemptId },
+        `${attemptId}:hanzi`,
+      );
+      if (awarded > 0) {
+        await this.activityService.log(
+          em, userId, ActivityType.PRACTICE_COMPLETED,
+          { attemptId, type: 'HANZI_WRITING', completedChars: result.completedChars },
+          awarded,
+        );
+      }
+      await this.streakService.recordActivityAndCheckMilestones(em, userId);
+      return awarded;
+    });
+
     return {
-      data: result,
+      data: { ...result, expAwarded },
       message: 'Hanzi writing session completed',
     };
   }

@@ -26,4 +26,13 @@ export class Subscription extends BaseEntity {
 
   @Column({ name: 'expires_at', type: 'timestamptz', nullable: true })
   expiresAt: Date | null;
+
+  /**
+   * A-la-carte feature scope (PR-33 ADR-5).
+   * - [] = Full VIP (mở tất cả feature).
+   * - ['ai_speaking'] = feature VIP (chỉ mở AI Speaking).
+   * Entitlement: scope rỗng OR chứa feature required.
+   */
+  @Column({ type: 'jsonb', default: [] })
+  scope: string[];
 }

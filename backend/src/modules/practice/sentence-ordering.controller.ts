@@ -23,6 +23,10 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy';
 import { PracticeType, SourceType } from '../../common/enums/practice.enums';
 import { PracticeAttemptStatus } from '../../common/enums/practice.enums';
+import { ExpService } from '../achievements/exp.service';
+import { ActivityService } from '../achievements/activity.service';
+import { StreakService } from '../achievements/streak.service';
+import { ActivityType } from '../../common/enums/achievements.enums';
 
 function ok(data: unknown, msg: string) {
   return { data, message: msg };
@@ -35,6 +39,9 @@ export class SentenceOrderingController {
     private readonly gradingService: GradingService,
     private readonly attemptService: PracticeAttemptService,
     private readonly dataSource: DataSource,
+    private readonly expService: ExpService,
+    private readonly activityService: ActivityService,
+    private readonly streakService: StreakService,
   ) {}
 
   /**
@@ -129,7 +136,8 @@ export class SentenceOrderingController {
       dto.durationSeconds,
     );
 
-    // Cập nhật attempt
+    // Cập nhật attempt + award EXP (cùng tx)
+    let expAwarded = 0;
     await this.dataSource.transaction(async (em) => {
       const repo = em.getRepository(attempt.constructor as any);
       await repo.update(attemptId, {
@@ -141,8 +149,23 @@ export class SentenceOrderingController {
         status: PracticeAttemptStatus.COMPLETED,
         completedAt: new Date(),
       });
+
+      // PR-33: Award EXP + log activity + update streak.
+      expAwarded = await this.expService.awardFromAttempt(
+        em, userId,
+        { correct: gradingResult.totalCorrect, total: gradingResult.totalQuestions, combo: 0, refId: attemptId },
+        `${attemptId}:sentence`,
+      );
+      if (expAwarded > 0) {
+        await this.activityService.log(
+          em, userId, ActivityType.PRACTICE_COMPLETED,
+          { attemptId, type: 'SENTENCE_ORDERING', correct: gradingResult.totalCorrect, total: gradingResult.totalQuestions },
+          expAwarded,
+        );
+      }
+      await this.streakService.recordActivityAndCheckMilestones(em, userId);
     });
 
-    return ok(gradingResult, 'Sentence ordering submitted');
+    return ok({ ...gradingResult, expAwarded }, 'Sentence ordering submitted');
   }
 }
