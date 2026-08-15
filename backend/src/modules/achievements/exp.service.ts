@@ -1,10 +1,9 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, EntityManager } from 'typeorm';
-import { User } from '../auth/entities/user.entity';
+import { InjectEntityManager } from '@nestjs/typeorm';
+import { EntityManager } from 'typeorm';
 import { ExpTransaction } from './entities/exp-transaction.entity';
-import { ExpDailyEarnings } from './entities/exp-daily-earnings.entity';
+import { ConfigCacheService } from '../config/config-cache.service';
 import {
   ExpTransactionType,
   ExpRefType,
@@ -28,11 +27,10 @@ export class ExpService {
   private readonly maxDailyExp: number;
 
   constructor(
-    @InjectRepository(ExpTransaction)
-    private expTxRepo: Repository<ExpTransaction>,
-    @InjectRepository(ExpDailyEarnings)
-    private dailyEarningsRepo: Repository<ExpDailyEarnings>,
+    @InjectEntityManager()
+    private readonly em: EntityManager,
     private configService: ConfigService,
+    private configCache: ConfigCacheService,
   ) {
     this.maxDailyExp = Number(this.configService.get<string>('MAX_DAILY_EXP') ?? 200);
   }
@@ -84,19 +82,23 @@ export class ExpService {
     idempotencyKey?: string,
   ): Promise<number> {
     const { correct, total, combo, refId } = input;
+    const baseReward = await this.configCache.get('exp_base_reward', 10);
+    const perfectReward = await this.configCache.get('exp_perfect_reward', 5);
+    const comboMultiplier = await this.configCache.get('exp_combo_multiplier', 2);
+
     const isPerfect = total > 0 && correct === total;
-    const comboBonus = 2 * Math.max(0, combo - 2);
+    const comboBonus = comboMultiplier * Math.max(0, combo - 2);
 
     let totalAwarded = 0;
     const baseKey = idempotencyKey ?? `${refId}:${Date.now()}`;
 
     totalAwarded += await this.award(
-      em, userId, 10, ExpTransactionType.EARN_LESSON,
+      em, userId, baseReward, ExpTransactionType.EARN_LESSON,
       ExpRefType.PRACTICE_ATTEMPT, refId, `${baseKey}:lesson`,
     );
     if (isPerfect) {
       totalAwarded += await this.award(
-        em, userId, 5, ExpTransactionType.EARN_PERFECT,
+        em, userId, perfectReward, ExpTransactionType.EARN_PERFECT,
         ExpRefType.PRACTICE_ATTEMPT, refId, `${baseKey}:perfect`,
       );
     }
@@ -143,7 +145,7 @@ export class ExpService {
 
   /** Đọc balance O(1) từ cache users. */
   async getBalance(userId: string): Promise<{ current: number; total: number }> {
-    const rows = await this.expTxRepo.query(
+    const rows = await this.em.query(
       'SELECT current_exp, total_exp FROM users WHERE id = $1',
       [userId],
     );

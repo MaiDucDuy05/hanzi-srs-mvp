@@ -91,7 +91,11 @@ export class RewardsService {
     });
   }
 
-  /** Grant phần thưởng theo type (trong tx). */
+  /** 
+   * TODO: Hệ thống phần thưởng này chưa chốt và cần phải thống nhất lại các thiết kế/logic sau.
+   * Tạm thời implement các luồng cơ bản.
+   * Grant phần thưởng theo type (chạy trong transaction). 
+   */
   private async grant(em: EntityManager, userId: string, reward: Reward, userRewardId: string) {
     const meta = reward.metadata as any;
 
