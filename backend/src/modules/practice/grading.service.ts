@@ -10,6 +10,7 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, EntityManager } from 'typeorm';
 import { PracticeAttempt } from './entities/practice-attempt.entity';
+import { MistakeBookService } from '../resources/mistake-book.service';
 
 export interface SentenceAnswer {
   questionId: string;
@@ -39,6 +40,7 @@ export class GradingService {
   constructor(
     @InjectRepository(PracticeAttempt)
     private attemptRepo: Repository<PracticeAttempt>,
+    private mistakeBookSvc: MistakeBookService,
   ) {}
 
   /**
@@ -69,7 +71,21 @@ export class GradingService {
     for (const answer of answers) {
       const result = this.gradeQuestion(answer, correctAnswers);
       results.push(result);
-      if (result.isCorrect) totalCorrect++;
+      if (result.isCorrect) {
+        totalCorrect++;
+      } else {
+        await this.mistakeBookSvc.addToMistakeBook(
+          attempt.userId,
+          attempt.practiceType || 'SENTENCE_ORDERING',
+          attemptId,
+          'question',
+          { correctOrder: result.correctOrder },
+          { submittedOrder: result.submittedOrder },
+          { correctOrder: result.correctOrder },
+          result.questionId,
+          undefined
+        );
+      }
     }
 
     const totalQuestions = results.length;
@@ -163,17 +179,32 @@ export class GradingService {
     const correctMap = qData?.correctAnswers || {};
 
     let totalCorrect = 0;
-    const results = answers.map((ans) => {
+    const results = [];
+    for (const ans of answers) {
       const correctId = correctMap[ans.questionId];
       const isCorrect = ans.tokenId === correctId;
-      if (isCorrect) totalCorrect++;
-      return {
+      if (isCorrect) {
+        totalCorrect++;
+      } else {
+        await this.mistakeBookSvc.addToMistakeBook(
+          userId,
+          attempt.practiceType || 'FILL_BLANK',
+          attemptId,
+          'question',
+          { correctTokenId: correctId },
+          { submittedTokenId: ans.tokenId },
+          { correctTokenId: correctId },
+          ans.questionId,
+          undefined
+        );
+      }
+      results.push({
         questionId: ans.questionId,
         isCorrect,
         submittedTokenId: ans.tokenId,
         correctTokenId: correctId,
-      };
-    });
+      });
+    }
 
     return {
       totalQuestions: Object.keys(correctMap).length,

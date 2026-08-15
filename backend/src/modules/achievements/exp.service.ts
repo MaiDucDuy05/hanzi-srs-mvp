@@ -188,5 +188,15 @@ export class ExpService {
       `UPDATE users SET current_exp = current_exp + $2, total_exp = total_exp + $3 WHERE id = $1`,
       [userId, amount, totalDelta],
     );
+
+    // Update daily earnings if it's earning (amount > 0) and not bypassing cap
+    if (amount > 0 && type !== ExpTransactionType.EARN_STREAK) {
+      const today = new Date().toISOString().slice(0, 10);
+      await em.query(
+        `INSERT INTO exp_daily_earnings (user_id, date, earned) VALUES ($1, $2, $3)
+         ON CONFLICT (user_id, date) DO UPDATE SET earned = exp_daily_earnings.earned + $3`,
+        [userId, today, amount],
+      );
+    }
   }
 }

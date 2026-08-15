@@ -37,4 +37,56 @@ export class MistakeBookService {
   async delete(id: string) {
     await this.repo.remove(await this.findById(id));
   }
+
+  async addToMistakeBook(
+    userId: string,
+    sourceType: string,
+    sourceId: string,
+    questionType: string,
+    questionSnapshot: any,
+    userAnswer?: any,
+    correctAnswer?: any,
+    questionId?: string,
+    vocabularyId?: string,
+  ) {
+    let existing = null;
+    if (questionId) {
+      existing = await this.repo.findOne({ where: { userId, questionId } });
+    } else if (vocabularyId) {
+      existing = await this.repo.findOne({ where: { userId, vocabularyId } });
+    }
+
+    if (existing) {
+      existing.failCount++;
+      existing.lastFailedAt = new Date();
+      existing.correctStreak = 0;
+      if (userAnswer !== undefined) existing.userAnswer = userAnswer;
+      if (correctAnswer !== undefined) existing.correctAnswer = correctAnswer;
+      existing.sourceId = sourceId;
+      existing.sourceType = sourceType;
+      return this.repo.save(existing);
+    }
+
+    const count = await this.repo.count({ where: { userId } });
+    if (count >= 500) {
+      const oldest = await this.repo.findOne({
+        where: { userId },
+        order: { lastFailedAt: 'ASC' },
+      });
+      if (oldest) await this.repo.remove(oldest);
+    }
+
+    const newMistake = this.repo.create({
+      userId,
+      questionId,
+      vocabularyId,
+      sourceType,
+      sourceId,
+      questionType,
+      questionSnapshot,
+      userAnswer,
+      correctAnswer,
+    });
+    return this.repo.save(newMistake);
+  }
 }

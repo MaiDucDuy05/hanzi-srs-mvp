@@ -19,6 +19,7 @@ import { GradingService } from './grading.service';
 import { HanziWritingService } from './hanzi-writing.service';
 import { SubscriptionModule } from '../subscription/subscription.module';
 import { AchievementsModule } from '../achievements/achievements.module';
+import { ResourcesModule } from '../resources/resources.module';
 import { TopicVocabulary } from '../curriculum/entities/topic-vocabulary.entity';
 import { LessonContent } from '../curriculum/entities/lesson-content.entity';
 import { Vocabulary } from '../curriculum/entities/vocabulary.entity';
@@ -28,6 +29,7 @@ import { Vocabulary } from '../curriculum/entities/vocabulary.entity';
     TypeOrmModule.forFeature([PracticeQuestion, PracticeAttempt, TopicVocabulary, LessonContent, Vocabulary]),
     SubscriptionModule,
     AchievementsModule,
+    ResourcesModule,
   ],
   controllers: [
     PracticeQuestionController,

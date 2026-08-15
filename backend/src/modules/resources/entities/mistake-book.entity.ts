@@ -10,6 +10,12 @@ export class MistakeBook extends BaseEntity {
   @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
 
+  @Column({ name: 'question_id', type: 'uuid', nullable: true })
+  questionId: string | null;
+
+  @Column({ name: 'vocabulary_id', type: 'uuid', nullable: true })
+  vocabularyId: string | null;
+
   @Column({ name: 'source_type', type: 'varchar', length: 20 })
   sourceType: string;
 
@@ -30,4 +36,16 @@ export class MistakeBook extends BaseEntity {
 
   @Column({ type: 'text', nullable: true })
   explanation: string | null;
+
+  @Column({ name: 'fail_count', type: 'int', default: 1 })
+  failCount: number;
+
+  @Column({ name: 'correct_streak', type: 'int', default: 0 })
+  correctStreak: number;
+
+  @Column({ name: 'last_failed_at', type: 'timestamp', default: () => 'CURRENT_TIMESTAMP' })
+  lastFailedAt: Date;
+
+  @Column({ name: 'last_reviewed_at', type: 'timestamp', nullable: true })
+  lastReviewedAt: Date | null;
 }
