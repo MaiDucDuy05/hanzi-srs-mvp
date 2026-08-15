@@ -52,9 +52,6 @@ export interface User {
   banReason?: string | null;
   bannedAt?: string | null;
   dailyGoal?: number;
-  vipValidUntil?: string | null;
-  banReason?: string | null;
-  bannedAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
