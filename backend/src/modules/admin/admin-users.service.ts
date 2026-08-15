@@ -83,7 +83,8 @@ export class AdminUsersService {
     if (!user) throw new NotFoundException('User not found');
     
     const sub = await this.subRepo.findOne({ 
-      where: { userId: id, status: SubscriptionStatus.ACTIVE } 
+      where: { userId: id, status: SubscriptionStatus.ACTIVE, plan: SubscriptionPlan.VIP },
+      order: { expiresAt: 'DESC' }
     });
 
     return {
@@ -167,7 +168,8 @@ export class AdminUsersService {
 
     // Xử lý Subscriptions (VIP)
     const existingSub = await this.subRepo.findOne({ 
-      where: { userId: targetId, status: SubscriptionStatus.ACTIVE, plan: SubscriptionPlan.VIP } 
+      where: { userId: targetId, status: SubscriptionStatus.ACTIVE, plan: SubscriptionPlan.VIP },
+      order: { expiresAt: 'DESC' }
     });
 
     if (isUpgradingToVip && vipDays) {

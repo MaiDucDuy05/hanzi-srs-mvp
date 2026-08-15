@@ -40,6 +40,7 @@ export type ResourceTier = 'FREE' | 'VIP';
 export type UpgradeRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 export type AiJobType = 'STORY' | 'STUDY_PATH';
 export type AiJobStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+export type RewardType = 'TEMPORARY_VIP' | 'DISCOUNT_VOUCHER' | 'CONTENT_UNLOCK' | 'COSMETIC';
 
 // ── Auth / Users ──
 export interface User {
@@ -397,6 +398,36 @@ export interface AiJob {
   completedAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+// ── Rewards ──
+export interface Reward {
+  id: string;
+  code: string;
+  title: string;
+  type: RewardType;
+  costExp: number;
+  metadata: Record<string, unknown> | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateRewardDto {
+  code: string;
+  title: string;
+  type: RewardType;
+  costExp: number;
+  metadata?: Record<string, unknown>;
+  active?: boolean;
+}
+
+export interface UpdateRewardDto {
+  title?: string;
+  type?: RewardType;
+  costExp?: number;
+  metadata?: Record<string, unknown>;
+  active?: boolean;
 }
 
 // ── Admin Dashboard ──

@@ -23,6 +23,7 @@ const NAV_ITEMS = [
   { href: '/admin/teacher-content', title: 'Teacher', icon: GraduationCap },
   { href: '/admin/users', title: 'Users', icon: Users },
   { href: '/admin/subscriptions', title: 'Subscriptions', icon: CreditCard },
+  { href: '/admin/rewards', title: 'Rewards', icon: ShieldAlert },
   { href: '/admin/resources', title: 'Resources', icon: FolderOpen },
   { href: '/admin/settings', title: 'Settings', icon: Settings },
 ];
