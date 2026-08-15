@@ -15,6 +15,8 @@ export interface AchievementsDashboard {
   level: LevelInfo;
   streak: number;
   dailyGoal: number;
+  dailyXp: number;
+  progressPercent: number;
   recentActivities: UserActivity[];
 }
 

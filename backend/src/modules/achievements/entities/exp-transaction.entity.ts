@@ -1,5 +1,4 @@
-import { Column, Entity, Index } from 'typeorm';
-import { BaseEntity } from '../../../common/base.entity';
+import { Column, Entity, Index, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
 import { ExpRefType, ExpTransactionType } from '../../../common/enums/achievements.enums';
 
 /**
@@ -11,7 +10,13 @@ import { ExpRefType, ExpTransactionType } from '../../../common/enums/achievemen
  */
 @Entity('exp_transactions')
 @Index('idx_exp_tx_user_created', ['userId', 'createdAt'])
-export class ExpTransaction extends BaseEntity {
+export class ExpTransaction {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
+  createdAt: Date;
+
   @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
 

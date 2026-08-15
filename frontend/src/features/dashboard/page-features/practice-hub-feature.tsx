@@ -1,9 +1,8 @@
-﻿'use client';
+'use client';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { BookOpenCheck, Library, TrendingUp, BookX } from 'lucide-react';
-import { studentApi } from '@/lib/api/endpoints/student';
-import type { StudentProgress } from '@/lib/api/types';
+import { achievementsApi, type AchievementsDashboard } from '@/lib/api/endpoints/achievements';
 
 const MODES = [
   { id: 'assignment', icon: BookOpenCheck, title: "Teacher's Assignments", desc: "Exercises assigned by teacher" },
@@ -13,10 +12,10 @@ const MODES = [
 ];
 
 export function PracticeHubFeature() {
-  const [progress, setProgress] = useState<StudentProgress | null>(null);
+  const [progress, setProgress] = useState<AchievementsDashboard | null>(null);
 
   useEffect(() => {
-    studentApi.getProgress().then(setProgress).catch(console.error);
+    achievementsApi.getDashboard().then(setProgress).catch(console.error);
   }, []);
 
   const currentXp = progress?.dailyXp ?? 0;

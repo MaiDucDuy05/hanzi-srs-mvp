@@ -17,7 +17,7 @@ const NAV_ITEMS = [
   { label: 'Dashboard', href: '/dashboard' },
   { label: 'Courses', href: '/dashboard/courses' },
   { label: 'Practice', href: '/dashboard/practice' },
-  { label: 'Leaderboard', href: '/dashboard/leaderboard' },
+  { label: 'Achievements', href: '/dashboard/achievements' },
   { label: 'Settings', href: '/dashboard/settings' },
 ];
 
@@ -112,7 +112,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         
         {/* Main Content Area */}
         <main className={`flex-1 min-w-0 flex flex-col items-center overflow-y-auto custom-scrollbar h-full rounded-[2rem] ${
-          !(pathname.startsWith('/dashboard/courses') || pathname.startsWith('/dashboard/practice/lessons')) 
+          !(pathname.startsWith('/dashboard/courses') || pathname.startsWith('/dashboard/practice/lessons') || pathname.startsWith('/dashboard/achievements')) 
             ? 'justify-center' 
             : ''
         }`}>

@@ -5,6 +5,7 @@ import { UserActivity } from './entities/user-activity.entity';
 import { User } from '../auth/entities/user.entity';
 import { PracticeAttempt } from '../practice/entities/practice-attempt.entity';
 import { PracticeAttemptStatus } from '../../common/enums/practice.enums';
+import { ExpDailyEarnings } from './entities/exp-daily-earnings.entity';
 import { getLevel } from './utils/level.util';
 import { ActivityType } from '../../common/enums/achievements.enums';
 
@@ -21,6 +22,8 @@ export class AchievementsService {
     private userRepo: Repository<User>,
     @InjectRepository(PracticeAttempt)
     private attemptRepo: Repository<PracticeAttempt>,
+    @InjectRepository(ExpDailyEarnings)
+    private dailyEarningsRepo: Repository<ExpDailyEarnings>,
   ) {}
 
   /** Dashboard: balance + level + streak + recent activities. */
@@ -38,11 +41,23 @@ export class AchievementsService {
       take: 10,
     });
 
+    const todayDate = new Date().toISOString().split('T')[0];
+    const dailyEarnings = await this.dailyEarningsRepo.findOne({
+      where: { userId, date: todayDate },
+      select: ['earned'],
+    });
+    const dailyXp = dailyEarnings?.earned ?? 0;
+    
+    // progressPercent is capped at 100%
+    const progressPercent = Math.min(Math.round((dailyXp / (user.dailyGoal || 50)) * 100), 100);
+
     return {
       balance: { current: user.currentExp, total: user.totalExp },
       level,
       streak: user.currentStreak,
-      dailyGoal: user.dailyGoal,
+      dailyGoal: user.dailyGoal || 50,
+      dailyXp,
+      progressPercent,
       recentActivities,
     };
   }

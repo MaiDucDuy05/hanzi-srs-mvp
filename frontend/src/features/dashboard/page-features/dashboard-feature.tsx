@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { studentApi, LessonProgressItem } from '@/lib/api/endpoints/student';
-import type { StudentProgress } from '@/lib/api/types';
+import { achievementsApi, type AchievementsDashboard } from '@/lib/api/endpoints/achievements';
 
 const BambooShoot = ({ className }: { className?: string }) => (
   <img
@@ -42,13 +42,13 @@ const CircularProgress = ({ value, label }: { value: number; label: string }) =>
 };
 
 export function DashboardFeature() {
-  const [progress, setProgress] = useState<StudentProgress | null>(null);
+  const [progress, setProgress] = useState<AchievementsDashboard | null>(null);
   const [recommendedLessons, setRecommendedLessons] = useState<LessonProgressItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     Promise.all([
-      studentApi.getProgress(),
+      achievementsApi.getDashboard(),
       studentApi.getRecommendedLessons(),
     ])
       .then(([p, lessons]) => {
@@ -99,11 +99,13 @@ export function DashboardFeature() {
             <h2 className="font-bold text-[#215b3b] font-[family-name:var(--font-nunito)] text-2xl">
               Daily Streak
             </h2>
-            <div className="text-xl font-black text-[#215b3b]">
-              {loading ? '—' : progress?.currentStreak ?? 0} Days
-            </div>
-            <div className="text-xl font-black text-[#215b3b] mb-1">Streak!</div>
-            <p className="text-gray-500 text-sm font-medium">Keep growing!</p>
+            {loading ? (
+              <span className="text-gray-400 text-sm mt-1">Loading...</span>
+            ) : (
+              <p className="text-[#5e7f26] font-medium text-lg mt-1">
+                <span className="text-3xl font-black text-[#8fc353]">{progress?.streak ?? 0}</span> days in a row
+              </p>
+            )}
           </div>
         </div>
 

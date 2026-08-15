@@ -11,7 +11,7 @@ const NAV_LINKS = [
   { href: '/dashboard', label: 'Home' },
   { href: '/practice', label: 'Practice' },
   { href: '/games', label: 'Games' },
-  { href: '/leaderboard', label: 'Leaderboard' },
+  { href: '/achievements', label: 'Achievements' },
 ];
 
 const COURSES_DROPDOWN = [
