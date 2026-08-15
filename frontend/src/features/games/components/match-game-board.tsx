@@ -47,9 +47,10 @@ interface MatchBoardProps {
   initialState: MatchingState | null;
   onStateChange: (state: MatchingState) => void;
   onComplete: (result: ModeResult) => void;
+  elapsed?: number;
 }
 
-export function MatchBoard({ items, initialState, onStateChange, onComplete }: MatchBoardProps) {
+export function MatchBoard({ items, initialState, onStateChange, onComplete, elapsed = 0 }: MatchBoardProps) {
   const pairs = useMemo(() => pickPairs(items), [items]);
 
   const [state, setState] = useState<MatchingState>(
@@ -64,15 +65,7 @@ export function MatchBoard({ items, initialState, onStateChange, onComplete }: M
     }
   );
 
-  const [seconds, setSeconds] = useState(0);
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (state.isGameActive) {
-      interval = setInterval(() => setSeconds(s => s + 1), 1000);
-    }
-    return () => clearInterval(interval);
-  }, [state.isGameActive]);
 
   const update = (next: MatchingState) => {
     setState(next);
@@ -136,7 +129,7 @@ export function MatchBoard({ items, initialState, onStateChange, onComplete }: M
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            {formatTime(seconds)}
+            {formatTime(elapsed)}
           </div>
           <div className="w-[120px] sm:w-[260px]">
             <BambooProgressBar

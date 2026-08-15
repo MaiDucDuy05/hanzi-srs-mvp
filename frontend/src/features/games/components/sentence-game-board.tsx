@@ -95,7 +95,7 @@ export function SentenceGameBoard({
   const isComplete = availableTokens.length === 0;
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center w-full max-w-5xl mx-auto px-4 py-6 sm:py-8 relative z-10 h-full min-h-screen">
+    <div className="flex-1 flex flex-col items-center justify-center w-full max-w-5xl mx-auto px-4 py-6 sm:py-8 relative z-10 h-full">
 
       {/* Header */}
       <div className="w-full flex justify-between items-center mb-6 max-w-2xl">

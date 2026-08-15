@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePracticeEngine } from '@/features/practice/components/practice-engine';
 import { GameSummary } from '@/features/games/components/game-summary';
@@ -18,6 +18,16 @@ export function SentenceGameFeature({ sourceType, sourceId }: { sourceType: Sour
     sourceId,
     sessionKey: 'sentence-ordering-session',
   });
+
+  useEffect(() => {
+    if (engine.status === 'running' && engine.sentenceQuestions.length > 0) {
+      const firstIncomplete = engine.sentenceQuestions.findIndex(q => {
+        const ans = engine.userAnswers[q.questionId] || [];
+        return ans.length < q.tokens.length;
+      });
+      setCurrentIndex(firstIncomplete !== -1 ? firstIncomplete : engine.sentenceQuestions.length - 1);
+    }
+  }, [engine.status]);
 
   if (engine.status === 'loading') {
     return (

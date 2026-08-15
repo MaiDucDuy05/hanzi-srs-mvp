@@ -56,6 +56,7 @@ function MemoryGameContent({ searchParams }: { searchParams: URLSearchParams }) 
       initialState={engine.modeState}
       onStateChange={engine.setModeState}
       onComplete={engine.handleComplete}
+      elapsed={engine.elapsed}
     />
   );
 }

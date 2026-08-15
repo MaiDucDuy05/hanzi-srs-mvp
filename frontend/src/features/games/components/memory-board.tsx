@@ -38,9 +38,10 @@ interface MemoryBoardProps {
   initialState: MemoryState | null;
   onStateChange: (state: MemoryState) => void;
   onComplete: (result: ModeResult) => void;
+  elapsed?: number;
 }
 
-export function MemoryBoard({ items, initialState, onStateChange, onComplete }: MemoryBoardProps) {
+export function MemoryBoard({ items, initialState, onStateChange, onComplete, elapsed = 0 }: MemoryBoardProps) {
   const pairs = useMemo(() => pickPairs(items), [items]);
 
   const [state, setState] = useState<MemoryState>(() => {
@@ -48,16 +49,9 @@ export function MemoryBoard({ items, initialState, onStateChange, onComplete }: 
     return { cards: buildCards(pairs), flipped: [], matchedPairIds: [], mistakes: 0, moves: 0, isGameActive: true };
   });
 
-  const [seconds, setSeconds] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (state.isGameActive) {
-      interval = setInterval(() => setSeconds(s => s + 1), 1000);
-    }
-    return () => clearInterval(interval);
-  }, [state.isGameActive]);
+
 
   useEffect(() => { onStateChange(state); }, [state, onStateChange]);
 
@@ -120,7 +114,7 @@ export function MemoryBoard({ items, initialState, onStateChange, onComplete }: 
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-6 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            {formatTime(seconds)}
+            {formatTime(elapsed)}
           </div>
           <div className="w-[120px] sm:w-[260px]">
             <BambooProgressBar

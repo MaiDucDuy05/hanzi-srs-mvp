@@ -74,12 +74,15 @@ export class GradingService {
       if (result.isCorrect) {
         totalCorrect++;
       } else {
+        const questionDataAny = attempt.questionData as any;
+        const questionsList = questionDataAny.questions || questionDataAny.snapshot?.questions || [];
+        const questionObj = questionsList.find((q: any) => q.questionId === result.questionId);
         await this.mistakeBookSvc.addToMistakeBook(
           attempt.userId,
           attempt.practiceType || 'SENTENCE_ORDERING',
           attemptId,
           'question',
-          { correctOrder: result.correctOrder },
+          questionObj || { correctOrder: result.correctOrder },
           { submittedOrder: result.submittedOrder },
           { correctOrder: result.correctOrder },
           result.questionId,
@@ -186,16 +189,18 @@ export class GradingService {
       if (isCorrect) {
         totalCorrect++;
       } else {
+        const questionDataAny = attempt.questionData as any;
+        const questionsList = questionDataAny.questions || questionDataAny.snapshot?.questions || [];
+        const questionObj = questionsList.find((q: any) => q.questionId === ans.questionId);
         await this.mistakeBookSvc.addToMistakeBook(
           userId,
           attempt.practiceType || 'FILL_BLANK',
           attemptId,
           'question',
-          { correctTokenId: correctId },
+          questionObj || { correctTokenId: correctId },
           { submittedTokenId: ans.tokenId },
           { correctTokenId: correctId },
           ans.questionId,
-          undefined
         );
       }
       results.push({

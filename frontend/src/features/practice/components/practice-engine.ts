@@ -85,7 +85,7 @@ export function usePracticeEngine<TState = unknown>(options: {
   const [sentenceQuestions, setSentenceQuestions] = useState<SentenceQuestion[]>([]);
   const [fillBlankQuestions, setFillBlankQuestions] = useState<import('@/lib/api/types').FillBlankQuestion[]>([]);
   const [userAnswers, setUserAnswersState] = useState<Record<string, string[]>>({});
-  const [fillBlankAnswers, setFillBlankAnswers] = useState<Record<string, string>>({});
+  const [fillBlankAnswers, setFillBlankAnswersState] = useState<Record<string, string>>({});
   const [hanziChars, setHanziChars] = useState<HanziChar[]>([]);
   const [modeState, setModeState] = useState<TState | null>(null);
   const [result, setResult] = useState<ModeResult | null>(null);
@@ -99,6 +99,16 @@ export function usePracticeEngine<TState = unknown>(options: {
 
     // ── Sentence Ordering: dùng API riêng PR-10 ──
     if (practiceType === 'SENTENCE_ORDERING') {
+      const saved = loadSession<SentenceOrderingSession>(sessionKey);
+      if (saved) {
+        attemptIdRef.current = saved.attemptId;
+        startedAtRef.current = saved.startedAt;
+        setSentenceQuestions(saved.questions);
+        setUserAnswersState(saved.userAnswers);
+        setModeState(saved.modeState as TState);
+        setStatus('running');
+        return;
+      }
       let cancelled = false;
       (async () => {
         try {
@@ -256,6 +266,18 @@ export function usePracticeEngine<TState = unknown>(options: {
 
     // ── Fill in the Blank (PR-09) ──
     if (practiceType === 'FILL_BLANK') {
+      type FillBlankSession = { attemptId: string; questions: import('@/lib/api/types').FillBlankQuestion[]; userAnswers: Record<string, string>; modeState: TState | null; startedAt: string; };
+      const saved = loadSession<FillBlankSession>(sessionKey);
+      if (saved) {
+        attemptIdRef.current = saved.attemptId;
+        startedAtRef.current = saved.startedAt;
+        setFillBlankQuestions(saved.questions);
+        setFillBlankAnswersState(saved.userAnswers);
+        setModeState(saved.modeState as TState);
+        setStatus('running');
+        return;
+      }
+      
       let cancelled = false;
       (async () => {
         try {
@@ -291,7 +313,7 @@ export function usePracticeEngine<TState = unknown>(options: {
           setFillBlankQuestions(res.questions);
 
           const initAnswers: Record<string, string> = {};
-          setFillBlankAnswers(initAnswers);
+          setFillBlankAnswersState(initAnswers);
 
           saveSession<{ attemptId: string; questions: import('@/lib/api/types').FillBlankQuestion[]; userAnswers: Record<string, string>; modeState: TState | null; startedAt: string; }>(sessionKey, {
             attemptId: res.attemptId,
@@ -406,6 +428,13 @@ export function usePracticeEngine<TState = unknown>(options: {
   const setUserAnswers = (next: Record<string, string[]>) => {
     setUserAnswersState(next);
     const saved = loadSession<SentenceOrderingSession>(sessionKey);
+    if (saved) saveSession(sessionKey, { ...saved, userAnswers: next });
+  };
+
+  const setFillBlankAnswers = (next: Record<string, string>) => {
+    setFillBlankAnswersState(next);
+    type FillBlankSession = { attemptId: string; questions: import('@/lib/api/types').FillBlankQuestion[]; userAnswers: Record<string, string>; modeState: TState | null; startedAt: string; };
+    const saved = loadSession<FillBlankSession>(sessionKey);
     if (saved) saveSession(sessionKey, { ...saved, userAnswers: next });
   };
 

@@ -22,6 +22,12 @@ export const resourceApi = {
 
   deleteMistake: (id: string) => apiFetch(`/mistake-book/${id}`, { method: 'DELETE' }),
 
+  startMistakeReview: (filter?: string) =>
+    unwrap(apiFetch<Single<MistakeBookEntry[]>>('/mistake-book/review/start', { method: 'POST', body: JSON.stringify({ filter }) })),
+
+  submitMistakeReview: (id: string, isCorrect: boolean) =>
+    unwrap(apiFetch<Single<any>>(`/mistake-book/review/${id}/submit`, { method: 'POST', body: JSON.stringify({ isCorrect }) })),
+
   listVipRequests: (params: { userId?: string; status?: string; page?: number; limit?: number } = {}) =>
     apiFetch<Paginated<VipUpgradeRequest>>(`/vip-upgrade-requests${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
 

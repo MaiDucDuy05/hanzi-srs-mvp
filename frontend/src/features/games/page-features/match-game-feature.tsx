@@ -73,6 +73,7 @@ function MatchGameContent() {
       initialState={engine.modeState}
       onStateChange={engine.setModeState}
       onComplete={engine.handleComplete}
+      elapsed={engine.elapsed}
     />
   );
 }

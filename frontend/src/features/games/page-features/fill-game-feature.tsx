@@ -6,7 +6,7 @@
  * renders the game header (title + timer + bamboo progress) while running, and
  * delegates the board / results to FillGameBoard / FillResults.
  */
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePracticeEngine } from '@/features/practice/components/practice-engine';
 import type { SourceType } from '@/lib/api/types';
@@ -49,6 +49,12 @@ export function FillGameFeature({ sourceId, sourceType }: FillGameFeatureProps) 
   });
 
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    if (status === 'running') {
+      setCurrentIndex(Math.min(Object.keys(fillBlankAnswers).length, fillBlankQuestions.length - 1 || 0));
+    }
+  }, [status]);
 
   const handleAnswer = useCallback((questionId: string, tokenId: string, isLast: boolean) => {
     const newAnswers = { ...fillBlankAnswers, [questionId]: tokenId };

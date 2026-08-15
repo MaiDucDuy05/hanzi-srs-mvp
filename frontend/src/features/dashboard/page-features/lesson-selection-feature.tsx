@@ -80,6 +80,8 @@ export function LessonSelectionFeature() {
   const handleLessonClick = useCallback((lessonId: string, lessonTitle: string) => {
     if (mode === 'assignment') {
       router.push(`/games/balloon?mode=assignment&lesson=${lessonId}`);
+    } else if (mode === 'mistakes') {
+      router.push(`/games/mistakes/review?filter=${lessonId}`);
     } else {
       setSelectedLesson({ id: lessonId, title: lessonTitle });
     }
