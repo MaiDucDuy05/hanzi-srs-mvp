@@ -23,6 +23,8 @@ export function AdminDashboardFeature() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [selectedContact, setSelectedContact] = useState<any | null>(null);
+
   const loadData = async () => {
     setLoading(true);
     setError(null);
@@ -203,14 +205,17 @@ export function AdminDashboardFeature() {
                   <ul className="divide-y divide-gray-50">
                     {pendingItems.pendingContacts.map(c => (
                       <li key={c.id}>
-                        <Link href="/admin/resources" className="block p-4 hover:bg-gray-50 transition-colors">
+                        <button 
+                          onClick={() => setSelectedContact(c)}
+                          className="block w-full text-left p-4 hover:bg-gray-50 transition-colors focus:outline-none"
+                        >
                           <div className="flex justify-between items-start mb-1">
                             <span className="font-medium text-sm text-gray-800">{c.name}</span>
                             <span className="text-xs text-gray-400">{new Date(c.createdAt).toLocaleDateString()}</span>
                           </div>
-                          <p className="text-xs text-gray-500 truncate">{c.email}</p>
-                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">{c.subject}</p>
-                        </Link>
+                          <p className="text-xs text-gray-500 truncate">{c.email} {c.phone ? `- ${c.phone}` : ''}</p>
+                          <p className="text-sm text-gray-600 mt-1 line-clamp-2">{c.message}</p>
+                        </button>
                       </li>
                     ))}
                   </ul>
@@ -294,6 +299,62 @@ export function AdminDashboardFeature() {
 
           </div>
         </>
+      )}
+
+      {/* Contact Details Modal */}
+      {selectedContact && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden flex flex-col">
+            <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+              <h3 className="font-bold text-lg text-gray-800">Chi tiết Liên hệ</h3>
+              <button onClick={() => setSelectedContact(null)} className="text-gray-400 hover:text-gray-600">
+                <XCircle className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <p className="text-sm font-semibold text-gray-500">Người gửi</p>
+                <p className="text-gray-800 font-medium">{selectedContact.name} &lt;{selectedContact.email}&gt;</p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-500">Ngày gửi</p>
+                <p className="text-gray-800">{new Date(selectedContact.createdAt).toLocaleString('vi-VN')}</p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-500">Số điện thoại</p>
+                <p className="text-gray-800 font-medium">{selectedContact.phone || 'Không cung cấp'}</p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-500">Trạng thái</p>
+                <p className="text-gray-800 font-medium">
+                  {selectedContact.status === 'NEW' ? (
+                    <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-xs">Mới</span>
+                  ) : selectedContact.status === 'IN_PROGRESS' ? (
+                    <span className="text-amber-600 bg-amber-50 px-2 py-0.5 rounded text-xs">Đang xử lý</span>
+                  ) : selectedContact.status === 'RESOLVED' ? (
+                    <span className="text-green-600 bg-green-50 px-2 py-0.5 rounded text-xs">Đã giải quyết</span>
+                  ) : (
+                    <span className="text-gray-600 bg-gray-50 px-2 py-0.5 rounded text-xs">{selectedContact.status}</span>
+                  )}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-500">Nội dung</p>
+                <div className="mt-1 p-3 bg-gray-50 rounded-lg text-gray-700 whitespace-pre-wrap text-sm border border-gray-100">
+                  {selectedContact.message}
+                </div>
+              </div>
+            </div>
+            <div className="p-4 border-t flex justify-end bg-gray-50">
+              <button 
+                onClick={() => setSelectedContact(null)}
+                className="px-6 py-2 bg-[#11321e] text-white rounded-xl text-sm font-bold hover:bg-[#1f4e31] transition-colors"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

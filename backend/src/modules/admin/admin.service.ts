@@ -137,7 +137,9 @@ export class AdminService {
       id: c.id,
       name: c.name,
       email: c.email,
-      subject: c.message ? (c.message.length > 50 ? c.message.substring(0, 50) + '...' : c.message) : '',
+      phone: c.phone,
+      message: c.message,
+      status: c.status,
       createdAt: c.createdAt.toISOString(),
     }));
   }

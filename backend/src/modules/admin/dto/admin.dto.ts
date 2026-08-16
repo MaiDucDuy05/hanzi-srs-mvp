@@ -43,7 +43,9 @@ export interface PendingContactItem {
   id: string;
   name: string;
   email: string;
-  subject: string;
+  phone: string | null;
+  message: string;
+  status: string;
   createdAt: string;
 }
 
