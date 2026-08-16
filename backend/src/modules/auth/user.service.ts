@@ -7,6 +7,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
+import { Subscription } from '../subscription/entities/subscription.entity';
+import { SubscriptionPlan, SubscriptionStatus } from '../../common/enums/subscription.enums';
 import { CreateUserDto, UpdateUserDto } from './dto/auth.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 import { PaginatedResult } from '../../common/pagination.dto';
@@ -16,6 +18,8 @@ export class UserService {
   constructor(
     @InjectRepository(User)
     private userRepo: Repository<User>,
+    @InjectRepository(Subscription)
+    private subRepo: Repository<Subscription>,
   ) {}
 
   async findAll(query: UserQueryDto): Promise<PaginatedResult<User>> {
@@ -43,10 +47,17 @@ export class UserService {
     };
   }
 
-  async findById(id: string): Promise<User> {
+  async findById(id: string): Promise<User & { vipValidUntil?: string | Date | null }> {
     const user = await this.userRepo.findOne({ where: { id } });
     if (!user) throw new NotFoundException('User not found');
-    return user;
+    
+    // Fetch VIP subscription to populate vipValidUntil
+    const sub = await this.subRepo.findOne({
+      where: { userId: id, status: SubscriptionStatus.ACTIVE, plan: SubscriptionPlan.VIP },
+      order: { expiresAt: 'DESC' }
+    });
+
+    return Object.assign(user, { vipValidUntil: sub?.expiresAt || null });
   }
 
   async create(dto: CreateUserDto): Promise<User> {

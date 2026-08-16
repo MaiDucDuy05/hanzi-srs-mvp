@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ForestBackground } from '@/features/background/components/forest-background';
+import { useAuth } from '@/lib/auth/auth-context';
 
 const PawIcon = ({ className }: { className?: string }) => (
   <img 
@@ -15,26 +16,16 @@ const PawIcon = ({ className }: { className?: string }) => (
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/dashboard' },
-  { label: 'Courses', href: '/dashboard/courses' },
+  { label: 'HSK', href: '/dashboard/courses/hsk' },
+  { label: 'Topic', href: '/dashboard/courses/topic' },
   { label: 'Practice', href: '/dashboard/practice' },
   { label: 'Achievements', href: '/dashboard/achievements' },
   { label: 'Settings', href: '/dashboard/settings' },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
   const pathname = usePathname();
-  const [coursesOpen, setCoursesOpen] = useState(false);
-  const coursesRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (coursesRef.current && !coursesRef.current.contains(e.target as Node)) {
-        setCoursesOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
 
   return (
     <ForestBackground className="p-4 sm:p-8">
@@ -46,58 +37,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <div className="relative z-10 mx-auto flex w-full max-w-7xl flex-col gap-6 lg:flex-row lg:items-stretch lg:h-[calc(100vh-4rem)]">
         
         {/* Sidebar */}
-        <aside className="flex-shrink-0 w-full lg:w-64 bg-white rounded-[2rem] p-6 shadow-sm flex flex-col justify-center gap-2">
-          {NAV_ITEMS.map((item) => {
-            const isActive = pathname === item.href || (item.href === '/dashboard/courses' && pathname.startsWith('/dashboard/courses'));
-            
-            if (item.label === 'Courses') {
-              return (
-                <div key={item.href} ref={coursesRef} className="relative flex flex-col">
-                  <button
-                    onClick={() => setCoursesOpen(!coursesOpen)}
-                    className={`flex items-center justify-between lg:justify-start lg:gap-3 px-6 py-4 rounded-full transition-colors w-full ${
-                      isActive 
-                        ? 'bg-[#e5f5eb] text-[#215b3b]' 
-                        : 'text-[#215b3b] hover:bg-[#f3f9f5]'
-                    }`}
-                  >
-                    <div className="flex items-center justify-center lg:justify-start gap-3 w-full lg:w-auto">
-                      <PawIcon className="w-6 h-6 shrink-0" />
-                      <span className="font-[family-name:var(--font-nunito)] text-lg font-black">{item.label}</span>
-                    </div>
-                    <svg className={`hidden lg:block w-5 h-5 transition-transform ${coursesOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                  {coursesOpen && (
-                    <div className="flex flex-col gap-1 mt-2 lg:pl-12 lg:pr-4 animate-in slide-in-from-top-2 fade-in duration-200">
-                      <Link
-                        href="/dashboard/courses/hsk"
-                        onClick={() => setCoursesOpen(false)}
-                        className={`px-4 py-2 rounded-xl transition-colors text-sm flex flex-col items-center lg:items-start text-center lg:text-left ${pathname.includes('/courses/hsk') ? 'bg-[#f3f9f5]' : 'hover:bg-gray-50'}`}
-                      >
-                        <div className={`font-bold ${pathname.includes('/courses/hsk') ? 'text-[#215b3b]' : 'text-gray-700'}`}>Học theo HSK</div>
-                        <div className="text-xs font-medium text-gray-400">Bài học chuẩn HSK 1-6</div>
-                      </Link>
-                      <Link
-                        href="/dashboard/courses/topic"
-                        onClick={() => setCoursesOpen(false)}
-                        className={`px-4 py-2 rounded-xl transition-colors text-sm flex flex-col items-center lg:items-start text-center lg:text-left ${pathname.includes('/courses/topic') ? 'bg-[#f3f9f5]' : 'hover:bg-gray-50'}`}
-                      >
-                        <div className={`font-bold ${pathname.includes('/courses/topic') ? 'text-[#215b3b]' : 'text-gray-700'}`}>Học theo Topic</div>
-                        <div className="text-xs font-medium text-gray-400">Bài học theo chủ đề</div>
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              );
-            }
+        <aside className="flex-shrink-0 w-full lg:w-64 bg-white rounded-[2rem] p-6 shadow-sm flex flex-col gap-2">
+          
+          <div className="flex-1 flex flex-col justify-center gap-2">
+            {NAV_ITEMS.map((item) => {
+            const isActive = item.href === '/dashboard' 
+              ? pathname === item.href 
+              : pathname.startsWith(item.href);
 
             return (
               <Link 
                 key={item.href} 
                 href={item.href}
-                className={`flex items-center justify-center lg:justify-start gap-3 px-6 py-4 rounded-full transition-colors ${
+                className={`flex items-center justify-start gap-3 w-52 mx-auto px-6 py-4 rounded-full transition-colors ${
                   isActive 
                     ? 'bg-[#e5f5eb] text-[#215b3b]' 
                     : 'text-[#215b3b] hover:bg-[#f3f9f5]'
@@ -108,6 +60,44 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </Link>
             );
           })}
+          </div>
+
+          {/* VIP Status Box */}
+          {user && (
+            <div className="pt-4 border-t border-gray-100">
+              <div className="bg-[#fefce8] rounded-2xl p-4 border border-[#fef08a] flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-gray-700">Tài khoản</span>
+                  {user.vipValidUntil && new Date(user.vipValidUntil) > new Date() ? (
+                    <span className="px-2 py-0.5 rounded-full bg-[#fef08a] text-[#a16207] text-xs font-bold uppercase tracking-wider">
+                      VIP
+                    </span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-bold uppercase tracking-wider">
+                      Free
+                    </span>
+                  )}
+                </div>
+
+                {user.vipValidUntil && new Date(user.vipValidUntil) > new Date() ? (
+                  <p className="text-xs text-gray-500 font-medium">
+                    Hạn dùng: <span className="text-[#a16207] font-bold">{new Date(user.vipValidUntil).toLocaleDateString('vi-VN')}</span>
+                  </p>
+                ) : (
+                  <p className="text-xs text-gray-500 font-medium leading-relaxed">
+                    Nâng cấp VIP để mở khoá tính năng không giới hạn.
+                  </p>
+                )}
+
+                <Link
+                  href="/dashboard/upgrade-vip"
+                  className="mt-2 text-center text-sm font-bold text-[#854d0e] bg-[#fde047] hover:bg-[#facc15] py-2 rounded-xl transition-colors shadow-sm"
+                >
+                  {user.vipValidUntil && new Date(user.vipValidUntil) > new Date() ? 'Gia hạn VIP' : 'Yêu cầu gói VIP'}
+                </Link>
+              </div>
+            </div>
+          )}
         </aside>
         
         {/* Main Content Area */}

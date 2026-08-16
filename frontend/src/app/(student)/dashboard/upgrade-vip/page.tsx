@@ -19,10 +19,17 @@ const BENEFITS = [
   { emoji: '🧑‍🏫', title: 'Hỗ trợ ưu tiên', desc: 'Được giáo viên hỗ trợ nhanh hơn.' },
 ];
 
+const planLabels: Record<string, string> = {
+  '1_MONTH': '1 Tháng',
+  '6_MONTHS': '6 Tháng',
+  '1_YEAR': '1 Năm',
+};
+
 export default function UpgradeVipPage() {
   const { user } = useAuth();
   const [requests, setRequests] = useState<VipUpgradeRequest[]>([]);
   const [note, setNote] = useState('');
+  const [plan, setPlan] = useState('1_MONTH');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -31,12 +38,6 @@ export default function UpgradeVipPage() {
   const load = () => {
     if (!user) return;
     setLoading(true);
-    // GET /vip-upgrade-requests chỉ dành cho ADMIN — người khác không xem lịch sử.
-    if (user.role !== 'ADMIN') {
-      setRequests([]);
-      setLoading(false);
-      return;
-    }
     resourceApi
       .listVipRequests({ userId: user.id })
       .then(setRequests)
@@ -51,7 +52,12 @@ export default function UpgradeVipPage() {
     if (!user) return;
     setSending(true);
     try {
-      await resourceApi.createVipRequest({ userId: user.id, note: note || undefined });
+      await resourceApi.createVipRequest({ 
+        userId: user.id, 
+        plan, 
+        amount: 0, 
+        note: note || undefined 
+      });
       setSent(true);
       setNote('');
       load();
@@ -101,6 +107,17 @@ export default function UpgradeVipPage() {
                 </div>
               ) : (
                 <form onSubmit={submit} className="space-y-4">
+                  <Field label="Gói VIP">
+                    <select
+                      value={plan}
+                      onChange={(e) => setPlan(e.target.value)}
+                      className="w-full rounded-xl border border-gray-300 p-2.5 focus:border-forest focus:outline-none focus:ring-1 focus:ring-forest"
+                    >
+                      <option value="1_MONTH">1 Tháng</option>
+                      <option value="6_MONTHS">6 Tháng</option>
+                      <option value="1_YEAR">1 Năm</option>
+                    </select>
+                  </Field>
                   <Field label="Ghi chú (tùy chọn)">
                     <Textarea
                       rows={3}
@@ -122,16 +139,14 @@ export default function UpgradeVipPage() {
             <CardBody>
               {loading && <PageLoading label="Đang tải..." />}
               {error && <ErrorState message={error} onRetry={load} />}
-              {!loading && !error && user?.role !== 'ADMIN' && (
-                <p className="text-sm text-gray-500">
-                  Lịch sử xét duyệt do quản trị viên quản lý. Yêu cầu của bạn đã được ghi nhận.
-                </p>
-              )}
-              {!loading && !error && user?.role === 'ADMIN' && (
+              {!loading && !error && (
                 <ul className="space-y-2">
                   {requests.map((r) => (
                     <li key={r.id} className="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 text-sm ">
-                      <span className="text-gray-600">{formatDateTime(r.requestedAt)}</span>
+                      <div className="flex flex-col">
+                        <span className="font-medium text-gray-700">Gói {planLabels[r.plan as string] || r.plan}</span>
+                        <span className="text-xs text-gray-500">{formatDateTime(r.requestedAt)}</span>
+                      </div>
                       <Badge tone={toneFor(r.status) as 'green' | 'red' | 'amber'}>{r.status}</Badge>
                     </li>
                   ))}

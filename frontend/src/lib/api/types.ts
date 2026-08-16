@@ -379,6 +379,9 @@ export interface VipUpgradeRequest {
   id: string;
   userId: string;
   status: UpgradeRequestStatus;
+  plan: string;
+  amount: number;
+  transferNote: string | null;
   note: string | null;
   reviewedBy: string | null;
   requestedAt: string;

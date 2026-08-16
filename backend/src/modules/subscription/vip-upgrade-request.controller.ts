@@ -13,9 +13,15 @@ function ok(data: any, msg: string) { return data?.meta ? { ...data, message: ms
 export class VipUpgradeController {
   constructor(private readonly svc: VipUpgradeService) {}
   
-  @Get() 
-  @Roles(Role.ADMIN) 
-  async findAll(@Query() q: DTO.VipUpgradeRequestQueryDto) { 
+  @Get()
+  async findAll(
+    @Query() q: DTO.VipUpgradeRequestQueryDto,
+    @CurrentUser() user: { sub: string; role: Role }
+  ) {
+    // If not admin, force userId to be the current user
+    if (user.role !== Role.ADMIN) {
+      q.userId = user.sub;
+    }
     return ok(await this.svc.findAll(q), 'VIP upgrade requests retrieved'); 
   }
   
