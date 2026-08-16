@@ -23,6 +23,9 @@ export class PracticeQuestion extends BaseEntity {
   @Column({ name: 'lesson_id', type: 'uuid', nullable: true })
   lessonId: string | null;
 
+  @Column({ name: 'topic_id', type: 'uuid', nullable: true })
+  topicId: string | null;
+
   @Column({ type: 'text', nullable: true })
   prompt: string | null;
 

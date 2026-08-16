@@ -234,6 +234,7 @@ export interface PracticeQuestion {
   questionType: PracticeQuestionType;
   levelId: string | null;
   lessonId: string | null;
+  topicId: string | null;
   prompt: string | null;
   questionData: Record<string, unknown> | null;
   answerData: Record<string, unknown> | null;

@@ -1,4 +1,4 @@
-﻿import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, DataSource } from 'typeorm';
 import { PracticeQuestion } from './entities/practice-question.entity';
@@ -56,17 +56,11 @@ export class FillBlankService {
     let questions: PracticeQuestion[];
 
     if (topicId) {
-      const tvRecords = await this.tvRepo.find({ where: { topicId } });
-      const vocabIds = [...new Set(tvRecords.map((r) => r.vocabularyId))];
-      const vocabRepo = this.tvRepo.manager.getRepository(Vocabulary);
-      const vocabs = await vocabRepo.find({ where: { id: In(vocabIds) } });
-      const levelIds = [...new Set(vocabs.map((v) => v.levelId).filter(Boolean) as string[])];
-
       questions = await this.qRepo.find({
         where: {
           questionType: 'FILL_BLANK' as any,
           status: 'PUBLISHED' as any,
-          ...(levelIds.length ? { levelId: In(levelIds) } : {}),
+          topicId: topicId,
         } as any,
         order: { createdAt: 'DESC' },
         take: Math.min(count, 10),

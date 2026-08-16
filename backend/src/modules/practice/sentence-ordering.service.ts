@@ -110,20 +110,12 @@ export class SentenceOrderingService {
     let questions: PracticeQuestion[];
 
     if (topicId) {
-      // TOPIC: lấy vocabularyIds của topic → filter PracticeQuestion theo lessonId/levelId
-      const tvRecords = await this.tvRepo.find({ where: { topicId } });
-      const vocabIds = [...new Set(tvRecords.map((r) => r.vocabularyId))];
-
-      // Lấy vocabularies để biết levelId của chúng (vocab không có lessonId)
-      const vocabRepo = this.tvRepo.manager.getRepository(Vocabulary);
-      const vocabs = await vocabRepo.find({ where: { id: In(vocabIds) } });
-      const levelIds = [...new Set(vocabs.map((v) => v.levelId).filter(Boolean) as string[])];
-
+      // TOPIC: Truy vấn trực tiếp bằng topic_id (đã được liên kết)
       questions = await this.qRepo.find({
         where: {
           questionType: 'SENTENCE_ORDERING' as any,
           status: 'PUBLISHED' as any,
-          ...(levelIds.length ? { levelId: In(levelIds) } : {}),
+          topicId: topicId,
         } as any,
         order: { createdAt: 'DESC' },
         take: Math.min(count, 10),

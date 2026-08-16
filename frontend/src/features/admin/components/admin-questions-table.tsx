@@ -32,7 +32,7 @@ export const AdminQuestionsTable = () => {
     if (question) {
       setEditForm({ ...question, questionData: JSON.stringify(question.questionData || {}), answerData: JSON.stringify(question.answerData || {}) });
     } else {
-      setEditForm({ prompt: '', questionType: 'FILL_BLANK', status: 'DRAFT', isActive: true, questionData: '{}', answerData: '{}' });
+      setEditForm({ prompt: '', questionType: 'FILL_BLANK', status: 'DRAFT', isActive: true, questionData: '{}', answerData: '{}', topicId: '' });
     }
     setIsModalOpen(true);
   };
@@ -182,6 +182,23 @@ export const AdminQuestionsTable = () => {
                   onChange={e => setEditForm({...editForm, prompt: e.target.value})} 
                 />
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Lesson ID (Tuỳ chọn)</label>
+                  <input type="text" className="w-full p-2 border border-gray-200 rounded-xl" value={editForm.lessonId || ''} onChange={(e) => setEditForm({...editForm, lessonId: e.target.value})} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Level ID (Tuỳ chọn)</label>
+                  <input type="text" className="w-full p-2 border border-gray-200 rounded-xl" value={editForm.levelId || ''} onChange={(e) => setEditForm({...editForm, levelId: e.target.value})} />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Topic ID (Tuỳ chọn)</label>
+                <input type="text" className="w-full p-2 border border-gray-200 rounded-xl" placeholder="Nếu câu hỏi thuộc Topic, dán ID vào đây" value={editForm.topicId || ''} onChange={(e) => setEditForm({...editForm, topicId: e.target.value})} />
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Dữ liệu Câu hỏi (JSON)</label>
