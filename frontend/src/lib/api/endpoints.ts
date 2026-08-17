@@ -13,3 +13,5 @@ export * from './endpoints/hanzi-writing';
 export * from './endpoints/users';
 export * from './endpoints/admin-users';
 export { type StartPracticeInput, type SubmitPracticeInput } from './endpoints/practice';
+export * from './endpoints/test-assignments';
+export * from './endpoints/question-bank';

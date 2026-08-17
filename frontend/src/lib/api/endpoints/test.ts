@@ -15,6 +15,12 @@ export const testApi = {
 
   remove: (id: string) => apiFetch(`/tests/${id}`, { method: 'DELETE' }),
 
+  assign: (id: string, data: { classroomId?: string | null; studentId?: string | null; startTime: string; endTime: string }) =>
+    unwrap(apiFetch<Single<any>>(`/tests/${id}/assign`, { method: 'POST', body: JSON.stringify(data) })),
+
+  updateQuestionOrder: (testId: string, questionIds: string[]) =>
+    unwrap(apiFetch<Single<any>>(`/tests/${testId}/questions/order`, { method: 'PUT', body: JSON.stringify({ questionIds }) })),
+
   listQuestions: (params: { testId?: string; page?: number; limit?: number } = {}) =>
     apiFetch<Paginated<TestQuestion>>(`/test-questions${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
 
@@ -31,11 +37,19 @@ export const testApi = {
 
   getAttempt: (id: string) => unwrap(apiFetch<Single<TestAttempt>>(`/test-attempts/${id}`)),
 
-  startAttempt: (testId: string) =>
-    unwrap(apiFetch<Single<TestAttempt>>('/test-attempts', { method: 'POST', body: JSON.stringify({ testId }) })),
+  startAttempt: (testId: string, assignmentId?: string) =>
+    unwrap(apiFetch<Single<TestAttempt>>('/test-attempts', { method: 'POST', body: JSON.stringify({ testId, assignmentId }) })),
 
   submitAttempt: (id: string, durationSeconds: number) =>
     unwrap(apiFetch<Single<TestAttempt>>(`/test-attempts/${id}`, { method: 'PATCH', body: JSON.stringify({ durationSeconds }) })),
+
+  getAttemptResult: (attemptId: string) =>
+    unwrap(apiFetch<Single<{
+      attempt: TestAttempt;
+      test: Test;
+      questions: TestQuestion[];
+      answers: TestAnswer[];
+    }>>(`/test-attempts/${attemptId}/result`)),
 
   listAnswers: (attemptId: string) =>
     unwrap(apiFetch<Single<TestAnswer[]>>(`/test-attempts/${attemptId}/answers`)),

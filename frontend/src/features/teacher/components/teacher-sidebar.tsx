@@ -12,13 +12,15 @@ import {
   Plus,
   Settings,
   HelpCircle,
-  LogOut
+  LogOut,
+  Database
 } from 'lucide-react';
 
 const NAV_ITEMS = [
   { href: '/teacher/classes', title: 'Classes', icon: Users },
   { href: '/teacher/students', title: 'Students', icon: GraduationCap },
-  { href: '/teacher/exams', title: 'Exams', icon: FileCheck },
+  { href: '/teacher/tests', title: 'Exams', icon: FileCheck },
+  { href: '/teacher/questions', title: 'Question Bank', icon: Database },
   { href: '/teacher/hskk-grading', title: 'HSKK Grading', icon: BookOpenCheck },
   { href: '/teacher/ai-library', title: 'AI Library', icon: BrainCircuit },
 ];

@@ -10,9 +10,13 @@ export enum TestQuestionType {
   SINGLE_CHOICE = 'SINGLE_CHOICE',
   TRUE_FALSE = 'TRUE_FALSE',
   SHORT_ANSWER = 'SHORT_ANSWER',
+  FILL_IN = 'FILL_IN',
+  ORDERING = 'ORDERING',
+  MATCHING = 'MATCHING',
 }
 
 export enum TestAttemptStatus {
   IN_PROGRESS = 'IN_PROGRESS',
   SUBMITTED = 'SUBMITTED',
+  GRADED = 'GRADED',
 }

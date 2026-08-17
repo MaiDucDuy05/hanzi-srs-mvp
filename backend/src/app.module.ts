@@ -23,7 +23,7 @@ import { StudentModule } from './modules/student/student.module';
 import { AchievementsModule } from './modules/achievements/achievements.module';
 import { AdminContentModule } from './modules/admin-content/admin-content.module';
 import { SystemConfigModule } from './modules/config/config.module';
-
+import { QuestionBankModule } from './modules/question-bank/question-bank.module';
 
 @Module({
   imports: [
@@ -63,6 +63,7 @@ import { SystemConfigModule } from './modules/config/config.module';
     AchievementsModule,
     AdminContentModule,
     SystemConfigModule,
+    QuestionBankModule,
   ],
   controllers: [AppController],
   providers: [

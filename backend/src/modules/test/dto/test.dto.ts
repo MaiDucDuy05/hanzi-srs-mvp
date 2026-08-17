@@ -22,11 +22,13 @@ export class TestAttemptQueryDto extends PaginationQueryDto {
 // ── Create/Update DTOs ──
 
 export class CreateTestDto {
-  @IsUUID() teacherId: string;
   @IsString() name: string;
   @IsOptional() @IsString() description?: string | null;
   @IsOptional() @IsInt() @Min(0) timeLimitMinutes?: number;
   @IsOptional() @IsInt() @Min(1) attemptLimit?: number;
+  @IsOptional() @IsInt() @Min(1) hskLevel?: number;
+  @IsOptional() @IsBoolean() shuffleQuestions?: boolean;
+  @IsOptional() @IsBoolean() showAnswersAfter?: boolean;
   @IsOptional() @IsBoolean() showScoreImmediately?: boolean;
   @IsOptional() @IsString() accessCode?: string | null;
 }
@@ -36,6 +38,9 @@ export class UpdateTestDto {
   @IsOptional() @IsString() description?: string | null;
   @IsOptional() @IsInt() @Min(0) timeLimitMinutes?: number;
   @IsOptional() @IsInt() @Min(1) attemptLimit?: number;
+  @IsOptional() @IsInt() @Min(1) hskLevel?: number;
+  @IsOptional() @IsBoolean() shuffleQuestions?: boolean;
+  @IsOptional() @IsBoolean() showAnswersAfter?: boolean;
   @IsOptional() @IsEnum(TestStatus) status?: TestStatus;
   @IsOptional() @IsBoolean() showScoreImmediately?: boolean;
   @IsOptional() @IsString() accessCode?: string | null;
@@ -62,6 +67,7 @@ export class UpdateTestQuestionDto {
 
 export class StartTestAttemptDto {
   @IsUUID() testId: string;
+  @IsOptional() @IsUUID() assignmentId?: string;
 }
 
 export class SubmitTestAnswerDto {

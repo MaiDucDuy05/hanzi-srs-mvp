@@ -32,8 +32,8 @@ export type PracticeQuestionType = 'FILL_BLANK' | 'SENTENCE_ORDERING';
 export type PracticeAnswerType = 'HANZI' | 'PINYIN' | 'TEXT';
 export type PracticeAttemptStatus = 'IN_PROGRESS' | 'COMPLETED';
 export type TestStatus = 'DRAFT' | 'PUBLISHED' | 'CLOSED';
-export type TestQuestionType = 'SINGLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER';
-export type TestAttemptStatus = 'IN_PROGRESS' | 'SUBMITTED';
+export type TestQuestionType = 'SINGLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'FILL_IN' | 'ORDERING' | 'MATCHING';
+export type TestAttemptStatus = 'IN_PROGRESS' | 'SUBMITTED' | 'GRADED';
 export type SubscriptionPlan = 'FREE' | 'VIP';
 export type SubscriptionStatus = 'PENDING_PAYMENT' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
 export type ResourceTier = 'FREE' | 'VIP';
@@ -590,5 +590,55 @@ export interface HanziCharResult {
 export interface HanziWritingCompleteResult {
   completedChars: number;
   totalMistakes: number;
+}
+
+export interface Test {
+  id: string;
+  teacherId: string;
+  name: string;
+  description: string | null;
+  hskLevel: number | null;
+  timeLimitMinutes: number;
+  shuffleQuestions: boolean;
+  showAnswersAfter: boolean;
+  attemptLimit: number;
+  status: TestStatus;
+  accessCode: string | null;
+  showScoreImmediately: boolean;
+  createdAt: string;
+}
+
+export interface TestQuestion {
+  id: string;
+  testId: string;
+  questionType: TestQuestionType;
+  content: string;
+  options: Record<string, unknown> | null;
+  correctAnswer: Record<string, unknown> | null;
+  points: number;
+  displayOrder: number;
+}
+
+export interface TestAttempt {
+  id: string;
+  testId: string;
+  userId: string;
+  assignmentId: string | null;
+  status: TestAttemptStatus;
+  startedAt: string;
+  submittedAt: string | null;
+  score: number;
+  durationSeconds: number;
+}
+
+export interface TestAssignment {
+  id: string;
+  testId: string;
+  classroomId: string | null;
+  studentId: string | null;
+  startTime: string;
+  endTime: string;
+  assignedBy: string;
+  test?: Test;
 }
 

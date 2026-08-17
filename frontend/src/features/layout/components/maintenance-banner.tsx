@@ -3,15 +3,18 @@
 import { useEffect, useState } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { adminConfigsApi } from '@/lib/api/endpoints/admin-configs';
+import { useAuth } from '@/lib/auth/auth-context';
 
 export function MaintenanceBanner() {
   const [isMaintenance, setIsMaintenance] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     // Only check if we have a token (logged in as admin)
     // For MVP, we just ping the configs API to see if maintenance_mode is true
     // If it's a public user, they will get a 503 from the backend anyway
     const checkMaintenance = async () => {
+      if (user?.role !== 'ADMIN') return;
       try {
         const data = await adminConfigsApi.getConfigs();
         const systemConfigs = data['system'] || [];
