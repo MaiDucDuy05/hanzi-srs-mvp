@@ -7,6 +7,7 @@ import { DailyPracticeUsage } from './entities/daily-practice-usage.entity';
 import { PracticeLimitSettings } from './entities/practice-limit-settings.entity';
 import { SubscriptionPlan, SubscriptionStatus } from '../../common/enums/subscription.enums';
 import { Role } from '../../common/enums/user.enums';
+import { ConfigCacheService } from '../config/config-cache.service';
 
 describe('SubscriptionService', () => {
   let service: SubscriptionService;
@@ -247,6 +248,10 @@ describe('DailyUsageService', () => {
       transaction: jest.fn(),
     };
 
+    const mockConfigCache = {
+      get: jest.fn((key: string, defaultVal: number) => defaultVal),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DailyUsageService,
@@ -254,6 +259,7 @@ describe('DailyUsageService', () => {
         { provide: getRepositoryToken(PracticeLimitSettings), useValue: mockSettingsRepo },
         { provide: getDataSourceToken(), useValue: mockDataSource },
         { provide: SubscriptionService, useValue: mockSubscriptionSvc },
+        { provide: ConfigCacheService, useValue: mockConfigCache },
       ],
     }).compile();
 

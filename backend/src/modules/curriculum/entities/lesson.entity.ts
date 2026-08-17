@@ -1,12 +1,17 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../common/base.entity';
 import { ContentStatus } from '../../../common/enums/curriculum.enums';
+import { HskLevel } from './hsk-level.entity';
 
 /** Bài học thuộc một cấp HSK (FR-01). Có thể nằm trong nhiều course qua course_lessons. */
 @Entity('lessons')
 export class Lesson extends BaseEntity {
   @Column({ name: 'level_id', type: 'uuid' })
   levelId: string;
+
+  @ManyToOne(() => HskLevel)
+  @JoinColumn({ name: 'level_id' })
+  level: HskLevel;
 
   @Column({ type: 'varchar', length: 200 })
   title: string;

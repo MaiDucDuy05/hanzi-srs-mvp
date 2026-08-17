@@ -1,5 +1,7 @@
-import { Column, Entity, Index, Unique } from 'typeorm';
+import { Column, Entity, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { BaseEntity } from '../../../common/base.entity';
+import { User } from '../../auth/entities/user.entity';
+import { Vocabulary } from '../../curriculum/entities/vocabulary.entity';
 
 /**
  * SRS progress tracking per user/vocabulary (SM-2 algorithm).
@@ -7,13 +9,22 @@ import { BaseEntity } from '../../../common/base.entity';
  * Indexed by (user_id, next_review_at) for due-card queries.
  */
 @Entity('user_vocabulary_progress')
-@Unique(['userId', 'vocabularyId'])
+@Index('idx_uvp_user_vocab', ['userId', 'vocabularyId'], { unique: true })
+@Index('idx_uvp_user_next_review', ['userId', 'nextReviewAt'])
 export class UserVocabularyProgress extends BaseEntity {
   @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
 
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
+
   @Column({ name: 'vocabulary_id', type: 'uuid' })
   vocabularyId: string;
+
+  @ManyToOne(() => Vocabulary)
+  @JoinColumn({ name: 'vocabulary_id' })
+  vocabulary: Vocabulary;
 
   /** 0–4 (0=unseen, 1=new, 2=learning, 3=review, 4=mastered) */
   @Column({ name: 'mastery_level', type: 'int', default: 0 })

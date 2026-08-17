@@ -14,6 +14,7 @@ describe('VocabularyService', () => {
   function createMockQb() {
     return {
       innerJoin: jest.fn().mockReturnThis(),
+      addSelect: jest.fn().mockReturnThis(),
       orderBy: jest.fn().mockReturnThis(),
       where: jest.fn().mockReturnThis(),
       skip: jest.fn().mockReturnThis(),

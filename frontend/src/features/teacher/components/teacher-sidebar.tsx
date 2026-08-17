@@ -13,11 +13,12 @@ import {
   Settings,
   HelpCircle,
   LogOut,
-  Database
+  Database,
+  LayoutDashboard
 } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { href: '/teacher/classes', title: 'Classes', icon: Users },
+  { href: '/teacher', title: 'Dashboard', icon: LayoutDashboard },
   { href: '/teacher/students', title: 'Students', icon: GraduationCap },
   { href: '/teacher/tests', title: 'Exams', icon: FileCheck },
   { href: '/teacher/questions', title: 'Question Bank', icon: Database },
@@ -41,7 +42,9 @@ export function TeacherSidebar() {
 
       <nav className="flex-1 space-y-1">
         {NAV_ITEMS.map((item) => {
-          const isActive = pathname?.startsWith(item.href);
+          const isActive = item.href === '/teacher' 
+            ? pathname === '/teacher'
+            : pathname?.startsWith(item.href);
           return (
             <Link
               key={item.href}

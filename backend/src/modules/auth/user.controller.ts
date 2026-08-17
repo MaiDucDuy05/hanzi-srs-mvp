@@ -33,6 +33,21 @@ export class UserController {
     return { ...result, message: 'Users retrieved successfully' };
   }
 
+  @Get('students/stats')
+  @Roles(Role.ADMIN, Role.TEACHER)
+  async findStudentsStats(@Query() query: UserQueryDto) {
+    const result = await this.userService.getStudentsStats(query);
+    return { ...result, message: 'Student stats retrieved successfully' };
+  }
+
+  @Get('students/activities')
+  @Roles(Role.ADMIN, Role.TEACHER)
+  async findStudentsActivities(@Query('limit') limitStr?: string) {
+    const limit = limitStr ? parseInt(limitStr, 10) : 10;
+    const activities = await this.userService.getStudentsActivities(limit);
+    return { data: activities, message: 'Student activities retrieved successfully' };
+  }
+
   @Get(':id')
   @Roles(Role.ADMIN, Role.TEACHER)
   async findOne(@Param('id') id: string) {

@@ -171,7 +171,7 @@ describe('TestService', () => {
       await service.findAll({ teacherId: 'teacher-1' });
 
       expect(repo.findAndCount).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { teacherId: 'teacher-1' } }),
+        expect.objectContaining({ where: expect.objectContaining({ teacherId: 'teacher-1' }) }),
       );
     });
 
@@ -181,7 +181,7 @@ describe('TestService', () => {
       await service.findAll({ status: TestStatus.PUBLISHED });
 
       expect(repo.findAndCount).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { status: TestStatus.PUBLISHED } }),
+        expect.objectContaining({ where: expect.objectContaining({ status: TestStatus.PUBLISHED }) }),
       );
     });
 
@@ -229,7 +229,7 @@ describe('TestService', () => {
       repo.findOne.mockResolvedValue(mockTest);
       repo.save.mockImplementation((e) => Promise.resolve(e as TestEntity));
 
-      const result = await service.update('test-1', { title: 'Updated Test', status: TestStatus.CLOSED });
+      const result = await service.update('test-1', { title: 'Updated Test', status: TestStatus.CLOSED }, 'admin-1', Role.ADMIN);
 
       expect(result.title).toBe('Updated Test');
       expect(result.status).toBe(TestStatus.CLOSED);
@@ -241,7 +241,7 @@ describe('TestService', () => {
       repo.findOne.mockResolvedValue(mockTest);
       repo.softRemove.mockResolvedValue(mockTest);
 
-      await service.softDelete('test-1');
+      await service.softDelete('test-1', 'admin-1', Role.ADMIN);
 
       expect(repo.softRemove).toHaveBeenCalled();
     });
@@ -249,7 +249,7 @@ describe('TestService', () => {
     it('should throw NotFoundException for non-existent', async () => {
       repo.findOne.mockResolvedValue(null);
 
-      await expect(service.softDelete('non-existent')).rejects.toThrow('Test not found');
+      await expect(service.softDelete('non-existent', 'admin-1', Role.ADMIN)).rejects.toThrow('Test not found');
     });
   });
 });
@@ -334,7 +334,15 @@ describe('TestQuestionService', () => {
 
   describe('findById', () => {
     it('should strip correctAnswer by default', async () => {
-      repo.findOne.mockResolvedValue(JSON.parse(JSON.stringify(mockQuestion)));
+      repo.findOne.mockResolvedValue(question({
+        id: 'q-1',
+        testId: 'test-1',
+        questionType: TestQuestionType.SINGLE_CHOICE,
+        correctAnswer: { answer: '4' },
+        content: { question: 'What is 2+2?', options: ['2', '3', '4', '5'] },
+        points: 10,
+        displayOrder: 1,
+      }));
 
       const result = await service.findById('q-1');
 
@@ -342,11 +350,21 @@ describe('TestQuestionService', () => {
     });
 
     it('should include correctAnswer when includeAnswer=true', async () => {
-      repo.findOne.mockResolvedValue(JSON.parse(JSON.stringify(mockQuestion)));
+      repo.findOne.mockResolvedValue(question({
+        id: 'q-1',
+        testId: 'test-1',
+        questionType: TestQuestionType.SINGLE_CHOICE,
+        correctAnswer: { answer: '4' },
+        content: { question: 'What is 2+2?', options: ['2', '3', '4', '5'] },
+        points: 10,
+        displayOrder: 1,
+      }));
 
       const result = await service.findById('q-1', true);
 
+      // When includeAnswer is true, correct_answer should be present in question.content
       expect(result.question.content).toHaveProperty('correct_answer');
+      expect(result.question.content.correct_answer).toEqual({ answer: '4' });
     });
 
     it('should throw NotFoundException when not found', async () => {

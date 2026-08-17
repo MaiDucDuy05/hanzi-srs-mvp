@@ -1,4 +1,5 @@
-import { Column, Entity, Index, PrimaryGeneratedColumn, CreateDateColumn } from 'typeorm';
+import { Column, Entity, Index } from 'typeorm';
+import { BaseEntity } from '../../../common/base.entity';
 import { ActivityType } from '../../../common/enums/achievements.enums';
 
 /**
@@ -8,14 +9,9 @@ import { ActivityType } from '../../../common/enums/achievements.enums';
  * - exp_awarded: EXP cộng từ hoạt động này (0 nếu không cộng).
  */
 @Entity('user_activities')
+@Index('idx_user_activities_user', ['userId'])
 @Index('idx_user_activities_user_created', ['userId', 'createdAt'])
-export class UserActivity {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
-  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
-  createdAt: Date;
-
+export class UserActivity extends BaseEntity {
   @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
 

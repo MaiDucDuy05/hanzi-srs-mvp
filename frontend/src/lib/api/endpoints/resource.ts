@@ -47,6 +47,12 @@ export const resourceApi = {
   listUsers: (params: { page?: number; limit?: number } = {}) =>
     apiFetch<Paginated<User>>(`/users${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
 
+  listStudentStats: (params: { page?: number; limit?: number } = {}) =>
+    apiFetch<Paginated<any>>(`/users/students/stats${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
+
+  listStudentActivities: (params: { limit?: number } = {}) =>
+    apiFetch<Single<any[]>>(`/users/students/activities${toQuery({ limit: params.limit ?? 10 })}`).then((r) => r.data),
+
   // Admin-only — returns 403 for non-admin users.
   updateUser: (id: string, data: Partial<User>) =>
     unwrap(apiFetch<Single<User>>(`/users/${id}`, { method: 'PATCH', body: JSON.stringify(data) })),

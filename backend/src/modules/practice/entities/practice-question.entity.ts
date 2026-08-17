@@ -1,10 +1,13 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../common/base.entity';
 import { ContentStatus } from '../../../common/enums/curriculum.enums';
 import {
   PracticeAnswerType,
   PracticeQuestionType,
 } from '../../../common/enums/practice.enums';
+import { HskLevel } from '../../curriculum/entities/hsk-level.entity';
+import { Lesson } from '../../curriculum/entities/lesson.entity';
+import { Topic } from '../../curriculum/entities/topic.entity';
 
 /**
  * Câu hỏi luyện tập dùng chung cho PR-09 (điền chỗ trống) và PR-10 (sắp xếp câu).
@@ -20,11 +23,23 @@ export class PracticeQuestion extends BaseEntity {
   @Column({ name: 'level_id', type: 'uuid', nullable: true })
   levelId: string | null;
 
+  @ManyToOne(() => HskLevel)
+  @JoinColumn({ name: 'level_id' })
+  level: HskLevel | null;
+
   @Column({ name: 'lesson_id', type: 'uuid', nullable: true })
   lessonId: string | null;
 
+  @ManyToOne(() => Lesson)
+  @JoinColumn({ name: 'lesson_id' })
+  lesson: Lesson | null;
+
   @Column({ name: 'topic_id', type: 'uuid', nullable: true })
   topicId: string | null;
+
+  @ManyToOne(() => Topic)
+  @JoinColumn({ name: 'topic_id' })
+  topic: Topic | null;
 
   @Column({ type: 'text', nullable: true })
   prompt: string | null;

@@ -1,10 +1,14 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { BaseEntity } from '../../../common/base.entity';
 import { ContentStatus } from '../../../common/enums/curriculum.enums';
 import { ResourceTier } from '../../../common/enums/resources.enums';
+import { User } from '../../auth/entities/user.entity';
 
 /** Tài liệu tham khảo (PPT...) trong thư viện (FR-24). file_key trỏ S3. */
 @Entity('resources')
+@Index('idx_resources_tier_status', ['tier', 'status', 'createdAt'], {
+  where: 'deleted_at IS NULL',
+})
 export class Resource extends BaseEntity {
   @Column({ type: 'varchar', length: 200 })
   title: string;
@@ -23,6 +27,10 @@ export class Resource extends BaseEntity {
 
   @Column({ name: 'uploader_id', type: 'uuid' })
   uploaderId: string;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'uploader_id' })
+  uploader: User;
 
   @Column({ type: 'varchar', length: 20, default: ContentStatus.DRAFT })
   status: ContentStatus;

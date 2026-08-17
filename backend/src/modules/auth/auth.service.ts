@@ -37,7 +37,10 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<{ accessToken: string; user: User }> {
-    const user = await this.userRepo.findOne({ where: { email: dto.email } });
+    const user = await this.userRepo.createQueryBuilder('user')
+      .where('user.email = :email', { email: dto.email })
+      .addSelect('user.passwordHash')
+      .getOne();
     if (!user) throw new UnauthorizedException('Invalid email or password');
 
     if (user.status !== UserStatus.ACTIVE) {

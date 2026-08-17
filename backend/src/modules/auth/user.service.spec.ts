@@ -5,6 +5,10 @@ import { ConflictException, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { UserService } from './user.service';
 import { User } from './entities/user.entity';
+import { Subscription } from '../subscription/entities/subscription.entity';
+import { TestAttempt } from '../test/entities/test-attempt.entity';
+import { UserVocabularyProgress } from '../srs/entities/user-vocabulary-progress.entity';
+import { UserActivity } from '../achievements/entities/user-activity.entity';
 import { Role, UserStatus } from '../../common/enums/user.enums';
 
 jest.mock('bcrypt');
@@ -38,10 +42,49 @@ describe('UserService', () => {
       recover: jest.fn(),
     };
 
+    const mockSubRepo = {
+      findOne: jest.fn(),
+    };
+
+    const mockTestAttemptRepo = {
+      createQueryBuilder: jest.fn(() => ({
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue([]),
+      })),
+    };
+
+    const mockVocabProgressRepo = {
+      createQueryBuilder: jest.fn(() => ({
+        select: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        andWhere: jest.fn().mockReturnThis(),
+        groupBy: jest.fn().mockReturnThis(),
+        getRawMany: jest.fn().mockResolvedValue([]),
+      })),
+    };
+
+    const mockActivityRepo = {
+      createQueryBuilder: jest.fn(() => ({
+        where: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        limit: jest.fn().mockReturnThis(),
+        getMany: jest.fn().mockResolvedValue([]),
+      })),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserService,
         { provide: getRepositoryToken(User), useValue: mockRepo },
+        { provide: getRepositoryToken(Subscription), useValue: mockSubRepo },
+        { provide: getRepositoryToken(TestAttempt), useValue: mockTestAttemptRepo },
+        { provide: getRepositoryToken(UserVocabularyProgress), useValue: mockVocabProgressRepo },
+        { provide: getRepositoryToken(UserActivity), useValue: mockActivityRepo },
       ],
     }).compile();
 
@@ -165,13 +208,17 @@ describe('UserService', () => {
       const createDto = { email: 'new@example.com', password: 'password123', fullName: 'New User' };
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword');
       repo.findOne.mockResolvedValue(null);
-      repo.create.mockReturnValue({ ...mockUser, ...createDto, passwordHash: 'hashedPassword' } as User);
-      repo.save.mockResolvedValue({ ...mockUser, ...createDto, passwordHash: 'hashedPassword' } as User);
+      const savedUser = { ...mockUser, ...createDto, passwordHash: 'hashedPassword' } as User;
+      repo.create.mockReturnValue(savedUser);
+      repo.save.mockResolvedValue(savedUser);
 
       const result = await service.create(createDto);
 
       expect(bcrypt.hash).toHaveBeenCalledWith(createDto.password, 10);
-      expect(result.passwordHash).toBe('hashedPassword');
+      expect(result.email).toBe(createDto.email);
+      expect(result.fullName).toBe(createDto.fullName);
+      // passwordHash is stripped from response for security
+      expect((result as any).passwordHash).toBeUndefined();
     });
 
     it('should throw ConflictException if email already exists', async () => {

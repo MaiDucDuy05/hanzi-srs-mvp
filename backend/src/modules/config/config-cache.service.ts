@@ -61,17 +61,17 @@ export class ConfigCacheService implements OnModuleInit {
   /**
    * Helper to parse string value based on valueType.
    */
-  private parseValue(value: string, type: ConfigValueType): any {
+  private parseValue(value: string, type: string): any {
     if (value === null || value === undefined) return value;
     try {
       switch (type) {
-        case ConfigValueType.INT:
+        case 'INT':
           return parseInt(value, 10);
-        case ConfigValueType.BOOLEAN:
+        case 'BOOLEAN':
           return value === 'true';
-        case ConfigValueType.JSON:
+        case 'JSON':
           return JSON.parse(value);
-        case ConfigValueType.STRING:
+        case 'STRING':
         default:
           return value;
       }

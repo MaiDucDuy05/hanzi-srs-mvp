@@ -24,7 +24,8 @@ export class SystemConfig {
   @Column({ type: 'text', nullable: true })
   value: string;
 
-  @Column({ type: 'enum', enum: ConfigValueType, default: ConfigValueType.STRING })
+  /** varchar thay vì enum để dễ migrate (quy ước project). */
+  @Column({ name: 'valueType', type: 'varchar', length: 20, default: ConfigValueType.STRING })
   valueType: ConfigValueType;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
@@ -33,13 +34,13 @@ export class SystemConfig {
   @Column({ type: 'text', nullable: true })
   description: string;
 
-  @Column({ type: 'uuid', nullable: true, name: 'updatedBy' })
+  @Column({ name: 'updatedBy', type: 'uuid', nullable: true })
   updatedBy: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { nullable: true })
   @JoinColumn({ name: 'updatedBy' })
-  updatedByUser: User;
+  updatedByUser: User | null;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'updatedAt' })
   updatedAt: Date;
 }

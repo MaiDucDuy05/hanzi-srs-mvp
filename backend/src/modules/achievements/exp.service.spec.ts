@@ -7,6 +7,7 @@ import { ExpService } from './exp.service';
 import { ExpTransaction } from './entities/exp-transaction.entity';
 import { ExpDailyEarnings } from './entities/exp-daily-earnings.entity';
 import { ExpTransactionType, ExpRefType } from '../../common/enums/achievements.enums';
+import { ConfigCacheService } from '../config/config-cache.service';
 
 describe('ExpService', () => {
   let service: ExpService;
@@ -37,7 +38,8 @@ describe('ExpService', () => {
         ExpService,
         { provide: getRepositoryToken(ExpTransaction), useValue: expTxRepo },
         { provide: getRepositoryToken(ExpDailyEarnings), useValue: dailyEarningsRepo },
-        { provide: ConfigService, useValue: { get: jest.fn(() => '200') } },
+        { provide: EntityManager, useValue: em },
+        { provide: ConfigCacheService, useValue: { get: jest.fn((key: string, defaultVal: number) => defaultVal) } },
       ],
     }).compile();
 

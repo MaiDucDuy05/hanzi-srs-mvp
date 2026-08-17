@@ -1,9 +1,10 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../common/base.entity';
 import {
   SubscriptionPlan,
   SubscriptionStatus,
 } from '../../../common/enums/subscription.enums';
+import { User } from '../../auth/entities/user.entity';
 
 /**
  * Gói đăng ký của người dùng (PR-14). Entitlement VIP:
@@ -14,6 +15,10 @@ import {
 export class Subscription extends BaseEntity {
   @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
   @Column({ type: 'varchar', length: 10, default: SubscriptionPlan.FREE })
   plan: SubscriptionPlan;

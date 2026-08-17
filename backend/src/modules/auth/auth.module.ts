@@ -5,6 +5,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { User } from './entities/user.entity';
 import { Subscription } from '../subscription/entities/subscription.entity';
+import { TestAttempt } from '../test/entities/test-attempt.entity';
+import { UserVocabularyProgress } from '../srs/entities/user-vocabulary-progress.entity';
+import { UserActivity } from '../achievements/entities/user-activity.entity';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UserService } from './user.service';
@@ -15,7 +18,7 @@ import { RolesGuard } from './guards/roles.guard';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Subscription]),
+    TypeOrmModule.forFeature([User, Subscription, TestAttempt, UserVocabularyProgress, UserActivity]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],

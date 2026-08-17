@@ -6,6 +6,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { User } from './entities/user.entity';
+import { Subscription } from '../subscription/entities/subscription.entity';
 import { Role, UserStatus } from '../../common/enums/user.enums';
 
 // Mock bcrypt
@@ -36,6 +37,15 @@ describe('AuthService', () => {
       findOne: jest.fn(),
       create: jest.fn(),
       save: jest.fn(),
+      createQueryBuilder: jest.fn(() => ({
+        where: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        getOne: jest.fn(),
+      })),
+    };
+
+    const mockSubRepo = {
+      findOne: jest.fn().mockResolvedValue(null),
     };
 
     const mockJwtService = {
@@ -46,6 +56,7 @@ describe('AuthService', () => {
       providers: [
         AuthService,
         { provide: getRepositoryToken(User), useValue: mockUserRepo },
+        { provide: getRepositoryToken(Subscription), useValue: mockSubRepo },
         { provide: JwtService, useValue: mockJwtService },
       ],
     }).compile();
@@ -95,7 +106,12 @@ describe('AuthService', () => {
     };
 
     it('should login successfully with valid credentials', async () => {
-      userRepo.findOne.mockResolvedValue(mockUser);
+      // Mock createQueryBuilder chain used in login method
+      userRepo.createQueryBuilder.mockReturnValue({
+        where: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockUser),
+      });
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       const result = await service.login(loginDto);
@@ -110,14 +126,22 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException for non-existent user', async () => {
-      userRepo.findOne.mockResolvedValue(null);
+      userRepo.createQueryBuilder.mockReturnValue({
+        where: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(null),
+      });
 
       await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);
       await expect(service.login(loginDto)).rejects.toThrow('Invalid email or password');
     });
 
     it('should throw UnauthorizedException for invalid password', async () => {
-      userRepo.findOne.mockResolvedValue(mockUser);
+      userRepo.createQueryBuilder.mockReturnValue({
+        where: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
+        getOne: jest.fn().mockResolvedValue(mockUser),
+      });
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       await expect(service.login(loginDto)).rejects.toThrow(UnauthorizedException);

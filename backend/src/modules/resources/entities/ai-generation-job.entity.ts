@@ -1,6 +1,7 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { BaseEntity } from '../../../common/base.entity';
 import { AiJobStatus, AiJobType } from '../../../common/enums/resources.enums';
+import { User } from '../../auth/entities/user.entity';
 
 /**
  * Tác vụ AI bất đồng bộ (FR-15 story, FR-16 study path).
@@ -8,9 +9,14 @@ import { AiJobStatus, AiJobType } from '../../../common/enums/resources.enums';
  * frontend poll khi COMPLETED. Index (status, created_at) cho worker poll.
  */
 @Entity('ai_generation_jobs')
+@Index('idx_ai_jobs_status_created', ['status', 'createdAt'])
 export class AiGenerationJob extends BaseEntity {
   @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
   @Column({ name: 'job_type', type: 'varchar', length: 20 })
   jobType: AiJobType;

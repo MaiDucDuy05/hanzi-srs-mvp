@@ -6,17 +6,17 @@ import { MistakeBookService } from './mistake-book.service';
 import { AiJobService } from './ai-generation-job.service';
 import { SpeakingService } from './speaking-attempt.service';
 import { ContactService } from './contact-request.service';
-import { VipUpgradeService } from './vip-upgrade-request.service';
 import { ResourceService } from './resource.service';
 import { MistakeBook } from './entities/mistake-book.entity';
 import { AiGenerationJob } from './entities/ai-generation-job.entity';
 import { SpeakingAttempt } from './entities/speaking-attempt.entity';
 import { ContactRequest } from './entities/contact-request.entity';
-import { VipUpgradeRequest } from './entities/vip-upgrade-request.entity';
 import { Resource } from './entities/resource.entity';
 import { AiJobStatus, SpeakingStatus, ResourceTier } from '../../common/enums/resources.enums';
 import { Role } from '../../common/enums/user.enums';
 import { SubscriptionService } from '../subscription/subscription.service';
+import { VipUpgradeService } from '../subscription/vip-upgrade-request.service';
+import { VipUpgradeRequest } from '../subscription/entities/vip-upgrade-request.entity';
 
 describe('MistakeBookService', () => {
   let service: MistakeBookService;
@@ -680,7 +680,7 @@ describe('ResourceService', () => {
       await service.findAll({ tier: ResourceTier.FREE });
 
       expect(repo.findAndCount).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { tier: ResourceTier.FREE } }),
+        expect.objectContaining({ where: expect.objectContaining({ tier: ResourceTier.FREE }) }),
       );
     });
 

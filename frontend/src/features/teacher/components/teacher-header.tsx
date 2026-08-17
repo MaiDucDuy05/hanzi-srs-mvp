@@ -7,8 +7,6 @@ import { useAuth } from '@/lib/auth/auth-context';
 
 const HEADER_NAV = [
   { href: '/teacher', title: 'Dashboard', exact: true },
-  { href: '/teacher/classes', title: 'Classes' },
-  { href: '/teacher/reports', title: 'Reports' },
 ];
 
 export function TeacherHeader() {

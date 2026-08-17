@@ -2,17 +2,20 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Subscription } from '../subscription/entities/subscription.entity';
-import { VipUpgradeRequest } from '../resources/entities/vip-upgrade-request.entity';
+import { VipUpgradeRequest } from '../subscription/entities/vip-upgrade-request.entity';
 import { User } from '../auth/entities/user.entity';
+import { ContactRequest } from '../resources/entities/contact-request.entity';
 import { AdminService } from './admin.service';
 import { UserStatsService } from './services/user-stats.service';
 import { RevenueService } from './services/revenue.service';
 import { HealthService } from './services/health.service';
+import { SystemJobLog } from './entities/system-job-log.entity';
 import {
   SubscriptionPlan,
   SubscriptionStatus,
+  UpgradeRequestStatus,
 } from '../../common/enums/subscription.enums';
-import { UpgradeRequestStatus } from '../../common/enums/resources.enums';
+import { ContactStatus } from '../../common/enums/resources.enums';
 import { Role } from '../../common/enums/user.enums';
 
 describe('AdminService', () => {
@@ -20,6 +23,8 @@ describe('AdminService', () => {
   let subRepo: jest.Mocked<Repository<Subscription>>;
   let vipReqRepo: jest.Mocked<Repository<VipUpgradeRequest>>;
   let userRepo: jest.Mocked<Repository<User>>;
+  let contactRepo: jest.Mocked<Repository<ContactRequest>>;
+  let systemJobRepo: jest.Mocked<Repository<SystemJobLog>>;
   let userStatsSvc: jest.Mocked<UserStatsService>;
   let revenueSvc: jest.Mocked<RevenueService>;
   let healthSvc: jest.Mocked<HealthService>;
@@ -30,30 +35,45 @@ describe('AdminService', () => {
         AdminService,
         {
           provide: getRepositoryToken(Subscription),
-          useValue: { find: jest.fn() },
+          useValue: { find: jest.fn(), findOne: jest.fn() },
         },
         {
           provide: getRepositoryToken(VipUpgradeRequest),
-          useValue: { count: jest.fn() },
+          useValue: { find: jest.fn(), count: jest.fn() },
         },
         {
           provide: getRepositoryToken(User),
+          useValue: { find: jest.fn(), count: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(ContactRequest),
           useValue: { find: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(SystemJobLog),
+          useValue: { find: jest.fn(), createQueryBuilder: jest.fn(() => ({
+            distinctOn: jest.fn().mockReturnThis(),
+            orderBy: jest.fn().mockReturnThis(),
+            addOrderBy: jest.fn().mockReturnThis(),
+            getMany: jest.fn().mockResolvedValue([]),
+          })) },
         },
         {
           provide: UserStatsService,
           useValue: {
-            getStats: jest.fn(),
-            countActiveVip: jest.fn(),
+            getSummaryStats: jest.fn(),
+            getAttemptsStats: jest.fn(),
+            getRegistrationsChart: jest.fn(),
+            getAttemptsChart: jest.fn(),
           },
         },
         {
           provide: RevenueService,
-          useValue: { getMetrics: jest.fn() },
+          useValue: { getSummaryRevenue: jest.fn() },
         },
         {
           provide: HealthService,
-          useValue: { getHealth: jest.fn() },
+          useValue: { getSystemHealth: jest.fn() },
         },
       ],
     }).compile();
@@ -62,6 +82,8 @@ describe('AdminService', () => {
     subRepo = module.get(getRepositoryToken(Subscription));
     vipReqRepo = module.get(getRepositoryToken(VipUpgradeRequest));
     userRepo = module.get(getRepositoryToken(User));
+    contactRepo = module.get(getRepositoryToken(ContactRequest));
+    systemJobRepo = module.get(getRepositoryToken(SystemJobLog));
     userStatsSvc = module.get(UserStatsService);
     revenueSvc = module.get(RevenueService);
     healthSvc = module.get(HealthService);
@@ -69,151 +91,89 @@ describe('AdminService', () => {
 
   afterEach(() => jest.clearAllMocks());
 
-  describe('getOverview', () => {
-    it('aggregates all sub-services + pending counts into one payload', async () => {
-      userStatsSvc.getStats.mockResolvedValue({
-        total: 100,
-        byRole: { [Role.FREE]: 80, [Role.TEACHER]: 15, [Role.ADMIN]: 5 },
-        vipCount: 20,
-      });
-      revenueSvc.getMetrics.mockResolvedValue({
-        monthlyRevenue: 199.8,
-        revenueTarget: 45000,
-        currency: 'USD',
-      });
-      healthSvc.getHealth.mockResolvedValue({
-        healthPercent: 100,
-        statusLabel: 'Optimal',
-        statusMessage: 'OK',
-        lastCheckedAt: '2026-01-01T00:00:00.000Z',
-      });
-      vipReqRepo.count.mockResolvedValue(7);
-      subRepo.find.mockResolvedValue([]); // no pending subs
+  describe('getSummary', () => {
+    it('should return summary with user stats and revenue', async () => {
+      userStatsSvc.getSummaryStats.mockResolvedValue([
+        { value: 100 },
+        { value: 20 },
+      ]);
+      userStatsSvc.getAttemptsStats.mockResolvedValue({ value: 50, yesterday: 30 });
+      revenueSvc.getSummaryRevenue.mockResolvedValue({ value: 199.8, lastMonth: 150.0 });
 
-      const result = await service.getOverview();
+      const result = await service.getSummary();
 
-      expect(result.userStats.total).toBe(100);
-      expect(result.userStats.vipCount).toBe(20);
-      expect(result.pendingVipCount).toBe(7);
-      expect(result.revenue.monthlyRevenue).toBe(199.8);
-      expect(result.health.statusLabel).toBe('Optimal');
-      expect(result.pendingSubscriptions).toEqual([]);
+      expect(result.totalUsers).toEqual({ value: 100 });
+      expect(result.activeVip).toEqual({ value: 20 });
+      expect(result.todayAttempts).toEqual({ value: 50, yesterday: 30 });
+      expect(result.monthlyRevenue).toEqual({ value: 199.8, lastMonth: 150.0 });
     });
+  });
 
-    it('maps pending subscriptions with user full names', async () => {
-      userStatsSvc.getStats.mockResolvedValue({
-        total: 0,
-        byRole: { [Role.FREE]: 0, [Role.TEACHER]: 0, [Role.ADMIN]: 0 },
-        vipCount: 0,
-      });
-      revenueSvc.getMetrics.mockResolvedValue({
-        monthlyRevenue: 0,
-        revenueTarget: 45000,
-        currency: 'USD',
-      });
-      healthSvc.getHealth.mockResolvedValue({
-        healthPercent: 100,
-        statusLabel: 'Optimal',
-        statusMessage: 'OK',
-        lastCheckedAt: '2026-01-01T00:00:00.000Z',
-      });
-      vipReqRepo.count.mockResolvedValue(0);
+  describe('getCharts', () => {
+    it('should return registrations and attempts charts', async () => {
+      userStatsSvc.getRegistrationsChart.mockResolvedValue([
+        { date: '2026-01-01', count: 10 },
+      ]);
+      userStatsSvc.getAttemptsChart.mockResolvedValue([
+        { date: '2026-01-01', count: 50 },
+      ]);
 
-      const mockSubs = [
-        {
-          id: 'sub-1',
-          userId: 'user-1',
-          plan: SubscriptionPlan.VIP,
-          status: SubscriptionStatus.ACTIVE,
-        },
-        {
-          id: 'sub-2',
-          userId: 'user-2',
-          plan: SubscriptionPlan.VIP,
-          status: SubscriptionStatus.ACTIVE,
-        },
-      ] as Subscription[];
-      subRepo.find.mockResolvedValue(mockSubs);
+      const result = await service.getCharts();
+
+      expect(result.registrations).toHaveLength(1);
+      expect(result.attempts).toHaveLength(1);
+    });
+  });
+
+  describe('getPendingItems', () => {
+    it('should return pending VIP requests with user full names', async () => {
+      vipReqRepo.find.mockResolvedValue([
+        { id: 'req-1', userId: 'user-1', plan: SubscriptionPlan.VIP, createdAt: new Date() },
+      ] as VipUpgradeRequest[]);
       userRepo.find.mockResolvedValue([
         { id: 'user-1', fullName: 'Mei Lin' },
-        { id: 'user-2', fullName: 'James Wu' },
       ] as User[]);
-
-      const result = await service.getOverview();
-
-      expect(result.pendingSubscriptions).toEqual([
-        {
-          id: 'sub-1',
-          userId: 'user-1',
-          userFullName: 'Mei Lin',
-          plan: SubscriptionPlan.VIP,
-        },
-        {
-          id: 'sub-2',
-          userId: 'user-2',
-          userFullName: 'James Wu',
-          plan: SubscriptionPlan.VIP,
-        },
-      ]);
-    });
-
-    it('uses "Unknown" when user not found', async () => {
-      userStatsSvc.getStats.mockResolvedValue({
-        total: 0,
-        byRole: { [Role.FREE]: 0, [Role.TEACHER]: 0, [Role.ADMIN]: 0 },
-        vipCount: 0,
-      });
-      revenueSvc.getMetrics.mockResolvedValue({
-        monthlyRevenue: 0,
-        revenueTarget: 45000,
-        currency: 'USD',
-      });
-      healthSvc.getHealth.mockResolvedValue({
-        healthPercent: 100,
-        statusLabel: 'Optimal',
-        statusMessage: 'OK',
-        lastCheckedAt: '2026-01-01T00:00:00.000Z',
-      });
-      vipReqRepo.count.mockResolvedValue(0);
-      subRepo.find.mockResolvedValue([
-        {
-          id: 'sub-1',
-          userId: 'ghost',
-          plan: SubscriptionPlan.VIP,
-          status: SubscriptionStatus.ACTIVE,
-        },
-      ] as Subscription[]);
-      userRepo.find.mockResolvedValue([]); // user deleted/not found
-
-      const result = await service.getOverview();
-
-      expect(result.pendingSubscriptions[0].userFullName).toBe('Unknown');
-    });
-
-    it('counts only PENDING vip upgrade requests', async () => {
-      userStatsSvc.getStats.mockResolvedValue({
-        total: 0,
-        byRole: { [Role.FREE]: 0, [Role.TEACHER]: 0, [Role.ADMIN]: 0 },
-        vipCount: 0,
-      });
-      revenueSvc.getMetrics.mockResolvedValue({
-        monthlyRevenue: 0,
-        revenueTarget: 45000,
-        currency: 'USD',
-      });
-      healthSvc.getHealth.mockResolvedValue({
-        healthPercent: 100,
-        statusLabel: 'Optimal',
-        statusMessage: 'OK',
-        lastCheckedAt: '2026-01-01T00:00:00.000Z',
-      });
       subRepo.find.mockResolvedValue([]);
+      contactRepo.find.mockResolvedValue([]);
+      systemJobRepo.find.mockResolvedValue([]);
 
-      await service.getOverview();
+      const result = await service.getPendingItems();
 
-      expect(vipReqRepo.count).toHaveBeenCalledWith({
-        where: { status: UpgradeRequestStatus.PENDING },
+      expect(result.pendingVip).toHaveLength(1);
+      expect(result.pendingVip[0].userFullName).toBe('Mei Lin');
+    });
+
+    it('should use "Unknown" when user not found for pending VIP', async () => {
+      vipReqRepo.find.mockResolvedValue([
+        { id: 'req-1', userId: 'ghost', plan: SubscriptionPlan.VIP, createdAt: new Date() },
+      ] as VipUpgradeRequest[]);
+      userRepo.find.mockResolvedValue([]);
+      subRepo.find.mockResolvedValue([]);
+      contactRepo.find.mockResolvedValue([]);
+      systemJobRepo.find.mockResolvedValue([]);
+
+      const result = await service.getPendingItems();
+
+      expect(result.pendingVip[0].userFullName).toBe('Unknown');
+    });
+  });
+
+  describe('getSystemHealth', () => {
+    it('should return system health status', async () => {
+      healthSvc.getSystemHealth.mockResolvedValue({
+        healthPercent: 100,
+        statusLabel: 'Optimal',
+        statusMessage: 'OK',
+        lastCheckedAt: '2026-01-01T00:00:00.000Z',
+        aiCallsToday: 10,
+        storageUsedMb: 100,
+        cronJobs: [],
       });
+
+      const result = await service.getSystemHealth();
+
+      expect(result.healthPercent).toBe(100);
+      expect(result.statusLabel).toBe('Optimal');
     });
   });
 });

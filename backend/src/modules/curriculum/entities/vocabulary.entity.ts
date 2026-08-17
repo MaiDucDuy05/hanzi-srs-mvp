@@ -1,6 +1,7 @@
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { BaseEntity } from '../../../common/base.entity';
 import { ContentStatus } from '../../../common/enums/curriculum.enums';
+import { HskLevel } from './hsk-level.entity';
 import { TopicVocabulary } from './topic-vocabulary.entity';
 
 /** Từ vựng (FR-01). Dùng cho: bài học, chủ đề, practice, flashcard, game. */
@@ -8,6 +9,10 @@ import { TopicVocabulary } from './topic-vocabulary.entity';
 export class Vocabulary extends BaseEntity {
   @Column({ name: 'level_id', type: 'uuid' })
   levelId: string;
+
+  @ManyToOne(() => HskLevel)
+  @JoinColumn({ name: 'level_id' })
+  level: HskLevel;
 
   @Column({ type: 'varchar', length: 50 })
   hanzi: string;
