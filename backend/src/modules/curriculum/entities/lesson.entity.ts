@@ -20,6 +20,9 @@ export class Lesson extends BaseEntity {
   @Column({ type: 'varchar', length: 20, default: ContentStatus.DRAFT })
   status: ContentStatus;
 
+  @Column({ name: 'is_active', type: 'boolean', default: true })
+  isActive: boolean;
+
   @Column({ name: 'published_at', type: 'timestamptz', nullable: true })
   publishedAt: Date | null;
 

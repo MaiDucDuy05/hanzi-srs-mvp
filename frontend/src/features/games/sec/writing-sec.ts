@@ -35,6 +35,7 @@ export interface WritingCtx {
   readonly wrongCount: number;
   readonly moves: number;
   readonly feedback: 'done' | null;
+  readonly charResults: Array<{ char: string; mistakes: number; skipped: boolean }>;
 }
 
 export interface WritingResult {
@@ -42,6 +43,7 @@ export interface WritingResult {
   wrong: number;
   score: number;
   chars: number;
+  charResults: Array<{ char: string; mistakes: number; skipped: boolean }>;
 }
 
 export class WritingSec {
@@ -73,6 +75,7 @@ export class WritingSec {
       wrongCount: 0,
       moves: 0,
       feedback: null,
+      charResults: [],
     };
   }
 
@@ -81,7 +84,7 @@ export class WritingSec {
   }
 
   /** Called when user completes tracing a character */
-  complete(): WritingCtx {
+  complete(mistakes: number = 0): WritingCtx {
     if (this.ctx.phase !== 'playing') return this.ctx;
 
     this.clearTimer();
@@ -91,6 +94,10 @@ export class WritingSec {
       feedback: 'done',
       correctCount: this.ctx.correctCount + 1,
       moves: this.ctx.moves + 1,
+      charResults: [
+        ...this.ctx.charResults,
+        { char: this.ctx.currentHanzi, mistakes, skipped: false }
+      ],
     };
 
     this.onCharComplete.dispatch({
@@ -115,6 +122,10 @@ export class WritingSec {
       feedback: 'done',
       wrongCount: this.ctx.wrongCount + 1,
       moves: this.ctx.moves + 1,
+      charResults: [
+        ...this.ctx.charResults,
+        { char: this.ctx.currentHanzi, mistakes: 0, skipped: true }
+      ],
     };
 
     this.onSkip.dispatch({
@@ -139,6 +150,7 @@ export class WritingSec {
         wrong: this.ctx.wrongCount,
         score,
         chars: this.ctx.totalChars,
+        charResults: this.ctx.charResults,
       });
       return this.ctx;
     }

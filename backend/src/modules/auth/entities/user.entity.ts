@@ -48,4 +48,12 @@ export class User extends BaseEntity {
 
   @Column({ name: 'banned_by', type: 'uuid', nullable: true })
   bannedBy: string | null;
+
+  /** Tổng EXP tích lũy vĩnh viễn (từ exp_transactions). */
+  @Column({ name: 'total_exp', type: 'int', default: 0 })
+  totalExp: number;
+
+  /** EXP khả dụng hiện tại (total - đã redeem). Cache O(1) balance. */
+  @Column({ name: 'current_exp', type: 'int', default: 0 })
+  currentExp: number;
 }

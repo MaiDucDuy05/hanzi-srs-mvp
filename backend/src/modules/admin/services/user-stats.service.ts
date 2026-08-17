@@ -1,55 +1,100 @@
-/**
- * UserStatsService — đếm người dùng theo role + số VIP active.
- * - count by role: GROUP BY trên users (deletedAt IS NULL).
- * - vipCount: DISTINCT userId có subscription plan=VIP, status=ACTIVE, chưa hết hạn.
- */
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Between, IsNull } from 'typeorm';
 import { User } from '../../auth/entities/user.entity';
 import { Subscription } from '../../subscription/entities/subscription.entity';
-import { Role } from '../../../common/enums/user.enums';
+import { TestAttempt } from '../../test/entities/test-attempt.entity';
 import {
   SubscriptionPlan,
   SubscriptionStatus,
 } from '../../../common/enums/subscription.enums';
-import { UserStats } from '../dto/admin.dto';
+import { MetricWithChange, ChartDataPoint } from '../dto/admin.dto';
 
 @Injectable()
 export class UserStatsService {
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
     @InjectRepository(Subscription) private subRepo: Repository<Subscription>,
+    @InjectRepository(TestAttempt) private attemptRepo: Repository<TestAttempt>,
   ) {}
 
-  /** Đếm user theo role (soft-deleted excluded) + VIP active count. */
-  async getStats(): Promise<UserStats> {
-    const rows = await this.userRepo
-      .createQueryBuilder('u')
-      .select('u.role', 'role')
-      .addSelect('COUNT(*)', 'count')
-      .where('u.deletedAt IS NULL')
-      .groupBy('u.role')
-      .getRawMany<{ role: Role; count: string }>();
+  async getSummaryStats(): Promise<[MetricWithChange, MetricWithChange]> {
+    const totalUsers = await this.userRepo.count({ where: { deletedAt: IsNull() } });
+    const activeVip = await this.countActiveVip();
 
-    const byRole: Record<Role, number> = {
-      [Role.FREE]: 0,
-      [Role.TEACHER]: 0,
-      [Role.ADMIN]: 0,
-    };
-    let total = 0;
-    for (const r of rows) {
-      const c = Number(r.count);
-      byRole[r.role] = c;
-      total += c;
-    }
-
-    const vipCount = await this.countActiveVip();
-    return { total, byRole, vipCount };
+    return [
+      { value: totalUsers },
+      { value: activeVip },
+    ];
   }
 
-  /** DISTINCT users có VIP ACTIVE chưa hết hạn (expiresAt null hoặc > now). */
-  async countActiveVip(): Promise<number> {
+  async getAttemptsStats(): Promise<{ value: number; yesterday: number }> {
+    const now = new Date();
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const startOfTomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    
+    const startOfYesterday = new Date(startOfToday);
+    startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+
+    const todayAttempts = await this.attemptRepo.count({
+      where: {
+        createdAt: Between(startOfToday, startOfTomorrow),
+      }
+    });
+
+    const yesterdayAttempts = await this.attemptRepo.count({
+      where: {
+        createdAt: Between(startOfYesterday, startOfToday),
+      }
+    });
+
+    return {
+      value: todayAttempts,
+      yesterday: yesterdayAttempts,
+    };
+  }
+
+  async getRegistrationsChart(days: number): Promise<ChartDataPoint[]> {
+    const start = new Date();
+    start.setDate(start.getDate() - days);
+    start.setHours(0, 0, 0, 0);
+
+    const rows = await this.userRepo
+      .createQueryBuilder('u')
+      .select("TO_CHAR(u.created_at, 'MM-DD')", 'date')
+      .addSelect('COUNT(*)', 'count')
+      .where('u.created_at >= :start', { start })
+      .groupBy("TO_CHAR(u.created_at, 'MM-DD')")
+      .orderBy('date', 'ASC')
+      .getRawMany();
+
+    return rows.map(r => ({
+      date: r.date,
+      count: Number(r.count),
+    }));
+  }
+
+  async getAttemptsChart(days: number): Promise<ChartDataPoint[]> {
+    const start = new Date();
+    start.setDate(start.getDate() - days);
+    start.setHours(0, 0, 0, 0);
+
+    const rows = await this.attemptRepo
+      .createQueryBuilder('a')
+      .select("TO_CHAR(a.created_at, 'MM-DD')", 'date')
+      .addSelect('COUNT(*)', 'count')
+      .where('a.created_at >= :start', { start })
+      .groupBy("TO_CHAR(a.created_at, 'MM-DD')")
+      .orderBy('date', 'ASC')
+      .getRawMany();
+
+    return rows.map(r => ({
+      date: r.date,
+      count: Number(r.count),
+    }));
+  }
+
+  private async countActiveVip(): Promise<number> {
     const row = await this.subRepo
       .createQueryBuilder('s')
       .select('COUNT(DISTINCT s.userId)', 'count')

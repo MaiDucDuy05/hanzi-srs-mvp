@@ -2,13 +2,18 @@ import { SentenceGameFeature } from '@/features/games/page-features/sentence-gam
 import { SourceType } from '@/lib/api/types';
 import Link from 'next/link';
 
-export default function SentenceGamePage({
+export default async function SentenceGamePage({
   searchParams,
 }: {
-  searchParams: { type?: string; id?: string };
+  searchParams: Promise<{ mode?: string; lesson?: string }>;
 }) {
-  const type = (searchParams.type as SourceType) || 'LESSON';
-  const id = searchParams.id;
+  const params = await searchParams;
+  const mode = params.mode;
+  const id = params.lesson;
+
+  let type: SourceType = 'LESSON';
+  if (mode === 'hsk') type = 'LEVEL';
+  else if (mode === 'topic') type = 'TOPIC';
 
   if (!id) {
     return (

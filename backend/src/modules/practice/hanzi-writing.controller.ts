@@ -23,6 +23,10 @@ import { StartHanziWritingDto, CompleteHanziWritingDto } from './hanzi-writing.d
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy';
 import { PracticeType, SourceType } from '../../common/enums/practice.enums';
+import { ExpService } from '../achievements/exp.service';
+import { ActivityService } from '../achievements/activity.service';
+import { StreakService } from '../achievements/streak.service';
+import { ActivityType } from '../../common/enums/achievements.enums';
 
 @Controller('practice/hanzi-writing')
 export class HanziWritingController {
@@ -30,7 +34,29 @@ export class HanziWritingController {
     private readonly hwService: HanziWritingService,
     private readonly attemptService: PracticeAttemptService,
     private readonly dataSource: DataSource,
+    private readonly expService: ExpService,
+    private readonly activityService: ActivityService,
+    private readonly streakService: StreakService,
   ) {}
+
+  /**
+   * POST /practice/hanzi-writing/preview
+   * Lấy trước danh sách chữ Hán mà không tạo session (không tốn attempt).
+   */
+  @Post('preview')
+  @HttpCode(HttpStatus.OK)
+  async preview(@Body() dto: StartHanziWritingDto) {
+    if (!dto.levelId && !dto.lessonId && !dto.topicId) {
+      throw new BadRequestException('Must provide levelId, lessonId, or topicId');
+    }
+
+    const chars = await this.hwService.resolveChars(dto);
+
+    return {
+      data: chars as HanziChar[],
+      message: 'Hanzi characters preview retrieved',
+    };
+  }
 
   /**
    * POST /practice/hanzi-writing/start
@@ -52,7 +78,6 @@ export class HanziWritingController {
 
     const userId = user?.sub ?? '';
     const role = user?.role;
-
     // Resolve characters from vocabulary source
     const chars = await this.hwService.resolveChars(dto);
     if (chars.length === 0) {
@@ -107,8 +132,29 @@ export class HanziWritingController {
     @CurrentUser('sub') userId: string,
   ) {
     const result = await this.hwService.complete(attemptId, userId, dto);
+
+    // PR-33: Award EXP + log activity + update streak.
+    // Hanzi-writing service chưa dùng em → award trong tx riêng.
+    // Idempotency key (attemptId) chống double-award nếu retry.
+    const expAwarded = await this.dataSource.transaction(async (em) => {
+      const awarded = await this.expService.awardFromAttempt(
+        em, userId,
+        { correct: result.completedChars, total: dto.characters.length, combo: 0, refId: attemptId },
+        `${attemptId}:hanzi`,
+      );
+      if (awarded > 0) {
+        await this.activityService.log(
+          em, userId, ActivityType.PRACTICE_COMPLETED,
+          { attemptId, type: 'HANZI_WRITING', completedChars: result.completedChars },
+          awarded,
+        );
+      }
+      await this.streakService.recordActivityAndCheckMilestones(em, userId);
+      return awarded;
+    });
+
     return {
-      data: result,
+      data: { ...result, expAwarded },
       message: 'Hanzi writing session completed',
     };
   }

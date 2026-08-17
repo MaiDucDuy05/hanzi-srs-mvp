@@ -8,6 +8,7 @@ import { PaginationQueryDto } from '../../../common/pagination.dto';
 export class PracticeQuestionQueryDto extends PaginationQueryDto {
   @IsOptional() @IsEnum(PracticeQuestionType) questionType?: PracticeQuestionType;
   @IsOptional() @IsUUID() levelId?: string;
+  @IsOptional() @IsUUID() topicId?: string;
   @IsOptional() @IsString() status?: string;
 }
 
@@ -23,6 +24,7 @@ export class CreatePracticeQuestionDto {
   @IsEnum(PracticeQuestionType) questionType: PracticeQuestionType;
   @IsOptional() @IsUUID() levelId?: string | null;
   @IsOptional() @IsUUID() lessonId?: string | null;
+  @IsOptional() @IsUUID() topicId?: string | null;
   @IsOptional() @IsString() prompt?: string | null;
   @IsOptional() questionData?: Record<string, unknown> | null;
   @IsOptional() answerData?: Record<string, unknown> | null;
@@ -36,6 +38,7 @@ export class UpdatePracticeQuestionDto {
   @IsOptional() @IsEnum(PracticeQuestionType) questionType?: PracticeQuestionType;
   @IsOptional() @IsUUID() levelId?: string | null;
   @IsOptional() @IsUUID() lessonId?: string | null;
+  @IsOptional() @IsUUID() topicId?: string | null;
   @IsOptional() @IsString() prompt?: string | null;
   @IsOptional() questionData?: Record<string, unknown> | null;
   @IsOptional() answerData?: Record<string, unknown> | null;

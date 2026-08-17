@@ -15,6 +15,7 @@ import { Vocabulary } from '../curriculum/entities/vocabulary.entity';
 import { TopicVocabulary } from '../curriculum/entities/topic-vocabulary.entity';
 import { LessonContent } from '../curriculum/entities/lesson-content.entity';
 import { StartHanziWritingDto, CompleteHanziWritingDto } from './hanzi-writing.dto';
+import { MistakeBookService } from '../resources/mistake-book.service';
 import { SourceType } from '../../common/enums/practice.enums';
 import { PracticeAttemptStatus } from '../../common/enums/practice.enums';
 import { ContentType } from '../../common/enums/curriculum.enums';
@@ -42,6 +43,7 @@ export class HanziWritingService {
     private tvRepo: Repository<TopicVocabulary>,
     @InjectRepository(LessonContent)
     private lcRepo: Repository<LessonContent>,
+    private mistakeBookSvc: MistakeBookService,
   ) {}
 
   /**
@@ -91,7 +93,12 @@ export class HanziWritingService {
       }
     }
 
-    return Array.from(charMap.values());
+    const resolved = Array.from(charMap.values());
+    if (dto.chars && dto.chars.length > 0) {
+      const allowed = new Set(dto.chars);
+      return resolved.filter((c) => allowed.has(c.char));
+    }
+    return resolved;
   }
 
   /**
@@ -131,6 +138,26 @@ export class HanziWritingService {
     // Count completed (not skipped) and total mistakes
     const completedChars = dto.characters.filter((c) => !c.skipped).length;
     const totalMistakes = dto.characters.reduce((sum, c) => sum + (c.mistakes ?? 0), 0);
+
+    // Auto log mistakes
+    for (const c of dto.characters) {
+      if (c.skipped || (c.mistakes && c.mistakes > 0)) {
+        const sessionChar = (sessionChars as HanziChar[]).find(sc => sc.char === c.char);
+        if (sessionChar) {
+          await this.mistakeBookSvc.addToMistakeBook(
+            userId,
+            attempt.practiceType || 'HANZI_WRITING',
+            attemptId,
+            'vocabulary',
+            { char: sessionChar.char, pinyin: sessionChar.pinyin, meaning: sessionChar.meaning }, // snapshot
+            { skipped: c.skipped, mistakes: c.mistakes }, // userAnswer
+            null, // correctAnswer
+            undefined, // questionId
+            sessionChar.vocabularyId // vocabularyId
+          );
+        }
+      }
+    }
 
     await this.attemptRepo.update(attemptId, {
       answerData: { characters: dto.characters } as any,

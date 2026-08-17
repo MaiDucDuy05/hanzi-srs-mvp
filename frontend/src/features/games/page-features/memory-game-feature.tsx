@@ -1,88 +1,70 @@
 'use client';
 
-import React, { useState } from 'react';
+import { Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { usePracticeEngine } from '@/features/practice/components/practice-engine';
+import { MemoryBoard, type MemoryState } from '@/features/games/components/memory-board';
+import { GameSummary } from '@/features/games/components/game-summary';
+import { PageLoading } from '@/features/ui/components/spinner';
+import { ErrorState } from '@/features/ui/components/error-state';
+import type { SourceType } from '@/lib/api/types';
 
-const INITIAL_CARDS = [
-  { id: 1, content: '水', pairId: 'shui' },
-  { id: 2, content: '水', pairId: 'shui' },
-  { id: 3, content: '火', pairId: 'huo' },
-  { id: 4, content: '火', pairId: 'huo' },
-  { id: 5, content: '木', pairId: 'mu' },
-  { id: 6, content: '木', pairId: 'mu' },
-  { id: 7, content: '金', pairId: 'jin' },
-  { id: 8, content: '金', pairId: 'jin' },
-  { id: 9, content: '土', pairId: 'tu' },
-  { id: 10, content: '土', pairId: 'tu' },
-  { id: 11, content: '日', pairId: 'ri' },
-  { id: 12, content: '日', pairId: 'ri' },
-].sort(() => Math.random() - 0.5);
+function MemoryGameContent({ searchParams }: { searchParams: URLSearchParams }) {
+  const router = useRouter();
+  const mode = searchParams.get('mode');
+  const id = searchParams.get('lesson');
 
-export function MemoryGameFeature() {
-  const [cards] = useState(INITIAL_CARDS);
-  const [flipped, setFlipped] = useState<number[]>([]);
-  const [matched, setMatched] = useState<number[]>([]);
+  let sourceType: SourceType = 'LESSON';
+  if (mode === 'hsk') sourceType = 'LEVEL';
+  else if (mode === 'topic') sourceType = 'TOPIC';
 
-  const handleFlip = (index: number) => {
-    if (flipped.length === 2 || flipped.includes(index) || matched.includes(index)) return;
+  const engine = usePracticeEngine<MemoryState>({
+    practiceType: 'MEMORY_GAME',
+    sourceType,
+    sourceId: id || '',
+    sessionKey: `practice:MEMORY_GAME:${sourceType}:${id}`,
+  });
 
-    const newFlipped = [...flipped, index];
-    setFlipped(newFlipped);
+  if (engine.status === 'loading') {
+    return <div className="flex-1 flex items-center justify-center min-h-[50vh]"><PageLoading label="Đang tải dữ liệu trò chơi..." /></div>;
+  }
 
-    if (newFlipped.length === 2) {
-      const [first, second] = newFlipped;
-      if (cards[first].pairId === cards[second].pairId) {
-        setTimeout(() => {
-          setMatched(prev => [...prev, first, second]);
-          setFlipped([]);
-        }, 500);
-      } else {
-        setTimeout(() => setFlipped([]), 1000);
-      }
-    }
-  };
+  if (engine.status === 'error' && engine.error) {
+    return <ErrorState message={engine.error ?? 'Có lỗi xảy ra'} onRetry={() => window.location.reload()} />;
+  }
+
+  if (engine.status === 'finished' && engine.result) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-4 min-h-[60vh]">
+        <GameSummary
+          title="Tuyệt vời! 🎉"
+          subtitle="Hoàn thành Lật thẻ (Memory Game)"
+          result={engine.result}
+          elapsed={engine.elapsed}
+          onReplay={() => window.location.reload()}
+          onExit={() => router.back()}
+        />
+      </div>
+    );
+  }
+
+  if (!engine.items.length) return null;
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center w-full max-w-5xl mx-auto px-4 py-6 sm:py-8 relative z-10 h-full">
-      <h1 className="text-3xl font-black text-[#215b3b] font-heading mb-8 drop-shadow-sm">Memory Grove</h1>
-      
-      <div className="grid grid-cols-3 sm:grid-cols-4 gap-4 w-full max-w-2xl flex-1 content-center">
-        {cards.map((card, index) => {
-          const isFlipped = flipped.includes(index) || matched.includes(index);
-          const isMatched = matched.includes(index);
+    <MemoryBoard
+      items={engine.items}
+      initialState={engine.modeState}
+      onStateChange={engine.setModeState}
+      onComplete={engine.handleComplete}
+      elapsed={engine.elapsed}
+    />
+  );
+}
 
-          return (
-            <div 
-              key={card.id}
-              onClick={() => handleFlip(index)}
-              className="aspect-[3/4] perspective-1000 cursor-pointer group"
-            >
-              <div className={`relative w-full h-full transition-transform duration-500 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
-                
-                {/* Back (Face down) */}
-                <div className={`absolute inset-0 backface-hidden bg-[#aadd4a] rounded-2xl shadow-md border-4 border-white flex items-center justify-center transition-transform group-hover:-translate-y-1 ${isFlipped ? 'pointer-events-none' : ''}`}>
-                  <div className="w-12 h-12 border-4 border-white/50 rounded-full flex items-center justify-center">
-                    <span className="text-white/80 font-bold text-2xl">?</span>
-                  </div>
-                </div>
-
-                {/* Front (Face up) */}
-                <div className={`absolute inset-0 backface-hidden rotate-y-180 bg-white rounded-2xl shadow-md flex items-center justify-center text-5xl font-bold ${isMatched ? 'border-4 border-[#8BC34A] text-[#8BC34A] opacity-60' : 'border-4 border-[#eef7e9] text-[#215b3b]'}`}>
-                  {card.content}
-                </div>
-
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="mt-12 h-16 flex items-center justify-center">
-        {matched.length === cards.length && (
-          <div className="text-xl sm:text-3xl font-black text-[#8BC34A] bg-white px-8 py-4 rounded-full shadow-lg border-4 border-[#eef7e9] flex items-center gap-3">
-            <span>🎉 Memory Master! 🧠</span>
-          </div>
-        )}
-      </div>
-    </div>
+export function MemoryGameFeature() {
+  return (
+    <Suspense fallback={<PageLoading label="Đang tải..." />}>
+      <MemoryGameContent searchParams={useSearchParams()} />
+    </Suspense>
   );
 }

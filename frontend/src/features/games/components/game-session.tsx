@@ -92,7 +92,6 @@ export function GameSession({
       {practiceType === 'PINYIN_BALLOON_GAME' && (
         <BalloonMode
           items={engine.items}
-          onStateChange={engine.setModeState}
           onComplete={engine.handleComplete}
         />
       )}

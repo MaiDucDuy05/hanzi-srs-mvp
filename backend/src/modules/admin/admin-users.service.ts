@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, ConflictException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
@@ -34,6 +35,25 @@ export class AdminUsersService {
       );
     }
 
+    if (query.plan) {
+      if (query.plan === 'VIP') {
+        qb.innerJoin(
+          Subscription,
+          'sub',
+          'sub.userId = user.id AND sub.status = :subStatus AND sub.plan = :subPlan',
+          { subStatus: SubscriptionStatus.ACTIVE, subPlan: SubscriptionPlan.VIP }
+        );
+      } else if (query.plan === 'FREE') {
+        qb.leftJoin(
+          Subscription,
+          'sub',
+          'sub.userId = user.id AND sub.status = :subStatus AND sub.plan = :subPlan',
+          { subStatus: SubscriptionStatus.ACTIVE, subPlan: SubscriptionPlan.VIP }
+        );
+        qb.andWhere('sub.id IS NULL');
+      }
+    }
+
     const [data, total] = await qb.getManyAndCount();
 
     // Lấy thông tin VIP cho từng user
@@ -63,7 +83,8 @@ export class AdminUsersService {
     if (!user) throw new NotFoundException('User not found');
     
     const sub = await this.subRepo.findOne({ 
-      where: { userId: id, status: SubscriptionStatus.ACTIVE } 
+      where: { userId: id, status: SubscriptionStatus.ACTIVE, plan: SubscriptionPlan.VIP },
+      order: { expiresAt: 'DESC' }
     });
 
     return {
@@ -71,6 +92,48 @@ export class AdminUsersService {
       passwordHash: undefined,
       vipValidUntil: sub?.expiresAt || null,
     };
+  }
+
+  async createUser(data: any, adminId: string, ipAddress: string) {
+    const existing = await this.userRepo.findOne({ where: { email: data.email } });
+    if (existing) throw new ConflictException('Email already exists');
+
+    const passwordToUse = data.password || 'Hanzi@123456';
+    const passwordHash = await bcrypt.hash(passwordToUse, 10);
+
+    const isVip = data.role === 'VIP';
+    const roleToSave = isVip ? Role.FREE : (data.role as Role);
+
+    const newUser = this.userRepo.create({
+      email: data.email,
+      fullName: data.fullName,
+      passwordHash,
+      role: roleToSave,
+      status: UserStatus.ACTIVE,
+    });
+    
+    await this.userRepo.save(newUser);
+
+    if (isVip && data.vipDays) {
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + data.vipDays);
+      
+      const newSub = this.subRepo.create({
+        userId: newUser.id,
+        plan: SubscriptionPlan.VIP,
+        status: SubscriptionStatus.ACTIVE,
+        startsAt: new Date(),
+        expiresAt,
+      });
+      await this.subRepo.save(newSub);
+    }
+
+    await this.auditLogService.logAction(
+      adminId, 'CREATE_USER', 'USER', newUser.id, ipAddress,
+      { newValue: { email: newUser.email, role: data.role, vipDays: data.vipDays || 0 } }
+    );
+
+    return this.findById(newUser.id);
   }
 
   async changeRole(targetId: string, inputRole: string, vipDays: number | undefined, adminId: string, ipAddress: string) {
@@ -105,17 +168,18 @@ export class AdminUsersService {
 
     // Xử lý Subscriptions (VIP)
     const existingSub = await this.subRepo.findOne({ 
-      where: { userId: targetId, status: SubscriptionStatus.ACTIVE, plan: SubscriptionPlan.VIP } 
+      where: { userId: targetId, status: SubscriptionStatus.ACTIVE, plan: SubscriptionPlan.VIP },
+      order: { expiresAt: 'DESC' }
     });
 
     if (isUpgradingToVip && vipDays) {
-      const expiresAt = new Date();
-      expiresAt.setDate(expiresAt.getDate() + vipDays);
-
       if (existingSub) {
-        existingSub.expiresAt = expiresAt;
+        const base = existingSub.expiresAt && existingSub.expiresAt > new Date() ? existingSub.expiresAt : new Date();
+        existingSub.expiresAt = new Date(base.getTime() + vipDays * 24 * 60 * 60 * 1000);
         await this.subRepo.save(existingSub);
       } else {
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + vipDays);
         const newSub = this.subRepo.create({
           userId: targetId,
           plan: SubscriptionPlan.VIP,
@@ -127,7 +191,7 @@ export class AdminUsersService {
       }
     } else if (!isUpgradingToVip && existingSub) {
       // Đổi sang FREE, TEACHER, ADMIN -> Xoá gói VIP hiện tại (hạ quyền)
-      existingSub.status = SubscriptionStatus.CANCELLED;
+      existingSub.status = SubscriptionStatus.EXPIRED;
       await this.subRepo.save(existingSub);
     }
 

@@ -9,8 +9,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { User } from '../auth/entities/user.entity';
 import { Subscription } from '../subscription/entities/subscription.entity';
-import { VipUpgradeRequest } from '../resources/entities/vip-upgrade-request.entity';
+import { VipUpgradeRequest } from '../subscription/entities/vip-upgrade-request.entity';
 import { AdminAuditLog } from './entities/admin-audit-log.entity';
+import { SystemJobLog } from './entities/system-job-log.entity';
+import { ContactRequest } from '../resources/entities/contact-request.entity';
+import { Resource } from '../resources/entities/resource.entity';
+import { AiGenerationJob } from '../resources/entities/ai-generation-job.entity';
+import { TestAttempt } from '../test/entities/test-attempt.entity';
+import { CacheModule } from '@nestjs/cache-manager';
 
 import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
@@ -25,11 +31,17 @@ import { AuditLogService } from './audit-log.service';
 @Module({
   imports: [
     ConfigModule,
+    CacheModule.register(),
     TypeOrmModule.forFeature([
       User, 
       Subscription, 
       VipUpgradeRequest, 
-      AdminAuditLog
+      AdminAuditLog,
+      SystemJobLog,
+      ContactRequest,
+      Resource,
+      AiGenerationJob,
+      TestAttempt
     ]),
   ],
   controllers: [

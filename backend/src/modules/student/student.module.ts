@@ -7,8 +7,8 @@ import { LessonContent } from '../curriculum/entities/lesson-content.entity';
 import { UserVocabularyProgress } from '../srs/entities/user-vocabulary-progress.entity';
 import { AuthModule } from '../auth/auth.module';
 import { PracticeModule } from '../practice/practice.module';
-import { StudentProgressService } from './student-progress.service';
 import { StudentProgressController } from './student-progress.controller';
+import { StudentProgressService } from './student-progress.service';
 
 @Module({
   imports: [

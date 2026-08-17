@@ -1,47 +1,85 @@
-/**
- * Response shapes cho admin dashboard overview endpoint.
- * Đây là response-only DTO (không validation) — trả về từ GET /admin/dashboard/overview.
- */
 import { Role } from '../../../common/enums/user.enums';
 import { SubscriptionPlan } from '../../../common/enums/subscription.enums';
 
-/** Thống kê người dùng theo vai trò + số VIP active. */
-export interface UserStats {
-  total: number;
-  byRole: Record<Role, number>;
-  vipCount: number;
+export interface MetricWithChange {
+  value: number;
+  changePercent?: number; // % change
+  changeValue?: number;   // absolute change
 }
 
-/** Doanh thu tháng + target (từ VIP subscriptions × giá env). */
-export interface RevenueMetrics {
-  monthlyRevenue: number;
-  revenueTarget: number;
-  currency: string;
+/** 4 Thẻ thống kê nhanh trên cùng */
+export interface DashboardSummary {
+  totalUsers: MetricWithChange;
+  activeVip: MetricWithChange;
+  todayAttempts: { value: number; yesterday: number };
+  monthlyRevenue: { value: number; lastMonth: number };
+}
+
+export interface ChartDataPoint {
+  date: string;
+  count: number;
+}
+
+/** Biểu đồ 30 ngày */
+export interface DashboardCharts {
+  registrations: ChartDataPoint[];
+  attempts: ChartDataPoint[];
+}
+
+export interface PendingVipItem {
+  id: string;
+  userFullName: string;
+  plan: SubscriptionPlan;
+  createdAt: string;
+}
+
+export interface ExpiringVipItem {
+  id: string;
+  userFullName: string;
+  expiresAt: string;
+}
+
+export interface PendingContactItem {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  message: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface SystemErrorItem {
+  id: string;
+  jobName: string;
+  errorMessage: string;
+  createdAt: string;
+}
+
+/** Danh sách chờ xử lý */
+export interface DashboardPendingItems {
+  pendingVip: PendingVipItem[];
+  expiringVip: ExpiringVipItem[];
+  pendingContacts: PendingContactItem[];
+  recentSystemErrors: SystemErrorItem[];
 }
 
 export type HealthStatus = 'Optimal' | 'Degraded' | 'Critical';
 
-/** Tình trạng hệ thống (DB ping + uptime). */
-export interface SystemHealth {
+export interface CronJobStatus {
+  name: string;
+  lastRun: string;
+  status: 'OK' | 'ERROR';
+  errorMessage?: string;
+}
+
+/** Tình trạng hệ thống */
+export interface DashboardSystemHealth {
   healthPercent: number;
   statusLabel: HealthStatus;
   statusMessage: string;
   lastCheckedAt: string;
-}
-
-/** Một dòng trong bảng pending subscriptions (top N VIP active gần nhất). */
-export interface PendingSubscriptionItem {
-  id: string;
-  userId: string;
-  userFullName: string;
-  plan: SubscriptionPlan;
-}
-
-/** Payload tổng hợp cho admin dashboard — 1 round-trip. */
-export interface DashboardOverview {
-  userStats: UserStats;
-  pendingVipCount: number;
-  revenue: RevenueMetrics;
-  health: SystemHealth;
-  pendingSubscriptions: PendingSubscriptionItem[];
+  aiCallsToday: number;
+  storageUsedMb: number;
+  cronJobs: CronJobStatus[];
 }

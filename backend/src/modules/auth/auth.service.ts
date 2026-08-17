@@ -11,6 +11,8 @@ import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { RegisterDto, LoginDto, UpdateMeDto } from './dto/auth.dto';
 import { Role, UserStatus } from '../../common/enums/user.enums';
+import { Subscription } from '../subscription/entities/subscription.entity';
+import { SubscriptionPlan, SubscriptionStatus } from '../../common/enums/subscription.enums';
 
 @Injectable()
 export class AuthService {
@@ -18,6 +20,8 @@ export class AuthService {
     @InjectRepository(User)
     private userRepo: Repository<User>,
     private jwtService: JwtService,
+    @InjectRepository(Subscription)
+    private subRepo: Repository<Subscription>,
   ) {}
 
   async register(dto: RegisterDto): Promise<{ accessToken: string; user: User }> {
@@ -42,6 +46,13 @@ export class AuthService {
 
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid) throw new UnauthorizedException('Invalid email or password');
+
+    // Fetch VIP subscription to populate vipValidUntil
+    const sub = await this.subRepo.findOne({
+      where: { userId: user.id, status: SubscriptionStatus.ACTIVE, plan: SubscriptionPlan.VIP },
+      order: { expiresAt: 'DESC' }
+    });
+    Object.assign(user, { vipValidUntil: sub?.expiresAt || null });
 
     const payload = { sub: user.id, email: user.email, role: user.role };
     return { accessToken: this.jwtService.sign(payload), user };

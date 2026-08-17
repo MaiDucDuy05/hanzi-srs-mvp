@@ -1,27 +1,31 @@
-/**
- * AdminService — orchestrator cho dashboard overview.
- * Gọi 3 sub-services (userStats, revenue, health) song song + 2 query riêng:
- * - pendingVipCount: VIP upgrade requests status=PENDING.
- * - pendingSubscriptions: top N VIP active subs + join user fullName cho table.
- */
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, MoreThanOrEqual } from 'typeorm';
 import { Subscription } from '../subscription/entities/subscription.entity';
-import { VipUpgradeRequest } from '../resources/entities/vip-upgrade-request.entity';
+import { VipUpgradeRequest } from '../subscription/entities/vip-upgrade-request.entity';
 import { User } from '../auth/entities/user.entity';
+import { ContactRequest } from '../resources/entities/contact-request.entity';
+import { SystemJobLog } from './entities/system-job-log.entity';
 import {
   SubscriptionStatus,
   SubscriptionPlan,
+  UpgradeRequestStatus,
 } from '../../common/enums/subscription.enums';
-import { UpgradeRequestStatus } from '../../common/enums/resources.enums';
+import { ContactStatus } from '../../common/enums/resources.enums';
 import { UserStatsService } from './services/user-stats.service';
 import { RevenueService } from './services/revenue.service';
 import { HealthService } from './services/health.service';
-import { DashboardOverview, PendingSubscriptionItem } from './dto/admin.dto';
-
-/** Số dòng pending subscriptions tối đa trả về cho dashboard table. */
-const PENDING_SUBS_LIMIT = 5;
+import { 
+  DashboardSummary, 
+  DashboardCharts, 
+  DashboardPendingItems, 
+  DashboardSystemHealth,
+  PendingVipItem,
+  ExpiringVipItem,
+  PendingContactItem,
+  SystemErrorItem,
+  ChartDataPoint
+} from './dto/admin.dto';
 
 @Injectable()
 export class AdminService {
@@ -30,60 +34,128 @@ export class AdminService {
     private revenueSvc: RevenueService,
     private healthSvc: HealthService,
     @InjectRepository(Subscription) private subRepo: Repository<Subscription>,
-    @InjectRepository(VipUpgradeRequest)
-    private vipReqRepo: Repository<VipUpgradeRequest>,
+    @InjectRepository(VipUpgradeRequest) private vipReqRepo: Repository<VipUpgradeRequest>,
     @InjectRepository(User) private userRepo: Repository<User>,
+    @InjectRepository(ContactRequest) private contactRepo: Repository<ContactRequest>,
+    @InjectRepository(SystemJobLog) private systemJobRepo: Repository<SystemJobLog>,
   ) {}
 
-  /** Tổng hợp tất cả stats cho dashboard — 1 round-trip từ frontend. */
-  async getOverview(): Promise<DashboardOverview> {
-    const [userStats, revenue, health, pendingVipCount, pendingSubscriptions] =
-      await Promise.all([
-        this.userStatsSvc.getStats(),
-        this.revenueSvc.getMetrics(),
-        this.healthSvc.getHealth(),
-        this.getPendingVipCount(),
-        this.getPendingSubscriptions(),
-      ]);
+  async getSummary(): Promise<DashboardSummary> {
+    const [totalUsers, activeVip] = await this.userStatsSvc.getSummaryStats();
+    const todayAttempts = await this.userStatsSvc.getAttemptsStats();
+    const monthlyRevenue = await this.revenueSvc.getSummaryRevenue();
 
     return {
-      userStats,
-      pendingVipCount,
-      revenue,
-      health,
-      pendingSubscriptions,
+      totalUsers,
+      activeVip,
+      todayAttempts,
+      monthlyRevenue,
     };
   }
 
-  /** Đếm VIP upgrade requests đang chờ admin review. */
-  private async getPendingVipCount(): Promise<number> {
-    return this.vipReqRepo.count({
-      where: { status: UpgradeRequestStatus.PENDING },
-    });
+  async getCharts(): Promise<DashboardCharts> {
+    const registrations = await this.userStatsSvc.getRegistrationsChart(30);
+    const attempts = await this.userStatsSvc.getAttemptsChart(30);
+
+    return {
+      registrations,
+      attempts,
+    };
   }
 
-  /** Top N VIP active subscriptions gần nhất + user fullName cho dashboard table. */
-  private async getPendingSubscriptions(): Promise<PendingSubscriptionItem[]> {
+  async getPendingItems(): Promise<DashboardPendingItems> {
+    const pendingVip = await this.getPendingVipRequests();
+    const expiringVip = await this.getExpiringVip();
+    const pendingContacts = await this.getPendingContacts();
+    const recentSystemErrors = await this.getRecentSystemErrors();
+
+    return {
+      pendingVip,
+      expiringVip,
+      pendingContacts,
+      recentSystemErrors,
+    };
+  }
+
+  async getSystemHealth(): Promise<DashboardSystemHealth> {
+    return this.healthSvc.getSystemHealth();
+  }
+
+  private async getPendingVipRequests(): Promise<PendingVipItem[]> {
+    const reqs = await this.vipReqRepo.find({
+      where: { status: UpgradeRequestStatus.PENDING },
+      order: { createdAt: 'DESC' },
+      take: 5,
+    });
+    if (reqs.length === 0) return [];
+    const users = await this.userRepo.find({ where: { id: In(reqs.map(r => r.userId)) } });
+    const userMap = new Map(users.map(u => [u.id, u.fullName]));
+
+    return reqs.map(r => ({
+      id: r.id,
+      userFullName: userMap.get(r.userId) ?? 'Unknown',
+      plan: r.plan as unknown as SubscriptionPlan,
+      createdAt: r.createdAt.toISOString(),
+    }));
+  }
+
+  private async getExpiringVip(): Promise<ExpiringVipItem[]> {
+    const next7Days = new Date();
+    next7Days.setDate(next7Days.getDate() + 7);
+    
     const subs = await this.subRepo.find({
-      where: {
-        status: SubscriptionStatus.PENDING_PAYMENT,
+      where: { 
+        status: SubscriptionStatus.ACTIVE,
         plan: SubscriptionPlan.VIP,
       },
-      order: { createdAt: 'DESC' },
-      take: PENDING_SUBS_LIMIT,
+      order: { expiresAt: 'ASC' },
+      take: 5,
     });
-    if (subs.length === 0) return [];
+    
+    // Filter out those expiring beyond 7 days in memory (or add condition if needed)
+    const expiring = subs.filter(s => s.expiresAt && s.expiresAt <= next7Days);
+    if (expiring.length === 0) return [];
 
-    // Batch fetch user names — tránh N+1.
-    const userIds = [...new Set(subs.map((s) => s.userId))];
-    const users = await this.userRepo.find({ where: { id: In(userIds) } });
-    const userMap = new Map(users.map((u) => [u.id, u.fullName]));
+    const users = await this.userRepo.find({ where: { id: In(expiring.map(s => s.userId)) } });
+    const userMap = new Map(users.map(u => [u.id, u.fullName]));
 
-    return subs.map((s) => ({
+    return expiring.map(s => ({
       id: s.id,
-      userId: s.userId,
       userFullName: userMap.get(s.userId) ?? 'Unknown',
-      plan: s.plan,
+      expiresAt: s.expiresAt!.toISOString(),
+    }));
+  }
+
+  private async getPendingContacts(): Promise<PendingContactItem[]> {
+    const contacts = await this.contactRepo.find({
+      where: { status: ContactStatus.NEW },
+      order: { createdAt: 'DESC' },
+      take: 5,
+    });
+
+    return contacts.map(c => ({
+      id: c.id,
+      name: c.name,
+      email: c.email,
+      phone: c.phone,
+      message: c.message,
+      status: c.status,
+      createdAt: c.createdAt.toISOString(),
+    }));
+  }
+
+  private async getRecentSystemErrors(): Promise<SystemErrorItem[]> {
+    const errors = await this.systemJobRepo.find({
+      where: { status: 'ERROR' },
+      order: { lastRun: 'DESC' },
+      take: 5,
+    });
+
+    return errors.map(e => ({
+      id: e.id,
+      jobName: e.jobName,
+      errorMessage: e.errorMessage ?? 'Lỗi không xác định',
+      createdAt: e.lastRun.toISOString(),
     }));
   }
 }

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './database/database.module';
@@ -19,11 +20,15 @@ import { AdminModule } from './modules/admin/admin.module';
 import { SrsModule } from './modules/srs/srs.module';
 import { LessonSelectionModule } from './modules/lesson-selection/lesson-selection.module';
 import { StudentModule } from './modules/student/student.module';
+import { AchievementsModule } from './modules/achievements/achievements.module';
+import { AdminContentModule } from './modules/admin-content/admin-content.module';
+import { SystemConfigModule } from './modules/config/config.module';
 
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -55,6 +60,9 @@ import { StudentModule } from './modules/student/student.module';
     SrsModule,
     LessonSelectionModule,
     StudentModule,
+    AchievementsModule,
+    AdminContentModule,
+    SystemConfigModule,
   ],
   controllers: [AppController],
   providers: [

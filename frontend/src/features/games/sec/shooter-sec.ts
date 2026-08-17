@@ -35,7 +35,7 @@ export interface Particle {
 }
 
 export interface ShooterCtx {
-  phase: 'idle' | 'playing' | 'gameover' | 'completed';
+  phase: 'idle' | 'playing' | 'paused' | 'gameover' | 'completed';
   targets: Target[];
   bullets: Bullet[];
   particles: Particle[];
@@ -46,6 +46,7 @@ export interface ShooterCtx {
   maxCombo: number;
   correctKeystrokes: number;
   wrongKeystrokes: number;
+  completedWords: number;
   timeElapsed: number;
   difficulty: number;
 }
@@ -62,11 +63,11 @@ export interface ShooterConfig {
 
 const DEFAULT_CONFIG: ShooterConfig = {
   initialHp: 5,
-  spawnRateMs: 2500,
-  minSpawnRateMs: 800,
-  baseFallSpeed: 5,
-  maxFallSpeed: 25,
-  difficultyRamp: 0.02,
+  spawnRateMs: 4500, // Slower initial spawn rate (1 balloon every 4.5s)
+  minSpawnRateMs: 1200,
+  baseFallSpeed: 2.5, // Slower initial fall speed (takes 40s to reach bottom)
+  maxFallSpeed: 18,
+  difficultyRamp: 0.012, // More gradual difficulty curve
   bulletSpeed: 150,
 };
 
@@ -106,6 +107,7 @@ export class ShooterSec {
       maxCombo: 0,
       correctKeystrokes: 0,
       wrongKeystrokes: 0,
+      completedWords: 0,
       timeElapsed: 0,
       difficulty: 1,
     };
@@ -116,6 +118,18 @@ export class ShooterSec {
     this.ctx = this.getInitialState();
     this.ctx.phase = 'playing';
     this.lastSpawnTime = 0;
+  }
+
+  pause(): void {
+    if (this.ctx.phase === 'playing') {
+      this.ctx.phase = 'paused';
+    }
+  }
+
+  resume(): void {
+    if (this.ctx.phase === 'paused') {
+      this.ctx.phase = 'playing';
+    }
   }
 
   getState(): ShooterCtx {
@@ -149,6 +163,7 @@ export class ShooterSec {
       
       if (t.y >= 100) {
         // Target reached bottom
+        this.spawnParticles(t.x, t.y, 15, '#ef4444'); // Red explosion on crash
         this.ctx.targets.splice(i, 1);
         this.takeDamage();
       }
@@ -324,13 +339,14 @@ export class ShooterSec {
       this.ctx.bullets.push({
         id: `bullet_${this.bulletIdCounter++}`,
         x: 50, // player cannon is at 50% width
-        y: 95, // player cannon is at bottom
+        y: 80, // player cannon is slightly higher now
         targetId: target.id,
         speed: this.config.bulletSpeed
       });
 
       if (target.typedCount === target.pinyinTyped.length) {
         target.fullyTyped = true;
+        this.ctx.completedWords++;
         // Bonus score for full word
         const completionBonus = 50 * (1 + Math.floor(this.ctx.combo / 10));
         this.ctx.score += completionBonus;

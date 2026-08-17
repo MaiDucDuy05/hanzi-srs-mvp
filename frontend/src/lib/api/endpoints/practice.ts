@@ -57,11 +57,6 @@ export const practiceApi = {
 
   // ── Sentence Ordering (PR-10) ──
 
-  /**
-   * POST /practice/sentence-ordering/start
-   * Tạo attempt + shuffle tokens (Fisher-Yates), trả shuffled tokens.
-   * Trả về attemptId + danh sách câu hỏi đã xáo trộn.
-   */
   sentenceOrderingStart: (params: {
     levelId?: string;
     lessonId?: string;
@@ -76,17 +71,39 @@ export const practiceApi = {
       }),
     ),
 
-  /**
-   * POST /practice/sentence-ordering/:attemptId/submit
-   * Gửi mảng { questionId, tokenIds[] } → backend chấm điểm.
-   */
   sentenceOrderingSubmit: (attemptId: string, data: { answers: SentenceAnswer[]; durationSeconds: number }) =>
     unwrap(
       apiFetch<Single<SentenceGradingResult>>(`/practice/sentence-ordering/${attemptId}/submit`, {
+        method: 'POST', // Chú ý: backend sửa thành PATCH thì frontend cũng phải sửa, nhưng hiện tại backend là POST cho submit
+        body: JSON.stringify(data),
+      }),
+    ),
+
+  // ── Fill in the Blank (PR-09) ──
+
+  fillBlankStart: (params: {
+    levelId?: string;
+    lessonId?: string;
+    topicId?: string;
+    questionCount?: number;
+    idempotencyKey?: string;
+  }) =>
+    unwrap(
+      apiFetch<Single<any>>('/practice/fill-blank/start', {
+        method: 'POST',
+        body: JSON.stringify(params),
+      }),
+    ),
+
+  fillBlankSubmit: (attemptId: string, data: { answers: { questionId: string; tokenId: string }[]; durationSeconds: number }) =>
+    unwrap(
+      apiFetch<Single<any>>(`/practice/fill-blank/${attemptId}/submit`, {
         method: 'POST',
         body: JSON.stringify(data),
       }),
     ),
+
+
 
   /**
    * POST /practice-questions/:id/publish

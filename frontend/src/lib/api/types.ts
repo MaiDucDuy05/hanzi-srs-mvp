@@ -40,6 +40,7 @@ export type ResourceTier = 'FREE' | 'VIP';
 export type UpgradeRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
 export type AiJobType = 'STORY' | 'STUDY_PATH';
 export type AiJobStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED';
+export type RewardType = 'TEMPORARY_VIP' | 'DISCOUNT_VOUCHER' | 'CONTENT_UNLOCK' | 'COSMETIC';
 
 // ── Auth / Users ──
 export interface User {
@@ -48,6 +49,9 @@ export interface User {
   fullName: string;
   role: Role;
   status: string;
+  vipValidUntil?: string | null;
+  banReason?: string | null;
+  bannedAt?: string | null;
   dailyGoal?: number;
   createdAt: string;
   updatedAt: string;
@@ -56,14 +60,6 @@ export interface User {
 export interface AuthResponse {
   // accessToken nằm trong HttpOnly cookie (backend set) — body chỉ trả user.
   user: User;
-}
-
-// ── Student Progress ──
-export interface StudentProgress {
-  dailyXp: number;
-  dailyGoal: number;
-  progressPercent: number;
-  currentStreak: number;
 }
 
 // ── Curriculum ──
@@ -238,6 +234,7 @@ export interface PracticeQuestion {
   questionType: PracticeQuestionType;
   levelId: string | null;
   lessonId: string | null;
+  topicId: string | null;
   prompt: string | null;
   questionData: Record<string, unknown> | null;
   answerData: Record<string, unknown> | null;
@@ -383,6 +380,9 @@ export interface VipUpgradeRequest {
   id: string;
   userId: string;
   status: UpgradeRequestStatus;
+  plan: string;
+  amount: number;
+  transferNote: string | null;
   note: string | null;
   reviewedBy: string | null;
   requestedAt: string;
@@ -404,20 +404,115 @@ export interface AiJob {
   updatedAt: string;
 }
 
-// ── Admin Dashboard ──
-export interface UserStats {
-  total: number;
-  byRole: { FREE: number; TEACHER: number; ADMIN: number };
-  vipCount: number;
+// ── Rewards ──
+export interface Reward {
+  id: string;
+  code: string;
+  title: string;
+  type: RewardType;
+  costExp: number;
+  metadata: Record<string, unknown> | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface RevenueMetrics {
-  monthlyRevenue: number;
-  revenueTarget: number;
-  currency: string;
+export interface CreateRewardDto {
+  code: string;
+  title: string;
+  type: RewardType;
+  costExp: number;
+  metadata?: Record<string, unknown>;
+  active?: boolean;
+}
+
+export interface UpdateRewardDto {
+  title?: string;
+  type?: RewardType;
+  costExp?: number;
+  metadata?: Record<string, unknown>;
+  active?: boolean;
+}
+
+// ── Admin Dashboard ──
+export interface MetricWithChange {
+  value: number;
+  changePercent?: number;
+  changeValue?: number;
+}
+
+export interface DashboardSummary {
+  totalUsers: MetricWithChange;
+  activeVip: MetricWithChange;
+  todayAttempts: { value: number; yesterday: number };
+  monthlyRevenue: { value: number; lastMonth: number };
+}
+
+export interface ChartDataPoint {
+  date: string;
+  count: number;
+}
+
+export interface DashboardCharts {
+  registrations: ChartDataPoint[];
+  attempts: ChartDataPoint[];
+}
+
+export interface PendingVipItem {
+  id: string;
+  userFullName: string;
+  plan: SubscriptionPlan;
+  createdAt: string;
+}
+
+export interface ExpiringVipItem {
+  id: string;
+  userFullName: string;
+  expiresAt: string;
+}
+
+export interface PendingContactItem {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  message: string;
+  status: string;
+  createdAt: string;
+}
+
+export interface SystemErrorItem {
+  id: string;
+  jobName: string;
+  errorMessage: string;
+  createdAt: string;
+}
+
+export interface DashboardPendingItems {
+  pendingVip: PendingVipItem[];
+  expiringVip: ExpiringVipItem[];
+  pendingContacts: PendingContactItem[];
+  recentSystemErrors: SystemErrorItem[];
 }
 
 export type HealthStatus = 'Optimal' | 'Degraded' | 'Critical';
+
+export interface CronJobStatus {
+  name: string;
+  lastRun: string;
+  status: 'OK' | 'ERROR';
+  errorMessage?: string;
+}
+
+export interface DashboardSystemHealth {
+  healthPercent: number;
+  statusLabel: HealthStatus;
+  statusMessage: string;
+  lastCheckedAt: string;
+  aiCallsToday: number;
+  storageUsedMb: number;
+  cronJobs: CronJobStatus[];
+}
 
 // ── Sentence Ordering (PR-10) ──
 export interface SentenceToken {
@@ -428,9 +523,19 @@ export interface SentenceToken {
 export interface SentenceQuestion {
   questionId: string;
   tokens: SentenceToken[];
-  translation: string | null;
-  explanation: string | null;
+  prompt?: string | null;
+  translation?: string | null;
+  explanation?: string | null;
 }
+
+export interface FillBlankQuestion {
+  questionId: string;
+  prompt: string;
+  options: string[];
+  translation?: string | null;
+  explanation?: string | null;
+}
+
 
 export interface SentenceAnswer {
   questionId: string;
@@ -487,24 +592,3 @@ export interface HanziWritingCompleteResult {
   totalMistakes: number;
 }
 
-export interface SystemHealth {
-  healthPercent: number;
-  statusLabel: HealthStatus;
-  statusMessage: string;
-  lastCheckedAt: string;
-}
-
-export interface PendingSubscriptionItem {
-  id: string;
-  userId: string;
-  userFullName: string;
-  plan: SubscriptionPlan;
-}
-
-export interface DashboardOverview {
-  userStats: UserStats;
-  pendingVipCount: number;
-  revenue: RevenueMetrics;
-  health: SystemHealth;
-  pendingSubscriptions: PendingSubscriptionItem[];
-}

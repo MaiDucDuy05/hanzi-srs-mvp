@@ -71,11 +71,14 @@ export function gradeQuestion(
 @Injectable()
 export class TestService {
   constructor(@InjectRepository(Test) private repo: Repository<Test>) {}
-  async findAll(q: TestQueryDto) {
+  async findAll(q: TestQueryDto, role?: string) {
     const { page = 1, limit = 20, teacherId, status } = q;
     const where: any = {};
     if (teacherId) where.teacherId = teacherId;
     if (status) where.status = status;
+    if (role !== Role.ADMIN && role !== Role.TEACHER) {
+      where.hiddenByAdmin = false;
+    }
     const [data, total] = await this.repo.findAndCount({
       where,
       skip: (page - 1) * limit,
@@ -84,19 +87,23 @@ export class TestService {
     });
     return paginatedResult(data, total, page, limit);
   }
-  async findById(id: string) {
-    return findOrNotFound(this.repo, id, 'Test');
+  async findById(id: string, role?: string) {
+    const test = await findOrNotFound(this.repo, id, 'Test');
+    if (role !== Role.ADMIN && role !== Role.TEACHER && test.hiddenByAdmin) {
+      throw new ForbiddenException('This test has been hidden by administrator');
+    }
+    return test;
   }
   async create(dto: CreateTestDto) {
     return this.repo.save(this.repo.create(dto as any));
   }
   async update(id: string, dto: UpdateTestDto) {
-    const e = await this.findById(id);
+    const e = await this.findById(id, Role.ADMIN); // bypass check for internal updates
     Object.assign(e, dto);
     return this.repo.save(e);
   }
   async softDelete(id: string) {
-    await this.repo.softRemove(await this.findById(id));
+    await this.repo.softRemove(await this.findById(id, Role.ADMIN));
   }
 }
 
