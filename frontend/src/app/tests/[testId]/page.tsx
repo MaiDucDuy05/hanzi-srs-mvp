@@ -94,10 +94,10 @@ export default function TakeTestPage() {
         <Card>
           <CardHeader
             title={`Câu ${t.current + 1}/${t.questions.length}`}
-            subtitle={q.questionType === 'SINGLE_CHOICE' ? 'Trắc nghiệm' : q.questionType === 'TRUE_FALSE' ? 'Đúng / Sai' : 'Trả lời ngắn'}
+            subtitle={q.question?.type === 'SINGLE_CHOICE' ? 'Trắc nghiệm' : q.question?.type === 'TRUE_FALSE' ? 'Đúng / Sai' : 'Trả lời ngắn'}
           />
           <CardBody className="space-y-4">
-            <p className="text-lg font-medium">{q.content}</p>
+            <p className="text-lg font-medium">{q.question?.content?.questionText || q.question?.content?.sentence || JSON.stringify(q.question?.content)}</p>
             <TestQuestionForm
               question={q}
               value={t.answers[q.id]}

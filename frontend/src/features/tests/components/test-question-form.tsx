@@ -18,11 +18,13 @@ export function TestQuestionForm({
   value: unknown;
   onChange: (answer: unknown) => void;
 }) {
-  const options = question.options && typeof question.options === 'object'
-    ? ((question.options as { list?: unknown[] }).list ?? [])
-    : [];
+  const q = question.question;
+  const qContent = (q?.content || {}) as Record<string, any>;
+  const type = q?.type || 'UNKNOWN';
 
-  if (question.questionType === 'SHORT_ANSWER') {
+  const options = qContent.options as string[] | undefined || [];
+
+  if (type === 'SHORT_ANSWER') {
     return (
       <Input
         value={typeof value === 'string' ? value : ''}
@@ -33,7 +35,7 @@ export function TestQuestionForm({
     );
   }
 
-  const isBoolean = question.questionType === 'TRUE_FALSE';
+  const isBoolean = type === 'TRUE_FALSE';
   return (
     <div className="space-y-2">
       {options.map((opt, i) => {

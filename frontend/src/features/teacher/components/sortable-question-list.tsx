@@ -40,6 +40,16 @@ function SortableQuestionItem({ question, index, onDelete }: SortableQuestionIte
     position: 'relative' as const,
   };
 
+  const q = question.question;
+  const qContent = (q?.content || {}) as Record<string, any>;
+  const type = q?.type || 'UNKNOWN';
+  let text = qContent.questionText || qContent.sentence || JSON.stringify(qContent);
+  if (type === 'ORDERING') text = (qContent.correctOrder || []).join(' / ');
+  if (type === 'MATCHING') text = 'Nối từ';
+  
+  const options = qContent.options as string[] | undefined;
+  const correctAnswer = qContent.correct_answer || qContent.correctOrder || qContent.acceptedAnswers || qContent.pairs;
+
   return (
     <div ref={setNodeRef} style={style} className={isDragging ? 'opacity-50' : ''}>
       <Card>
@@ -54,16 +64,16 @@ function SortableQuestionItem({ question, index, onDelete }: SortableQuestionIte
             </div>
             <div className="flex-1">
               <p className="font-medium text-sm">
-                {index + 1}. {question.content}
+                {index + 1}. {text}
               </p>
               <div className="mt-1.5 flex flex-wrap gap-2 text-[11px] text-gray-500">
-                <Badge tone="blue">{question.questionType}</Badge>
+                <Badge tone="blue">{type}</Badge>
                 <span>{question.points} điểm</span>
-                {question.options && (
-                  <span>{(question.options as { list?: unknown[] }).list?.join(' | ')}</span>
+                {options && (
+                  <span>{options.join(' | ')}</span>
                 )}
-                {question.correctAnswer && (
-                  <span className="text-green-600">✓ {JSON.stringify(question.correctAnswer)}</span>
+                {correctAnswer && (
+                  <span className="text-green-600">✓ {JSON.stringify(correctAnswer)}</span>
                 )}
               </div>
             </div>

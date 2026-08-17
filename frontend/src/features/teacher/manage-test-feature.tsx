@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import { testApi } from '@/lib/api/endpoints';
-import type { Test, TestAttempt, TestQuestion } from '@/lib/api/types';
+import type { Test, TestAttempt, TestQuestion, TestQuestionType } from '@/lib/api/types';
 import { Card, CardBody } from '@/features/ui/components/card';
 import { Button } from '@/features/ui/components/button';
 import { Modal } from '@/features/ui/components/modal';
@@ -18,6 +18,7 @@ import { AdminViolationBadge } from '@/components/shared/admin-violation-badge';
 import { StudentExamResultFeature } from '@/features/student/student-exam-result-feature';
 import { SortableQuestionList } from './components/sortable-question-list';
 import { QuestionPickerModal } from './components/question-picker-modal';
+import { questionBankApi } from '@/lib/api/endpoints';
 
 export function ManageTestFeature() {
   const { testId } = useParams<{ testId: string }>();
@@ -78,7 +79,7 @@ export function ManageTestFeature() {
     e.preventDefault();
     setSaving(true);
     try {
-      const type = qform.questionType as TestQuestion['questionType'];
+      const type = qform.questionType as TestQuestionType;
       const optionsList = qform.options
         .split(',')
         .map((s) => s.trim())
@@ -88,12 +89,20 @@ export function ManageTestFeature() {
         type === 'SHORT_ANSWER'
           ? { accepted: correct.split('|').map((s) => s.trim()).filter(Boolean) }
           : { answer: type === 'TRUE_FALSE' ? correct === 'true' : correct };
+      const newQuestion = await questionBankApi.create({
+        type: type,
+        visibility: 'PRIVATE',
+        difficulty: 'MEDIUM',
+        content: {
+          questionText: qform.content,
+          options: optionsList.length ? optionsList : null,
+          correctAnswer: type !== 'SHORT_ANSWER' ? correctAnswer : null,
+          acceptedAnswers: type === 'SHORT_ANSWER' ? correctAnswer.accepted : null,
+        }
+      });
       await testApi.createQuestion({
         testId,
-        questionType: type,
-        content: qform.content,
-        options: optionsList.length ? { list: optionsList } : null,
-        correctAnswer,
+        questionId: newQuestion.id,
         points: Number(qform.points),
         displayOrder: questions.length + 1,
       });
@@ -130,32 +139,9 @@ export function ManageTestFeature() {
 
   const handleSelectFromPicker = async (q: any) => { // q is QuestionBankItem
     try {
-      // Map properties properly from Question Bank Item to TestQuestion
-      let contentString = '';
-      let optionsObj = null;
-      let correctAnswerObj = null;
-
-      if (q.type === 'SINGLE_CHOICE') {
-        contentString = q.content?.questionText || '';
-        optionsObj = q.content?.options || null;
-        correctAnswerObj = q.content?.correctAnswer || null;
-      } else if (q.type === 'FILL_IN') {
-        contentString = q.content?.sentence || '';
-        correctAnswerObj = q.content?.acceptedAnswers || null;
-      } else if (q.type === 'ORDERING') {
-        contentString = 'Sắp xếp câu: ' + (q.content?.correctOrder || []).join(' / ');
-        correctAnswerObj = q.content?.correctOrder || null;
-      } else if (q.type === 'MATCHING') {
-        contentString = 'Nối từ tương ứng';
-        correctAnswerObj = q.content?.pairs || null;
-      }
-
       await testApi.createQuestion({
         testId,
-        questionType: q.type,
-        content: contentString,
-        options: optionsObj,
-        correctAnswer: correctAnswerObj,
+        questionId: q.id,
         points: q.difficulty === 'HARD' ? 3 : q.difficulty === 'MEDIUM' ? 2 : 1,
         displayOrder: questions.length + 1,
       });

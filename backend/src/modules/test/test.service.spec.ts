@@ -16,19 +16,24 @@ import { TestAnswer } from './entities/test-answer.entity';
 import { TestStatus, TestQuestionType, TestAttemptStatus } from '../../common/enums/test.enums';
 import { Role } from '../../common/enums/user.enums';
 
-function question(partial: Partial<TestQuestion>): TestQuestion {
+function question(partial: any): TestQuestion {
+  const { questionType, correctAnswer, content, ...rest } = partial;
   return {
     id: 'q1',
     testId: 't1',
-    questionType: TestQuestionType.SINGLE_CHOICE,
-    content: 'x',
-    options: null,
-    correctAnswer: null,
+    questionId: 'bank-q1',
     points: 2,
     displayOrder: 0,
     createdAt: new Date(),
     updatedAt: new Date(),
-    ...partial,
+    question: {
+      type: questionType || TestQuestionType.SINGLE_CHOICE,
+      content: {
+        correct_answer: correctAnswer,
+        ...content
+      }
+    } as any,
+    ...rest,
   } as TestQuestion;
 }
 
@@ -134,10 +139,13 @@ describe('TestService', () => {
       softRemove: jest.fn(),
     };
 
+    const mockAttemptRepo = { count: jest.fn() };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TestService,
         { provide: getRepositoryToken(TestEntity), useValue: mockRepo },
+        { provide: getRepositoryToken(TestAttempt), useValue: mockAttemptRepo },
       ],
     }).compile();
 
@@ -250,19 +258,15 @@ describe('TestQuestionService', () => {
   let service: TestQuestionService;
   let repo: jest.Mocked<Repository<TestQuestion>>;
 
-  const mockQuestion: TestQuestion = {
+  const mockQuestion = question({
     id: 'q-1',
     testId: 'test-1',
     questionType: TestQuestionType.SINGLE_CHOICE,
-    content: { question: 'What is 2+2?' },
+    content: { question: 'What is 2+2?', options: ['2', '3', '4', '5'] },
     correctAnswer: { answer: '4' },
-    options: ['2', '3', '4', '5'],
     points: 10,
     displayOrder: 1,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    deletedAt: null,
-  };
+  });
 
   beforeEach(async () => {
     const mockRepo = {
@@ -272,11 +276,13 @@ describe('TestQuestionService', () => {
       save: jest.fn(),
       remove: jest.fn(),
     };
+    const mockAttemptRepo = { count: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TestQuestionService,
         { provide: getRepositoryToken(TestQuestion), useValue: mockRepo },
+        { provide: getRepositoryToken(TestAttempt), useValue: mockAttemptRepo },
       ],
     }).compile();
 
@@ -288,21 +294,21 @@ describe('TestQuestionService', () => {
 
   describe('findAll', () => {
     it('should strip correctAnswer by default', async () => {
-      repo.findAndCount.mockResolvedValue([[mockQuestion], 1]);
+      repo.findAndCount.mockResolvedValue([[JSON.parse(JSON.stringify(mockQuestion))], 1]);
 
       const result = await service.findAll({});
 
-      expect(result.data[0]).not.toHaveProperty('correctAnswer');
+      expect(result.data[0].question.content).not.toHaveProperty('correct_answer');
       expect(result.data[0]).toHaveProperty('id');
-      expect(result.data[0]).toHaveProperty('content');
+      expect(result.data[0].question).toHaveProperty('content');
     });
 
     it('should include correctAnswer when includeAnswer=true', async () => {
-      repo.findAndCount.mockResolvedValue([[mockQuestion], 1]);
+      repo.findAndCount.mockResolvedValue([[JSON.parse(JSON.stringify(mockQuestion))], 1]);
 
       const result = await service.findAll({}, true);
 
-      expect(result.data[0]).toHaveProperty('correctAnswer');
+      expect(result.data[0].question.content).toHaveProperty('correct_answer');
     });
 
     it('should filter by testId', async () => {
@@ -328,19 +334,19 @@ describe('TestQuestionService', () => {
 
   describe('findById', () => {
     it('should strip correctAnswer by default', async () => {
-      repo.findOne.mockResolvedValue(mockQuestion);
+      repo.findOne.mockResolvedValue(JSON.parse(JSON.stringify(mockQuestion)));
 
       const result = await service.findById('q-1');
 
-      expect(result).not.toHaveProperty('correctAnswer');
+      expect(result.question.content).not.toHaveProperty('correct_answer');
     });
 
     it('should include correctAnswer when includeAnswer=true', async () => {
-      repo.findOne.mockResolvedValue(mockQuestion);
+      repo.findOne.mockResolvedValue(JSON.parse(JSON.stringify(mockQuestion)));
 
       const result = await service.findById('q-1', true);
 
-      expect(result).toHaveProperty('correctAnswer');
+      expect(result.question.content).toHaveProperty('correct_answer');
     });
 
     it('should throw NotFoundException when not found', async () => {
@@ -352,7 +358,7 @@ describe('TestQuestionService', () => {
 
   describe('create', () => {
     it('should create new question', async () => {
-      const createDto = { testId: 'test-1', questionType: TestQuestionType.SHORT_ANSWER, content: {}, points: 5, displayOrder: 2 };
+      const createDto = { testId: 'test-1', questionId: 'bank-q1', points: 5, displayOrder: 2 };
       repo.create.mockReturnValue({ ...mockQuestion, ...createDto } as TestQuestion);
       repo.save.mockResolvedValue({ ...mockQuestion, ...createDto } as TestQuestion);
 
@@ -593,7 +599,7 @@ describe('TestAttemptService', () => {
 
       const result = await service.submit('attempt-1', { durationSeconds: 600 }, 'user-1');
 
-      expect(result.status).toBe(TestAttemptStatus.SUBMITTED);
+      expect(result.status).toBe(TestAttemptStatus.GRADED);
       expect(result.score).toBe(75); // (10+5)/(10+10)*100 = 75
       expect(result.durationSeconds).toBe(600);
       expect(result.submittedAt).toBeDefined();
@@ -646,19 +652,15 @@ describe('TestAnswerService', () => {
     updatedAt: new Date(),
   };
 
-  const mockQuestion: TestQuestion = {
+  const mockQuestion = question({
     id: 'q-1',
     testId: 'test-1',
     questionType: TestQuestionType.SINGLE_CHOICE,
-    content: { question: 'What is 2+2?' },
+    content: { question: 'What is 2+2?', options: ['2', '3', '4', '5'] },
     correctAnswer: { answer: '4' },
-    options: ['2', '3', '4', '5'],
     points: 10,
     displayOrder: 1,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    deletedAt: null,
-  };
+  });
 
   beforeEach(async () => {
     const mockAnswerRepo = { findOne: jest.fn(), find: jest.fn(), create: jest.fn(), save: jest.fn() };

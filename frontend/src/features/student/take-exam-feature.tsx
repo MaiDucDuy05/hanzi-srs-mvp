@@ -176,25 +176,34 @@ export function TakeExamFeature() {
       </div>
 
       <div className="space-y-6 px-4">
-        {questions.map((q, index) => (
-          <Card key={q.id}>
+        {questions.map((qObj, index) => {
+          const q = qObj.question;
+          const qContent = (q?.content || {}) as Record<string, any>;
+          const type = q?.type || 'UNKNOWN';
+          let text = qContent.questionText || qContent.sentence || JSON.stringify(qContent);
+          if (type === 'ORDERING') text = (qContent.correctOrder || []).join(' / ');
+          if (type === 'MATCHING') text = 'Nối từ';
+          const options = qContent.options as string[] | undefined;
+
+          return (
+          <Card key={qObj.id}>
             <CardBody className="space-y-4">
               <div className="flex gap-3">
                 <span className="font-semibold text-lg">{index + 1}.</span>
-                <div className="text-lg font-medium whitespace-pre-wrap">{q.content}</div>
+                <div className="text-lg font-medium whitespace-pre-wrap">{text}</div>
               </div>
 
               <div className="pl-6">
-                {q.questionType === 'SINGLE_CHOICE' && q.options && (
+                {type === 'SINGLE_CHOICE' && options && (
                   <div className="space-y-2">
-                    {((q.options as { list?: string[] }).list || []).map((opt) => (
+                    {options.map((opt) => (
                       <label key={opt} className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                         <input
                           type="radio"
-                          name={`q-${q.id}`}
+                          name={`q-${qObj.id}`}
                           value={opt}
-                          checked={answers[q.id] === opt}
-                          onChange={() => handleAnswerChange(q.id, opt)}
+                          checked={answers[qObj.id] === opt}
+                          onChange={() => handleAnswerChange(qObj.id, opt)}
                           className="w-4 h-4 text-brand"
                         />
                         <span>{opt}</span>
@@ -203,14 +212,14 @@ export function TakeExamFeature() {
                   </div>
                 )}
 
-                {q.questionType === 'TRUE_FALSE' && (
+                {type === 'TRUE_FALSE' && (
                   <div className="flex gap-4">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
-                        name={`q-${q.id}`}
-                        checked={answers[q.id] === true}
-                        onChange={() => handleAnswerChange(q.id, true)}
+                        name={`q-${qObj.id}`}
+                        checked={answers[qObj.id] === true}
+                        onChange={() => handleAnswerChange(qObj.id, true)}
                         className="w-4 h-4"
                       />
                       <span>Đúng (True)</span>
@@ -218,9 +227,9 @@ export function TakeExamFeature() {
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
-                        name={`q-${q.id}`}
-                        checked={answers[q.id] === false}
-                        onChange={() => handleAnswerChange(q.id, false)}
+                        name={`q-${qObj.id}`}
+                        checked={answers[qObj.id] === false}
+                        onChange={() => handleAnswerChange(qObj.id, false)}
                         className="w-4 h-4"
                       />
                       <span>Sai (False)</span>
@@ -228,20 +237,20 @@ export function TakeExamFeature() {
                   </div>
                 )}
 
-                {q.questionType === 'SHORT_ANSWER' && (
+                {(type === 'SHORT_ANSWER' || type === 'FILL_IN') && (
                   <textarea
                     rows={3}
                     className="w-full p-3 border rounded-lg focus:ring focus:ring-brand focus:border-brand"
                     placeholder="Nhập câu trả lời của bạn..."
-                    value={(answers[q.id] as string) || ''}
-                    onBlur={(e) => handleAnswerChange(q.id, e.target.value)}
-                    onChange={(e) => setAnswers(prev => ({ ...prev, [q.id]: e.target.value }))}
+                    value={(answers[qObj.id] as string) || ''}
+                    onBlur={(e) => handleAnswerChange(qObj.id, e.target.value)}
+                    onChange={(e) => setAnswers(prev => ({ ...prev, [qObj.id]: e.target.value }))}
                   />
                 )}
               </div>
             </CardBody>
           </Card>
-        ))}
+        )})}
       </div>
     </div>
   );

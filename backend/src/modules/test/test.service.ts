@@ -49,23 +49,35 @@ function normalizeAnswer(raw: unknown): string {
  * SINGLE_CHOICE / TRUE_FALSE so khớp chính xác. Không tin điểm client gửi lên.
  */
 export function gradeQuestion(
-  question: TestQuestion,
+  testQuestion: TestQuestion,
   submitted: unknown,
 ): { isCorrect: boolean; pointsAwarded: number } {
-  const ca = question.correctAnswer ?? {};
+  const qContent = testQuestion.question?.content ?? {};
+  const qType = testQuestion.question?.type;
   let isCorrect = false;
-  if (question.questionType === TestQuestionType.SHORT_ANSWER) {
-    const accepted = Array.isArray(ca.accepted)
-      ? (ca.accepted as unknown[]).map(normalizeAnswer)
-      : [];
-    const single = ca.answer != null ? normalizeAnswer(ca.answer) : null;
+
+  if (qType === TestQuestionType.FILL_IN || qType === TestQuestionType.SHORT_ANSWER) {
+    const accepted = Array.isArray(qContent.accepted_answers)
+      ? (qContent.accepted_answers as unknown[]).map(normalizeAnswer)
+      : (Array.isArray((qContent.correct_answer as any)?.accepted) 
+         ? ((qContent.correct_answer as any).accepted as unknown[]).map(normalizeAnswer)
+         : []);
+    const single = qContent.correct_answer ? normalizeAnswer(typeof qContent.correct_answer === 'object' ? (qContent.correct_answer as any).answer : qContent.correct_answer) : null;
     const norm = normalizeAnswer(submitted);
     isCorrect = accepted.includes(norm) || (single !== null && norm === single);
+  } else if (qType === TestQuestionType.ORDERING) {
+    const correct = Array.isArray(qContent.correct_order) ? qContent.correct_order.join(',') : '';
+    const sub = Array.isArray(submitted) ? submitted.join(',') : String(submitted ?? '');
+    isCorrect = correct === sub;
+  } else if (qType === TestQuestionType.MATCHING) {
+    isCorrect = JSON.stringify(submitted) === JSON.stringify(qContent.pairs);
   } else {
-    // SINGLE_CHOICE / TRUE_FALSE: so khớp chính xác (chuẩn hoá kiểu number/string).
-    isCorrect = String(submitted ?? '') === String(ca?.answer ?? '');
+    // SINGLE_CHOICE / TRUE_FALSE / MCQ
+    const correct = typeof qContent.correct_answer === 'object' ? (qContent.correct_answer as any)?.answer : qContent.correct_answer;
+    isCorrect = String(submitted ?? '') === String(correct ?? '');
   }
-  return { isCorrect, pointsAwarded: isCorrect ? question.points : 0 };
+
+  return { isCorrect, pointsAwarded: isCorrect ? testQuestion.points : 0 };
 }
 
 @Injectable()
@@ -147,8 +159,11 @@ export class TestQuestionService {
 
   /** Bóc correctAnswer khỏi câu hỏi khi trả cho học viên (PR-05 §1.1). */
   private stripAnswers(q: TestQuestion): TestQuestion {
-    const { correctAnswer: _omitted, ...rest } = q;
-    return rest as TestQuestion;
+    if (q.question && q.question.content) {
+      const { correct_answer, accepted_answers, correct_order, pairs, ...safeContent } = q.question.content as any;
+      q.question = { ...q.question, content: safeContent } as any;
+    }
+    return q;
   }
 
   async findAll(q: TestQuestionQueryDto, includeAnswer = false) {
@@ -157,6 +172,7 @@ export class TestQuestionService {
     if (testId) where.testId = testId;
     const [data, total] = await this.repo.findAndCount({
       where,
+      relations: ['question'],
       skip: (page - 1) * limit,
       take: limit,
       order: { displayOrder: 'ASC' },
@@ -169,7 +185,8 @@ export class TestQuestionService {
     );
   }
   async findById(id: string, includeAnswer = false) {
-    const q = await findOrNotFound(this.repo, id, 'Test question');
+    const q = await this.repo.findOne({ where: { id } as any, relations: ['question'] });
+    if (!q) throw new BadRequestException('Test question not found');
     return includeAnswer ? q : this.stripAnswers(q);
   }
   async create(dto: CreateTestQuestionDto) {
@@ -278,6 +295,7 @@ export class TestAttemptService {
       this.answerRepo.find({ where: { attemptId: id } as any }),
       this.questionRepo.find({
         where: { testId: test.id } as any,
+        relations: ['question'],
         order: { displayOrder: 'ASC' },
       }),
     ]);
@@ -304,6 +322,7 @@ export class TestAttemptService {
     const answers = await this.answerRepo.find({ where: { attemptId: id } as any });
     let questions = await this.questionRepo.find({
       where: { testId: test.id } as any,
+      relations: ['question'],
       order: { displayOrder: 'ASC' },
     });
 
@@ -314,8 +333,11 @@ export class TestAttemptService {
 
     if (!canSeeAnswers) {
       questions = questions.map((q) => {
-        const { correctAnswer: _, ...rest } = q;
-        return rest as TestQuestion;
+        if (q.question && q.question.content) {
+          const { correct_answer, accepted_answers, correct_order, pairs, ...safeContent } = q.question.content as any;
+          q.question = { ...q.question, content: safeContent } as any;
+        }
+        return q;
       });
     }
 
@@ -356,11 +378,11 @@ export class TestAnswerService {
     userId: string,
   ) {
     const attempt = await this.assertCanAnswer(attemptId, userId);
-    const question = await findOrNotFound(
-      this.questionRepo,
-      dto.questionId,
-      'Test question',
-    );
+    const question = await this.questionRepo.findOne({
+      where: { id: dto.questionId } as any,
+      relations: ['question'],
+    });
+    if (!question) throw new BadRequestException('Test question not found');
     // Chống inject: câu hỏi phải thuộc đúng bài test của attempt.
     if (question.testId !== attempt.testId)
       throw new BadRequestException('Question does not belong to this test');

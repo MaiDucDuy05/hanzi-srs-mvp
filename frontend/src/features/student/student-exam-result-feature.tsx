@@ -69,20 +69,29 @@ export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: {
       <div className="space-y-4">
         <h2 className="text-xl font-bold">Chi tiết bài làm</h2>
         {questions.length === 0 && <p className="text-gray-500">Đề bài không có câu hỏi.</p>}
-        {questions.map((q, index) => {
-          const ans = answerMap.get(q.id);
+        {questions.map((qObj, index) => {
+          const q = qObj.question;
+          const qContent = (q?.content || {}) as Record<string, any>;
+          const type = q?.type || 'UNKNOWN';
+          let text = qContent.questionText || qContent.sentence || JSON.stringify(qContent);
+          if (type === 'ORDERING') text = (qContent.correctOrder || []).join(' / ');
+          if (type === 'MATCHING') text = 'Nối từ';
+
+          const correctAnswer = qContent.correct_answer || qContent.correctOrder || qContent.acceptedAnswers;
+
+          const ans = answerMap.get(qObj.id);
           const isCorrect = ans?.isCorrect;
           
           return (
-            <Card key={q.id} className={cn("border-l-4", isCorrect ? "border-l-green-500" : (isCorrect === false ? "border-l-red-500" : "border-l-gray-300"))}>
+            <Card key={qObj.id} className={cn("border-l-4", isCorrect ? "border-l-green-500" : (isCorrect === false ? "border-l-red-500" : "border-l-gray-300"))}>
               <CardBody className="space-y-3">
                 <div className="flex justify-between gap-4">
                   <div className="flex gap-2">
                     <span className="font-bold">{index + 1}.</span>
-                    <span className="font-medium whitespace-pre-wrap">{q.content}</span>
+                    <span className="font-medium whitespace-pre-wrap">{text}</span>
                   </div>
                   <div className="shrink-0 text-sm font-semibold text-gray-500">
-                    {ans?.pointsAwarded || 0} / {q.points} điểm
+                    {ans?.pointsAwarded || 0} / {qObj.points} điểm
                   </div>
                 </div>
 
@@ -95,15 +104,13 @@ export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: {
                     ) : <span className="text-gray-400 italic">Không trả lời</span>}
                   </p>
 
-                  {q.correctAnswer && (
+                  {correctAnswer && (
                     <p className="mt-2 text-green-700">
                       <span className="font-medium">Đáp án đúng: </span>
-                      {typeof q.correctAnswer === 'object' && 'list' in q.correctAnswer ? 
-                        (q.correctAnswer.list as string[]).join(', ') : 
-                        JSON.stringify(q.correctAnswer)}
+                      {JSON.stringify(correctAnswer)}
                     </p>
                   )}
-                  {!q.correctAnswer && test.showAnswersAfter && attempt.status === 'GRADED' && (
+                  {!correctAnswer && test.showAnswersAfter && attempt.status === 'GRADED' && (
                     <p className="mt-2 text-gray-500 italic">Câu hỏi tự luận, chờ giáo viên chấm hoặc không có đáp án mẫu.</p>
                   )}
                 </div>

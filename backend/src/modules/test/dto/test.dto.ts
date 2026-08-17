@@ -48,19 +48,12 @@ export class UpdateTestDto {
 
 export class CreateTestQuestionDto {
   @IsUUID() testId: string;
-  @IsEnum(TestQuestionType) questionType: TestQuestionType;
-  @IsString() content: string;
-  @IsOptional() options?: Record<string, unknown> | null;
-  @IsOptional() correctAnswer?: Record<string, unknown> | null;
+  @IsUUID() questionId: string;
   @IsOptional() @IsInt() @Min(0) points?: number;
   @IsOptional() @IsInt() @Min(0) displayOrder?: number;
 }
 
 export class UpdateTestQuestionDto {
-  @IsOptional() @IsEnum(TestQuestionType) questionType?: TestQuestionType;
-  @IsOptional() @IsString() content?: string;
-  @IsOptional() options?: Record<string, unknown> | null;
-  @IsOptional() correctAnswer?: Record<string, unknown> | null;
   @IsOptional() @IsInt() @Min(0) points?: number;
   @IsOptional() @IsInt() @Min(0) displayOrder?: number;
 }

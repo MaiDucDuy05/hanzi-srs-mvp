@@ -288,10 +288,13 @@ export interface Test {
 export interface TestQuestion {
   id: string;
   testId: string;
-  questionType: TestQuestionType;
-  content: string;
-  options: Record<string, unknown> | null;
-  correctAnswer: Record<string, unknown> | null;
+  questionId: string;
+  question: {
+    id: string;
+    type: TestQuestionType;
+    difficulty: string;
+    content: Record<string, any>;
+  };
   points: number;
   displayOrder: number;
   createdAt: string;
@@ -608,16 +611,7 @@ export interface Test {
   createdAt: string;
 }
 
-export interface TestQuestion {
-  id: string;
-  testId: string;
-  questionType: TestQuestionType;
-  content: string;
-  options: Record<string, unknown> | null;
-  correctAnswer: Record<string, unknown> | null;
-  points: number;
-  displayOrder: number;
-}
+
 
 export interface TestAttempt {
   id: string;
