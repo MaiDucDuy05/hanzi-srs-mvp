@@ -3,4 +3,3 @@ import { CoursesFeature } from '@/features/dashboard/page-features/courses-featu
 export default function CoursesPage() {
   return <CoursesFeature />;
 }
-CoursesPage

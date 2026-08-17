@@ -4,7 +4,6 @@ import { AuthProvider } from "@/lib/auth/auth-context";
 import { AppShell } from "@/features/layout/components/app-shell";
 import { MaintenanceBanner } from "@/features/layout/components/maintenance-banner";
 import "./globals.css";
-import { ReactScanScript } from "@/features/layout/components/react-scan-script";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -46,7 +45,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
       </head>
       <body className="min-h-full flex flex-col">
-        <ReactScanScript />
         <AuthProvider>
           <AppShell>{children}</AppShell>
         </AuthProvider>

@@ -2,8 +2,10 @@
 
 import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import { Navbar } from '@/features/layout/components/navbar';
+import Link from 'next/link';
 import { Footer } from '@/features/layout/components/footer';
+
+import { ForestBackground } from '@/features/background/components/forest-background';
 
 /**
  * Bố cục chung toàn app: Navbar + nội dung + Footer.
@@ -24,10 +26,29 @@ export function AppShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Navbar />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">{children}</main>
-      <Footer />
-    </div>
+    <ForestBackground className="flex min-h-screen flex-col font-[family-name:var(--font-nunito)] relative">
+      {/* Gấu trúc trang trí góc trái */}
+      <div className="fixed bottom-0 left-0 z-0 hidden lg:block h-[300px] xl:h-[400px] pointer-events-none opacity-90">
+        <img
+          src="/assets/illustrations/panda/panda.png"
+          alt="Panda Decorative"
+          className="h-full w-auto object-contain object-bottom"
+        />
+      </div>
+
+      <div className="absolute top-8 left-1/2 z-20 flex w-[80%] lg:w-[40%] -translate-x-1/2 items-center justify-between rounded-full bg-gradient-to-r from-[#e5f5eb] via-[#e9f9ef] to-[#e0f5e9] shadow-md px-8 py-2 font-[family-name:var(--font-nunito)] text-lg font-black text-[#215b3b] sm:text-xl lg:text-2xl">
+        <Link href="/">
+          <img src="/assets/illustrations/panda/panda-at-beach.svg" alt="Panda" className="h-18 w-auto sm:h-24" />
+        </Link>
+        <Link href="/learn" className="transition-colors hover:text-[#5E7F26]">Courses</Link>
+        <Link href="/games" className="transition-colors hover:text-[#5E7F26]">Games</Link>
+        <Link href="/leaderboard" className="transition-colors hover:text-[#5E7F26]">Leaderboard</Link>
+      </div>
+      <main className="mx-auto flex-1 w-full max-w-6xl px-4 py-6 pt-32 relative z-10 flex flex-col">
+        {children}
+      </main>
+      <div className="relative z-10">
+      </div>
+    </ForestBackground>
   );
 }
