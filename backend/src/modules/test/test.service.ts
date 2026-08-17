@@ -4,7 +4,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Test } from './entities/test.entity';
 import { TestQuestion } from './entities/test-question.entity';
 import { TestAttempt } from './entities/test-attempt.entity';
@@ -70,7 +70,10 @@ export function gradeQuestion(
 
 @Injectable()
 export class TestService {
-  constructor(@InjectRepository(Test) private repo: Repository<Test>) {}
+  constructor(
+    @InjectRepository(Test) private repo: Repository<Test>,
+    @InjectRepository(TestAttempt) private attemptRepo: Repository<TestAttempt>,
+  ) {}
   async findAll(q: TestQueryDto, role?: string) {
     const { page = 1, limit = 20, teacherId, status } = q;
     const where: any = {};
@@ -97,13 +100,41 @@ export class TestService {
   async create(dto: CreateTestDto) {
     return this.repo.save(this.repo.create(dto as any));
   }
-  async update(id: string, dto: UpdateTestDto) {
-    const e = await this.findById(id, Role.ADMIN); // bypass check for internal updates
+  async update(id: string, dto: UpdateTestDto, userId: string, role: string) {
+    const e = await this.findById(id, role);
+    if (role !== Role.ADMIN && e.teacherId !== userId) {
+      throw new ForbiddenException('You can only update your own tests');
+    }
     Object.assign(e, dto);
     return this.repo.save(e);
   }
-  async softDelete(id: string) {
-    await this.repo.softRemove(await this.findById(id, Role.ADMIN));
+  async softDelete(id: string, userId: string, role: string) {
+    const test = await this.findById(id, role);
+    if (role !== Role.ADMIN && test.teacherId !== userId) {
+      throw new ForbiddenException('You can only delete your own tests');
+    }
+    const attempts = await this.attemptRepo.count({
+      where: { testId: id, status: In([TestAttemptStatus.SUBMITTED, TestAttemptStatus.GRADED]) }
+    });
+    if (attempts > 0) {
+      throw new BadRequestException('EXAM_HAS_SUBMISSIONS');
+    }
+    await this.repo.softRemove(test);
+  }
+
+  async updateQuestionOrder(id: string, questionIds: string[], userId: string, role: string) {
+    const test = await this.findById(id, role); // Check if test exists
+    if (role !== Role.ADMIN && test.teacherId !== userId) {
+      throw new ForbiddenException('You can only update your own tests');
+    }
+    
+    // We update each question's displayOrder by iterating through the array.
+    // Using transaction would be better, but doing simple updates for MVP.
+    const promises = questionIds.map((questionId, index) => 
+      this.repo.manager.update('test_questions', { id: questionId, testId: id }, { displayOrder: index })
+    );
+    await Promise.all(promises);
+    return { updatedCount: promises.length };
   }
 }
 
@@ -111,6 +142,7 @@ export class TestService {
 export class TestQuestionService {
   constructor(
     @InjectRepository(TestQuestion) private repo: Repository<TestQuestion>,
+    @InjectRepository(TestAttempt) private attemptRepo: Repository<TestAttempt>,
   ) {}
 
   /** Bóc correctAnswer khỏi câu hỏi khi trả cho học viên (PR-05 §1.1). */
@@ -149,7 +181,14 @@ export class TestQuestionService {
     return this.repo.save(e);
   }
   async delete(id: string) {
-    await this.repo.remove(await this.findById(id));
+    const q = await this.findById(id);
+    const attempts = await this.attemptRepo.count({
+      where: { testId: q.testId, status: In([TestAttemptStatus.SUBMITTED, TestAttemptStatus.GRADED]) }
+    });
+    if (attempts > 0) {
+      throw new BadRequestException('Cannot delete question because test has submissions');
+    }
+    await this.repo.remove(q);
   }
 }
 
@@ -206,7 +245,7 @@ export class TestAttemptService {
       where: {
         testId: dto.testId,
         userId,
-        status: TestAttemptStatus.SUBMITTED,
+        status: In([TestAttemptStatus.SUBMITTED, TestAttemptStatus.GRADED]),
       },
     });
     if (submittedCount >= test.attemptLimit)
@@ -216,6 +255,7 @@ export class TestAttemptService {
       this.repo.create({
         testId: dto.testId,
         userId,
+        assignmentId: dto.assignmentId,
         status: TestAttemptStatus.IN_PROGRESS,
         startedAt: new Date(),
       } as any),
@@ -250,12 +290,36 @@ export class TestAttemptService {
     const score = totalPoints ? Math.round((earned / totalPoints) * 100) : 0;
 
     Object.assign(attempt, {
-      status: TestAttemptStatus.SUBMITTED,
+      status: TestAttemptStatus.GRADED,
       submittedAt: new Date(),
       durationSeconds: dto.durationSeconds,
       score,
     });
     return this.repo.save(attempt);
+  }
+
+  async getResult(id: string, userId: string, role: string) {
+    const attempt = await this.findById(id, userId, role);
+    const test = await findOrNotFound(this.testRepo, attempt.testId, 'Test');
+    const answers = await this.answerRepo.find({ where: { attemptId: id } as any });
+    let questions = await this.questionRepo.find({
+      where: { testId: test.id } as any,
+      order: { displayOrder: 'ASC' },
+    });
+
+    const canSeeAnswers =
+      role === Role.TEACHER ||
+      role === Role.ADMIN ||
+      (test.showAnswersAfter && attempt.status === TestAttemptStatus.GRADED);
+
+    if (!canSeeAnswers) {
+      questions = questions.map((q) => {
+        const { correctAnswer: _, ...rest } = q;
+        return rest as TestQuestion;
+      });
+    }
+
+    return { attempt, test, questions, answers };
   }
 }
 

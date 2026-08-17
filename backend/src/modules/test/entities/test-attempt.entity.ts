@@ -1,5 +1,6 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from '../../../common/base.entity';
+import { TestAssignment } from './test-assignment.entity';
 import { TestAttemptStatus } from '../../../common/enums/test.enums';
 
 /**
@@ -15,6 +16,13 @@ export class TestAttempt extends BaseEntity {
 
   @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
+
+  @Column({ name: 'assignment_id', type: 'uuid', nullable: true })
+  assignmentId: string | null;
+
+  @ManyToOne(() => TestAssignment)
+  @JoinColumn({ name: 'assignment_id' })
+  assignment: TestAssignment;
 
   @Column({ type: 'varchar', length: 20, default: TestAttemptStatus.IN_PROGRESS })
   status: TestAttemptStatus;

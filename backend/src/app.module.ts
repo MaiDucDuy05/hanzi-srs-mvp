@@ -21,7 +21,7 @@ import { LessonSelectionModule } from './modules/lesson-selection/lesson-selecti
 import { StudentModule } from './modules/student/student.module';
 import { AdminContentModule } from './modules/admin-content/admin-content.module';
 import { SystemConfigModule } from './modules/config/config.module';
-
+import { QuestionBankModule } from './modules/question-bank/question-bank.module';
 
 @Module({
   imports: [
@@ -59,6 +59,7 @@ import { SystemConfigModule } from './modules/config/config.module';
     StudentModule,
     AdminContentModule,
     SystemConfigModule,
+    QuestionBankModule,
   ],
   controllers: [AppController],
   providers: [

@@ -15,6 +15,9 @@ import { Badge } from '@/features/ui/components/badge';
 import { formatDateTime } from '@/lib/utils/format';
 import { cn } from '@/lib/utils/cn';
 import { AdminViolationBadge } from '@/components/shared/admin-violation-badge';
+import { StudentExamResultFeature } from '@/features/student/student-exam-result-feature';
+import { SortableQuestionList } from './components/SortableQuestionList';
+import { QuestionPickerModal } from './components/QuestionPickerModal';
 
 export function ManageTestFeature() {
   const { testId } = useParams<{ testId: string }>();
@@ -26,6 +29,10 @@ export function ManageTestFeature() {
   const [error, setError] = useState<string | null>(null);
 
   const [showQuestion, setShowQuestion] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
+  const [showAssign, setShowAssign] = useState(false);
+  const [selectedAttemptId, setSelectedAttemptId] = useState<string | null>(null);
+  const [assignForm, setAssignForm] = useState({ classroomId: '', studentId: '', startTime: '', endTime: '' });
   const [qform, setQform] = useState({
     questionType: 'SINGLE_CHOICE',
     content: '',
@@ -110,6 +117,74 @@ export function ManageTestFeature() {
     }
   };
 
+  const handleReorder = async (newOrder: TestQuestion[]) => {
+    // Optimistic update
+    setQuestions(newOrder);
+    try {
+      await testApi.updateQuestionOrder(testId, newOrder.map((q) => q.id));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Lỗi cập nhật thứ tự.');
+      void load(); // revert
+    }
+  };
+
+  const handleSelectFromPicker = async (q: any) => { // q is QuestionBankItem
+    try {
+      // Map properties properly from Question Bank Item to TestQuestion
+      let contentString = '';
+      let optionsObj = null;
+      let correctAnswerObj = null;
+
+      if (q.type === 'SINGLE_CHOICE') {
+        contentString = q.content?.questionText || '';
+        optionsObj = q.content?.options || null;
+        correctAnswerObj = q.content?.correctAnswer || null;
+      } else if (q.type === 'FILL_IN') {
+        contentString = q.content?.sentence || '';
+        correctAnswerObj = q.content?.acceptedAnswers || null;
+      } else if (q.type === 'ORDERING') {
+        contentString = 'Sắp xếp câu: ' + (q.content?.correctOrder || []).join(' / ');
+        correctAnswerObj = q.content?.correctOrder || null;
+      } else if (q.type === 'MATCHING') {
+        contentString = 'Nối từ tương ứng';
+        correctAnswerObj = q.content?.pairs || null;
+      }
+
+      await testApi.createQuestion({
+        testId,
+        questionType: q.type,
+        content: contentString,
+        options: optionsObj,
+        correctAnswer: correctAnswerObj,
+        points: q.difficulty === 'HARD' ? 3 : q.difficulty === 'MEDIUM' ? 2 : 1,
+        displayOrder: questions.length + 1,
+      });
+      setShowPicker(false);
+      void load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Lỗi thêm câu hỏi.');
+    }
+  };
+
+  const handleAssign = async (e: FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await testApi.assign(testId, {
+        classroomId: assignForm.classroomId || null,
+        studentId: assignForm.studentId || null,
+        startTime: new Date(assignForm.startTime).toISOString(),
+        endTime: new Date(assignForm.endTime).toISOString(),
+      });
+      setShowAssign(false);
+      alert('Giao bài thành công!');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Giao bài thất bại.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) return <PageLoading label="Đang tải..." />;
   if (error || !test)
     return <ErrorState message={error ?? 'Không tìm thấy đề.'} onRetry={() => void load()} />;
@@ -126,6 +201,9 @@ export function ManageTestFeature() {
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => void togglePublish()}>
             {test.status === 'PUBLISHED' ? 'Chuyển sang nháp' : 'Xuất bản'}
+          </Button>
+          <Button size="sm" onClick={() => setShowAssign(true)}>
+            Giao bài
           </Button>
         </div>
       </header>
@@ -146,53 +224,26 @@ export function ManageTestFeature() {
 
       {tab === 'questions' && (
         <div className="space-y-4">
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button size="sm" variant="outline" onClick={() => setShowPicker(true)}>Chọn từ Ngân hàng</Button>
             <Button size="sm" onClick={() => setShowQuestion(true)}>+ Câu hỏi</Button>
           </div>
-          {questions.map((q, i) => (
-            <Card key={q.id}>
-              <CardBody>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-medium">
-                      {i + 1}. {q.content}
-                    </p>
-                    <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-500">
-                      <Badge tone="blue">{q.questionType}</Badge>
-                      <span>{q.points} điểm</span>
-                      {q.options && (
-                        <span>
-                          {(q.options as { list?: unknown[] }).list?.join(' | ')}
-                        </span>
-                      )}
-                      {q.correctAnswer && (
-                        <span className="text-green-600">
-                          ✓ {JSON.stringify(q.correctAnswer)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => deleteQuestion(q)}>
-                    Xóa
-                  </Button>
-                </div>
-              </CardBody>
-            </Card>
-          ))}
-          {questions.length === 0 && (
-            <p className="text-sm text-gray-500">Chưa có câu hỏi nào.</p>
-          )}
+          <SortableQuestionList
+            questions={questions}
+            onReorder={handleReorder}
+            onDelete={deleteQuestion}
+          />
         </div>
       )}
 
       {tab === 'attempts' && (
         <div className="space-y-2">
           {attempts.map((a) => (
-            <Card key={a.id}>
+            <Card key={a.id} className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setSelectedAttemptId(a.id)}>
               <CardBody>
                 <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                   <div className="flex items-center gap-2">
-                    <Badge tone={a.status === 'SUBMITTED' ? 'green' : 'amber'}>{a.status}</Badge>
+                    <Badge tone={a.status === 'SUBMITTED' || a.status === 'GRADED' ? 'green' : 'amber'}>{a.status}</Badge>
                     <span className="text-gray-600">{formatDateTime(a.startedAt)}</span>
                   </div>
                   <div className="flex gap-3 text-gray-500">
@@ -261,6 +312,55 @@ export function ManageTestFeature() {
           </p>
         </form>
       </Modal>
+
+      <QuestionPickerModal
+        open={showPicker}
+        onClose={() => setShowPicker(false)}
+        onSelect={handleSelectFromPicker}
+      />
+
+      <Modal
+        open={showAssign}
+        onClose={() => setShowAssign(false)}
+        title="Giao bài kiểm tra"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setShowAssign(false)}>Hủy</Button>
+            <Button form="assign-form" type="submit" loading={saving}>Giao bài</Button>
+          </>
+        }
+      >
+        <form id="assign-form" onSubmit={handleAssign} className="space-y-4">
+          <Field label="ID Học viên (Student ID)">
+            <Input value={assignForm.studentId} onChange={(e) => setAssignForm({ ...assignForm, studentId: e.target.value })} placeholder="UUID học viên" />
+          </Field>
+          <Field label="ID Lớp học (Classroom ID - Chưa hỗ trợ đầy đủ)">
+            <Input value={assignForm.classroomId} onChange={(e) => setAssignForm({ ...assignForm, classroomId: e.target.value })} placeholder="UUID lớp học" />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Thời gian mở đề">
+              <Input type="datetime-local" required value={assignForm.startTime} onChange={(e) => setAssignForm({ ...assignForm, startTime: e.target.value })} />
+            </Field>
+            <Field label="Thời gian đóng đề">
+              <Input type="datetime-local" required value={assignForm.endTime} onChange={(e) => setAssignForm({ ...assignForm, endTime: e.target.value })} />
+            </Field>
+          </div>
+        </form>
+      </Modal>
+      <Modal
+        open={!!selectedAttemptId}
+        onClose={() => setSelectedAttemptId(null)}
+        title="Chi tiết bài làm"
+        wide
+      >
+        {selectedAttemptId && (
+          <StudentExamResultFeature 
+            attemptId={selectedAttemptId} 
+            onBack={() => setSelectedAttemptId(null)} 
+          />
+        )}
+      </Modal>
+
     </div>
   );
 }

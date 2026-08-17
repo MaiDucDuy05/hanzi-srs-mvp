@@ -9,6 +9,7 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  Put,
 } from '@nestjs/common';
 import {
   TestService,
@@ -16,6 +17,7 @@ import {
   TestAttemptService,
   TestAnswerService,
 } from './test.service';
+import { TestAssignmentService } from './test-assignment.service';
 import {
   CreateTestDto,
   UpdateTestDto,
@@ -44,7 +46,10 @@ function canSeeAnswer(role: string | undefined): boolean {
 
 @Controller('tests')
 export class TestController {
-  constructor(private readonly svc: TestService) {}
+  constructor(
+    private readonly svc: TestService,
+    private readonly assignmentSvc: TestAssignmentService,
+  ) {}
   @Get() async findAll(@Query() q: TestQueryDto, @CurrentUser() user: JwtPayload) {
     return ok(await this.svc.findAll(q, user?.role), 'Tests retrieved');
   }
@@ -54,20 +59,43 @@ export class TestController {
   @Post()
   @Roles(Role.TEACHER, Role.ADMIN)
   @HttpCode(HttpStatus.CREATED)
-  async create(@Body() dto: CreateTestDto) {
-    return ok(await this.svc.create(dto), 'Test created');
+  async create(@Body() dto: CreateTestDto, @CurrentUser('sub') teacherId: string) {
+    return ok(await this.svc.create({ ...dto, teacherId } as any), 'Test created');
   }
   @Patch(':id') @Roles(Role.TEACHER, Role.ADMIN) async update(
     @Param('id') id: string,
     @Body() dto: UpdateTestDto,
+    @CurrentUser() user: JwtPayload,
   ) {
-    return ok(await this.svc.update(id, dto), 'Test updated');
+    return ok(await this.svc.update(id, dto, user.sub, user.role), 'Test updated');
+  }
+
+  @Put(':id/questions/order')
+  @Roles(Role.TEACHER, Role.ADMIN)
+  async updateQuestionOrder(
+    @Param('id') id: string,
+    @Body() dto: { questionIds: string[] },
+    @CurrentUser() user: JwtPayload,
+  ) {
+    // We will call the TestQuestionService to handle this.
+    return ok(await this.svc.updateQuestionOrder(id, dto.questionIds, user.sub, user.role), 'Question order updated');
   }
   @Delete(':id')
   @Roles(Role.TEACHER, Role.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string) {
-    await this.svc.softDelete(id);
+  async remove(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    await this.svc.softDelete(id, user.sub, user.role);
+  }
+
+  @Post(':id/assign')
+  @Roles(Role.TEACHER, Role.ADMIN)
+  @HttpCode(HttpStatus.CREATED)
+  async assignTest(
+    @Param('id') testId: string,
+    @Body() dto: { classroomId?: string; studentId?: string; startTime: string; endTime: string },
+    @CurrentUser('sub') assignerId: string,
+  ) {
+    return ok(await this.assignmentSvc.create({ testId, ...dto }, assignerId), 'Test assigned');
   }
 }
 
@@ -130,14 +158,24 @@ export class TestAttemptController {
   }
   @Get(':id') async findOne(
     @Param('id') id: string,
-    @CurrentUser() user: JwtPayload,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: string,
   ) {
     return ok(
-      await this.svc.findById(id, user?.sub, user?.role),
+      await this.svc.findById(id, userId, role),
       'Test attempt retrieved',
     );
   }
-
+  @Get(':id/result') async getResult(
+    @Param('id') id: string,
+    @CurrentUser('id') userId: string,
+    @CurrentUser('role') role: string,
+  ) {
+    return ok(
+      await this.svc.getResult(id, userId, role),
+      'Test attempt result retrieved',
+    );
+  }
   @Post() @HttpCode(HttpStatus.CREATED) async start(
     @Body() dto: StartTestAttemptDto,
     @CurrentUser('sub') userId: string,
