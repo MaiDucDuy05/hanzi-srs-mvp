@@ -10,7 +10,7 @@ import { ErrorState } from '@/features/ui/components/error-state';
 import { Badge } from '@/features/ui/components/badge';
 import { useAuth } from '@/lib/auth/auth-context';
 
-import { QuestionPreviewModal } from '../components/QuestionPreviewModal';
+import { QuestionPreviewModal } from '../components/question-preview-modal';
 
 export function QuestionBankFeature() {
   const { user } = useAuth();

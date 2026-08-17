@@ -16,8 +16,8 @@ import { formatDateTime } from '@/lib/utils/format';
 import { cn } from '@/lib/utils/cn';
 import { AdminViolationBadge } from '@/components/shared/admin-violation-badge';
 import { StudentExamResultFeature } from '@/features/student/student-exam-result-feature';
-import { SortableQuestionList } from './components/SortableQuestionList';
-import { QuestionPickerModal } from './components/QuestionPickerModal';
+import { SortableQuestionList } from './components/sortable-question-list';
+import { QuestionPickerModal } from './components/question-picker-modal';
 
 export function ManageTestFeature() {
   const { testId } = useParams<{ testId: string }>();
