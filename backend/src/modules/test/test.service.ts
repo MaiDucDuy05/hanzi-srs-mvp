@@ -225,7 +225,11 @@ export class TestQuestionService {
   /** Bóc correctAnswer khỏi câu hỏi khi trả cho học viên (PR-05 §1.1). */
   private stripAnswers(q: TestQuestion): TestQuestion {
     if (q.question && q.question.content) {
-      const { correct_answer, accepted_answers, correct_order, pairs, ...safeContent } = q.question.content as any;
+      const { 
+        correct_answer, accepted_answers, correct_order, pairs,
+        correctAnswer, acceptedAnswers, correctOrder,
+        ...safeContent 
+      } = q.question.content as any;
       q.question = { ...q.question, content: safeContent } as any;
     }
     return q;
@@ -399,7 +403,11 @@ export class TestAttemptService {
     if (!canSeeAnswers) {
       questions = questions.map((q) => {
         if (q.question && q.question.content) {
-          const { correct_answer, accepted_answers, correct_order, pairs, ...safeContent } = q.question.content as any;
+          const { 
+            correct_answer, accepted_answers, correct_order, pairs,
+            correctAnswer, acceptedAnswers, correctOrder,
+            ...safeContent 
+          } = q.question.content as any;
           q.question = { ...q.question, content: safeContent } as any;
         }
         return q;

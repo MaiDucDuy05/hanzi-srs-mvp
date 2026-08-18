@@ -180,7 +180,7 @@ export class TestAttemptController {
   }
   @Get(':id') async findOne(
     @Param('id') id: string,
-    @CurrentUser('id') userId: string,
+    @CurrentUser('sub') userId: string,
     @CurrentUser('role') role: string,
   ) {
     return ok(
@@ -190,7 +190,7 @@ export class TestAttemptController {
   }
   @Get(':id/result') async getResult(
     @Param('id') id: string,
-    @CurrentUser('id') userId: string,
+    @CurrentUser('sub') userId: string,
     @CurrentUser('role') role: string,
   ) {
     return ok(

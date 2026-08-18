@@ -19,6 +19,7 @@ const NAV_ITEMS = [
   { label: 'HSK', href: '/dashboard/courses/hsk' },
   { label: 'Topic', href: '/dashboard/courses/topic' },
   { label: 'Practice', href: '/dashboard/practice' },
+  { label: 'Exams', href: '/exams' },
   { label: 'Achievements', href: '/dashboard/achievements' },
   { label: 'Settings', href: '/dashboard/settings' },
 ];

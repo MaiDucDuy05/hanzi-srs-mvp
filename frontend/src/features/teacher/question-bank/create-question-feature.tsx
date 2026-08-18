@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { useEffect } from 'react';
 import { questionBankApi, type QuestionBankItem } from '@/lib/api/endpoints/question-bank';
 import { Card, CardBody } from '@/features/ui/components/card';
 import { Button } from '@/features/ui/components/button';
@@ -11,6 +12,8 @@ import { useAuth } from '@/lib/auth/auth-context';
 
 export function CreateQuestionFeature() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get('edit');
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,6 +36,57 @@ export function CreateQuestionFeature() {
   const [orderingWords, setOrderingWords] = useState('');
 
   const [matchingPairs, setMatchingPairs] = useState([{left:'', right:''}, {left:'', right:''}]);
+  
+  const [trueFalseAnswer, setTrueFalseAnswer] = useState('true');
+  const [shortAnswerText, setShortAnswerText] = useState('');
+  const [shortAnswerAccepted, setShortAnswerAccepted] = useState('');
+
+  useEffect(() => {
+    if (editId) {
+      setLoading(true);
+      questionBankApi.get(editId).then(q => {
+        setType(q.type);
+        setHskLevel(String(q.hskLevel || '1'));
+        setDifficulty(q.difficulty);
+        setVisibility(q.visibility);
+        setTags((q.tags || []).join(', '));
+        setExplanation(q.explanation || '');
+        
+        const content = q.content as any;
+        if (q.type === 'SINGLE_CHOICE') {
+          setMcqText(content.questionText || '');
+          if (Array.isArray(content.options)) {
+            if (typeof content.options[0] === 'string') {
+              setMcqOptions([
+                { id: 'A', text: content.options[0] || '' },
+                { id: 'B', text: content.options[1] || '' },
+                { id: 'C', text: content.options[2] || '' },
+                { id: 'D', text: content.options[3] || '' },
+              ]);
+            } else {
+              setMcqOptions(content.options.length > 0 ? content.options : [{id:'A', text:''}, {id:'B', text:''}, {id:'C', text:''}, {id:'D', text:''}]);
+            }
+          }
+          setMcqCorrect(content.correctAnswer || 'A');
+        } else if (q.type === 'FILL_IN') {
+          setFillInSentence(content.sentence || content.questionText || '');
+          setFillInAccepted((content.acceptedAnswers || []).join(', '));
+        } else if (q.type === 'ORDERING') {
+          setOrderingWords((content.correctOrder || []).map((w: any) => typeof w === 'string' ? w : w.text).join(', '));
+        } else if (q.type === 'MATCHING') {
+          setMatchingPairs(content.pairs && content.pairs.length > 0 ? content.pairs : [{left:'', right:''}, {left:'', right:''}]);
+        } else if (q.type === 'TRUE_FALSE') {
+          setMcqText(content.questionText || '');
+          setTrueFalseAnswer(String(content.correctAnswer));
+        } else if (q.type === 'SHORT_ANSWER') {
+          setShortAnswerText(content.questionText || '');
+          setShortAnswerAccepted(Array.isArray(content.acceptedAnswers) ? content.acceptedAnswers.join(', ') : (content.correctAnswer || ''));
+        }
+      }).catch(err => {
+        setError('Không tải được câu hỏi');
+      }).finally(() => setLoading(false));
+    }
+  }, [editId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,10 +113,21 @@ export function CreateQuestionFeature() {
       content = {
         pairs: matchingPairs.filter(p => p.left && p.right),
       };
+    } else if (type === 'TRUE_FALSE') {
+      content = {
+        questionText: mcqText,
+        correctAnswer: trueFalseAnswer === 'true',
+      };
+    } else if (type === 'SHORT_ANSWER') {
+      content = {
+        questionText: shortAnswerText,
+        acceptedAnswers: shortAnswerAccepted.split(',').map(s => s.trim()).filter(Boolean),
+        correctAnswer: shortAnswerAccepted.split(',')[0]?.trim() || '',
+      };
     }
 
     try {
-      await questionBankApi.create({
+      const payload = {
         type,
         hskLevel: hskLevel ? Number(hskLevel) : null,
         difficulty,
@@ -70,7 +135,14 @@ export function CreateQuestionFeature() {
         tags: tags.split(',').map(s => s.trim()).filter(Boolean),
         explanation: explanation || null,
         content,
-      });
+      };
+
+      if (editId) {
+        await questionBankApi.update(editId, payload);
+      } else {
+        await questionBankApi.create(payload);
+      }
+      
       router.push('/teacher/questions');
     } catch (err: any) {
       setError(err.message || 'Có lỗi xảy ra');
@@ -82,7 +154,7 @@ export function CreateQuestionFeature() {
     <div className="max-w-3xl space-y-6 pb-20">
       <header>
         <Link href="/teacher/questions" className="text-sm text-brand hover:underline">← Quay lại danh sách</Link>
-        <h1 className="text-2xl font-bold mt-2">Thêm câu hỏi mới</h1>
+        <h1 className="text-2xl font-bold mt-2">{editId ? 'Sửa câu hỏi' : 'Thêm câu hỏi mới'}</h1>
       </header>
 
       {error && <div className="p-3 bg-red-100 text-red-600 rounded">{error}</div>}
@@ -96,6 +168,8 @@ export function CreateQuestionFeature() {
               <Field label="Loại câu hỏi">
                 <select value={type} onChange={e => setType(e.target.value as any)} className="w-full border rounded p-2">
                   <option value="SINGLE_CHOICE">Trắc nghiệm</option>
+                  <option value="TRUE_FALSE">Đúng / Sai</option>
+                  <option value="SHORT_ANSWER">Trả lời ngắn</option>
                   <option value="FILL_IN">Điền chỗ trống</option>
                   <option value="ORDERING">Sắp xếp câu</option>
                   <option value="MATCHING">Nối từ</option>
@@ -212,6 +286,32 @@ export function CreateQuestionFeature() {
                 <Button type="button" variant="outline" size="sm" onClick={() => setMatchingPairs([...matchingPairs, {left:'', right:''}])}>
                   + Thêm cặp
                 </Button>
+              </div>
+            )}
+
+            {type === 'TRUE_FALSE' && (
+              <div className="space-y-4">
+                <Field label="Nội dung câu hỏi">
+                  <Input required placeholder="VD: 1 + 1 = 2" value={mcqText} onChange={e => setMcqText(e.target.value)} />
+                </Field>
+                <Field label="Đáp án đúng">
+                  <select value={trueFalseAnswer} onChange={e => setTrueFalseAnswer(e.target.value)} className="w-full border rounded p-2">
+                    <option value="true">Đúng (True)</option>
+                    <option value="false">Sai (False)</option>
+                  </select>
+                </Field>
+              </div>
+            )}
+
+            {type === 'SHORT_ANSWER' && (
+              <div className="space-y-4">
+                <Field label="Câu hỏi">
+                  <Input required placeholder="Nhập câu hỏi trả lời ngắn" value={shortAnswerText} onChange={e => setShortAnswerText(e.target.value)} />
+                </Field>
+                <Field label="Các đáp án đúng (phân cách bằng dấu phẩy)">
+                  <Input required placeholder="VD: táo, quả táo, apple" value={shortAnswerAccepted} onChange={e => setShortAnswerAccepted(e.target.value)} />
+                  <p className="text-xs text-gray-500 mt-1">Học sinh nhập đúng 1 trong các từ này sẽ được tính điểm.</p>
+                </Field>
               </div>
             )}
           </CardBody>

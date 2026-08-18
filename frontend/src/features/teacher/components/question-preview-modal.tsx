@@ -47,20 +47,46 @@ export function QuestionPreviewModal({ open, onClose, question }: QuestionPrevie
             <div className="space-y-4">
               <p className="font-medium text-lg">{(question.content as any).questionText}</p>
               <div className="space-y-2">
-                {((question.content as any).options || []).map((opt: any) => {
-                  const isCorrect = (question.content as any).correctAnswer === opt.id;
+                {((question.content as any).options || []).map((opt: any, index: number) => {
+                  const optId = typeof opt === 'string' ? String.fromCharCode(65 + index) : opt.id;
+                  const optText = typeof opt === 'string' ? opt : opt.text;
+                  const correctAnswer = (question.content as any).correctAnswer;
+                  const isCorrect = correctAnswer === optId || correctAnswer === optText;
+                  
                   return (
                     <div
-                      key={opt.id}
+                      key={index}
                       className={`p-3 rounded-lg border ${
                         isCorrect ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
                       } flex items-center justify-between`}
                     >
-                      <span><strong className="mr-2">{opt.id}.</strong> {opt.text}</span>
+                      <span><strong className="mr-2">{optId}.</strong> {optText}</span>
                       {isCorrect && <span className="text-green-600 font-bold text-xl">✓</span>}
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {question.type === 'TRUE_FALSE' && (
+            <div className="space-y-4">
+              <p className="font-medium text-lg">{(question.content as any).questionText || 'Đúng hay Sai?'}</p>
+              <div className="p-4 bg-gray-50 rounded-lg text-lg">
+                <strong>Đáp án đúng: </strong>
+                {String((question.content as any).correctAnswer) === 'true' ? 'Đúng (True)' : 'Sai (False)'}
+              </div>
+            </div>
+          )}
+
+          {question.type === 'SHORT_ANSWER' && (
+            <div className="space-y-4">
+              <p className="font-medium text-lg">{(question.content as any).questionText || 'Trả lời ngắn:'}</p>
+              <div className="p-4 bg-gray-50 rounded-lg text-lg">
+                <strong>Đáp án đúng: </strong>
+                {Array.isArray((question.content as any).acceptedAnswers) 
+                  ? ((question.content as any).acceptedAnswers).join(', ') 
+                  : ((question.content as any).correctAnswer || '(Chưa có đáp án)')}
               </div>
             </div>
           )}

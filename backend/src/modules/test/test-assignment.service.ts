@@ -11,20 +11,38 @@ export class TestAssignmentService {
   ) {}
 
   async create(dto: CreateTestAssignmentDto, assignerId: string) {
-    if (!dto.classroomId && !dto.studentId) {
-      throw new BadRequestException('Must provide either classroomId or studentId');
+    if (!dto.classroomId && (!dto.studentIds || dto.studentIds.length === 0)) {
+      throw new BadRequestException('Must provide either classroomId or studentIds');
     }
 
-    const assignment = this.repo.create({
-      testId: dto.testId,
-      classroomId: dto.classroomId,
-      studentId: dto.studentId,
-      startTime: new Date(dto.startTime),
-      endTime: new Date(dto.endTime),
-      assignedBy: assignerId,
-    });
+    const assignmentsToCreate = [];
 
-    return this.repo.save(assignment);
+    if (dto.classroomId) {
+      assignmentsToCreate.push({
+        testId: dto.testId,
+        classroomId: dto.classroomId,
+        studentId: null,
+        startTime: new Date(dto.startTime),
+        endTime: new Date(dto.endTime),
+        assignedBy: assignerId,
+      });
+    }
+
+    if (dto.studentIds && dto.studentIds.length > 0) {
+      for (const studentId of dto.studentIds) {
+        assignmentsToCreate.push({
+          testId: dto.testId,
+          classroomId: null,
+          studentId: studentId,
+          startTime: new Date(dto.startTime),
+          endTime: new Date(dto.endTime),
+          assignedBy: assignerId,
+        });
+      }
+    }
+
+    const assignments = this.repo.create(assignmentsToCreate);
+    return this.repo.save(assignments);
   }
 
   async findAssignedToStudent(studentId: string, classroomIds: string[]) {

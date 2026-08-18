@@ -2,15 +2,31 @@
 
 import { useState, useEffect, type FormEvent } from 'react';
 import Link from 'next/link';
-import { Library, Plus, FileText, Clock, Calendar, X, Settings, Award, FileEdit, Trash2, PlayCircle, Lock } from 'lucide-react';
+import { 
+  Library, 
+  Plus, 
+  FileText, 
+  Clock, 
+  Calendar, 
+  X, 
+  Settings, 
+  Award, 
+  FileEdit, 
+  Trash2, 
+  PlayCircle, 
+  Lock,
+  Send 
+} from 'lucide-react';
 import { testApi } from '@/lib/api/endpoints/test';
 import type { Test, TestStatus } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/auth-context';
 import { formatDate } from '@/lib/utils/format';
 import { cn } from '@/lib/utils/cn';
 
+// Modals
 import { ExamCreateModal } from './components/exam-create-modal';
 import { ExamQuestionModal } from './components/exam-question-modal';
+import { ExamAssignModal } from './components/exam-assign-modal';
 
 type ExamFilter = 'All' | 'Drafts' | 'Active' | 'Completed';
 
@@ -27,6 +43,8 @@ export function TeacherExamManagementFeature() {
   
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   const [managingTestId, setManagingTestId] = useState<string | null>(null);
+
+  const [assigningTestId, setAssigningTestId] = useState<string | null>(null);
 
   const loadTests = () => {
     if (!user) return;
@@ -273,6 +291,14 @@ export function TeacherExamManagementFeature() {
                         </button>
                       )}
                       
+                      <button
+                        onClick={() => setAssigningTestId(test.id)}
+                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Giao bài kiểm tra"
+                      >
+                        <Send className="h-4 w-4" />
+                      </button>
+
                       <Link href={`/teacher/exams/${test.id}`}>
                         <button
                           className="p-2 text-gray-400 hover:text-[#1f5333] hover:bg-gray-100 rounded-lg transition-colors"
@@ -331,6 +357,12 @@ export function TeacherExamManagementFeature() {
         }}
         onSuccess={loadTests}
         testId={managingTestId}
+      />
+
+      <ExamAssignModal 
+        open={!!assigningTestId}
+        onClose={() => setAssigningTestId(null)}
+        testId={assigningTestId}
       />
     </div>
   );

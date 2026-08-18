@@ -9,9 +9,12 @@ interface QuestionRendererProps {
   question: TestQuestion;
   index?: number;
   compact?: boolean;
+  mode?: 'view' | 'take';
+  value?: any;
+  onChange?: (val: any) => void;
 }
 
-export function QuestionRenderer({ question, index = 0, compact = false }: QuestionRendererProps) {
+export function QuestionRenderer({ question, index = 0, compact = false, mode = 'view', value, onChange }: QuestionRendererProps) {
   const q = question.question;
   const content = (q?.content || {}) as Record<string, any>;
   const type = q?.type || 'UNKNOWN';
@@ -64,23 +67,34 @@ export function QuestionRenderer({ question, index = 0, compact = false }: Quest
           <div className="space-y-2">
             <p className="font-medium text-gray-900 mb-3">{content.questionText || 'Câu hỏi'}</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {(content.options || []).map((opt: string, i: number) => {
-                const isCorrect = actualAnswer === opt;
+              {(content.options || []).map((opt: any, i: number) => {
+                const optId = typeof opt === 'string' ? String.fromCharCode(65 + i) : opt.id;
+                const optText = typeof opt === 'string' ? opt : opt.text;
+                
+                let isHighlighted = false;
+                if (mode === 'take') {
+                  isHighlighted = value === optId || value === optText;
+                } else {
+                  isHighlighted = actualAnswer === optId || actualAnswer === optText;
+                }
+
                 return (
                   <div
                     key={i}
+                    onClick={() => mode === 'take' && onChange?.(optId)}
                     className={cn(
                       "flex items-center gap-3 p-3 border rounded-lg",
-                      isCorrect ? "border-blue-500 bg-blue-50 shadow-sm" : "border-gray-200 bg-gray-50"
+                      mode === 'take' && "cursor-pointer hover:border-blue-300",
+                      isHighlighted ? "border-blue-500 bg-blue-50 shadow-sm" : "border-gray-200 bg-gray-50"
                     )}
                   >
                     <div className={cn(
                       "flex shrink-0 items-center justify-center w-5 h-5 rounded-full border",
-                      isCorrect ? "border-blue-500 bg-blue-500" : "border-gray-300 bg-white"
+                      isHighlighted ? "border-blue-500 bg-blue-500" : "border-gray-300 bg-white"
                     )}>
-                      {isCorrect && <span className="w-2 h-2 rounded-full bg-white block" />}
+                      {isHighlighted && <span className="w-2 h-2 rounded-full bg-white block" />}
                     </div>
-                    <span className={cn("text-sm", isCorrect ? "text-blue-800 font-semibold" : "text-gray-700")}>{opt}</span>
+                    <span className={cn("text-sm", isHighlighted ? "text-blue-800 font-semibold" : "text-gray-700")}>{optText}</span>
                   </div>
                 );
               })}
@@ -91,37 +105,51 @@ export function QuestionRenderer({ question, index = 0, compact = false }: Quest
 
       case 'TRUE_FALSE': {
         const ca = (q as any).correctAnswer ?? content.correctAnswer ?? content.correct_answer;
-        const isTrueCorrect = typeof ca === 'object' && ca !== null ? ca.answer === true : ca === true;
-        const isFalseCorrect = typeof ca === 'object' && ca !== null ? ca.answer === false : ca === false;
+        let isTrueHighlighted = false;
+        let isFalseHighlighted = false;
+
+        if (mode === 'take') {
+          isTrueHighlighted = value === true;
+          isFalseHighlighted = value === false;
+        } else {
+          isTrueHighlighted = typeof ca === 'object' && ca !== null ? ca.answer === true : ca === true;
+          isFalseHighlighted = typeof ca === 'object' && ca !== null ? ca.answer === false : ca === false;
+        }
 
         return (
           <div className="space-y-3">
             <p className="font-medium text-gray-900">{content.questionText || 'Đúng hay Sai?'}</p>
             <div className="flex gap-3">
-              <div className={cn(
-                "flex items-center gap-2 p-3 border rounded-lg min-w-[120px]", 
-                isTrueCorrect ? "border-blue-500 bg-blue-50 shadow-sm" : "border-gray-200 bg-gray-50"
+              <div 
+                onClick={() => mode === 'take' && onChange?.(true)}
+                className={cn(
+                  "flex items-center gap-2 p-3 border rounded-lg min-w-[120px]", 
+                  mode === 'take' && "cursor-pointer hover:border-blue-300",
+                  isTrueHighlighted ? "border-blue-500 bg-blue-50 shadow-sm" : "border-gray-200 bg-gray-50"
               )}>
                 <div className={cn(
                   "w-5 h-5 rounded-full border flex shrink-0 items-center justify-center", 
-                  isTrueCorrect ? "border-blue-500 bg-blue-500" : "border-gray-300 bg-white"
+                  isTrueHighlighted ? "border-blue-500 bg-blue-500" : "border-gray-300 bg-white"
                 )}>
-                  {isTrueCorrect && <span className="w-2 h-2 bg-white rounded-full block" />}
+                  {isTrueHighlighted && <span className="w-2 h-2 bg-white rounded-full block" />}
                 </div>
-                <span className={cn("font-medium", isTrueCorrect ? "text-blue-800" : "text-gray-700")}>Đúng</span>
+                <span className={cn("font-medium", isTrueHighlighted ? "text-blue-800" : "text-gray-700")}>Đúng</span>
               </div>
               
-              <div className={cn(
-                "flex items-center gap-2 p-3 border rounded-lg min-w-[120px]", 
-                isFalseCorrect ? "border-blue-500 bg-blue-50 shadow-sm" : "border-gray-200 bg-gray-50"
+              <div 
+                onClick={() => mode === 'take' && onChange?.(false)}
+                className={cn(
+                  "flex items-center gap-2 p-3 border rounded-lg min-w-[120px]", 
+                  mode === 'take' && "cursor-pointer hover:border-blue-300",
+                  isFalseHighlighted ? "border-blue-500 bg-blue-50 shadow-sm" : "border-gray-200 bg-gray-50"
               )}>
                 <div className={cn(
                   "w-5 h-5 rounded-full border flex shrink-0 items-center justify-center", 
-                  isFalseCorrect ? "border-blue-500 bg-blue-500" : "border-gray-300 bg-white"
+                  isFalseHighlighted ? "border-blue-500 bg-blue-500" : "border-gray-300 bg-white"
                 )}>
-                  {isFalseCorrect && <span className="w-2 h-2 bg-white rounded-full block" />}
+                  {isFalseHighlighted && <span className="w-2 h-2 bg-white rounded-full block" />}
                 </div>
-                <span className={cn("font-medium", isFalseCorrect ? "text-blue-800" : "text-gray-700")}>Sai</span>
+                <span className={cn("font-medium", isFalseHighlighted ? "text-blue-800" : "text-gray-700")}>Sai</span>
               </div>
             </div>
           </div>
@@ -146,9 +174,11 @@ export function QuestionRenderer({ question, index = 0, compact = false }: Quest
               type="text"
               placeholder="Điều cần điền..."
               className="w-full px-4 py-2 border-2 border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
-              disabled
+              disabled={mode === 'view'}
+              value={mode === 'take' ? (value || '') : undefined}
+              onChange={(e) => mode === 'take' && onChange?.(e.target.value)}
             />
-            {content.correctAnswer && (
+            {mode === 'view' && content.correctAnswer && (
               <div className="p-2 bg-green-100 border border-green-300 rounded text-xs text-green-700">
                 ✓ Đáp án: <strong>{JSON.stringify(content.correctAnswer)}</strong>
               </div>
@@ -166,7 +196,7 @@ export function QuestionRenderer({ question, index = 0, compact = false }: Quest
               {(content.words || content.items || []).map((word: string, i: number) => (
                 <div
                   key={i}
-                  className="flex items-center gap-3 p-3 bg-white border-2 border-pink-200 rounded-lg cursor-move hover:shadow-sm transition-shadow"
+                  className={cn("flex items-center gap-3 p-3 bg-white border-2 border-pink-200 rounded-lg transition-shadow", mode === 'take' ? "cursor-move hover:shadow-sm" : "")}
                 >
                   <div className="flex items-center justify-center w-6 h-6 bg-pink-100 text-pink-600 rounded font-bold text-xs">
                     {i + 1}
@@ -175,7 +205,7 @@ export function QuestionRenderer({ question, index = 0, compact = false }: Quest
                 </div>
               ))}
             </div>
-            {content.correctOrder && (
+            {mode === 'view' && content.correctOrder && (
               <div className="p-3 bg-green-100 border border-green-300 rounded text-xs text-green-700">
                 <strong>✓ Thứ tự đúng:</strong> {(content.correctOrder as string[]).join(' → ')}
               </div>
@@ -209,12 +239,17 @@ export function QuestionRenderer({ question, index = 0, compact = false }: Quest
                 </div>
               </div>
             </div>
-            {content.pairs && (
-              <div className="p-3 bg-green-100 border border-green-300 rounded text-xs text-green-700">
-                <strong>✓ Cách nối:</strong>{' '}
-                {Object.entries(content.pairs as Record<string, string>)
-                  .map(([k, v]) => `${k}→${v}`)
-                  .join(', ')}
+            <div className="text-sm text-gray-500 italic mt-4">
+              Dạng bài Nối từ chưa hỗ trợ hiển thị hoặc tương tác đầy đủ trong bản demo này.
+            </div>
+            {mode === 'view' && content.pairs && (
+              <div className="p-3 bg-green-100 border border-green-300 rounded mt-4 text-xs text-green-700">
+                <strong>✓ Cặp đúng:</strong>
+                <ul className="list-disc ml-5 mt-1">
+                  {(content.pairs as {left: string, right: string}[]).map((p, i) => (
+                    <li key={i}>{p.left} → {p.right}</li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>
@@ -225,15 +260,20 @@ export function QuestionRenderer({ question, index = 0, compact = false }: Quest
           <div className="space-y-3">
             <p className="font-medium text-gray-900">{content.questionText || 'Trả lời câu hỏi:'}</p>
             <textarea
-              placeholder="Nhập câu trả lời..."
-              className="w-full px-4 py-3 border-2 border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              rows={3}
-              disabled
+              placeholder="Nhập câu trả lời của bạn..."
+              className="w-full px-4 py-3 border-2 border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[100px]"
+              disabled={mode === 'view'}
+              value={mode === 'take' ? (value || '') : undefined}
+              onChange={(e) => mode === 'take' && onChange?.(e.target.value)}
             />
-            {content.acceptedAnswers && (
-              <div className="p-2 bg-green-100 border border-green-300 rounded text-xs text-green-700">
-                <strong>✓ Đáp án chấp nhận:</strong>{' '}
-                {(content.acceptedAnswers as string[]).join(', ')}
+            {mode === 'view' && content.acceptedAnswers && (
+              <div className="p-3 bg-green-100 border border-green-300 rounded text-xs text-green-700">
+                <strong>✓ Các đáp án chấp nhận:</strong>
+                <ul className="list-disc ml-5 mt-1">
+                  {(content.acceptedAnswers as string[]).map((ans, i) => (
+                    <li key={i}>{ans}</li>
+                  ))}
+                </ul>
               </div>
             )}
           </div>

@@ -27,8 +27,6 @@ export function QuestionBankFeature() {
 
   // State cho Modal
   const [previewQuestion, setPreviewQuestion] = useState<QuestionBankItem | null>(null);
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [editingQuestion, setEditingQuestion] = useState<QuestionBankItem | null>(null);
 
   const fetchQuestions = useCallback(async () => {
     try {
@@ -72,9 +70,11 @@ export function QuestionBankFeature() {
           <h1 className="text-2xl font-bold text-gray-900">Ngân hàng câu hỏi</h1>
           <p className="text-gray-500 text-sm">Quản lý và lưu trữ câu hỏi để sử dụng trong các đề kiểm tra.</p>
         </div>
-        <Button onClick={() => { setEditingQuestion(null); setIsCreateOpen(true); }}>
-          + Thêm câu hỏi
-        </Button>
+        <Link href="/teacher/questions/create">
+          <Button>
+            + Thêm câu hỏi
+          </Button>
+        </Link>
       </div>
 
       <Card>
@@ -133,7 +133,7 @@ export function QuestionBankFeature() {
 
       {/* Danh sách */}
       {!loading && !error && (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {questions.map((q) => (
             <Card key={q.id}>
               <CardBody className="flex items-center justify-between gap-4 p-4">
@@ -145,10 +145,7 @@ export function QuestionBankFeature() {
                     <Badge tone={q.visibility === 'PUBLIC' ? 'green' : 'gray'}>{q.visibility}</Badge>
                   </div>
                   <div className="text-sm font-medium">
-                    {q.type === 'SINGLE_CHOICE' && (q.content as any).questionText}
-                    {q.type === 'FILL_IN' && (q.content as any).sentence}
-                    {q.type === 'ORDERING' && ((q.content as any).correctOrder || []).map((w: any) => typeof w === 'string' ? w : w.text).join(' / ')}
-                    {q.type === 'MATCHING' && 'Nối từ tương ứng'}
+                    {(q.content as any)?.questionText || (q.content as any)?.prompt || (q.content as any)?.question || (q.content as any)?.sentence || '(Không có nội dung)'}
                   </div>
                   {q.tags && q.tags.length > 0 && (
                     <div className="flex gap-1 mt-2">
@@ -161,6 +158,9 @@ export function QuestionBankFeature() {
                   <Button variant="outline" size="sm" onClick={() => setPreviewQuestion(q)}>Xem</Button>
                   {(user?.role === 'ADMIN' || q.creatorId === user?.id) && (
                     <>
+                      <Link href={`/teacher/questions/create?edit=${q.id}`}>
+                        <Button variant="outline" size="sm" className="text-brand-600 border-brand-200 hover:bg-brand-50">Sửa</Button>
+                      </Link>
                       <Button variant="danger" size="sm" onClick={() => remove(q.id)}>Xóa</Button>
                     </>
                   )}
@@ -169,7 +169,7 @@ export function QuestionBankFeature() {
             </Card>
           ))}
           {questions.length === 0 && (
-            <div className="text-center p-10 text-gray-500 bg-gray-50 rounded-xl border border-dashed">
+            <div className="col-span-1 lg:col-span-2 text-center p-10 text-gray-500 bg-gray-50 rounded-xl border border-dashed">
               Chưa có câu hỏi nào trong ngân hàng phù hợp với bộ lọc.
             </div>
           )}
