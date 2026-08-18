@@ -2,7 +2,7 @@ import { apiFetch, unwrap } from '../client';
 import type { Paginated, Single } from '../types';
 
 // Question source types
-export type TestQuestionType = 'SINGLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'FILL_IN' | 'ORDERING' | 'MATCHING';
+export type TestQuestionType = 'SINGLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'FILL_IN' | 'ORDERING' | 'MATCHING' | 'SPEAKING' | 'WRITING';
 export type QuestionSourceType = 'PRACTICE' | 'EXAM' | 'BOTH';
 
 export interface QuestionBankItem {

@@ -36,7 +36,7 @@ export function TeacherHskkGradingFeature() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    testApi.listAttempts({ limit: 50, status: 'GRADED' }).then(res => {
+    testApi.listAttempts({ limit: 50, status: 'SUBMITTED' }).then(res => {
       const attemptsArray = res || [];
       setAttempts(attemptsArray);
       setLoading(false);
@@ -87,7 +87,7 @@ export function TeacherHskkGradingFeature() {
       await testApi.gradeAnswer(selectedAttemptId, activeQuestionId, gradePoints);
       alert('Đã cập nhật điểm thành công!');
       // Refresh list to update total score
-      const res = await testApi.listAttempts({ limit: 50, status: 'GRADED' });
+      const res = await testApi.listAttempts({ limit: 50, status: 'SUBMITTED' });
       setAttempts(res || []);
       // Refresh detail
       const detailRes = await testApi.getAttemptResult(selectedAttemptId);
@@ -95,6 +95,58 @@ export function TeacherHskkGradingFeature() {
     } catch (err) {
       console.error(err);
       alert('Có lỗi xảy ra khi cập nhật điểm');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleCompleteGrading = async () => {
+    if (!selectedAttemptId) return;
+    if (!window.confirm('Bạn có chắc chắn muốn hoàn thành việc chấm điểm cho bài thi này? Bài thi sẽ được chuyển sang trạng thái Đã chấm.')) return;
+    try {
+      setIsSubmitting(true);
+      await testApi.completeGrading(selectedAttemptId);
+      alert('Đã hoàn thành chấm điểm!');
+      // Remove from list
+      setAttempts(prev => {
+        const updated = prev.filter(a => a.id !== selectedAttemptId);
+        if (updated.length > 0) {
+          setSelectedAttemptId(updated[0].id);
+        } else {
+          setSelectedAttemptId(null);
+          setAttemptDetail(null);
+        }
+        return updated;
+      });
+    } catch (err) {
+      console.error(err);
+      alert('Có lỗi xảy ra khi hoàn thành chấm điểm');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAutoGrade = async () => {
+    if (!selectedAttemptId) return;
+    try {
+      setIsSubmitting(true);
+      await testApi.autoGradeObjective(selectedAttemptId);
+      
+      // Refresh detail
+      const detailRes = await testApi.getAttemptResult(selectedAttemptId);
+      setAttemptDetail(detailRes);
+      
+      // Find first subjective question to focus on
+      const subjectiveQs = detailRes.questions.filter(q => q.question.type === 'SHORT_ANSWER' || q.question.type === 'SPEAKING' || q.question.type === 'WRITING');
+      if (subjectiveQs.length > 0) {
+        setActiveQuestionId(subjectiveQs[0].id);
+        alert('Đã tự động chấm trắc nghiệm! Bạn có thể bắt đầu chấm các câu tự luận/nói.');
+      } else {
+        alert('Đã tự động chấm xong toàn bài!');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Có lỗi xảy ra khi tự động chấm');
     } finally {
       setIsSubmitting(false);
     }
@@ -182,27 +234,65 @@ export function TeacherHskkGradingFeature() {
                       <Sparkles className="h-3 w-3" /> Điểm: {attemptDetail.attempt.score}
                     </span>
                   </div>
+                  <button 
+                    onClick={handleAutoGrade}
+                    disabled={isSubmitting}
+                    className="bg-white text-[#1f5333] px-4 py-2 rounded-full text-[13px] font-bold border border-[#1f5333]/20 hover:bg-[#f3f4e1] transition-all flex items-center gap-2"
+                  >
+                    <RotateCw className={`h-4 w-4 ${isSubmitting ? 'animate-spin' : ''}`} />
+                    Tự động chấm trắc nghiệm
+                  </button>
                 </div>
                 <p className="text-[15px] text-gray-600 font-medium">{attemptDetail.test.name}</p>
               </div>
 
-              {/* Question Selection */}
+              {/* Question Selection Matrix */}
               {attemptDetail.questions.length > 0 && (
-                 <div className="flex gap-2 overflow-x-auto pb-2">
-                   {attemptDetail.questions.map((q, idx) => (
-                     <button
-                        key={q.id}
-                        onClick={() => setActiveQuestionId(q.id)}
-                        className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-all ${
-                          activeQuestionId === q.id 
-                            ? 'bg-[#1f5333] text-white shadow-md' 
-                            : 'bg-white border border-gray-200 text-gray-600 hover:border-[#1f5333] hover:text-[#1f5333]'
-                        }`}
-                     >
-                       Câu {idx + 1} ({q.question.type})
-                     </button>
-                   ))}
-                 </div>
+                <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-[0_4px_24px_-4px_rgba(0,0,0,0.04)] mb-4">
+                  <h3 className="font-extrabold text-[#1f5333] mb-4">Danh sách câu hỏi</h3>
+                  <div className="flex flex-wrap gap-3">
+                    {attemptDetail.questions.map((q, idx) => {
+                      const answer = attemptDetail.answers.find(a => a.questionId === q.id);
+                      // Consider it graded if it has pointsAwarded
+                      const isGraded = answer && answer.pointsAwarded !== null && answer.pointsAwarded !== undefined;
+                      const isActive = activeQuestionId === q.id;
+
+                      let btnClass = 'w-12 h-12 rounded-xl flex items-center justify-center font-bold text-sm transition-all border-2 ';
+                      if (isActive) {
+                        btnClass += 'border-[#1f5333] ring-4 ring-[#eaf3c5] ';
+                      } else {
+                        btnClass += 'border-transparent hover:border-gray-200 ';
+                      }
+
+                      if (isGraded) {
+                        btnClass += isActive ? 'bg-[#1f5333] text-white' : 'bg-[#eaf3c5] text-[#1f5333]';
+                      } else {
+                        btnClass += isActive ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-500';
+                      }
+
+                      return (
+                        <button
+                          key={q.id}
+                          onClick={() => setActiveQuestionId(q.id)}
+                          className={btnClass}
+                          title={q.question.type}
+                        >
+                          {idx + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="flex items-center gap-6 mt-4 text-xs font-bold text-gray-500">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded bg-[#eaf3c5]"></div>
+                      <span>Đã chấm</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded bg-gray-100"></div>
+                      <span>Chưa chấm</span>
+                    </div>
+                  </div>
+                </div>
               )}
 
               {/* Grading Block */}
@@ -294,13 +384,20 @@ export function TeacherHskkGradingFeature() {
                     </div>
                     
                     {/* Footer Actions */}
-                    <div className="flex items-center justify-end gap-4 mt-2 mb-8">
+                    <div className="flex items-center justify-between mt-4 mb-8">
+                      <button 
+                        onClick={handleCompleteGrading}
+                        disabled={isSubmitting}
+                        className="bg-[#eef5e9] text-[#1f5333] px-6 py-3 rounded-full text-[14px] font-bold hover:bg-[#eaf3c5] transition-all border border-[#1f5333]/20 disabled:opacity-50"
+                      >
+                        Hoàn thành chấm điểm
+                      </button>
                       <button 
                         onClick={handleGradeSubmit}
                         disabled={isSubmitting || !activeAnswer}
                         className="bg-[#1f5333] text-white px-8 py-3 rounded-full text-[14px] font-bold hover:bg-[#1b462b] transition-all shadow-lg shadow-[#1f5333]/20 flex items-center gap-2 disabled:opacity-50"
                       >
-                        <Send className="h-4 w-4" /> {isSubmitting ? 'Đang lưu...' : 'Lưu điểm'}
+                        <Send className="h-4 w-4" /> {isSubmitting ? 'Đang lưu...' : 'Lưu điểm câu này'}
                       </button>
                     </div>
                   </>

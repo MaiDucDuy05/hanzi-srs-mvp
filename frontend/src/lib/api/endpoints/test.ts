@@ -88,6 +88,12 @@ export const testApi = {
   submitAttempt: (id: string, durationSeconds: number) =>
     unwrap(apiFetch<Single<TestAttempt>>(`/test-attempts/${id}`, { method: 'PATCH', body: JSON.stringify({ durationSeconds }) })),
 
+  completeGrading: (id: string) =>
+    unwrap(apiFetch<Single<TestAttempt>>(`/test-attempts/${id}/complete-grading`, { method: 'PATCH' })),
+
+  autoGradeObjective: (id: string) =>
+    unwrap(apiFetch<Single<TestAttempt>>(`/test-attempts/${id}/auto-grade`, { method: 'PATCH' })),
+
   getAttemptResult: (attemptId: string) =>
     unwrap(apiFetch<Single<{
       attempt: TestAttempt;

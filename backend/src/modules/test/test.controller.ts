@@ -213,6 +213,18 @@ export class TestAttemptController {
     return ok(await this.svc.submit(id, dto, userId), 'Test attempt submitted');
   }
 
+  @Patch(':id/complete-grading')
+  @Roles(Role.TEACHER, Role.ADMIN)
+  async completeGrading(@Param('id') id: string) {
+    return ok(await this.svc.completeGrading(id), 'Grading completed');
+  }
+
+  @Patch(':id/auto-grade')
+  @Roles(Role.TEACHER, Role.ADMIN)
+  async autoGradeObjective(@Param('id') id: string) {
+    return ok(await this.svc.autoGradeObjective(id), 'Objective questions auto-graded');
+  }
+
   // --- Nested answers under attempts ---
   @Get(':attemptId/answers') async findAnswers(
     @Param('attemptId') attemptId: string,

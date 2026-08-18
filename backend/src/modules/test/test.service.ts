@@ -463,6 +463,62 @@ export class TestAttemptService {
     attempt.score = score;
     return this.repo.save(attempt);
   }
+
+  async completeGrading(attemptId: string) {
+    const attempt = await findOrNotFound(this.repo, attemptId, 'Test attempt');
+    attempt.status = TestAttemptStatus.GRADED;
+    return this.repo.save(attempt);
+  }
+
+  async autoGradeObjective(attemptId: string) {
+    const attempt = await findOrNotFound(this.repo, attemptId, 'Test attempt');
+    const test = await findOrNotFound(this.testRepo, attempt.testId, 'Test');
+    const [answers, questions] = await Promise.all([
+      this.answerRepo.find({ where: { attemptId } as any }),
+      this.questionRepo.find({
+        where: { testId: test.id } as any,
+        relations: ['question'],
+      }),
+    ]);
+    
+    // Auto-grade objective questions
+    const answerMap = new Map(answers.map(a => [a.questionId, a]));
+    let updatedAnswers: TestAnswer[] = [];
+    
+    for (const q of questions) {
+      const type = q.question.type;
+      // Skip subjective questions
+      if (type === 'SHORT_ANSWER' || type === 'SPEAKING' || type === 'WRITING') {
+        continue;
+      }
+      
+      // gradeQuestion is defined in this file, so we can just call it
+      let answer = answerMap.get(q.questionId);
+      
+      if (answer) {
+        const { isCorrect, pointsAwarded } = gradeQuestion(q, answer.answer?.answer || answer.answer);
+        answer.isCorrect = isCorrect;
+        answer.pointsAwarded = pointsAwarded;
+        updatedAnswers.push(answer);
+      } else {
+        // Create an empty answer with 0 points
+        const { isCorrect, pointsAwarded } = gradeQuestion(q, null);
+        updatedAnswers.push(this.answerRepo.create({
+          attemptId,
+          questionId: q.questionId,
+          answer: null,
+          isCorrect,
+          pointsAwarded,
+        }));
+      }
+    }
+    
+    if (updatedAnswers.length > 0) {
+      await this.answerRepo.save(updatedAnswers);
+    }
+    
+    return this.recalculateScore(attemptId);
+  }
 }
 
 @Injectable()

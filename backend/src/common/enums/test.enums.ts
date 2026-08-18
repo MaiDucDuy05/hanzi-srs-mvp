@@ -13,6 +13,8 @@ export enum TestQuestionType {
   FILL_IN = 'FILL_IN',
   ORDERING = 'ORDERING',
   MATCHING = 'MATCHING',
+  SPEAKING = 'SPEAKING',
+  WRITING = 'WRITING',
 }
 
 export enum TestAttemptStatus {

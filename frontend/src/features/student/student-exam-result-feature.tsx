@@ -52,8 +52,22 @@ export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: {
       <Card>
         <CardBody className="text-center py-6 space-y-4">
           <h1 className="text-2xl font-bold text-gray-800">Kết quả: {test.name}</h1>
-          <div className="text-6xl font-bold text-brand">{attempt.score || 0}<span className="text-3xl text-gray-400">/100</span></div>
-          <div className="flex justify-center gap-8 text-sm text-gray-600 mt-4">
+          
+          {attempt.status === 'SUBMITTED' ? (
+            <div className="py-6">
+              <div className="inline-flex items-center justify-center p-4 bg-yellow-50 text-yellow-600 rounded-full mb-4">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h2 className="text-xl font-bold text-gray-800 mb-2">Đang chờ chấm điểm</h2>
+              <p className="text-gray-500">Bài làm của bạn đang chờ giáo viên chấm phần tự luận/nói. Điểm số sẽ được cập nhật sau.</p>
+            </div>
+          ) : (
+            <div className="text-6xl font-bold text-brand">{attempt.score || 0}<span className="text-3xl text-gray-400">/100</span></div>
+          )}
+
+          <div className="flex justify-center gap-8 text-sm text-gray-600 mt-4 border-t pt-6">
             <div>
               <p className="font-semibold text-gray-900">Thời gian làm bài</p>
               <p>{Math.floor((attempt.durationSeconds || 0) / 60)} phút {(attempt.durationSeconds || 0) % 60} giây</p>
@@ -83,35 +97,34 @@ export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: {
           const isCorrect = ans?.isCorrect;
           
           return (
-            <Card key={qObj.id} className={cn("border-l-4", isCorrect ? "border-l-green-500" : (isCorrect === false ? "border-l-red-500" : "border-l-gray-300"))}>
+            <Card key={qObj.id} className={cn("border-l-4", attempt.status === 'SUBMITTED' ? "border-l-gray-300" : (isCorrect ? "border-l-green-500" : (isCorrect === false ? "border-l-red-500" : "border-l-gray-300")))}>
               <CardBody className="space-y-3">
                 <div className="flex justify-between gap-4">
                   <div className="flex gap-2">
                     <span className="font-bold">{index + 1}.</span>
                     <span className="font-medium whitespace-pre-wrap">{text}</span>
                   </div>
-                  <div className="shrink-0 text-sm font-semibold text-gray-500">
-                    {ans?.pointsAwarded || 0} / {qObj.points} điểm
-                  </div>
+                  {attempt.status !== 'SUBMITTED' && (
+                    <div className="shrink-0 text-sm font-semibold text-gray-500">
+                      {ans?.pointsAwarded || 0} / {qObj.points} điểm
+                    </div>
+                  )}
                 </div>
 
                 <div className="bg-gray-50 p-3 rounded-lg text-sm">
                   <p className="mb-1"><span className="font-medium text-gray-700">Câu trả lời của bạn: </span> 
                     {ans?.answer ? (
-                      <span className={cn(isCorrect ? "text-green-600 font-semibold" : "text-red-600 font-semibold")}>
-                        {String(ans.answer)}
-                      </span>
-                    ) : <span className="text-gray-400 italic">Không trả lời</span>}
+                      <span className="font-bold text-gray-900">{(ans.answer as any).answer || JSON.stringify(ans.answer)}</span>
+                    ) : (
+                      <span className="text-gray-400 italic">Không trả lời</span>
+                    )}
                   </p>
-
-                  {correctAnswer && (
-                    <p className="mt-2 text-green-700">
-                      <span className="font-medium">Đáp án đúng: </span>
-                      {JSON.stringify(correctAnswer)}
+                  
+                  {attempt.status !== 'SUBMITTED' && correctAnswer && (
+                    <p className="text-green-700 mt-2 bg-green-50 p-2 rounded border border-green-100">
+                      <span className="font-bold">Đáp án đúng: </span> 
+                      {typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : String(correctAnswer)}
                     </p>
-                  )}
-                  {!correctAnswer && test.showAnswersAfter && attempt.status === 'GRADED' && (
-                    <p className="mt-2 text-gray-500 italic">Câu hỏi tự luận, chờ giáo viên chấm hoặc không có đáp án mẫu.</p>
                   )}
                 </div>
               </CardBody>
