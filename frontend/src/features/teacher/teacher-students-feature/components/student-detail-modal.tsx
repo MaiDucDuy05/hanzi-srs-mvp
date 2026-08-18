@@ -33,12 +33,19 @@ export function StudentDetailModal({
       const [activitiesRes, mistakesRes, attemptsRes] = await Promise.all([
         resourceApi.listStudentActivities({ limit: 10 }),
         resourceApi.listMistakes({ userId: String(student.id), limit: 10 }),
-        testApi.listAttempts({ userId: String(student.id), status: 'SUBMITTED', limit: 10 }),
+        testApi.listAttempts({ userId: String(student.id), status: 'GRADED', limit: 10 }),
       ]);
 
       setActivities(Array.isArray(activitiesRes) ? activitiesRes : []);
       setMistakes(sortByFailCount(Array.isArray(mistakesRes) ? mistakesRes : []));
-      setTestAttempts(Array.isArray(attemptsRes) ? attemptsRes : []);
+      
+      const mappedAttempts = Array.isArray(attemptsRes) 
+        ? attemptsRes.map((a: any) => ({
+            ...a,
+            testName: a.test?.name || a.testName
+          }))
+        : [];
+      setTestAttempts(mappedAttempts);
 
       setDetail({
         id: student.id as string,

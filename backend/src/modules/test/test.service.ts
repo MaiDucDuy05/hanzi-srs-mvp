@@ -306,6 +306,7 @@ export class TestAttemptService {
     if (status) where.status = status;
     const [data, total] = await this.repo.findAndCount({
       where,
+      relations: ['test'],
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: 'DESC' },
