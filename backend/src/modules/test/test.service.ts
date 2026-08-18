@@ -1,3 +1,5 @@
+import { UserActivity } from '../achievements/entities/user-activity.entity';
+import { ActivityType } from '../../common/enums/achievements.enums';
 import {
   Injectable,
   BadRequestException,
@@ -382,6 +384,14 @@ export class TestAttemptService {
       durationSeconds: dto.durationSeconds,
       score,
     });
+    
+    await this.repo.manager.insert(UserActivity, {
+      userId,
+      activityType: ActivityType.PRACTICE_COMPLETED,
+      details: { type: 'TEST', attemptId: id, testId: attempt.testId, score },
+      expAwarded: 0,
+    });
+
     return this.repo.save(attempt);
   }
 

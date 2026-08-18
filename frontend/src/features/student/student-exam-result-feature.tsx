@@ -44,7 +44,7 @@ export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: {
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-10">
       <div className="flex items-center gap-4 mb-4">
-        <Button variant="ghost" onClick={() => onBack ? onBack() : router.push('/exams')}>
+        <Button variant="ghost" onClick={() => onBack ? onBack() : router.push('/dashboard/exams')}>
           ← Quay lại
         </Button>
       </div>

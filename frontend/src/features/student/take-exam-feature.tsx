@@ -32,7 +32,7 @@ export function TakeExamFeature() {
       const att = await testApi.getAttempt(attemptId);
       if (att.status !== 'IN_PROGRESS') {
         alert('Bài kiểm tra này đã kết thúc!');
-        router.push('/exams');
+        router.push('/dashboard/exams');
         return;
       }
 
@@ -127,7 +127,7 @@ export function TakeExamFeature() {
     setSubmitting(true);
     try {
       await testApi.submitAttempt(attemptId, durationSecondsRef.current);
-      router.push('/exams');
+      router.push('/dashboard/exams');
     } catch (e) {
       setError('Lỗi nộp bài. Vui lòng thử lại.');
       setSubmitting(false);

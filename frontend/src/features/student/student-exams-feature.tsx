@@ -35,7 +35,7 @@ export function StudentExamsFeature() {
     if (!window.confirm(`Bắt đầu làm bài: ${assignment.test?.name}?`)) return;
     try {
       const attempt = await testApi.startAttempt(assignment.testId, assignment.id);
-      router.push(`/exams/${attempt.id}`);
+      router.push(`/dashboard/exams/${attempt.id}`);
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Không thể bắt đầu làm bài.');
     }
@@ -89,12 +89,12 @@ export function StudentExamsFeature() {
                   {!isStarted ? (
                     <Button className="w-full" disabled variant="outline">Chưa tới giờ mở đề</Button>
                   ) : inProgress ? (
-                    <Button className="w-full" onClick={() => router.push(`/exams/${inProgress.id}`)}>
+                    <Button className="w-full" onClick={() => router.push(`/dashboard/exams/${inProgress.id}`)}>
                       Tiếp tục làm bài
                     </Button>
                   ) : hasReachedLimit ? (
                     bestAttempt ? (
-                      <Button className="w-full" variant="outline" onClick={() => router.push(`/exams/${bestAttempt.id}/result`)}>
+                      <Button className="w-full" variant="outline" onClick={() => router.push(`/dashboard/exams/${bestAttempt.id}/result`)}>
                         Xem kết quả
                       </Button>
                     ) : (

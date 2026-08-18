@@ -40,7 +40,7 @@ export function StudentExamTakingPage() {
         const att = await testApi.getAttempt(attemptId);
         if (att.status !== 'IN_PROGRESS') {
           alert('Bài kiểm tra này đã kết thúc!');
-          router.push('/exams');
+          router.push('/dashboard/exams');
           return;
         }
 
@@ -145,7 +145,7 @@ export function StudentExamTakingPage() {
     setSubmitting(true);
     try {
       await testApi.submitAttempt(attemptId, durationSecondsRef.current);
-      router.push(`/exams/${attemptId}/result`);
+      router.push(`/dashboard/exams/${attemptId}/result`);
     } catch (e) {
       setError('Lỗi nộp bài. Vui lòng thử lại.');
       setSubmitting(false);
@@ -183,7 +183,7 @@ export function StudentExamTakingPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push('/exams')}
+              onClick={() => router.push('/dashboard/exams')}
               className="shrink-0"
             >
               <ChevronLeft className="h-5 w-5" />
