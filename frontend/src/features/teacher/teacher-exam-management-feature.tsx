@@ -2,20 +2,15 @@
 
 import { useState, useEffect, type FormEvent } from 'react';
 import Link from 'next/link';
-import { Library, Plus, FileText, Clock, Calendar, X, Settings, Award } from 'lucide-react';
+import { Library, Plus, FileText, Clock, Calendar, X, Settings, Award, FileEdit, Trash2, PlayCircle, Lock } from 'lucide-react';
 import { testApi } from '@/lib/api/endpoints/test';
-import { questionBankApi } from '@/lib/api/endpoints/question-bank';
 import type { Test, TestStatus } from '@/lib/api/types';
-import type { QuestionBankItem } from '@/lib/api/endpoints/question-bank';
 import { useAuth } from '@/lib/auth/auth-context';
-import { Button } from '@/features/ui/components/button';
-import { Modal } from '@/features/ui/components/modal';
-import { Field, Input, Select } from '@/features/ui/components/form';
-import { PageLoading } from '@/features/ui/components/spinner';
-import { ErrorState } from '@/features/ui/components/error-state';
-import { Badge } from '@/features/ui/components/badge';
 import { formatDate } from '@/lib/utils/format';
 import { cn } from '@/lib/utils/cn';
+
+import { ExamCreateModal } from './components/exam-create-modal';
+import { ExamQuestionModal } from './components/exam-question-modal';
 
 type ExamFilter = 'All' | 'Drafts' | 'Active' | 'Completed';
 
@@ -25,24 +20,13 @@ export function TeacherExamManagementFeature() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<ExamFilter>('All');
+  
+  // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingTestId, setEditingTestId] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
+  
   const [showQuestionModal, setShowQuestionModal] = useState(false);
   const [managingTestId, setManagingTestId] = useState<string | null>(null);
-  const [allQuestions, setAllQuestions] = useState<QuestionBankItem[]>([]);
-  const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);
-  const [savingQuestions, setSavingQuestions] = useState(false);
-  const [form, setForm] = useState({
-    name: '',
-    description: '',
-    timeLimitMinutes: '30',
-    attemptLimit: '1',
-    accessCode: '',
-    hskLevel: '1',
-    shuffleQuestions: false,
-    showAnswersAfter: false,
-  });
 
   const loadTests = () => {
     if (!user) return;
@@ -60,94 +44,17 @@ export function TeacherExamManagementFeature() {
 
   const openCreateModal = () => {
     setEditingTestId(null);
-    setForm({
-      name: '',
-      description: '',
-      timeLimitMinutes: '30',
-      attemptLimit: '1',
-      accessCode: '',
-      hskLevel: '1',
-      shuffleQuestions: false,
-      showAnswersAfter: false,
-    });
     setShowCreateModal(true);
   };
 
   const openEditModal = (test: Test) => {
     setEditingTestId(test.id);
-    setForm({
-      name: test.name,
-      description: test.description || '',
-      timeLimitMinutes: String(test.timeLimitMinutes),
-      attemptLimit: String(test.attemptLimit),
-      accessCode: test.accessCode || '',
-      hskLevel: String(test.hskLevel || 1),
-      shuffleQuestions: test.shuffleQuestions || false,
-      showAnswersAfter: test.showAnswersAfter || false,
-    });
     setShowCreateModal(true);
   };
 
-  const handleSaveExam = async (e: FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
-    setCreating(true);
-    try {
-      const data = {
-        name: form.name,
-        description: form.description || null,
-        timeLimitMinutes: Number(form.timeLimitMinutes),
-        attemptLimit: Number(form.attemptLimit),
-        accessCode: form.accessCode || null,
-        status: 'DRAFT' as const,
-        showScoreImmediately: true,
-        hskLevel: Number(form.hskLevel),
-        shuffleQuestions: form.shuffleQuestions,
-        showAnswersAfter: form.showAnswersAfter,
-      };
-      if (editingTestId) {
-        await testApi.update(editingTestId, data);
-      } else {
-        await testApi.create(data);
-      }
-      setShowCreateModal(false);
-      loadTests();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lỗi lưu bài kiểm tra.');
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const openQuestionModal = async (testId: string) => {
-    try {
-      setManagingTestId(testId);
-      const [existingQuestions, allQs] = await Promise.all([
-        testApi.listQuestions({ testId }),
-        questionBankApi.list({ limit: 500 }),
-      ]);
-      setAllQuestions(allQs);
-      setSelectedQuestionIds(existingQuestions.map((q: any) => q.questionId));
-      setShowQuestionModal(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lỗi tải câu hỏi.');
-    }
-  };
-
-  const handleSaveQuestions = async () => {
-    if (!managingTestId) return;
-    setSavingQuestions(true);
-    try {
-      await testApi.replaceQuestions(managingTestId, selectedQuestionIds);
-      setShowQuestionModal(false);
-      setManagingTestId(null);
-      setSelectedQuestionIds([]);
-      loadTests();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lỗi lưu câu hỏi.');
-    } finally {
-      setSavingQuestions(false);
-    }
+  const openQuestionModal = (testId: string) => {
+    setManagingTestId(testId);
+    setShowQuestionModal(true);
   };
 
   const handleDeleteExam = async (test: Test) => {
@@ -157,6 +64,22 @@ export function TeacherExamManagementFeature() {
       loadTests();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Xóa thất bại.');
+    }
+  };
+
+  const handleChangeStatus = async (test: Test, newStatus: TestStatus) => {
+    const actionNames = {
+      PUBLISHED: 'Phát hành',
+      CLOSED: 'Đóng',
+      DRAFT: 'Chuyển về nháp'
+    };
+    if (!window.confirm(`${actionNames[newStatus]} bài thi "${test.name}"?`)) return;
+    
+    try {
+      await testApi.update(test.id, { status: newStatus });
+      loadTests();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Cập nhật trạng thái thất bại.');
     }
   };
 
@@ -331,12 +254,31 @@ export function TeacherExamManagementFeature() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 sm:opacity-0 group-hover:opacity-100 transition-opacity pl-15 sm:pl-0">
+                      {test.status === 'DRAFT' && (
+                        <button
+                          onClick={() => handleChangeStatus(test, 'PUBLISHED')}
+                          className="p-2 text-gray-400 hover:text-[#78993a] hover:bg-[#f4f7ed] rounded-lg transition-colors"
+                          title="Phát hành bài thi"
+                        >
+                          <PlayCircle className="h-4 w-4" />
+                        </button>
+                      )}
+                      {(test.status === 'PUBLISHED' || test.status === 'CLOSED') && (
+                        <button
+                          onClick={() => handleChangeStatus(test, test.status === 'PUBLISHED' ? 'CLOSED' : 'PUBLISHED')}
+                          className="p-2 text-gray-400 hover:text-[#e55353] hover:bg-[#fff4f4] rounded-lg transition-colors"
+                          title={test.status === 'PUBLISHED' ? "Đóng bài thi" : "Mở lại bài thi"}
+                        >
+                          <Lock className="h-4 w-4" />
+                        </button>
+                      )}
+                      
                       <Link href={`/teacher/exams/${test.id}`}>
                         <button
                           className="p-2 text-gray-400 hover:text-[#1f5333] hover:bg-gray-100 rounded-lg transition-colors"
                           title="Chi tiết bài kiểm tra"
                         >
-                          <Settings className="h-4 w-4" />
+                          <FileEdit className="h-4 w-4" />
                         </button>
                       </Link>
                       <button
@@ -351,7 +293,7 @@ export function TeacherExamManagementFeature() {
                         className="p-2 text-gray-400 hover:text-[#e55353] hover:bg-red-50 rounded-lg transition-colors"
                         title="Xóa"
                       >
-                        <X className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </div>
@@ -372,149 +314,24 @@ export function TeacherExamManagementFeature() {
         </button>
       </div>
 
-      {/* Create/Edit Modal */}
-      <Modal
+      {/* Modals extracted to components */}
+      <ExamCreateModal
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        title={editingTestId ? 'Chỉnh sửa bài kiểm tra' : 'Tạo bài kiểm tra mới'}
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setShowCreateModal(false)}>
-              Hủy
-            </Button>
-            <Button form="exam-form" type="submit" loading={creating}>
-              {editingTestId ? 'Cập nhật' : 'Tạo đề'}
-            </Button>
-          </>
-        }
-      >
-        <form id="exam-form" onSubmit={handleSaveExam} className="space-y-4">
-          <Field label="Tên đề">
-            <Input
-              required
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="Kiểm tra giữa kỳ HSK 1"
-            />
-          </Field>
-          <Field label="Mô tả">
-            <Input
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="Nội dung bài kiểm tra..."
-            />
-          </Field>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Thời gian (phút)">
-              <Input
-                type="number"
-                min={1}
-                required
-                value={form.timeLimitMinutes}
-                onChange={(e) => setForm({ ...form, timeLimitMinutes: e.target.value })}
-              />
-            </Field>
-            <Field label="Số lần làm tối đa">
-              <Input
-                type="number"
-                min={1}
-                required
-                value={form.attemptLimit}
-                onChange={(e) => setForm({ ...form, attemptLimit: e.target.value })}
-              />
-            </Field>
-            <Field label="HSK Level">
-              <Select value={form.hskLevel} onChange={(e) => setForm({ ...form, hskLevel: e.target.value })}>
-                {[1, 2, 3, 4, 5, 6].map((level) => (
-                  <option key={level} value={level}>
-                    HSK {level}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            <Field label="Mã truy cập (tùy chọn)">
-              <Input
-                value={form.accessCode}
-                onChange={(e) => setForm({ ...form, accessCode: e.target.value })}
-                placeholder="HSK1-2026"
-              />
-            </Field>
-          </div>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={form.shuffleQuestions}
-                onChange={(e) => setForm({ ...form, shuffleQuestions: e.target.checked })}
-                className="rounded"
-              />
-              <span className="text-sm font-medium">Đảo câu hỏi</span>
-            </label>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={form.showAnswersAfter}
-                onChange={(e) => setForm({ ...form, showAnswersAfter: e.target.checked })}
-                className="rounded"
-              />
-              <span className="text-sm font-medium">Hiện đáp án sau khi nộp</span>
-            </label>
-          </div>
-        </form>
-      </Modal>
+        onSuccess={loadTests}
+        editingTestId={editingTestId}
+        tests={tests}
+      />
 
-      {/* Question Modal */}
-      <Modal
+      <ExamQuestionModal
         open={showQuestionModal}
-        onClose={() => setShowQuestionModal(false)}
-        title="Chọn câu hỏi cho bài kiểm tra"
-        wide
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setShowQuestionModal(false)}>
-              Hủy
-            </Button>
-            <Button loading={savingQuestions} onClick={handleSaveQuestions}>
-              Lưu ({selectedQuestionIds.length} câu)
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-3 max-h-96 overflow-y-auto">
-          {allQuestions.length === 0 ? (
-            <p className="text-center text-gray-500 py-8">Không có câu hỏi nào</p>
-          ) : (
-            allQuestions.map((q) => (
-              <label
-                key={q.id}
-                className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedQuestionIds.includes(q.id)}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedQuestionIds([...selectedQuestionIds, q.id]);
-                    } else {
-                      setSelectedQuestionIds(selectedQuestionIds.filter((id) => id !== q.id));
-                    }
-                  }}
-                  className="mt-1 rounded"
-                />
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{q.type}</p>
-                  <p className="text-xs text-gray-600 mt-1 line-clamp-2">
-                    {typeof q.content === 'object' && q.content !== null
-                      ? JSON.stringify(q.content).substring(0, 100)
-                      : String(q.content || '').substring(0, 100)}
-                  </p>
-                </div>
-                <Badge tone="gray">{q.difficulty || 'N/A'}</Badge>
-              </label>
-            ))
-          )}
-        </div>
-      </Modal>
+        onClose={() => {
+          setShowQuestionModal(false);
+          setManagingTestId(null);
+        }}
+        onSuccess={loadTests}
+        testId={managingTestId}
+      />
     </div>
   );
 }

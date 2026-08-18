@@ -1,21 +1,18 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState, type FormEvent } from 'react';
-import { ArrowLeft, Plus, Trash2, GripVertical, BookOpen } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowLeft, Trash2, BookOpen } from 'lucide-react';
 import { testApi } from '@/lib/api/endpoints/test';
-import { questionBankApi } from '@/lib/api/endpoints/question-bank';
 import type { Test, TestQuestion } from '@/lib/api/types';
 import { Button } from '@/features/ui/components/button';
-import { Modal } from '@/features/ui/components/modal';
-import { Field, Input, Select, Textarea } from '@/features/ui/components/form';
 import { Card, CardBody } from '@/features/ui/components/card';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
 import { Badge } from '@/features/ui/components/badge';
-import { cn } from '@/lib/utils/cn';
 import { QuestionRenderer } from './components/question-renderer';
-import { QuestionBankModal } from './components/question-bank-modal';
+import { TestAddBankModal } from './components/test-add-bank-modal';
+import { TestCreateQuestionModal } from './components/test-create-question-modal';
 
 export function TestDetailFeature() {
   const { testId } = useParams<{ testId: string }>();
@@ -26,23 +23,9 @@ export function TestDetailFeature() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Question bank modal
+  // Modal states
   const [showBankModal, setShowBankModal] = useState(false);
-  const [bankQuestions, setBankQuestions] = useState<any[]>([]);
-  const [selectedBankIds, setSelectedBankIds] = useState<string[]>([]);
-  const [savingBank, setSavingBank] = useState(false);
-
-  // Create question modal
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [createForm, setCreateForm] = useState({
-    type: 'SINGLE_CHOICE',
-    content: '',
-    options: '',
-    correctAnswer: '',
-    explanation: '',
-    points: '1',
-  });
 
   const load = async () => {
     try {
@@ -60,82 +43,6 @@ export function TestDetailFeature() {
   useEffect(() => {
     void load();
   }, [testId]);
-
-  // Open question bank modal
-  const openBankModal = async () => {
-    try {
-      const allBank = await questionBankApi.list({ limit: 500 });
-      setBankQuestions(allBank);
-      setSelectedBankIds(questions.map((q) => q.questionId));
-      setShowBankModal(true);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lỗi tải ngân hàng câu hỏi.');
-    }
-  };
-
-  // Save selected from bank
-  const handleAddFromBank = async () => {
-    setSavingBank(true);
-    try {
-      const newIds = selectedBankIds.filter((id) => !questions.map((q) => q.questionId).includes(id));
-      if (newIds.length > 0) {
-        await testApi.addQuestions(testId, newIds);
-        await load();
-      }
-      setShowBankModal(false);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lỗi thêm câu hỏi.');
-    } finally {
-      setSavingBank(false);
-    }
-  };
-
-  // Create new question inline
-  const handleCreateQuestion = async (e: FormEvent) => {
-    e.preventDefault();
-    setCreating(true);
-    try {
-      const optionsArr = createForm.options
-        .split('\n')
-        .map((s) => s.trim())
-        .filter(Boolean);
-
-      const qData = {
-        type: createForm.type as any,
-        visibility: 'PRIVATE' as const,
-        difficulty: 'MEDIUM' as const,
-        content: {
-          questionText: createForm.content,
-          options: optionsArr.length > 0 ? optionsArr : null,
-          correctAnswer: createForm.correctAnswer || null,
-        },
-        explanation: createForm.explanation || null,
-      };
-
-      const newQ = await questionBankApi.create(qData);
-      await testApi.createQuestion({
-        testId,
-        questionId: newQ.id,
-        points: Number(createForm.points),
-        displayOrder: questions.length + 1,
-      });
-
-      setShowCreateModal(false);
-      setCreateForm({
-        type: 'SINGLE_CHOICE',
-        content: '',
-        options: '',
-        correctAnswer: '',
-        explanation: '',
-        points: '1',
-      });
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lỗi tạo câu hỏi.');
-    } finally {
-      setCreating(false);
-    }
-  };
 
   // Delete question
   const handleDeleteQuestion = async (q: TestQuestion) => {
@@ -198,7 +105,7 @@ export function TestDetailFeature() {
             <BookOpen className="h-5 w-5" /> Câu hỏi ({questions.length})
           </h2>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={openBankModal}>
+            <Button size="sm" variant="outline" onClick={() => setShowBankModal(true)}>
               + Từ Ngân hàng
             </Button>
             <Button size="sm" onClick={() => setShowCreateModal(true)}>
@@ -259,109 +166,22 @@ export function TestDetailFeature() {
         )}
       </div>
 
-      {/* Add from Bank Modal */}
-      <Modal
+      {/* Modals extracted to components */}
+      <TestAddBankModal
         open={showBankModal}
         onClose={() => setShowBankModal(false)}
-        title="Thêm từ Ngân hàng câu hỏi"
-        wide
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setShowBankModal(false)}>
-              Hủy
-            </Button>
-            <Button loading={savingBank} onClick={handleAddFromBank}>
-              Thêm ({selectedBankIds.filter((id) => !questions.map((q) => q.questionId).includes(id)).length})
-            </Button>
-          </>
-        }
-      >
-        <QuestionBankModal
-          questions={bankQuestions}
-          selectedIds={selectedBankIds}
-          onSelectionChange={setSelectedBankIds}
-        />
-      </Modal>
+        onSuccess={load}
+        testId={testId}
+        existingQuestionIds={questions.map((q) => q.questionId)}
+      />
 
-      {/* Create Question Modal */}
-      <Modal
+      <TestCreateQuestionModal
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        title="Tạo câu hỏi mới"
-        footer={
-          <>
-            <Button variant="ghost" onClick={() => setShowCreateModal(false)}>
-              Hủy
-            </Button>
-            <Button form="create-question-form" type="submit" loading={creating}>
-              Tạo
-            </Button>
-          </>
-        }
-      >
-        <form id="create-question-form" onSubmit={handleCreateQuestion} className="space-y-4">
-          <Field label="Loại câu hỏi">
-            <Select
-              value={createForm.type}
-              onChange={(e) => setCreateForm({ ...createForm, type: e.target.value as any })}
-            >
-              <option value="SINGLE_CHOICE">Trắc nghiệm (1 đáp án)</option>
-              <option value="TRUE_FALSE">Đúng / Sai</option>
-              <option value="SHORT_ANSWER">Trả lời ngắn</option>
-              <option value="FILL_IN">Điền chỗ trống</option>
-              <option value="ORDERING">Sắp xếp câu</option>
-            </Select>
-          </Field>
-
-          <Field label="Nội dung câu hỏi">
-            <Textarea
-              required
-              value={createForm.content}
-              onChange={(e) => setCreateForm({ ...createForm, content: e.target.value })}
-              placeholder="Nhập câu hỏi..."
-              rows={3}
-            />
-          </Field>
-
-          {createForm.type === 'SINGLE_CHOICE' && (
-            <Field label="Các lựa chọn (mỗi dòng một lựa chọn)">
-              <Textarea
-                value={createForm.options}
-                onChange={(e) => setCreateForm({ ...createForm, options: e.target.value })}
-                placeholder="A&#10;B&#10;C&#10;D"
-                rows={4}
-              />
-            </Field>
-          )}
-
-          <Field label="Đáp án đúng">
-            <Input
-              required
-              value={createForm.correctAnswer}
-              onChange={(e) => setCreateForm({ ...createForm, correctAnswer: e.target.value })}
-              placeholder={createForm.type === 'TRUE_FALSE' ? 'true/false' : 'Nhập đáp án'}
-            />
-          </Field>
-
-          <Field label="Giải thích (tùy chọn)">
-            <Textarea
-              value={createForm.explanation}
-              onChange={(e) => setCreateForm({ ...createForm, explanation: e.target.value })}
-              placeholder="Giải thích tại sao câu trả lời này đúng..."
-              rows={2}
-            />
-          </Field>
-
-          <Field label="Điểm">
-            <Input
-              type="number"
-              min={1}
-              value={createForm.points}
-              onChange={(e) => setCreateForm({ ...createForm, points: e.target.value })}
-            />
-          </Field>
-        </form>
-      </Modal>
+        onSuccess={load}
+        testId={testId}
+        nextDisplayOrder={questions.length + 1}
+      />
     </div>
   );
 }
