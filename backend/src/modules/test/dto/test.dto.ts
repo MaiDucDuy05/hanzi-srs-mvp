@@ -1,4 +1,4 @@
-import { IsBoolean, IsEnum, IsInt, IsJSON, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import { IsBoolean, IsEnum, IsInt, IsJSON, IsNumber, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 import { TestStatus, TestQuestionType, TestAttemptStatus } from '../../../common/enums/test.enums';
 import { PaginationQueryDto } from '../../../common/pagination.dto';
 
@@ -70,4 +70,8 @@ export class SubmitTestAnswerDto {
 
 export class SubmitTestAttemptDto {
   @IsInt() @Min(0) durationSeconds: number;
+}
+
+export class GradeAnswerDto {
+  @IsNumber() @Min(0) pointsAwarded: number;
 }

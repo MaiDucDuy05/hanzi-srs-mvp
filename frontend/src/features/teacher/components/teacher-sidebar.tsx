@@ -7,14 +7,15 @@ import {
   Users, 
   GraduationCap, 
   FileCheck, 
-  BookOpenCheck, 
   BrainCircuit,
   Plus,
   Settings,
   HelpCircle,
   LogOut,
   Database,
-  LayoutDashboard
+  LayoutDashboard,
+  BarChart,
+  BookOpenCheck
 } from 'lucide-react';
 
 const NAV_ITEMS = [
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { href: '/teacher/exams', title: 'Exams', icon: FileCheck },
   { href: '/teacher/questions', title: 'Question Bank', icon: Database },
   { href: '/teacher/hskk-grading', title: 'HSKK Grading', icon: BookOpenCheck },
+  { href: '/teacher/exam-statistics', title: 'Thống kê điểm', icon: BarChart },
   { href: '/teacher/ai-library', title: 'AI Library', icon: BrainCircuit },
 ];
 

@@ -29,6 +29,7 @@ import {
   TestQueryDto,
   TestQuestionQueryDto,
   TestAttemptQueryDto,
+  GradeAnswerDto,
 } from './dto/test.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -231,5 +232,17 @@ export class TestAttemptController {
       await this.answerSvc.submitAnswer(attemptId, dto, userId),
       'Answer submitted',
     );
+  }
+
+  @Patch(':attemptId/answers/:questionId/grade') 
+  @Roles(Role.TEACHER, Role.ADMIN)
+  async gradeAnswer(
+    @Param('attemptId') attemptId: string,
+    @Param('questionId') questionId: string,
+    @Body() dto: GradeAnswerDto,
+  ) {
+    const answer = await this.answerSvc.gradeAnswerManually(attemptId, questionId, dto.pointsAwarded);
+    await this.svc.recalculateScore(attemptId);
+    return ok(answer, 'Answer graded successfully');
   }
 }

@@ -17,6 +17,7 @@ export function ExamAssignModal({ open, onClose, testId }: ExamAssignModalProps)
   const [endTime, setEndTime] = useState('');
   const [students, setStudents] = useState<User[]>([]);
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>([]);
+  const [statusOnSubmit, setStatusOnSubmit] = useState<'GRADED' | 'SUBMITTED'>('GRADED');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,6 +45,7 @@ export function ExamAssignModal({ open, onClose, testId }: ExamAssignModalProps)
         endTime: new Date(endTime).toISOString(),
         studentIds: selectedStudentIds,
         classroomId: null, // MVP: skipping class selection for now
+        statusOnSubmit,
       });
       alert('Giao bài kiểm tra thành công!');
       onClose();
@@ -98,6 +100,37 @@ export function ExamAssignModal({ open, onClose, testId }: ExamAssignModalProps)
             />
           </Field>
         </div>
+
+        <Field label="Chế độ chấm điểm">
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="statusOnSubmit"
+                value="GRADED"
+                checked={statusOnSubmit === 'GRADED'}
+                onChange={() => setStatusOnSubmit('GRADED')}
+                className="text-brand-600 focus:ring-brand-500"
+              />
+              <span className="text-sm">Tự động chấm</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="statusOnSubmit"
+                value="SUBMITTED"
+                checked={statusOnSubmit === 'SUBMITTED'}
+                onChange={() => setStatusOnSubmit('SUBMITTED')}
+                className="text-brand-600 focus:ring-brand-500"
+              />
+              <span className="text-sm">Chờ giáo viên chấm (Thủ công)</span>
+            </label>
+          </div>
+          <p className="text-xs text-gray-500 mt-1">
+            Chọn "Tự động chấm" nếu bài thi chỉ có trắc nghiệm. 
+            Chọn "Chờ giáo viên chấm" nếu bài thi có phần tự luận hoặc nói.
+          </p>
+        </Field>
 
         <Field label="Chọn Học sinh">
           <div className="border rounded-lg overflow-hidden flex flex-col">

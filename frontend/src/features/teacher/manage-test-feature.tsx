@@ -33,7 +33,7 @@ export function ManageTestFeature() {
   const [showPicker, setShowPicker] = useState(false);
   const [showAssign, setShowAssign] = useState(false);
   const [selectedAttemptId, setSelectedAttemptId] = useState<string | null>(null);
-  const [assignForm, setAssignForm] = useState({ classroomId: '', studentId: '', startTime: '', endTime: '' });
+  const [assignForm, setAssignForm] = useState({ classroomId: '', studentId: '', startTime: '', endTime: '', statusOnSubmit: 'GRADED' });
   const [qform, setQform] = useState({
     questionType: 'SINGLE_CHOICE',
     content: '',
@@ -161,6 +161,7 @@ export function ManageTestFeature() {
         studentId: assignForm.studentId || null,
         startTime: new Date(assignForm.startTime).toISOString(),
         endTime: new Date(assignForm.endTime).toISOString(),
+        statusOnSubmit: assignForm.statusOnSubmit as any,
       });
       setShowAssign(false);
       alert('Giao bài thành công!');
@@ -331,6 +332,36 @@ export function ManageTestFeature() {
               <Input type="datetime-local" required value={assignForm.endTime} onChange={(e) => setAssignForm({ ...assignForm, endTime: e.target.value })} />
             </Field>
           </div>
+          <Field label="Chế độ chấm điểm">
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="assignStatusOnSubmit"
+                  value="GRADED"
+                  checked={assignForm.statusOnSubmit === 'GRADED'}
+                  onChange={() => setAssignForm({ ...assignForm, statusOnSubmit: 'GRADED' })}
+                  className="text-brand-600 focus:ring-brand-500"
+                />
+                <span className="text-sm">Tự động chấm</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="assignStatusOnSubmit"
+                  value="SUBMITTED"
+                  checked={assignForm.statusOnSubmit === 'SUBMITTED'}
+                  onChange={() => setAssignForm({ ...assignForm, statusOnSubmit: 'SUBMITTED' })}
+                  className="text-brand-600 focus:ring-brand-500"
+                />
+                <span className="text-sm">Chờ giáo viên chấm (Thủ công)</span>
+              </label>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Chọn "Tự động chấm" nếu bài thi chỉ có trắc nghiệm. 
+              Chọn "Chờ giáo viên chấm" nếu bài thi có phần tự luận hoặc nói.
+            </p>
+          </Field>
         </form>
       </Modal>
       <Modal

@@ -25,6 +25,7 @@ export class TestAssignmentService {
         startTime: new Date(dto.startTime),
         endTime: new Date(dto.endTime),
         assignedBy: assignerId,
+        statusOnSubmit: dto.statusOnSubmit || 'GRADED',
       });
     }
 
@@ -37,6 +38,7 @@ export class TestAssignmentService {
           startTime: new Date(dto.startTime),
           endTime: new Date(dto.endTime),
           assignedBy: assignerId,
+          statusOnSubmit: dto.statusOnSubmit || 'GRADED',
         });
       }
     }
@@ -48,17 +50,14 @@ export class TestAssignmentService {
   async findAssignedToStudent(studentId: string, classroomIds: string[]) {
     const now = new Date();
     
-    // We want to find assignments for this student directly OR via their classrooms
-    // where now is between startTime and endTime.
+    // We want to find all assignments for this student directly OR via their classrooms
     const query = this.repo.createQueryBuilder('ta')
       .leftJoinAndSelect('ta.test', 'test')
-      .where('ta.startTime <= :now', { now })
-      .andWhere('ta.endTime >= :now', { now })
-      .andWhere('(ta.studentId = :studentId OR ta.classroomId IN (:...classroomIds))', { 
+      .where('(ta.studentId = :studentId OR ta.classroomId IN (:...classroomIds))', { 
         studentId, 
-        classroomIds: classroomIds.length > 0 ? classroomIds : [null] 
+        classroomIds: classroomIds.length ? classroomIds : [null] 
       })
-      .orderBy('ta.endTime', 'ASC');
+      .orderBy('ta.createdAt', 'DESC');
 
     return query.getMany();
   }

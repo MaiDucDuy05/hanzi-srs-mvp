@@ -6,4 +6,5 @@ export class CreateTestAssignmentDto {
   @IsOptional() @IsUUID("4", { each: true }) studentIds?: string[];
   @IsDateString() startTime: string;
   @IsDateString() endTime: string;
+  @IsOptional() @IsString() statusOnSubmit?: string;
 }

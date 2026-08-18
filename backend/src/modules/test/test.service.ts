@@ -10,6 +10,7 @@ import { Repository, In } from 'typeorm';
 import { Test } from './entities/test.entity';
 import { TestQuestion } from './entities/test-question.entity';
 import { TestAttempt } from './entities/test-attempt.entity';
+import { TestAssignment } from './entities/test-assignment.entity';
 import { TestAnswer } from './entities/test-answer.entity';
 import {
   CreateTestDto,
@@ -288,6 +289,8 @@ export class TestAttemptService {
     @InjectRepository(TestAnswer) private answerRepo: Repository<TestAnswer>,
     @InjectRepository(TestQuestion)
     private questionRepo: Repository<TestQuestion>,
+    @InjectRepository(TestAssignment)
+    private assignmentRepo: Repository<TestAssignment>,
   ) {}
 
   /**
@@ -306,7 +309,7 @@ export class TestAttemptService {
     if (status) where.status = status;
     const [data, total] = await this.repo.findAndCount({
       where,
-      relations: ['test'],
+      relations: ['test', 'user'],
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: 'DESC' },
@@ -379,8 +382,16 @@ export class TestAttemptService {
       .reduce((s, a) => s + a.pointsAwarded, 0);
     const score = totalPoints ? Math.round((earned / totalPoints) * 100) : 0;
 
+    let submitStatus = TestAttemptStatus.GRADED;
+    if (attempt.assignmentId) {
+      const assignment = await this.assignmentRepo.findOne({ where: { id: attempt.assignmentId } as any });
+      if (assignment && assignment.statusOnSubmit) {
+        submitStatus = assignment.statusOnSubmit as TestAttemptStatus;
+      }
+    }
+
     Object.assign(attempt, {
-      status: TestAttemptStatus.GRADED,
+      status: submitStatus,
       submittedAt: new Date(),
       durationSeconds: dto.durationSeconds,
       score,
@@ -426,6 +437,31 @@ export class TestAttemptService {
     }
 
     return { attempt, test, questions, answers };
+  }
+
+  /**
+   * Recalculates the total score of the attempt based on current answers.
+   * Useful when a teacher manually grades an answer.
+   */
+  async recalculateScore(attemptId: string) {
+    const attempt = await findOrNotFound(this.repo, attemptId, 'Test attempt');
+    const test = await findOrNotFound(this.testRepo, attempt.testId, 'Test');
+    const [answers, questions] = await Promise.all([
+      this.answerRepo.find({ where: { attemptId } as any }),
+      this.questionRepo.find({
+        where: { testId: test.id } as any,
+        relations: ['question'],
+      }),
+    ]);
+    const qIds = new Set(questions.map((q) => q.id));
+    const totalPoints = questions.reduce((s, q) => s + q.points, 0);
+    const earned = answers
+      .filter((a) => qIds.has(a.questionId))
+      .reduce((s, a) => s + a.pointsAwarded, 0);
+    const score = totalPoints ? Math.round((earned / totalPoints) * 100) : 0;
+
+    attempt.score = score;
+    return this.repo.save(attempt);
   }
 }
 
@@ -509,5 +545,33 @@ export class TestAnswerService {
       where: { attemptId },
       order: { createdAt: 'ASC' },
     });
+  }
+
+  /**
+   * Cho phép giáo viên chấm điểm thủ công (override điểm) một câu trả lời.
+   */
+  async gradeAnswerManually(
+    attemptId: string,
+    questionId: string,
+    pointsAwarded: number,
+  ) {
+    const existing = await this.repo.findOne({
+      where: { attemptId, questionId },
+    });
+    if (!existing) {
+      throw new BadRequestException('Answer not found');
+    }
+    
+    // Tìm câu hỏi để kiểm tra xem điểm được cấp có vượt quá điểm tối đa không (tuỳ chọn)
+    const question = await this.questionRepo.findOne({ where: { id: questionId } as any });
+    if (question && pointsAwarded > question.points) {
+      throw new BadRequestException(`Cannot award more than ${question.points} points for this question`);
+    }
+
+    existing.pointsAwarded = pointsAwarded;
+    // Cập nhật lại isCorrect dựa trên điểm số (nếu điểm > 0 coi như đúng 1 phần)
+    existing.isCorrect = pointsAwarded > 0;
+    
+    return this.repo.save(existing);
   }
 }

@@ -43,7 +43,7 @@ export const testApi = {
 
   remove: (id: string) => apiFetch(`/tests/${id}`, { method: 'DELETE' }),
 
-  assign: (id: string, data: { classroomId?: string | null; studentId?: string | null; startTime: string; endTime: string }) =>
+  assign: (id: string, data: { classroomId?: string | null; studentId?: string | null; startTime: string; endTime: string; statusOnSubmit?: string }) =>
     unwrap(apiFetch<Single<any>>(`/tests/${id}/assign`, { method: 'POST', body: JSON.stringify(data) })),
 
   updateQuestionOrder: (testId: string, questionIds: string[]) =>
@@ -75,7 +75,10 @@ export const testApi = {
   deleteQuestion: (id: string) => apiFetch(`/test-questions/${id}`, { method: 'DELETE' }),
 
   listAttempts: (params: { testId?: string; userId?: string; status?: string; page?: number; limit?: number } = {}) =>
-    apiFetch<Paginated<TestAttempt>>(`/test-attempts${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
+    apiFetch<Paginated<TestAttempt>>(`/test-attempts${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => {
+      console.log('listAttempts raw response:', r);
+      return r.data || (Array.isArray(r) ? r : []);
+    }),
 
   getAttempt: (id: string) => unwrap(apiFetch<Single<TestAttempt>>(`/test-attempts/${id}`)),
 
@@ -98,4 +101,7 @@ export const testApi = {
 
   submitAnswer: (attemptId: string, data: { questionId: string; answer?: unknown }) =>
     unwrap(apiFetch<Single<TestAnswer>>(`/test-attempts/${attemptId}/answers`, { method: 'POST', body: JSON.stringify({ questionId: data.questionId, answer: data.answer }) })),
+
+  gradeAnswer: (attemptId: string, questionId: string, pointsAwarded: number) =>
+    unwrap(apiFetch<Single<TestAnswer>>(`/test-attempts/${attemptId}/answers/${questionId}/grade`, { method: 'PATCH', body: JSON.stringify({ pointsAwarded }) })),
 };

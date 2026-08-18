@@ -38,4 +38,7 @@ export class TestAssignment extends BaseEntity {
   @ManyToOne(() => User)
   @JoinColumn({ name: 'assigned_by' })
   assigner: User;
+
+  @Column({ name: 'status_on_submit', type: 'varchar', length: 20, default: 'GRADED' })
+  statusOnSubmit: string;
 }

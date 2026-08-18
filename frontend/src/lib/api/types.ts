@@ -305,6 +305,7 @@ export interface TestAttempt {
   id: string;
   testId: string;
   userId: string;
+  assignmentId?: string | null;
   status: TestAttemptStatus;
   startedAt: string;
   submittedAt: string | null;
@@ -312,6 +313,14 @@ export interface TestAttempt {
   durationSeconds: number;
   createdAt: string;
   updatedAt: string;
+  test?: {
+    id?: string;
+    name: string;
+  };
+  user?: {
+    id?: string;
+    fullName: string;
+  };
 }
 
 export interface TestAnswer {
@@ -612,19 +621,6 @@ export interface Test {
 }
 
 
-
-export interface TestAttempt {
-  id: string;
-  testId: string;
-  userId: string;
-  assignmentId: string | null;
-  status: TestAttemptStatus;
-  startedAt: string;
-  submittedAt: string | null;
-  score: number;
-  durationSeconds: number;
-}
-
 export interface TestAssignment {
   id: string;
   testId: string;
@@ -633,6 +629,7 @@ export interface TestAssignment {
   startTime: string;
   endTime: string;
   assignedBy: string;
+  statusOnSubmit: 'GRADED' | 'SUBMITTED';
   test?: Test;
+  student?: User;
 }
-

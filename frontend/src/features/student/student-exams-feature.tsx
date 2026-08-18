@@ -17,6 +17,7 @@ export function StudentExamsFeature() {
   const [attempts, setAttempts] = useState<TestAttempt[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'SUBMITTED' | 'COMPLETED'>('ALL');
 
   useEffect(() => {
     Promise.all([
@@ -60,14 +61,44 @@ export function StudentExamsFeature() {
 
   return (
     <div className="space-y-6">
-      <header>
-        <h1 className="text-2xl font-bold">Bài kiểm tra của tôi</h1>
-        <p className="text-gray-500 mt-1">Danh sách bài kiểm tra bạn được giao.</p>
+      <header className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Bài kiểm tra của tôi</h1>
+          <p className="text-gray-500 mt-1">Danh sách bài kiểm tra bạn được giao.</p>
+        </div>
       </header>
 
+      <div className="flex gap-2 border-b">
+        {(['ALL', 'PENDING', 'SUBMITTED', 'COMPLETED'] as const).map(f => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={cn(
+              "px-4 py-2 border-b-2 font-medium text-sm transition-colors",
+              filter === f 
+                ? "border-brand-600 text-brand-600" 
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            )}
+          >
+            {f === 'ALL' ? 'Tất cả' :
+             f === 'PENDING' ? 'Đang chờ làm' :
+             f === 'SUBMITTED' ? 'Đang chờ chấm' :
+             'Đã hoàn thành'}
+          </button>
+        ))}
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {assignments.map(a => {
-          const { inProgress, submittedCount, limit, isEnded, isStarted, testAttempts } = getAssignmentState(a);
+        {assignments
+          .map(a => ({ ...a, state: getAssignmentState(a) }))
+          .filter(({ state }) => {
+            const hasSubmitted = state.testAttempts.some(t => t.status === 'SUBMITTED');
+            const category = hasSubmitted ? 'SUBMITTED' : (state.submittedCount >= state.limit || state.isEnded ? 'COMPLETED' : 'PENDING');
+            if (filter === 'ALL') return true;
+            return filter === category;
+          })
+          .map(a => {
+          const { inProgress, submittedCount, limit, isEnded, isStarted, testAttempts } = a.state;
           const hasReachedLimit = submittedCount >= limit;
           const bestAttempt = testAttempts.filter(t => t.status === 'GRADED').sort((a, b) => (b.score || 0) - (a.score || 0))[0];
 
@@ -113,9 +144,13 @@ export function StudentExamsFeature() {
           );
         })}
         
-        {assignments.length === 0 && (
+        {assignments.filter(a => {
+          const state = getAssignmentState(a);
+          const category = state.testAttempts.some(t => t.status === 'SUBMITTED') ? 'SUBMITTED' : (state.submittedCount >= state.limit || state.isEnded ? 'COMPLETED' : 'PENDING');
+          return filter === 'ALL' || filter === category;
+        }).length === 0 && (
           <div className="col-span-full py-8 text-center text-gray-500 border border-dashed rounded-lg">
-            Bạn hiện không có bài kiểm tra nào.
+            Bạn hiện không có bài kiểm tra nào trong danh sách này.
           </div>
         )}
       </div>
