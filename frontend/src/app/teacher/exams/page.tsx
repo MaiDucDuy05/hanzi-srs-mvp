@@ -1,5 +1,5 @@
-import { TeacherExamsFeature } from '@/features/teacher/teacher-exams-feature';
+import { TeacherExamManagementFeature } from '@/features/teacher/teacher-exam-management-feature';
 
 export default function TeacherExamsPage() {
-  return <TeacherExamsFeature />;
+  return <TeacherExamManagementFeature />;
 }

@@ -150,6 +150,36 @@ export class TestService {
   }
 
   /**
+   * Add questions to a test without replacing existing ones.
+   */
+  async addQuestions(id: string, questionIds: string[], userId: string, role: string) {
+    const test = await this.findById(id, role);
+    if (role !== Role.ADMIN && test.teacherId !== userId) {
+      throw new ForbiddenException('You can only update your own tests');
+    }
+
+    const testQuestionRepo = this.repo.manager.getRepository(TestQuestion);
+    
+    // Get max display order
+    const existing = await testQuestionRepo.find({ where: { testId: id } as any, order: { displayOrder: 'DESC' }, take: 1 });
+    let maxOrder = existing.length > 0 ? existing[0].displayOrder : 0;
+
+    // Create new questions
+    const toSave: Partial<TestQuestion>[] = questionIds.map((questionId) => {
+      maxOrder += 1;
+      return {
+        testId: id,
+        questionId,
+        displayOrder: maxOrder,
+        points: 1, // Default points
+      };
+    });
+
+    await testQuestionRepo.save(toSave);
+    return { addedCount: toSave.length };
+  }
+
+  /**
    * Replace all questions in a test (Cách 1: Create Exam FIRST → Add Questions AFTER).
    * Deletes existing questions and creates new ones.
    */
@@ -177,7 +207,7 @@ export class TestService {
       testId: id,
       questionId,
       displayOrder: index,
-      points: 10, // Default points
+      points: 1, // Default points
     }));
     await testQuestionRepo.save(toSave);
 

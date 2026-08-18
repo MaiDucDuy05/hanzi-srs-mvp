@@ -1,4 +1,3 @@
-// Re-export from modular structure
-export { TeacherExamsFeature } from './teacher-exams-feature/index';
-export * from './teacher-exams-feature/types';
-export * from './teacher-exams-feature/utils';
+// Re-export from unified feature
+export { TeacherExamManagementFeature as TeacherExamsFeature } from './teacher-exam-management-feature';
+

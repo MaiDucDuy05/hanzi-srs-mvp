@@ -91,6 +91,17 @@ export class TestController {
   ) {
     return ok(await this.svc.replaceQuestions(id, dto.questionIds, user.sub, user.role), 'Questions replaced');
   }
+
+  /** Add questions to a test without replacing existing ones. */
+  @Post(':id/questions')
+  @Roles(Role.TEACHER, Role.ADMIN)
+  async addQuestions(
+    @Param('id') id: string,
+    @Body() dto: { questionIds: string[] },
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return ok(await this.svc.addQuestions(id, dto.questionIds, user.sub, user.role), 'Questions added');
+  }
   @Delete(':id')
   @Roles(Role.TEACHER, Role.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
