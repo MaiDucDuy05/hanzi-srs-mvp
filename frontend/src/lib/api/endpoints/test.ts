@@ -2,15 +2,43 @@ import { apiFetch, unwrap } from '../client';
 import type { Paginated, Single, Test, TestQuestion, TestAttempt, TestAnswer } from '../types';
 import { toQuery } from './utils';
 
+export interface CreateTestDto {
+  name: string;
+  description?: string | null;
+  timeLimitMinutes?: number;
+  attemptLimit?: number;
+  accessCode?: string | null;
+  hskLevel?: number;
+  shuffleQuestions?: boolean;
+  showAnswersAfter?: boolean;
+  status?: 'DRAFT' | 'PUBLISHED';
+  showScoreImmediately?: boolean;
+}
+
+export interface UpdateTestDto {
+  name?: string;
+  description?: string | null;
+  timeLimitMinutes?: number;
+  attemptLimit?: number;
+  accessCode?: string | null;
+  status?: 'DRAFT' | 'PUBLISHED' | 'CLOSED';
+  showScoreImmediately?: boolean;
+}
+
+export interface AddQuestionsToTestDto {
+  questionIds: string[];
+}
+
 export const testApi = {
   list: (params: { status?: string; teacherId?: string; page?: number; limit?: number } = {}) =>
     apiFetch<Paginated<Test>>(`/tests${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
 
   get: (id: string) => unwrap(apiFetch<Single<Test>>(`/tests/${id}`)),
 
-  create: (data: Partial<Test>) => unwrap(apiFetch<Single<Test>>('/tests', { method: 'POST', body: JSON.stringify(data) })),
+  create: (data: CreateTestDto) =>
+    unwrap(apiFetch<Single<Test>>('/tests', { method: 'POST', body: JSON.stringify(data) })),
 
-  update: (id: string, data: Partial<Test>) =>
+  update: (id: string, data: UpdateTestDto) =>
     unwrap(apiFetch<Single<Test>>(`/tests/${id}`, { method: 'PATCH', body: JSON.stringify(data) })),
 
   remove: (id: string) => apiFetch(`/tests/${id}`, { method: 'DELETE' }),
@@ -20,6 +48,20 @@ export const testApi = {
 
   updateQuestionOrder: (testId: string, questionIds: string[]) =>
     unwrap(apiFetch<Single<any>>(`/tests/${testId}/questions/order`, { method: 'PUT', body: JSON.stringify({ questionIds }) })),
+
+  // Add questions to test (from unified question bank)
+  addQuestions: (testId: string, questionIds: string[]) =>
+    apiFetch(`/tests/${testId}/questions`, {
+      method: 'POST',
+      body: JSON.stringify({ questionIds }),
+    }),
+
+  // Replace all questions in a test
+  replaceQuestions: (testId: string, questionIds: string[]) =>
+    apiFetch(`/tests/${testId}/questions`, {
+      method: 'PUT',
+      body: JSON.stringify({ questionIds }),
+    }),
 
   listQuestions: (params: { testId?: string; page?: number; limit?: number } = {}) =>
     apiFetch<Paginated<TestQuestion>>(`/test-questions${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),

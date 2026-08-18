@@ -139,14 +139,49 @@ export class TestService {
     if (role !== Role.ADMIN && test.teacherId !== userId) {
       throw new ForbiddenException('You can only update your own tests');
     }
-    
+
     // We update each question's displayOrder by iterating through the array.
     // Using transaction would be better, but doing simple updates for MVP.
-    const promises = questionIds.map((questionId, index) => 
+    const promises = questionIds.map((questionId, index) =>
       this.repo.manager.update('test_questions', { id: questionId, testId: id }, { displayOrder: index })
     );
     await Promise.all(promises);
     return { updatedCount: promises.length };
+  }
+
+  /**
+   * Replace all questions in a test (Cách 1: Create Exam FIRST → Add Questions AFTER).
+   * Deletes existing questions and creates new ones.
+   */
+  async replaceQuestions(id: string, questionIds: string[], userId: string, role: string) {
+    const test = await this.findById(id, role);
+    if (role !== Role.ADMIN && test.teacherId !== userId) {
+      throw new ForbiddenException('You can only update your own tests');
+    }
+
+    // Check if test has submissions - if so, don't allow replacing questions
+    const attemptRepo = this.repo.manager.getRepository(TestAttempt);
+    const attempts = await attemptRepo.count({
+      where: { testId: id, status: In([TestAttemptStatus.SUBMITTED, TestAttemptStatus.GRADED]) }
+    });
+    if (attempts > 0) {
+      throw new BadRequestException('Cannot modify questions because test has submissions');
+    }
+
+    // Delete all existing questions for this test
+    const testQuestionRepo = this.repo.manager.getRepository(TestQuestion);
+    await testQuestionRepo.delete({ testId: id } as any);
+
+    // Create new questions
+    const toSave: Partial<TestQuestion>[] = questionIds.map((questionId, index) => ({
+      testId: id,
+      questionId,
+      displayOrder: index,
+      points: 10, // Default points
+    }));
+    await testQuestionRepo.save(toSave);
+
+    return { replacedCount: toSave.length };
   }
 }
 

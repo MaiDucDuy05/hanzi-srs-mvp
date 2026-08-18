@@ -80,6 +80,17 @@ export class TestController {
     // We will call the TestQuestionService to handle this.
     return ok(await this.svc.updateQuestionOrder(id, dto.questionIds, user.sub, user.role), 'Question order updated');
   }
+
+  /** Replace all questions in a test (Cách 1: Create Exam FIRST → Add Questions AFTER). */
+  @Put(':id/questions')
+  @Roles(Role.TEACHER, Role.ADMIN)
+  async replaceQuestions(
+    @Param('id') id: string,
+    @Body() dto: { questionIds: string[] },
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return ok(await this.svc.replaceQuestions(id, dto.questionIds, user.sub, user.role), 'Questions replaced');
+  }
   @Delete(':id')
   @Roles(Role.TEACHER, Role.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
