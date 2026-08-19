@@ -1,19 +1,22 @@
 'use client';
-
+import React from 'react';
 import { usePracticeEngine } from './practice-engine';
 import { MatchingMode, type MatchingState } from './matching-mode';
 import { FlashcardMode, type FlashcardState } from './flashcard-mode';
 import { FillBlankMode, type FillBlankState } from './fill-blank-mode';
 import { SentenceOrderingMode, type OrderingState } from './sentence-ordering-mode';
-import { LimitScreen, SummaryCard } from './session-frame';
+import { LimitScreen } from './session-frame';
+import { GameSummary } from '@/features/games/components/game-summary';
+import { WritingMode, type WritingState } from '@/features/games/components/writing-mode';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
 import { PRACTICE_TYPE_LABELS, SOURCE_TYPE_LABELS } from '@/lib/utils/constants';
 import { formatDuration } from '@/lib/utils/format';
-import type { PracticeType, SourceType } from '@/lib/api/types';
+import type { PracticeType, SourceType, HanziChar } from '@/lib/api/types';
+import type { QuestionItem } from './practice-models';
 
 /** Trạng thái mode mà engine quản lý — mỗi chế độ có state riêng (P2-7). */
-type PracticeModeState = MatchingState | FlashcardState | FillBlankState | OrderingState;
+type PracticeModeState = MatchingState | FlashcardState | FillBlankState | OrderingState | WritingState;
 
 interface SessionProps {
   practiceType: PracticeType;
@@ -21,6 +24,8 @@ interface SessionProps {
   sourceId: string;
   sourceLabel: string;
   onExit: () => void;
+  attemptId?: string;
+  hanziChars?: HanziChar[];
 }
 
 export function PracticeSession({
@@ -29,13 +34,17 @@ export function PracticeSession({
   sourceId,
   sourceLabel,
   onExit,
+  attemptId,
+  hanziChars,
 }: SessionProps) {
-  const sessionKey = `practice:${practiceType}:${sourceType}:${sourceId}`;
+  const baseSessionKey = `practice:${practiceType}:${sourceType}:${sourceId}`;
   const engine = usePracticeEngine<PracticeModeState>({
     practiceType,
     sourceType,
     sourceId,
-    sessionKey,
+    sessionKey: attemptId ? `practice:attempt:${attemptId}` : baseSessionKey,
+    initialAttemptId: attemptId,
+    initialHanziChars: hanziChars,
   });
 
   if (engine.status === 'loading') {
@@ -58,32 +67,37 @@ export function PracticeSession({
 
   if (engine.status === 'finished' && engine.result) {
     return (
-      <SummaryCard
-        title="Hoàn thành! 🎉"
-        subtitle={PRACTICE_TYPE_LABELS[practiceType]}
-        result={engine.result}
-        elapsed={engine.elapsed}
-        onExit={onExit}
-      />
+      <div className="flex-1 flex flex-col items-center justify-center p-4">
+        <GameSummary
+          title="Tuyệt vời! 🎉"
+          subtitle={`Hoàn thành ${PRACTICE_TYPE_LABELS[practiceType]}`}
+          result={engine.result}
+          elapsed={engine.elapsed}
+          onReplay={() => window.location.reload()}
+          onExit={onExit}
+        />
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <header className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <button onClick={onExit} className="text-sm text-brand hover:underline">
-            ← Thoát
-          </button>
-          <h1 className="text-xl font-bold">{PRACTICE_TYPE_LABELS[practiceType]}</h1>
-          <p className="text-sm text-gray-500">
-            {SOURCE_TYPE_LABELS[sourceType]}: {sourceLabel}
-          </p>
-        </div>
-        <span className="rounded-full bg-gray-100 px-3 py-1 font-mono text-sm text-gray-600  ">
-          {formatDuration(engine.elapsed)}
-        </span>
-      </header>
+    <div className="space-y-4 h-full flex flex-col">
+      {practiceType !== 'HANZI_WRITING' && practiceType !== 'WORD_MATCHING' && (
+        <header className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <button onClick={onExit} className="text-sm text-brand hover:underline">
+              ← Thoát
+            </button>
+            <h1 className="text-xl font-bold">{PRACTICE_TYPE_LABELS[practiceType]}</h1>
+            <p className="text-sm text-gray-500">
+              {SOURCE_TYPE_LABELS[sourceType]}: {sourceLabel}
+            </p>
+          </div>
+          <span className="rounded-full bg-gray-100 px-3 py-1 font-mono text-sm text-gray-600  ">
+            {formatDuration(engine.elapsed)}
+          </span>
+        </header>
+      )}
 
       {practiceType === 'WORD_MATCHING' && (
         <MatchingMode
@@ -109,14 +123,55 @@ export function PracticeSession({
           onComplete={engine.handleComplete}
         />
       )}
-      {practiceType === 'SENTENCE_ORDERING' && (
+      {practiceType === 'SENTENCE_ORDERING' && engine.sentenceQuestions.length > 0 && (
         <SentenceOrderingMode
-          items={engine.items}
+          questions={engine.sentenceQuestions}
           initialState={engine.modeState as OrderingState | null}
+          onAnswersChange={engine.setUserAnswers}
+          onComplete={engine.handleComplete}
+        />
+      )}
+      {practiceType === 'HANZI_WRITING' && engine.hanziChars.length > 0 && (
+        <HanziWritingModeWrapper
+          chars={engine.hanziChars}
+          initialState={engine.modeState as WritingState | null}
           onStateChange={engine.setModeState}
           onComplete={engine.handleComplete}
         />
       )}
     </div>
+  );
+}
+
+/** PR-13: Map HanziChar[] → QuestionItem[] rồi render WritingMode. */
+function HanziWritingModeWrapper({
+  chars,
+  initialState,
+  onStateChange,
+  onComplete,
+}: {
+  chars: HanziChar[];
+  initialState: WritingState | null;
+  onStateChange: (s: WritingState) => void;
+  onComplete: (r: import('./practice-models').ModeResult) => void;
+}) {
+  // Map HanziChar → QuestionItem (WritingMode expects QuestionItem[])
+  const items = React.useMemo<QuestionItem[]>(() => {
+    return chars.map((c) => ({
+      id: c.vocabularyId,
+      hanzi: c.char,
+      pinyin: c.pinyin,
+      meaning: c.meaning,
+      audioKey: c.audioKey,
+    }));
+  }, [chars]);
+
+  return (
+    <WritingMode
+      items={items}
+      initialState={initialState}
+      onStateChange={onStateChange}
+      onComplete={onComplete}
+    />
   );
 }

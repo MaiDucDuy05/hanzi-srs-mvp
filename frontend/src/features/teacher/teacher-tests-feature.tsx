@@ -27,6 +27,9 @@ export function TeacherTestsFeature() {
     timeLimitMinutes: '30',
     attemptLimit: '1',
     accessCode: '',
+    hskLevel: '1',
+    shuffleQuestions: false,
+    showAnswersAfter: false,
   });
 
   const load = () => {
@@ -47,7 +50,6 @@ export function TeacherTestsFeature() {
     setSaving(true);
     try {
       await testApi.create({
-        teacherId: user.id,
         name: form.name,
         description: form.description || null,
         timeLimitMinutes: Number(form.timeLimitMinutes),
@@ -55,9 +57,12 @@ export function TeacherTestsFeature() {
         accessCode: form.accessCode || null,
         status: 'DRAFT',
         showScoreImmediately: true,
+        hskLevel: Number(form.hskLevel),
+        shuffleQuestions: form.shuffleQuestions,
+        showAnswersAfter: form.showAnswersAfter,
       });
       setShowCreate(false);
-      setForm({ name: '', description: '', timeLimitMinutes: '30', attemptLimit: '1', accessCode: '' });
+      setForm({ name: '', description: '', timeLimitMinutes: '30', attemptLimit: '1', accessCode: '', hskLevel: '1', shuffleQuestions: false, showAnswersAfter: false });
       load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Tạo bài kiểm tra thất bại.');
@@ -155,10 +160,23 @@ export function TeacherTestsFeature() {
             <Field label="Số lần làm tối đa">
               <Input type="number" min={1} required value={form.attemptLimit} onChange={(e) => setForm({ ...form, attemptLimit: e.target.value })} />
             </Field>
+            <Field label="HSK Level">
+              <Input type="number" min={1} max={6} required value={form.hskLevel} onChange={(e) => setForm({ ...form, hskLevel: e.target.value })} />
+            </Field>
+            <Field label="Mã truy cập (tùy chọn)">
+              <Input value={form.accessCode} onChange={(e) => setForm({ ...form, accessCode: e.target.value })} placeholder="HSK1-2026" />
+            </Field>
           </div>
-          <Field label="Mã truy cập (tùy chọn)">
-            <Input value={form.accessCode} onChange={(e) => setForm({ ...form, accessCode: e.target.value })} placeholder="HSK1-2026" />
-          </Field>
+          <div className="flex gap-4">
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={form.shuffleQuestions} onChange={(e) => setForm({ ...form, shuffleQuestions: e.target.checked })} />
+              <span className="text-sm font-medium">Đảo câu hỏi</span>
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={form.showAnswersAfter} onChange={(e) => setForm({ ...form, showAnswersAfter: e.target.checked })} />
+              <span className="text-sm font-medium">Hiện đáp án sau khi nộp</span>
+            </label>
+          </div>
         </form>
       </Modal>
     </div>

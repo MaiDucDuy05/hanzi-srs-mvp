@@ -6,7 +6,9 @@ import { PaginationQueryDto } from '../../../common/pagination.dto';
 
 export class VocabularyQueryDto extends PaginationQueryDto {
   @IsOptional() @IsUUID() levelId?: string;
+  @IsOptional() @IsUUID() topicId?: string;
   @IsOptional() @IsString() status?: string;
+  @IsOptional() @IsString() search?: string;
 }
 
 export class GrammarPointQueryDto extends PaginationQueryDto {
@@ -77,6 +79,14 @@ export class CreateVocabularyDto {
   @IsOptional()
   @IsString()
   audioKey?: string | null;
+
+  @IsOptional()
+  @IsString()
+  partOfSpeech?: string | null;
+
+  @IsOptional()
+  @IsString()
+  example?: string | null;
 }
 
 export class UpdateVocabularyDto {
@@ -99,6 +109,14 @@ export class UpdateVocabularyDto {
   @IsOptional()
   @IsString()
   audioKey?: string | null;
+
+  @IsOptional()
+  @IsString()
+  partOfSpeech?: string | null;
+
+  @IsOptional()
+  @IsString()
+  example?: string | null;
 }
 
 export class CreateGrammarPointDto {

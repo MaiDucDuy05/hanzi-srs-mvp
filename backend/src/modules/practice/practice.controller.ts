@@ -24,6 +24,7 @@ import {
 } from './dto/practice.dto';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy';
+import { ContentStatus } from '../../common/enums/curriculum.enums';
 
 function ok(data: any, msg: string) {
   return data?.meta ? { ...data, message: msg } : { data, message: msg };
@@ -32,11 +33,11 @@ function ok(data: any, msg: string) {
 @Controller('practice-questions')
 export class PracticeQuestionController {
   constructor(private readonly svc: PracticeQuestionService) {}
-  @Get() async findAll(@Query() q: PracticeQuestionQueryDto) {
-    return ok(await this.svc.findAll(q), 'Practice questions retrieved');
+  @Get() async findAll(@Query() q: PracticeQuestionQueryDto, @CurrentUser() user: JwtPayload) {
+    return ok(await this.svc.findAll(q, user?.role), 'Practice questions retrieved');
   }
-  @Get(':id') async findOne(@Param('id') id: string) {
-    return ok(await this.svc.findById(id), 'Practice question retrieved');
+  @Get(':id') async findOne(@Param('id') id: string, @CurrentUser() user: JwtPayload) {
+    return ok(await this.svc.findById(id, user?.role), 'Practice question retrieved');
   }
   @Post() @HttpCode(HttpStatus.CREATED) async create(
     @Body() dto: CreatePracticeQuestionDto,
@@ -53,6 +54,13 @@ export class PracticeQuestionController {
     @Param('id') id: string,
   ) {
     await this.svc.softDelete(id);
+  }
+
+  /** POST /practice-questions/:id/publish — xuất bản câu hỏi */
+  @Post(':id/publish')
+  @HttpCode(HttpStatus.OK)
+  async publish(@Param('id') id: string) {
+    return ok(await this.svc.update(id, { status: ContentStatus.PUBLISHED }), 'Practice question published');
   }
 }
 

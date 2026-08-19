@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Patch,
   Body,
   Get,
   HttpCode,
@@ -9,9 +10,10 @@ import {
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { ConfigService } from '@nestjs/config';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { UserService } from './user.service';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
+import { RegisterDto, LoginDto, UpdateMeDto } from './dto/auth.dto';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
 import type { JwtPayload } from './strategies/jwt.strategy';
@@ -34,6 +36,7 @@ export class AuthController {
   @Public()
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 attempts per minute
   async register(
     @Body() dto: RegisterDto,
     @Res({ passthrough: true }) res: Response,
@@ -48,6 +51,7 @@ export class AuthController {
 
   @Public()
   @Post('login')
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 attempts per minute
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
@@ -74,6 +78,16 @@ export class AuthController {
     return {
       data: this.authService.sanitizeUser(user),
       message: 'Profile retrieved successfully',
+    };
+  }
+
+  /** Student tự cập nhật profile của mình (fullName, dailyGoal). */
+  @Patch('me')
+  async updateMe(@CurrentUser() current: JwtPayload, @Body() dto: UpdateMeDto) {
+    const user = await this.authService.updateMe(current.sub, dto);
+    return {
+      data: this.authService.sanitizeUser(user),
+      message: 'Profile updated successfully',
     };
   }
 

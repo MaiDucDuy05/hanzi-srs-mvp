@@ -1,5 +1,17 @@
-import { IsEmail, IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
-import { ResourceTier, AiJobType, UpgradeRequestStatus, ContactStatus, SpeakingStatus } from '../../../common/enums/resources.enums';
+import {
+  IsDateString,
+  IsEmail,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
+import {
+  ResourceTier,
+  AiJobType,
+  ContactStatus,
+  SpeakingStatus,
+} from '../../../common/enums/resources.enums';
 import { PaginationQueryDto } from '../../../common/pagination.dto';
 
 // ── Query DTOs ──
@@ -22,6 +34,8 @@ export class MistakeBookQueryDto extends PaginationQueryDto {
   @IsOptional() @IsUUID() userId?: string;
   @IsOptional() @IsString() sourceType?: string;
   @IsOptional() @IsString() sourceId?: string;
+  /** Filter entries created on or after this ISO timestamp (e.g. 7 days ago for "recent"). */
+  @IsOptional() @IsDateString() since?: string;
 }
 
 export class SpeakingAttemptQueryDto extends PaginationQueryDto {
@@ -29,10 +43,6 @@ export class SpeakingAttemptQueryDto extends PaginationQueryDto {
   @IsOptional() @IsEnum(SpeakingStatus) status?: SpeakingStatus;
 }
 
-export class VipUpgradeRequestQueryDto extends PaginationQueryDto {
-  @IsOptional() @IsUUID() userId?: string;
-  @IsOptional() @IsEnum(UpgradeRequestStatus) status?: UpgradeRequestStatus;
-}
 
 // ── Create/Update DTOs ──
 
@@ -88,12 +98,3 @@ export class GradeSpeakingDto {
   @IsOptional() @IsString() feedback?: string | null;
 }
 
-export class CreateVipUpgradeRequestDto {
-  @IsUUID() userId: string;
-  @IsOptional() @IsString() note?: string | null;
-}
-
-export class ReviewVipUpgradeDto {
-  @IsEnum(UpgradeRequestStatus) status: UpgradeRequestStatus;
-  @IsOptional() @IsString() note?: string | null;
-}

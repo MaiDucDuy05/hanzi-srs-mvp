@@ -11,6 +11,10 @@ export const authApi = {
   // Profile hiện tại theo HttpOnly cookie — thay cho user lưu localStorage.
   me: () => unwrap(apiFetch<Single<User>>('/auth/me')),
 
+  // Student tự cập nhật profile của mình.
+  updateMe: (data: { fullName?: string; dailyGoal?: number }) =>
+    unwrap(apiFetch<Single<User>>('/auth/me', { method: 'PATCH', body: JSON.stringify(data) })),
+
   // Xoá cookie phía server (client không tự xoá được HttpOnly).
   logout: () => apiFetch('/auth/logout', { method: 'POST' }),
 };

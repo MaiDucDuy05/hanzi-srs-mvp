@@ -1,9 +1,17 @@
 export * from './endpoints/auth';
 export * from './endpoints/curriculum';
 export * from './endpoints/practice';
+export * from './endpoints/srs';
 export * from './endpoints/test';
 export * from './endpoints/subscription';
 export * from './endpoints/resource';
 export * from './endpoints/courses';
 export * from './endpoints/speaking';
+export * from './endpoints/admin';
+export * from './endpoints/student';
+export * from './endpoints/hanzi-writing';
+export * from './endpoints/users';
+export * from './endpoints/admin-users';
 export { type StartPracticeInput, type SubmitPracticeInput } from './endpoints/practice';
+export * from './endpoints/test-assignments';
+export * from './endpoints/question-bank';

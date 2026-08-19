@@ -3,7 +3,7 @@
 import { useParams } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 import { testApi } from '@/lib/api/endpoints';
-import type { Test, TestAttempt, TestQuestion } from '@/lib/api/types';
+import type { Test, TestAttempt, TestQuestion, TestQuestionType } from '@/lib/api/types';
 import { Card, CardBody } from '@/features/ui/components/card';
 import { Button } from '@/features/ui/components/button';
 import { Modal } from '@/features/ui/components/modal';
@@ -14,6 +14,11 @@ import { ErrorState } from '@/features/ui/components/error-state';
 import { Badge } from '@/features/ui/components/badge';
 import { formatDateTime } from '@/lib/utils/format';
 import { cn } from '@/lib/utils/cn';
+import { AdminViolationBadge } from '@/components/shared/admin-violation-badge';
+import { StudentExamResultFeature } from '@/features/student/student-exam-result-feature';
+import { SortableQuestionList } from './components/sortable-question-list';
+import { QuestionPickerModal } from './components/question-picker-modal';
+import { questionBankApi } from '@/lib/api/endpoints';
 
 export function ManageTestFeature() {
   const { testId } = useParams<{ testId: string }>();
@@ -25,6 +30,10 @@ export function ManageTestFeature() {
   const [error, setError] = useState<string | null>(null);
 
   const [showQuestion, setShowQuestion] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
+  const [showAssign, setShowAssign] = useState(false);
+  const [selectedAttemptId, setSelectedAttemptId] = useState<string | null>(null);
+  const [assignForm, setAssignForm] = useState({ classroomId: '', studentId: '', startTime: '', endTime: '', statusOnSubmit: 'GRADED' });
   const [qform, setQform] = useState({
     questionType: 'SINGLE_CHOICE',
     content: '',
@@ -70,7 +79,7 @@ export function ManageTestFeature() {
     e.preventDefault();
     setSaving(true);
     try {
-      const type = qform.questionType as TestQuestion['questionType'];
+      const type = qform.questionType as TestQuestionType;
       const optionsList = qform.options
         .split(',')
         .map((s) => s.trim())
@@ -80,12 +89,20 @@ export function ManageTestFeature() {
         type === 'SHORT_ANSWER'
           ? { accepted: correct.split('|').map((s) => s.trim()).filter(Boolean) }
           : { answer: type === 'TRUE_FALSE' ? correct === 'true' : correct };
+      const newQuestion = await questionBankApi.create({
+        type: type,
+        visibility: 'PRIVATE',
+        difficulty: 'MEDIUM',
+        content: {
+          questionText: qform.content,
+          options: optionsList.length ? optionsList : null,
+          correctAnswer: type !== 'SHORT_ANSWER' ? correctAnswer : null,
+          acceptedAnswers: type === 'SHORT_ANSWER' ? correctAnswer.accepted : null,
+        }
+      });
       await testApi.createQuestion({
         testId,
-        questionType: type,
-        content: qform.content,
-        options: optionsList.length ? { list: optionsList } : null,
-        correctAnswer,
+        questionId: newQuestion.id,
         points: Number(qform.points),
         displayOrder: questions.length + 1,
       });
@@ -109,6 +126,52 @@ export function ManageTestFeature() {
     }
   };
 
+  const handleReorder = async (newOrder: TestQuestion[]) => {
+    // Optimistic update
+    setQuestions(newOrder);
+    try {
+      await testApi.updateQuestionOrder(testId, newOrder.map((q) => q.id));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Lỗi cập nhật thứ tự.');
+      void load(); // revert
+    }
+  };
+
+  const handleSelectFromPicker = async (q: any) => { // q is QuestionBankItem
+    try {
+      await testApi.createQuestion({
+        testId,
+        questionId: q.id,
+        points: q.difficulty === 'HARD' ? 3 : q.difficulty === 'MEDIUM' ? 2 : 1,
+        displayOrder: questions.length + 1,
+      });
+      setShowPicker(false);
+      void load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Lỗi thêm câu hỏi.');
+    }
+  };
+
+  const handleAssign = async (e: FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      await testApi.assign(testId, {
+        classroomId: assignForm.classroomId || null,
+        studentId: assignForm.studentId || null,
+        startTime: new Date(assignForm.startTime).toISOString(),
+        endTime: new Date(assignForm.endTime).toISOString(),
+        statusOnSubmit: assignForm.statusOnSubmit as any,
+      });
+      setShowAssign(false);
+      alert('Giao bài thành công!');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Giao bài thất bại.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (loading) return <PageLoading label="Đang tải..." />;
   if (error || !test)
     return <ErrorState message={error ?? 'Không tìm thấy đề.'} onRetry={() => void load()} />;
@@ -126,8 +189,16 @@ export function ManageTestFeature() {
           <Button variant="outline" size="sm" onClick={() => void togglePublish()}>
             {test.status === 'PUBLISHED' ? 'Chuyển sang nháp' : 'Xuất bản'}
           </Button>
+          <Button size="sm" onClick={() => setShowAssign(true)}>
+            Giao bài
+          </Button>
         </div>
       </header>
+
+      <AdminViolationBadge 
+        hiddenByAdmin={(test as any).hiddenByAdmin} 
+        hideReason={(test as any).hideReason} 
+      />
 
       <Tabs
         tabs={[
@@ -140,53 +211,26 @@ export function ManageTestFeature() {
 
       {tab === 'questions' && (
         <div className="space-y-4">
-          <div className="flex justify-end">
+          <div className="flex justify-end gap-2">
+            <Button size="sm" variant="outline" onClick={() => setShowPicker(true)}>Chọn từ Ngân hàng</Button>
             <Button size="sm" onClick={() => setShowQuestion(true)}>+ Câu hỏi</Button>
           </div>
-          {questions.map((q, i) => (
-            <Card key={q.id}>
-              <CardBody>
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="font-medium">
-                      {i + 1}. {q.content}
-                    </p>
-                    <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-500">
-                      <Badge tone="blue">{q.questionType}</Badge>
-                      <span>{q.points} điểm</span>
-                      {q.options && (
-                        <span>
-                          {(q.options as { list?: unknown[] }).list?.join(' | ')}
-                        </span>
-                      )}
-                      {q.correctAnswer && (
-                        <span className="text-green-600">
-                          ✓ {JSON.stringify(q.correctAnswer)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => deleteQuestion(q)}>
-                    Xóa
-                  </Button>
-                </div>
-              </CardBody>
-            </Card>
-          ))}
-          {questions.length === 0 && (
-            <p className="text-sm text-gray-500">Chưa có câu hỏi nào.</p>
-          )}
+          <SortableQuestionList
+            questions={questions}
+            onReorder={handleReorder}
+            onDelete={deleteQuestion}
+          />
         </div>
       )}
 
       {tab === 'attempts' && (
         <div className="space-y-2">
           {attempts.map((a) => (
-            <Card key={a.id}>
+            <Card key={a.id} className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setSelectedAttemptId(a.id)}>
               <CardBody>
                 <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                   <div className="flex items-center gap-2">
-                    <Badge tone={a.status === 'SUBMITTED' ? 'green' : 'amber'}>{a.status}</Badge>
+                    <Badge tone={a.status === 'SUBMITTED' || a.status === 'GRADED' ? 'green' : 'amber'}>{a.status}</Badge>
                     <span className="text-gray-600">{formatDateTime(a.startedAt)}</span>
                   </div>
                   <div className="flex gap-3 text-gray-500">
@@ -255,6 +299,85 @@ export function ManageTestFeature() {
           </p>
         </form>
       </Modal>
+
+      <QuestionPickerModal
+        open={showPicker}
+        onClose={() => setShowPicker(false)}
+        onSelect={handleSelectFromPicker}
+      />
+
+      <Modal
+        open={showAssign}
+        onClose={() => setShowAssign(false)}
+        title="Giao bài kiểm tra"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setShowAssign(false)}>Hủy</Button>
+            <Button form="assign-form" type="submit" loading={saving}>Giao bài</Button>
+          </>
+        }
+      >
+        <form id="assign-form" onSubmit={handleAssign} className="space-y-4">
+          <Field label="ID Học viên (Student ID)">
+            <Input value={assignForm.studentId} onChange={(e) => setAssignForm({ ...assignForm, studentId: e.target.value })} placeholder="UUID học viên" />
+          </Field>
+          <Field label="ID Lớp học (Classroom ID - Chưa hỗ trợ đầy đủ)">
+            <Input value={assignForm.classroomId} onChange={(e) => setAssignForm({ ...assignForm, classroomId: e.target.value })} placeholder="UUID lớp học" />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Thời gian mở đề">
+              <Input type="datetime-local" required value={assignForm.startTime} onChange={(e) => setAssignForm({ ...assignForm, startTime: e.target.value })} />
+            </Field>
+            <Field label="Thời gian đóng đề">
+              <Input type="datetime-local" required value={assignForm.endTime} onChange={(e) => setAssignForm({ ...assignForm, endTime: e.target.value })} />
+            </Field>
+          </div>
+          <Field label="Chế độ chấm điểm">
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="assignStatusOnSubmit"
+                  value="GRADED"
+                  checked={assignForm.statusOnSubmit === 'GRADED'}
+                  onChange={() => setAssignForm({ ...assignForm, statusOnSubmit: 'GRADED' })}
+                  className="text-brand-600 focus:ring-brand-500"
+                />
+                <span className="text-sm">Tự động chấm</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="assignStatusOnSubmit"
+                  value="SUBMITTED"
+                  checked={assignForm.statusOnSubmit === 'SUBMITTED'}
+                  onChange={() => setAssignForm({ ...assignForm, statusOnSubmit: 'SUBMITTED' })}
+                  className="text-brand-600 focus:ring-brand-500"
+                />
+                <span className="text-sm">Chờ giáo viên chấm (Thủ công)</span>
+              </label>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              Chọn "Tự động chấm" nếu bài thi chỉ có trắc nghiệm. 
+              Chọn "Chờ giáo viên chấm" nếu bài thi có phần tự luận hoặc nói.
+            </p>
+          </Field>
+        </form>
+      </Modal>
+      <Modal
+        open={!!selectedAttemptId}
+        onClose={() => setSelectedAttemptId(null)}
+        title="Chi tiết bài làm"
+        wide
+      >
+        {selectedAttemptId && (
+          <StudentExamResultFeature 
+            attemptId={selectedAttemptId} 
+            onBack={() => setSelectedAttemptId(null)} 
+          />
+        )}
+      </Modal>
+
     </div>
   );
 }

@@ -1,24 +1,28 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
 import { BaseEntity } from '../../../common/base.entity';
-import { TestQuestionType } from '../../../common/enums/test.enums';
+import { Test } from './test.entity';
+import { Question } from '../../question-bank/entities/question.entity';
 
-/** Câu hỏi trong bài kiểm tra (PR-05). options/correct_answer lưu JSONB. */
+/**
+ * Bảng trung gian liên kết giữa đề thi (Test) và câu hỏi trong Ngân hàng (Question).
+ * PR-05: TestQuestion chỉ lưu FK questionId, không copy nội dung.
+ * Điều này đảm bảo: sửa câu hỏi trong ngân hàng → tự động cập nhật trong mọi đề thi.
+ */
 @Entity('test_questions')
 export class TestQuestion extends BaseEntity {
   @Column({ name: 'test_id', type: 'uuid' })
   testId: string;
 
-  @Column({ name: 'question_type', type: 'varchar', length: 20 })
-  questionType: TestQuestionType;
+  @ManyToOne(() => Test)
+  @JoinColumn({ name: 'test_id' })
+  test: Test;
 
-  @Column({ type: 'text' })
-  content: string;
+  @Column({ name: 'question_id', type: 'uuid' })
+  questionId: string;
 
-  @Column({ type: 'jsonb', nullable: true })
-  options: Record<string, unknown> | null;
-
-  @Column({ name: 'correct_answer', type: 'jsonb', nullable: true })
-  correctAnswer: Record<string, unknown> | null;
+  @ManyToOne(() => Question)
+  @JoinColumn({ name: 'question_id' })
+  question: Question;
 
   @Column({ type: 'int', default: 1 })
   points: number;

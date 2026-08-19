@@ -4,6 +4,10 @@ import { PassportModule } from '@nestjs/passport';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { User } from './entities/user.entity';
+import { Subscription } from '../subscription/entities/subscription.entity';
+import { TestAttempt } from '../test/entities/test-attempt.entity';
+import { UserVocabularyProgress } from '../srs/entities/user-vocabulary-progress.entity';
+import { UserActivity } from '../achievements/entities/user-activity.entity';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UserService } from './user.service';
@@ -14,18 +18,24 @@ import { RolesGuard } from './guards/roles.guard';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, Subscription, TestAttempt, UserVocabularyProgress, UserActivity]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const secret = configService.get<string>('JWT_SECRET');
-        if (!secret && configService.get<string>('NODE_ENV') === 'production') {
-          throw new InternalServerErrorException('JWT_SECRET is required in production');
+        const nodeEnv = configService.get<string>('NODE_ENV');
+
+        if (!secret) {
+          if (nodeEnv === 'production') {
+            throw new InternalServerErrorException('JWT_SECRET is required in production');
+          }
+          throw new InternalServerErrorException('JWT_SECRET must be set');
         }
+
         return {
-          secret: secret || 'dev-secret',
+          secret,
           signOptions: { expiresIn: '7d' },
         };
       },
@@ -33,6 +43,6 @@ import { RolesGuard } from './guards/roles.guard';
   ],
   controllers: [AuthController, UserController],
   providers: [AuthService, UserService, JwtStrategy, JwtAuthGuard, RolesGuard],
-  exports: [JwtAuthGuard, RolesGuard, AuthService, UserService],
+  exports: [JwtAuthGuard, RolesGuard, AuthService, UserService, TypeOrmModule],
 })
 export class AuthModule {}

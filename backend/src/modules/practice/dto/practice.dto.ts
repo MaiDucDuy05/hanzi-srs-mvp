@@ -1,5 +1,6 @@
 import { IsEnum, IsInt, IsJSON, IsOptional, IsString, IsUUID, Min } from 'class-validator';
 import { PracticeQuestionType, PracticeAnswerType, PracticeType, SourceType, PracticeAttemptStatus } from '../../../common/enums/practice.enums';
+import { ContentStatus } from '../../../common/enums/curriculum.enums';
 import { PaginationQueryDto } from '../../../common/pagination.dto';
 
 // ── Query DTOs ──
@@ -7,6 +8,7 @@ import { PaginationQueryDto } from '../../../common/pagination.dto';
 export class PracticeQuestionQueryDto extends PaginationQueryDto {
   @IsOptional() @IsEnum(PracticeQuestionType) questionType?: PracticeQuestionType;
   @IsOptional() @IsUUID() levelId?: string;
+  @IsOptional() @IsUUID() topicId?: string;
   @IsOptional() @IsString() status?: string;
 }
 
@@ -22,6 +24,7 @@ export class CreatePracticeQuestionDto {
   @IsEnum(PracticeQuestionType) questionType: PracticeQuestionType;
   @IsOptional() @IsUUID() levelId?: string | null;
   @IsOptional() @IsUUID() lessonId?: string | null;
+  @IsOptional() @IsUUID() topicId?: string | null;
   @IsOptional() @IsString() prompt?: string | null;
   @IsOptional() questionData?: Record<string, unknown> | null;
   @IsOptional() answerData?: Record<string, unknown> | null;
@@ -35,6 +38,7 @@ export class UpdatePracticeQuestionDto {
   @IsOptional() @IsEnum(PracticeQuestionType) questionType?: PracticeQuestionType;
   @IsOptional() @IsUUID() levelId?: string | null;
   @IsOptional() @IsUUID() lessonId?: string | null;
+  @IsOptional() @IsUUID() topicId?: string | null;
   @IsOptional() @IsString() prompt?: string | null;
   @IsOptional() questionData?: Record<string, unknown> | null;
   @IsOptional() answerData?: Record<string, unknown> | null;
@@ -42,6 +46,7 @@ export class UpdatePracticeQuestionDto {
   @IsOptional() @IsEnum(PracticeAnswerType) answerType?: PracticeAnswerType | null;
   @IsOptional() @IsString() translation?: string | null;
   @IsOptional() @IsString() explanation?: string | null;
+  @IsOptional() @IsEnum(ContentStatus) status?: ContentStatus;
 }
 
 export class StartPracticeAttemptDto {

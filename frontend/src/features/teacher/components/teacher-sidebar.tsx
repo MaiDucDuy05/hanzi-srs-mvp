@@ -7,20 +7,24 @@ import {
   Users, 
   GraduationCap, 
   FileCheck, 
-  BookOpenCheck, 
   BrainCircuit,
   Plus,
   Settings,
   HelpCircle,
-  LogOut
+  LogOut,
+  Database,
+  LayoutDashboard,
+  BarChart,
+  BookOpenCheck
 } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { href: '/teacher/classes', title: 'Classes', icon: Users },
+  { href: '/teacher', title: 'Dashboard', icon: LayoutDashboard },
   { href: '/teacher/students', title: 'Students', icon: GraduationCap },
   { href: '/teacher/exams', title: 'Exams', icon: FileCheck },
+  { href: '/teacher/questions', title: 'Question Bank', icon: Database },
   { href: '/teacher/hskk-grading', title: 'HSKK Grading', icon: BookOpenCheck },
-  { href: '/teacher/ai-library', title: 'AI Library', icon: BrainCircuit },
+  { href: '/teacher/exam-statistics', title: 'Thống kê điểm', icon: BarChart },
 ];
 
 export function TeacherSidebar() {
@@ -39,7 +43,9 @@ export function TeacherSidebar() {
 
       <nav className="flex-1 space-y-1">
         {NAV_ITEMS.map((item) => {
-          const isActive = pathname?.startsWith(item.href);
+          const isActive = item.href === '/teacher' 
+            ? pathname === '/teacher'
+            : pathname?.startsWith(item.href);
           return (
             <Link
               key={item.href}

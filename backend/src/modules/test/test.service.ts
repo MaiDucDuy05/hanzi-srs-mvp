@@ -1,13 +1,16 @@
+import { UserActivity } from '../achievements/entities/user-activity.entity';
+import { ActivityType } from '../../common/enums/achievements.enums';
 import {
   Injectable,
   BadRequestException,
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In } from 'typeorm';
 import { Test } from './entities/test.entity';
 import { TestQuestion } from './entities/test-question.entity';
 import { TestAttempt } from './entities/test-attempt.entity';
+import { TestAssignment } from './entities/test-assignment.entity';
 import { TestAnswer } from './entities/test-answer.entity';
 import {
   CreateTestDto,
@@ -49,33 +52,51 @@ function normalizeAnswer(raw: unknown): string {
  * SINGLE_CHOICE / TRUE_FALSE so khớp chính xác. Không tin điểm client gửi lên.
  */
 export function gradeQuestion(
-  question: TestQuestion,
+  testQuestion: TestQuestion,
   submitted: unknown,
 ): { isCorrect: boolean; pointsAwarded: number } {
-  const ca = question.correctAnswer ?? {};
+  const qContent = testQuestion.question?.content ?? {};
+  const qType = testQuestion.question?.type;
   let isCorrect = false;
-  if (question.questionType === TestQuestionType.SHORT_ANSWER) {
-    const accepted = Array.isArray(ca.accepted)
-      ? (ca.accepted as unknown[]).map(normalizeAnswer)
-      : [];
-    const single = ca.answer != null ? normalizeAnswer(ca.answer) : null;
+
+  if (qType === TestQuestionType.FILL_IN || qType === TestQuestionType.SHORT_ANSWER) {
+    const accepted = Array.isArray(qContent.accepted_answers)
+      ? (qContent.accepted_answers as unknown[]).map(normalizeAnswer)
+      : (Array.isArray((qContent.correct_answer as any)?.accepted) 
+         ? ((qContent.correct_answer as any).accepted as unknown[]).map(normalizeAnswer)
+         : []);
+    const single = qContent.correct_answer ? normalizeAnswer(typeof qContent.correct_answer === 'object' ? (qContent.correct_answer as any).answer : qContent.correct_answer) : null;
     const norm = normalizeAnswer(submitted);
     isCorrect = accepted.includes(norm) || (single !== null && norm === single);
+  } else if (qType === TestQuestionType.ORDERING) {
+    const correct = Array.isArray(qContent.correct_order) ? qContent.correct_order.join(',') : '';
+    const sub = Array.isArray(submitted) ? submitted.join(',') : String(submitted ?? '');
+    isCorrect = correct === sub;
+  } else if (qType === TestQuestionType.MATCHING) {
+    isCorrect = JSON.stringify(submitted) === JSON.stringify(qContent.pairs);
   } else {
-    // SINGLE_CHOICE / TRUE_FALSE: so khớp chính xác (chuẩn hoá kiểu number/string).
-    isCorrect = String(submitted ?? '') === String(ca?.answer ?? '');
+    // SINGLE_CHOICE / TRUE_FALSE / MCQ
+    const correct = typeof qContent.correct_answer === 'object' ? (qContent.correct_answer as any)?.answer : qContent.correct_answer;
+    isCorrect = String(submitted ?? '') === String(correct ?? '');
   }
-  return { isCorrect, pointsAwarded: isCorrect ? question.points : 0 };
+
+  return { isCorrect, pointsAwarded: isCorrect ? testQuestion.points : 0 };
 }
 
 @Injectable()
 export class TestService {
-  constructor(@InjectRepository(Test) private repo: Repository<Test>) {}
-  async findAll(q: TestQueryDto) {
+  constructor(
+    @InjectRepository(Test) private repo: Repository<Test>,
+    @InjectRepository(TestAttempt) private attemptRepo: Repository<TestAttempt>,
+  ) {}
+  async findAll(q: TestQueryDto, role?: string) {
     const { page = 1, limit = 20, teacherId, status } = q;
     const where: any = {};
     if (teacherId) where.teacherId = teacherId;
     if (status) where.status = status;
+    if (role !== Role.ADMIN && role !== Role.TEACHER) {
+      where.hiddenByAdmin = false;
+    }
     const [data, total] = await this.repo.findAndCount({
       where,
       skip: (page - 1) * limit,
@@ -84,19 +105,116 @@ export class TestService {
     });
     return paginatedResult(data, total, page, limit);
   }
-  async findById(id: string) {
-    return findOrNotFound(this.repo, id, 'Test');
+  async findById(id: string, role?: string) {
+    const test = await findOrNotFound(this.repo, id, 'Test');
+    if (role !== Role.ADMIN && role !== Role.TEACHER && test.hiddenByAdmin) {
+      throw new ForbiddenException('This test has been hidden by administrator');
+    }
+    return test;
   }
   async create(dto: CreateTestDto) {
     return this.repo.save(this.repo.create(dto as any));
   }
-  async update(id: string, dto: UpdateTestDto) {
-    const e = await this.findById(id);
+  async update(id: string, dto: UpdateTestDto, userId: string, role: string) {
+    const e = await this.findById(id, role);
+    if (role !== Role.ADMIN && e.teacherId !== userId) {
+      throw new ForbiddenException('You can only update your own tests');
+    }
     Object.assign(e, dto);
     return this.repo.save(e);
   }
-  async softDelete(id: string) {
-    await this.repo.softRemove(await this.findById(id));
+  async softDelete(id: string, userId: string, role: string) {
+    const test = await this.findById(id, role);
+    if (role !== Role.ADMIN && test.teacherId !== userId) {
+      throw new ForbiddenException('You can only delete your own tests');
+    }
+    const attempts = await this.attemptRepo.count({
+      where: { testId: id, status: In([TestAttemptStatus.SUBMITTED, TestAttemptStatus.GRADED]) }
+    });
+    if (attempts > 0) {
+      throw new BadRequestException('EXAM_HAS_SUBMISSIONS');
+    }
+    await this.repo.softRemove(test);
+  }
+
+  async updateQuestionOrder(id: string, questionIds: string[], userId: string, role: string) {
+    const test = await this.findById(id, role); // Check if test exists
+    if (role !== Role.ADMIN && test.teacherId !== userId) {
+      throw new ForbiddenException('You can only update your own tests');
+    }
+
+    // We update each question's displayOrder by iterating through the array.
+    // Using transaction would be better, but doing simple updates for MVP.
+    const promises = questionIds.map((questionId, index) =>
+      this.repo.manager.update('test_questions', { id: questionId, testId: id }, { displayOrder: index })
+    );
+    await Promise.all(promises);
+    return { updatedCount: promises.length };
+  }
+
+  /**
+   * Add questions to a test without replacing existing ones.
+   */
+  async addQuestions(id: string, questionIds: string[], userId: string, role: string) {
+    const test = await this.findById(id, role);
+    if (role !== Role.ADMIN && test.teacherId !== userId) {
+      throw new ForbiddenException('You can only update your own tests');
+    }
+
+    const testQuestionRepo = this.repo.manager.getRepository(TestQuestion);
+    
+    // Get max display order
+    const existing = await testQuestionRepo.find({ where: { testId: id } as any, order: { displayOrder: 'DESC' }, take: 1 });
+    let maxOrder = existing.length > 0 ? existing[0].displayOrder : 0;
+
+    // Create new questions
+    const toSave: Partial<TestQuestion>[] = questionIds.map((questionId) => {
+      maxOrder += 1;
+      return {
+        testId: id,
+        questionId,
+        displayOrder: maxOrder,
+        points: 1, // Default points
+      };
+    });
+
+    await testQuestionRepo.save(toSave);
+    return { addedCount: toSave.length };
+  }
+
+  /**
+   * Replace all questions in a test (Cách 1: Create Exam FIRST → Add Questions AFTER).
+   * Deletes existing questions and creates new ones.
+   */
+  async replaceQuestions(id: string, questionIds: string[], userId: string, role: string) {
+    const test = await this.findById(id, role);
+    if (role !== Role.ADMIN && test.teacherId !== userId) {
+      throw new ForbiddenException('You can only update your own tests');
+    }
+
+    // Check if test has submissions - if so, don't allow replacing questions
+    const attemptRepo = this.repo.manager.getRepository(TestAttempt);
+    const attempts = await attemptRepo.count({
+      where: { testId: id, status: In([TestAttemptStatus.SUBMITTED, TestAttemptStatus.GRADED]) }
+    });
+    if (attempts > 0) {
+      throw new BadRequestException('Cannot modify questions because test has submissions');
+    }
+
+    // Delete all existing questions for this test
+    const testQuestionRepo = this.repo.manager.getRepository(TestQuestion);
+    await testQuestionRepo.delete({ testId: id } as any);
+
+    // Create new questions
+    const toSave: Partial<TestQuestion>[] = questionIds.map((questionId, index) => ({
+      testId: id,
+      questionId,
+      displayOrder: index,
+      points: 1, // Default points
+    }));
+    await testQuestionRepo.save(toSave);
+
+    return { replacedCount: toSave.length };
   }
 }
 
@@ -104,12 +222,20 @@ export class TestService {
 export class TestQuestionService {
   constructor(
     @InjectRepository(TestQuestion) private repo: Repository<TestQuestion>,
+    @InjectRepository(TestAttempt) private attemptRepo: Repository<TestAttempt>,
   ) {}
 
   /** Bóc correctAnswer khỏi câu hỏi khi trả cho học viên (PR-05 §1.1). */
   private stripAnswers(q: TestQuestion): TestQuestion {
-    const { correctAnswer: _omitted, ...rest } = q;
-    return rest as TestQuestion;
+    if (q.question && q.question.content) {
+      const { 
+        correct_answer, accepted_answers, correct_order, pairs,
+        correctAnswer, acceptedAnswers, correctOrder,
+        ...safeContent 
+      } = q.question.content as any;
+      q.question = { ...q.question, content: safeContent } as any;
+    }
+    return q;
   }
 
   async findAll(q: TestQuestionQueryDto, includeAnswer = false) {
@@ -118,6 +244,7 @@ export class TestQuestionService {
     if (testId) where.testId = testId;
     const [data, total] = await this.repo.findAndCount({
       where,
+      relations: ['question'],
       skip: (page - 1) * limit,
       take: limit,
       order: { displayOrder: 'ASC' },
@@ -130,7 +257,8 @@ export class TestQuestionService {
     );
   }
   async findById(id: string, includeAnswer = false) {
-    const q = await findOrNotFound(this.repo, id, 'Test question');
+    const q = await this.repo.findOne({ where: { id } as any, relations: ['question'] });
+    if (!q) throw new BadRequestException('Test question not found');
     return includeAnswer ? q : this.stripAnswers(q);
   }
   async create(dto: CreateTestQuestionDto) {
@@ -142,7 +270,14 @@ export class TestQuestionService {
     return this.repo.save(e);
   }
   async delete(id: string) {
-    await this.repo.remove(await this.findById(id));
+    const q = await this.findById(id);
+    const attempts = await this.attemptRepo.count({
+      where: { testId: q.testId, status: In([TestAttemptStatus.SUBMITTED, TestAttemptStatus.GRADED]) }
+    });
+    if (attempts > 0) {
+      throw new BadRequestException('Cannot delete question because test has submissions');
+    }
+    await this.repo.remove(q);
   }
 }
 
@@ -154,6 +289,8 @@ export class TestAttemptService {
     @InjectRepository(TestAnswer) private answerRepo: Repository<TestAnswer>,
     @InjectRepository(TestQuestion)
     private questionRepo: Repository<TestQuestion>,
+    @InjectRepository(TestAssignment)
+    private assignmentRepo: Repository<TestAssignment>,
   ) {}
 
   /**
@@ -172,6 +309,7 @@ export class TestAttemptService {
     if (status) where.status = status;
     const [data, total] = await this.repo.findAndCount({
       where,
+      relations: ['test', 'user'],
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: 'DESC' },
@@ -199,7 +337,7 @@ export class TestAttemptService {
       where: {
         testId: dto.testId,
         userId,
-        status: TestAttemptStatus.SUBMITTED,
+        status: In([TestAttemptStatus.SUBMITTED, TestAttemptStatus.GRADED]),
       },
     });
     if (submittedCount >= test.attemptLimit)
@@ -209,6 +347,7 @@ export class TestAttemptService {
       this.repo.create({
         testId: dto.testId,
         userId,
+        assignmentId: dto.assignmentId,
         status: TestAttemptStatus.IN_PROGRESS,
         startedAt: new Date(),
       } as any),
@@ -231,6 +370,7 @@ export class TestAttemptService {
       this.answerRepo.find({ where: { attemptId: id } as any }),
       this.questionRepo.find({
         where: { testId: test.id } as any,
+        relations: ['question'],
         order: { displayOrder: 'ASC' },
       }),
     ]);
@@ -242,13 +382,142 @@ export class TestAttemptService {
       .reduce((s, a) => s + a.pointsAwarded, 0);
     const score = totalPoints ? Math.round((earned / totalPoints) * 100) : 0;
 
+    let submitStatus = TestAttemptStatus.GRADED;
+    if (attempt.assignmentId) {
+      const assignment = await this.assignmentRepo.findOne({ where: { id: attempt.assignmentId } as any });
+      if (assignment && assignment.statusOnSubmit) {
+        submitStatus = assignment.statusOnSubmit as TestAttemptStatus;
+      }
+    }
+
     Object.assign(attempt, {
-      status: TestAttemptStatus.SUBMITTED,
+      status: submitStatus,
       submittedAt: new Date(),
       durationSeconds: dto.durationSeconds,
       score,
     });
+    
+    await this.repo.manager.insert(UserActivity, {
+      userId,
+      activityType: ActivityType.PRACTICE_COMPLETED,
+      details: { type: 'TEST', attemptId: id, testId: attempt.testId, score },
+      expAwarded: 0,
+    });
+
     return this.repo.save(attempt);
+  }
+
+  async getResult(id: string, userId: string, role: string) {
+    const attempt = await this.findById(id, userId, role);
+    const test = await findOrNotFound(this.testRepo, attempt.testId, 'Test');
+    const answers = await this.answerRepo.find({ where: { attemptId: id } as any });
+    let questions = await this.questionRepo.find({
+      where: { testId: test.id } as any,
+      relations: ['question'],
+      order: { displayOrder: 'ASC' },
+    });
+
+    const canSeeAnswers =
+      role === Role.TEACHER ||
+      role === Role.ADMIN ||
+      (test.showAnswersAfter && attempt.status === TestAttemptStatus.GRADED);
+
+    if (!canSeeAnswers) {
+      questions = questions.map((q) => {
+        if (q.question && q.question.content) {
+          const { 
+            correct_answer, accepted_answers, correct_order, pairs,
+            correctAnswer, acceptedAnswers, correctOrder,
+            ...safeContent 
+          } = q.question.content as any;
+          q.question = { ...q.question, content: safeContent } as any;
+        }
+        return q;
+      });
+    }
+
+    return { attempt, test, questions, answers };
+  }
+
+  /**
+   * Recalculates the total score of the attempt based on current answers.
+   * Useful when a teacher manually grades an answer.
+   */
+  async recalculateScore(attemptId: string) {
+    const attempt = await findOrNotFound(this.repo, attemptId, 'Test attempt');
+    const test = await findOrNotFound(this.testRepo, attempt.testId, 'Test');
+    const [answers, questions] = await Promise.all([
+      this.answerRepo.find({ where: { attemptId } as any }),
+      this.questionRepo.find({
+        where: { testId: test.id } as any,
+        relations: ['question'],
+      }),
+    ]);
+    const qIds = new Set(questions.map((q) => q.id));
+    const totalPoints = questions.reduce((s, q) => s + q.points, 0);
+    const earned = answers
+      .filter((a) => qIds.has(a.questionId))
+      .reduce((s, a) => s + a.pointsAwarded, 0);
+    const score = totalPoints ? Math.round((earned / totalPoints) * 100) : 0;
+
+    attempt.score = score;
+    return this.repo.save(attempt);
+  }
+
+  async completeGrading(attemptId: string) {
+    const attempt = await findOrNotFound(this.repo, attemptId, 'Test attempt');
+    attempt.status = TestAttemptStatus.GRADED;
+    return this.repo.save(attempt);
+  }
+
+  async autoGradeObjective(attemptId: string) {
+    const attempt = await findOrNotFound(this.repo, attemptId, 'Test attempt');
+    const test = await findOrNotFound(this.testRepo, attempt.testId, 'Test');
+    const [answers, questions] = await Promise.all([
+      this.answerRepo.find({ where: { attemptId } as any }),
+      this.questionRepo.find({
+        where: { testId: test.id } as any,
+        relations: ['question'],
+      }),
+    ]);
+    
+    // Auto-grade objective questions
+    const answerMap = new Map(answers.map(a => [a.questionId, a]));
+    let updatedAnswers: TestAnswer[] = [];
+    
+    for (const q of questions) {
+      const type = q.question.type;
+      // Skip subjective questions
+      if (type === 'SHORT_ANSWER' || type === 'SPEAKING' || type === 'WRITING') {
+        continue;
+      }
+      
+      // gradeQuestion is defined in this file, so we can just call it
+      let answer = answerMap.get(q.questionId);
+      
+      if (answer) {
+        const { isCorrect, pointsAwarded } = gradeQuestion(q, answer.answer?.answer || answer.answer);
+        answer.isCorrect = isCorrect;
+        answer.pointsAwarded = pointsAwarded;
+        updatedAnswers.push(answer);
+      } else {
+        // Create an empty answer with 0 points
+        const { isCorrect, pointsAwarded } = gradeQuestion(q, null);
+        updatedAnswers.push(this.answerRepo.create({
+          attemptId,
+          questionId: q.questionId,
+          answer: null,
+          isCorrect,
+          pointsAwarded,
+        }));
+      }
+    }
+    
+    if (updatedAnswers.length > 0) {
+      await this.answerRepo.save(updatedAnswers);
+    }
+    
+    return this.recalculateScore(attemptId);
   }
 }
 
@@ -285,11 +554,11 @@ export class TestAnswerService {
     userId: string,
   ) {
     const attempt = await this.assertCanAnswer(attemptId, userId);
-    const question = await findOrNotFound(
-      this.questionRepo,
-      dto.questionId,
-      'Test question',
-    );
+    const question = await this.questionRepo.findOne({
+      where: { id: dto.questionId } as any,
+      relations: ['question'],
+    });
+    if (!question) throw new BadRequestException('Test question not found');
     // Chống inject: câu hỏi phải thuộc đúng bài test của attempt.
     if (question.testId !== attempt.testId)
       throw new BadRequestException('Question does not belong to this test');
@@ -332,5 +601,33 @@ export class TestAnswerService {
       where: { attemptId },
       order: { createdAt: 'ASC' },
     });
+  }
+
+  /**
+   * Cho phép giáo viên chấm điểm thủ công (override điểm) một câu trả lời.
+   */
+  async gradeAnswerManually(
+    attemptId: string,
+    questionId: string,
+    pointsAwarded: number,
+  ) {
+    const existing = await this.repo.findOne({
+      where: { attemptId, questionId },
+    });
+    if (!existing) {
+      throw new BadRequestException('Answer not found');
+    }
+    
+    // Tìm câu hỏi để kiểm tra xem điểm được cấp có vượt quá điểm tối đa không (tuỳ chọn)
+    const question = await this.questionRepo.findOne({ where: { id: questionId } as any });
+    if (question && pointsAwarded > question.points) {
+      throw new BadRequestException(`Cannot award more than ${question.points} points for this question`);
+    }
+
+    existing.pointsAwarded = pointsAwarded;
+    // Cập nhật lại isCorrect dựa trên điểm số (nếu điểm > 0 coi như đúng 1 phần)
+    existing.isCorrect = pointsAwarded > 0;
+    
+    return this.repo.save(existing);
   }
 }

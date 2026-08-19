@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Resource } from './entities/resource.entity';
@@ -47,6 +47,9 @@ export class ResourceService {
     const where: any = {};
     if (tier) where.tier = tier;
     if (status) where.status = status;
+    if (role !== Role.ADMIN && role !== Role.TEACHER) {
+      where.hiddenByAdmin = false;
+    }
     const [data, total] = await this.repo.findAndCount({
       where,
       skip: (page - 1) * limit,
@@ -63,6 +66,9 @@ export class ResourceService {
 
   async findById(id: string, userId?: string, role?: string) {
     const resource = await findOrNotFound(this.repo, id, 'Resource');
+    if (role !== Role.ADMIN && role !== Role.TEACHER && resource.hiddenByAdmin) {
+      throw new ForbiddenException('This resource has been hidden by administrator');
+    }
     return this.maskFileKey(resource, userId, role);
   }
 

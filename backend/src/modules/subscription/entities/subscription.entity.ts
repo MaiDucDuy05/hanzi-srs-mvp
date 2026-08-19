@@ -1,9 +1,10 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../common/base.entity';
 import {
   SubscriptionPlan,
   SubscriptionStatus,
 } from '../../../common/enums/subscription.enums';
+import { User } from '../../auth/entities/user.entity';
 
 /**
  * Gói đăng ký của người dùng (PR-14). Entitlement VIP:
@@ -14,6 +15,10 @@ import {
 export class Subscription extends BaseEntity {
   @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
 
   @Column({ type: 'varchar', length: 10, default: SubscriptionPlan.FREE })
   plan: SubscriptionPlan;
@@ -26,4 +31,13 @@ export class Subscription extends BaseEntity {
 
   @Column({ name: 'expires_at', type: 'timestamptz', nullable: true })
   expiresAt: Date | null;
+
+  /**
+   * A-la-carte feature scope (PR-33 ADR-5).
+   * - [] = Full VIP (mở tất cả feature).
+   * - ['ai_speaking'] = feature VIP (chỉ mở AI Speaking).
+   * Entitlement: scope rỗng OR chứa feature required.
+   */
+  @Column({ type: 'jsonb', default: [] })
+  scope: string[];
 }

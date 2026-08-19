@@ -1,6 +1,7 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../common/base.entity';
 import { ContentStatus } from '../../../common/enums/curriculum.enums';
+import { HskLevel } from './hsk-level.entity';
 
 /** Chủ đề học theo chủ đề (FR-02), ưu tiên trẻ em. */
 @Entity('topics')
@@ -20,8 +21,15 @@ export class Topic extends BaseEntity {
   @Column({ name: 'recommended_level_id', type: 'uuid', nullable: true })
   recommendedLevelId: string | null;
 
+  @ManyToOne(() => HskLevel)
+  @JoinColumn({ name: 'recommended_level_id' })
+  recommendedLevel: HskLevel | null;
+
   @Column({ type: 'varchar', length: 20, default: ContentStatus.DRAFT })
   status: ContentStatus;
+
+  @Column({ name: 'is_active', type: 'boolean', default: true })
+  isActive: boolean;
 
   @Column({ name: 'display_order', type: 'int', default: 0 })
   displayOrder: number;

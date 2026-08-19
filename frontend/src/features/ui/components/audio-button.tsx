@@ -16,11 +16,13 @@ export function AudioButton({
   src,
   size = 'md',
   label,
+  className,
 }: {
   audioKey?: string | null;
   src?: string | null;
   size?: 'sm' | 'md';
   label?: string;
+  className?: string;
 }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const hookedRef = useRef(false);
@@ -67,6 +69,7 @@ export function AudioButton({
         className={cn(
           'inline-flex shrink-0 items-center justify-center rounded-full bg-brand-light text-brand transition-colors hover:bg-brand hover:text-white',
           size === 'sm' ? 'h-8 w-8' : 'h-10 w-10',
+          className
         )}
       >
         {playing ? '◼' : '🔊'}

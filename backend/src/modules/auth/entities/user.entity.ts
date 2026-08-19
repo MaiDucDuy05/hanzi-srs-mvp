@@ -1,18 +1,19 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, Index } from 'typeorm';
 import { BaseEntity } from '../../../common/base.entity';
 import { Role, UserStatus } from '../../../common/enums/user.enums';
 
 /**
  * Bảng users — tài khoản người dùng (Free/Teacher/Admin).
  * VIP là trạng thái gói ở bảng subscriptions, không phải role.
- * Login case-insensitive: unique index trên LOWER(email) tạo ở migration.
+ * Email unique và case-insensitive (index trên LOWER(email)).
  */
 @Entity('users')
 export class User extends BaseEntity {
+  @Index('idx_users_email_unique', { unique: true })
   @Column({ type: 'varchar', length: 255 })
   email: string;
 
-  @Column({ name: 'password_hash', type: 'varchar', length: 255 })
+  @Column({ name: 'password_hash', type: 'varchar', length: 255, select: false })
   passwordHash: string;
 
   @Column({ name: 'full_name', type: 'varchar', length: 100 })
@@ -24,6 +25,35 @@ export class User extends BaseEntity {
   @Column({ type: 'varchar', length: 20, default: UserStatus.ACTIVE })
   status: UserStatus;
 
+  /** Daily XP target */
+  @Column({ name: 'daily_goal', type: 'int', default: 50 })
+  dailyGoal: number;
+
+  /** Consecutive days streak */
+  @Column({ name: 'current_streak', type: 'int', default: 0 })
+  currentStreak: number;
+
+  /** Last date user earned XP (YYYY-MM-DD), used for streak calculation */
+  @Column({ name: 'last_activity_date', type: 'date', nullable: true })
+  lastActivityDate: string | null;
+
   @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true })
   deletedAt: Date | null;
+
+  @Column({ name: 'ban_reason', type: 'text', nullable: true })
+  banReason: string | null;
+
+  @Column({ name: 'banned_at', type: 'timestamptz', nullable: true })
+  bannedAt: Date | null;
+
+  @Column({ name: 'banned_by', type: 'uuid', nullable: true })
+  bannedBy: string | null;
+
+  /** Tổng EXP tích lũy vĩnh viễn (từ exp_transactions). */
+  @Column({ name: 'total_exp', type: 'int', default: 0 })
+  totalExp: number;
+
+  /** EXP khả dụng hiện tại (total - đã redeem). Cache O(1) balance. */
+  @Column({ name: 'current_exp', type: 'int', default: 0 })
+  currentExp: number;
 }

@@ -1,8 +1,9 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import type { Request } from 'express';
+import { UserService } from '../user.service';
 
 export interface JwtPayload {
   sub: string; // user id
@@ -12,24 +13,41 @@ export interface JwtPayload {
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private userService: UserService,
+  ) {
     const secret = configService.get<string>('JWT_SECRET');
-    if (!secret && configService.get<string>('NODE_ENV') === 'production') {
-      throw new InternalServerErrorException('JWT_SECRET is required in production');
+    const nodeEnv = configService.get<string>('NODE_ENV');
+
+    if (!secret) {
+      if (nodeEnv === 'production') {
+        throw new InternalServerErrorException('JWT_SECRET is required in production');
+      }
+      throw new InternalServerErrorException('JWT_SECRET must be set');
     }
+
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
-        // Auth mới qua HttpOnly cookie (FE không đọc/touch token); giữ Bearer
-        // header làm fallback cho client không dùng cookie.
         (req: Request) => req?.cookies?.access_token ?? null,
         ExtractJwt.fromAuthHeaderAsBearerToken(),
       ]),
       ignoreExpiration: false,
-      secretOrKey: secret || 'dev-secret',
+      secretOrKey: secret,
     });
   }
 
   async validate(payload: JwtPayload): Promise<JwtPayload> {
+    try {
+      const user = await this.userService.findById(payload.sub);
+      if (user.status === 'BANNED') {
+        throw new UnauthorizedException(`Tài khoản đã bị khóa. Lý do: ${user.banReason || 'Không xác định'}. Liên hệ admin.`);
+      }
+    } catch (err) {
+      if (err instanceof UnauthorizedException) throw err;
+      throw new UnauthorizedException('Token không hợp lệ hoặc người dùng không tồn tại');
+    }
+    
     return { sub: payload.sub, email: payload.email, role: payload.role };
   }
 }

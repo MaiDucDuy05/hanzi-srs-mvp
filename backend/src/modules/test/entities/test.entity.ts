@@ -18,8 +18,17 @@ export class Test extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   description: string | null;
 
+  @Column({ name: 'hsk_level', type: 'int', nullable: true })
+  hskLevel: number | null;
+
   @Column({ name: 'time_limit_minutes', type: 'int', default: 0 })
   timeLimitMinutes: number;
+
+  @Column({ name: 'shuffle_questions', type: 'boolean', default: false })
+  shuffleQuestions: boolean;
+
+  @Column({ name: 'show_answers_after', type: 'boolean', default: false })
+  showAnswersAfter: boolean;
 
   @Column({ name: 'attempt_limit', type: 'int', default: 1 })
   attemptLimit: number;
@@ -32,6 +41,15 @@ export class Test extends BaseEntity {
 
   @Column({ name: 'show_score_immediately', type: 'boolean', default: true })
   showScoreImmediately: boolean;
+
+  @Column({ name: 'hidden_by_admin', type: 'boolean', default: false })
+  hiddenByAdmin: boolean;
+
+  @Column({ name: 'hide_reason', type: 'text', nullable: true })
+  hideReason: string | null;
+
+  @Column({ name: 'hidden_at', type: 'timestamptz', nullable: true })
+  hiddenAt: Date | null;
 
   @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true })
   deletedAt: Date | null;

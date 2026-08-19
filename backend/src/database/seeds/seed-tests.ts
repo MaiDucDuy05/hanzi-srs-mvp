@@ -1,6 +1,7 @@
 import dataSource from '../data-source';
 import { Test } from '../../modules/test/entities/test.entity';
 import { TestQuestion } from '../../modules/test/entities/test-question.entity';
+import { Question, QuestionDifficulty, QuestionVisibility } from '../../modules/question-bank/entities/question.entity';
 import { User } from '../../modules/auth/entities/user.entity';
 import { TestStatus, TestQuestionType } from '../../common/enums/test.enums';
 
@@ -71,22 +72,38 @@ async function run(): Promise<void> {
       console.log(`= Test exists: ${T.name}`);
     }
 
-    // Questions — nếu số lượng khác thì insert thêm (giữ nguyên các câu cũ, idempotent theo content + testId)
     for (let i = 0; i < T.questions.length; i++) {
       const q = T.questions[i];
-      const has = await tqRepo.findOne({ where: { testId: test.id, content: q.content } });
-      if (has) continue;
 
-      // Chuẩn hóa JSONB cho options/correct
-      const options = q.options ? { list: q.options } : null;
-      let correctJsonb: Record<string, unknown>;
-      if (q.type === TestQuestionType.SINGLE_CHOICE) correctJsonb = { answer: q.correct as string };
-      else if (q.type === TestQuestionType.TRUE_FALSE) correctJsonb = { answer: q.correct as boolean };
-      else correctJsonb = { accepted: q.correct as string[] }; // SHORT_ANSWER
+      // Prepare nested content object
+      const options = q.options ? q.options : null;
+      let correctAns: any;
+      if (q.type === TestQuestionType.SINGLE_CHOICE) correctAns = q.correct as string;
+      else if (q.type === TestQuestionType.TRUE_FALSE) correctAns = q.correct as boolean;
+      else correctAns = q.correct as string[]; // SHORT_ANSWER
+
+      // Check if Question already exists for this test via TestQuestion relation
+      const existingTq = await tqRepo.findOne({
+        where: { testId: test.id },
+        relations: ['question'],
+      });
+      
+      const qRepo = dataSource.getRepository(Question);
+      let bankQuestion = await qRepo.save({
+        creatorId: teacher.id,
+        type: q.type,
+        visibility: QuestionVisibility.PRIVATE,
+        difficulty: QuestionDifficulty.MEDIUM,
+        content: {
+          questionText: q.content,
+          options,
+          correct_answer: q.type !== TestQuestionType.SHORT_ANSWER ? correctAns : undefined,
+          acceptedAnswers: q.type === TestQuestionType.SHORT_ANSWER ? correctAns : undefined,
+        },
+      });
 
       await tqRepo.save({
-        testId: test.id, questionType: q.type, content: q.content,
-        options, correctAnswer: correctJsonb, points: q.points, displayOrder: i + 1,
+        testId: test.id, questionId: bankQuestion.id, points: q.points, displayOrder: i + 1,
       });
     }
     console.log(`  → ${T.questions.length} questions processed`);

@@ -50,13 +50,24 @@ export function HanziWriterCanvas({
         radicalColor: null,
         charDataLoader: (c, onLoad, onError) => {
           loadCharData(c)
-            .then((data) => (data ? onLoad(data) : onError(new Error('no data'))))
-            .catch(onError);
+            .then((data) => {
+              if (data) onLoad(data);
+              else {
+                try { onError(new Error('no data')); } catch {}
+              }
+            })
+            .catch((e) => {
+              try { onError(e); } catch {}
+            });
         },
         onComplete: (summary) => onCompleteRef.current?.(summary.totalMistakes),
         onMistake: () => onMistakeRef.current?.(),
       });
-      writer.quiz();
+      try {
+        writer.quiz();
+      } catch (e) {
+        // Data might be missing, ignore the crash
+      }
     })();
 
     return () => {

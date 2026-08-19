@@ -1,72 +1,139 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { usePracticeEngine } from '@/features/practice/components/practice-engine';
+import { GameSummary } from '@/features/games/components/game-summary';
+import { SentenceGameBoard } from '@/features/games/components/sentence-game-board';
+import { Loader2, XCircle } from 'lucide-react';
+import type { SourceType } from '@/lib/api/types';
 
-const WORDS = [
-  { id: 1, text: '我' },
-  { id: 2, text: '喜' },
-  { id: 3, text: '欢' },
-  { id: 4, text: '喝' },
-  { id: 5, text: '茶' },
-].sort(() => Math.random() - 0.5);
+export function SentenceGameFeature({ sourceType, sourceId }: { sourceType: SourceType; sourceId: string }) {
+  const router = useRouter();
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-export function SentenceGameFeature() {
-  const [available, setAvailable] = useState(WORDS);
-  const [selected, setSelected] = useState<{ id: number, text: string }[]>([]);
+  const engine = usePracticeEngine({
+    practiceType: 'SENTENCE_ORDERING',
+    sourceType,
+    sourceId,
+    sessionKey: 'sentence-ordering-session',
+  });
 
-  const handleSelect = (word: { id: number, text: string }) => {
-    setAvailable(available.filter(w => w.id !== word.id));
-    setSelected([...selected, word]);
+  useEffect(() => {
+    if (engine.status === 'running' && engine.sentenceQuestions.length > 0) {
+      const firstIncomplete = engine.sentenceQuestions.findIndex(q => {
+        const ans = engine.userAnswers[q.questionId] || [];
+        return ans.length < q.tokens.length;
+      });
+      setCurrentIndex(firstIncomplete !== -1 ? firstIncomplete : engine.sentenceQuestions.length - 1);
+    }
+  }, [engine.status]);
+
+  if (engine.status === 'loading') {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center h-full min-h-[500px]">
+        <Loader2 className="w-10 h-10 animate-spin text-[#8BC34A] mb-4" />
+        <p className="text-lg font-medium text-[#4a6b38]">Đang tải câu hỏi...</p>
+      </div>
+    );
+  }
+
+  if (engine.status === 'error') {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center h-full min-h-[500px]">
+        <div className="bg-red-50 p-6 rounded-2xl border-2 border-red-200 text-center max-w-md">
+          <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-red-700 font-medium mb-6">{engine.error}</p>
+          <button onClick={() => router.push('/dashboard')} className="px-6 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors font-semibold">
+            Quay lại
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (engine.status === 'limit') {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center h-full min-h-[500px]">
+        <div className="bg-orange-50 p-6 rounded-2xl border-2 border-orange-200 text-center max-w-md">
+          <p className="text-orange-700 font-medium mb-6">Bạn đã hết lượt luyện tập hôm nay.</p>
+          <button onClick={() => router.push('/dashboard')} className="px-6 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-colors font-semibold">
+            Quay lại
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (engine.status === 'finished' && engine.result) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-4">
+        <GameSummary
+          title="Tuyệt vời! 🎉"
+          subtitle="Hoàn thành Sắp xếp câu (Sentence Game)"
+          result={engine.result}
+          elapsed={engine.elapsed}
+          onReplay={() => window.location.reload()}
+          onExit={() => router.push('/dashboard')}
+        />
+      </div>
+    );
+  }
+
+  // Running: interactive game
+  const currentQuestion = engine.sentenceQuestions[currentIndex];
+  if (!currentQuestion) return null;
+
+  const currentAnswers = engine.userAnswers[currentQuestion.questionId] || [];
+
+  const handleSelect = (tokenId: string) => {
+    engine.setUserAnswers({
+      ...engine.userAnswers,
+      [currentQuestion.questionId]: [...currentAnswers, tokenId],
+    });
   };
 
-  const handleDeselect = (word: { id: number, text: string }) => {
-    setSelected(selected.filter(w => w.id !== word.id));
-    setAvailable([...available, word].sort((a, b) => a.id - b.id));
+  const handleDeselect = (tokenId: string) => {
+    engine.setUserAnswers({
+      ...engine.userAnswers,
+      [currentQuestion.questionId]: currentAnswers.filter(id => id !== tokenId),
+    });
   };
 
-  const isComplete = available.length === 0;
+  const swapLeft = (index: number) => {
+    if (index === 0) return;
+    const next = [...currentAnswers];
+    [next[index - 1], next[index]] = [next[index], next[index - 1]];
+    engine.setUserAnswers({ ...engine.userAnswers, [currentQuestion.questionId]: next });
+  };
+
+  const swapRight = (index: number) => {
+    if (index === currentAnswers.length - 1) return;
+    const next = [...currentAnswers];
+    [next[index], next[index + 1]] = [next[index + 1], next[index]];
+    engine.setUserAnswers({ ...engine.userAnswers, [currentQuestion.questionId]: next });
+  };
+
+  const handleNext = () => {
+    if (currentIndex < engine.sentenceQuestions.length - 1) {
+      setCurrentIndex(i => i + 1);
+    } else {
+      engine.handleComplete({ correctCount: 0, wrongCount: 0, moveCount: 0, score: 0, answerData: engine.userAnswers });
+    }
+  };
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center w-full max-w-5xl mx-auto px-4 py-6 sm:py-8 relative z-10 h-full">
-      <h1 className="text-3xl font-black text-[#215b3b] font-heading mb-4 drop-shadow-sm">Sentence Forest</h1>
-      <p className="text-xl text-[#4a6b38] mb-12 font-medium">"I like drinking tea"</p>
-      
-      {/* Drop Zone */}
-      <div className="w-full max-w-2xl min-h-[100px] bg-white rounded-3xl border-4 border-dashed border-[#8BC34A] p-4 flex flex-wrap gap-2 items-center justify-center mb-12 transition-all">
-        {selected.length === 0 && (
-          <span className="text-gray-400 font-medium">Select words below to build the sentence</span>
-        )}
-        {selected.map((word) => (
-          <div 
-            key={word.id}
-            onClick={() => handleDeselect(word)}
-            className="px-6 py-3 bg-[#aadd4a] text-white text-2xl font-bold rounded-2xl cursor-pointer hover:bg-[#97cf34] shadow-sm transform hover:-translate-y-1 transition-all"
-          >
-            {word.text}
-          </div>
-        ))}
-      </div>
-
-      {/* Available Words */}
-      <div className="flex flex-wrap gap-4 items-center justify-center max-w-2xl min-h-[60px]">
-        {available.map((word) => (
-          <div 
-            key={word.id}
-            onClick={() => handleSelect(word)}
-            className="px-6 py-3 bg-white border-4 border-[#eef7e9] text-[#215b3b] text-2xl font-bold rounded-2xl cursor-pointer hover:border-[#8BC34A] hover:bg-[#f9fdf5] shadow-sm transform hover:-translate-y-1 transition-all"
-          >
-            {word.text}
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-12 h-16 flex items-center justify-center">
-        {isComplete && (
-          <button className="px-10 py-4 bg-[#215b3b] text-white text-xl font-bold rounded-full shadow-lg hover:bg-[#1a4a2f] transition-colors animate-bounce">
-            Check Answer
-          </button>
-        )}
-      </div>
-    </div>
+    <SentenceGameBoard
+      questions={engine.sentenceQuestions}
+      userAnswers={engine.userAnswers}
+      currentIndex={currentIndex}
+      onSelectToken={handleSelect}
+      onDeselectToken={handleDeselect}
+      onSwapLeft={swapLeft}
+      onSwapRight={swapRight}
+      onPrev={() => setCurrentIndex(i => Math.max(0, i - 1))}
+      onNext={handleNext}
+      onSubmit={() => handleNext()}
+    />
   );
 }

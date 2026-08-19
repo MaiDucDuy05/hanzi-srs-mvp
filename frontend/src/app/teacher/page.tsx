@@ -1,5 +1,5 @@
-import { TeacherClassesFeature } from '@/features/teacher/teacher-classes-feature';
+import { TeacherDashboardFeature } from '@/features/teacher/teacher-dashboard-feature';
 
 export default function TeacherPage() {
-  return <TeacherClassesFeature />;
+  return <TeacherDashboardFeature />;
 }

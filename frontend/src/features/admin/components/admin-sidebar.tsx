@@ -1,7 +1,7 @@
-'use client';
+'use client'; // Hot reload trigger
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   BookOpen,
@@ -9,7 +9,9 @@ import {
   CreditCard,
   FolderOpen,
   Settings,
-  UserCircle
+  UserCircle,
+  ShieldAlert,
+  GraduationCap
 } from 'lucide-react';
 
 import { useAuth } from '@/lib/auth/auth-context';
@@ -18,14 +20,17 @@ import { LogOut } from 'lucide-react';
 const NAV_ITEMS = [
   { href: '/admin', title: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/admin/curriculum', title: 'Content', icon: BookOpen },
+  { href: '/admin/teacher-content', title: 'Teacher', icon: GraduationCap },
   { href: '/admin/users', title: 'Users', icon: Users },
   { href: '/admin/subscriptions', title: 'Subscriptions', icon: CreditCard },
+  { href: '/admin/rewards', title: 'Rewards', icon: ShieldAlert },
   { href: '/admin/resources', title: 'Resources', icon: FolderOpen },
   { href: '/admin/settings', title: 'Settings', icon: Settings },
 ];
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { logout, user } = useAuth();
 
   return (
@@ -67,7 +72,10 @@ export function AdminSidebar() {
         </div>
         
         <button 
-          onClick={() => logout()}
+          onClick={async () => {
+            await logout();
+            router.push('/login');
+          }}
           className="flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-600 hover:text-forest hover:bg-light-bamboo transition-colors rounded-full"
         >
           <LogOut className="h-5 w-5" strokeWidth={2.5} />

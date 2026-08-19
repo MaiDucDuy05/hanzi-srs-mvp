@@ -2,14 +2,17 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
+  NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
-import { Role } from '../../common/enums/user.enums';
+import { RegisterDto, LoginDto, UpdateMeDto } from './dto/auth.dto';
+import { Role, UserStatus } from '../../common/enums/user.enums';
+import { Subscription } from '../subscription/entities/subscription.entity';
+import { SubscriptionPlan, SubscriptionStatus } from '../../common/enums/subscription.enums';
 
 @Injectable()
 export class AuthService {
@@ -17,6 +20,8 @@ export class AuthService {
     @InjectRepository(User)
     private userRepo: Repository<User>,
     private jwtService: JwtService,
+    @InjectRepository(Subscription)
+    private subRepo: Repository<Subscription>,
   ) {}
 
   async register(dto: RegisterDto): Promise<{ accessToken: string; user: User }> {
@@ -32,11 +37,25 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<{ accessToken: string; user: User }> {
-    const user = await this.userRepo.findOne({ where: { email: dto.email } });
+    const user = await this.userRepo.createQueryBuilder('user')
+      .where('user.email = :email', { email: dto.email })
+      .addSelect('user.passwordHash')
+      .getOne();
     if (!user) throw new UnauthorizedException('Invalid email or password');
+
+    if (user.status !== UserStatus.ACTIVE) {
+      throw new UnauthorizedException('Account has been suspended');
+    }
 
     const valid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!valid) throw new UnauthorizedException('Invalid email or password');
+
+    // Fetch VIP subscription to populate vipValidUntil
+    const sub = await this.subRepo.findOne({
+      where: { userId: user.id, status: SubscriptionStatus.ACTIVE, plan: SubscriptionPlan.VIP },
+      order: { expiresAt: 'DESC' }
+    });
+    Object.assign(user, { vipValidUntil: sub?.expiresAt || null });
 
     const payload = { sub: user.id, email: user.email, role: user.role };
     return { accessToken: this.jwtService.sign(payload), user };
@@ -50,5 +69,14 @@ export class AuthService {
 
   async validateUser(id: string): Promise<User | null> {
     return this.userRepo.findOne({ where: { id } });
+  }
+
+  async updateMe(userId: string, dto: UpdateMeDto): Promise<User> {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+    if (!user) throw new NotFoundException('User not found');
+    const { fullName, dailyGoal } = dto;
+    if (fullName !== undefined) user.fullName = fullName;
+    if (dailyGoal !== undefined) user.dailyGoal = dailyGoal;
+    return this.userRepo.save(user);
   }
 }

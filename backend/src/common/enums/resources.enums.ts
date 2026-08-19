@@ -17,13 +17,6 @@ export enum AiJobStatus {
   FAILED = 'FAILED',
 }
 
-/** Trạng thái yêu cầu nâng cấp VIP (FR-26). */
-export enum UpgradeRequestStatus {
-  PENDING = 'PENDING',
-  APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED',
-}
-
 /** Trạng thái form liên hệ tư vấn (FR-25). */
 export enum ContactStatus {
   NEW = 'NEW',

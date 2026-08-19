@@ -9,15 +9,20 @@ import {
   Query,
   HttpCode,
   HttpStatus,
+  ForbiddenException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto } from './dto/auth.dto';
 import { UserQueryDto } from './dto/user-query.dto';
 import { Roles } from './decorators/roles.decorator';
-import { Role } from '../../common/enums/user.enums';
+import { Role, UserStatus } from '../../common/enums/user.enums';
+import { CurrentUser } from './decorators/current-user.decorator';
+
+import type { JwtPayload } from './strategies/jwt.strategy';
 
 @Controller('users')
 @Roles(Role.ADMIN)
+
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
@@ -26,6 +31,21 @@ export class UserController {
   async findAll(@Query() query: UserQueryDto) {
     const result = await this.userService.findAll(query);
     return { ...result, message: 'Users retrieved successfully' };
+  }
+
+  @Get('students/stats')
+  @Roles(Role.ADMIN, Role.TEACHER)
+  async findStudentsStats(@Query() query: UserQueryDto) {
+    const result = await this.userService.getStudentsStats(query);
+    return { ...result, message: 'Student stats retrieved successfully' };
+  }
+
+  @Get('students/activities')
+  @Roles(Role.ADMIN, Role.TEACHER)
+  async findStudentsActivities(@Query('limit') limitStr?: string) {
+    const limit = limitStr ? parseInt(limitStr, 10) : 10;
+    const activities = await this.userService.getStudentsActivities(limit);
+    return { data: activities, message: 'Student activities retrieved successfully' };
   }
 
   @Get(':id')
@@ -43,14 +63,38 @@ export class UserController {
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+  async update(
+    @Param('id') id: string,
+    @Body() dto: UpdateUserDto,
+    @CurrentUser() current: JwtPayload,
+  ) {
+    // Users can only update their own profile unless they are ADMIN
+    if (current.sub !== id && current.role !== Role.ADMIN) {
+      throw new ForbiddenException('Cannot update another user\'s profile');
+    }
+
+    // Non-admins cannot change roles or status
+    if (current.role !== Role.ADMIN) {
+      if (dto.role !== undefined || dto.status !== undefined) {
+        throw new ForbiddenException('Only admins can change roles or status');
+      }
+    }
+
     const user = await this.userService.update(id, dto);
     return { data: user, message: 'User updated successfully' };
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string) {
+  async remove(@Param('id') id: string, @CurrentUser() current: JwtPayload) {
+    // Users can only delete themselves unless they are ADMIN
+    if (current.sub !== id && current.role !== Role.ADMIN) {
+      throw new ForbiddenException('Cannot delete another user');
+    }
+    // Prevent self-deletion of admins
+    if (current.sub === id && current.role === Role.ADMIN) {
+      throw new ForbiddenException('Admins cannot delete themselves');
+    }
     await this.userService.softDelete(id);
   }
 }

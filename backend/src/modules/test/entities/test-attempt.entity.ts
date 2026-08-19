@@ -1,6 +1,9 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from '../../../common/base.entity';
 import { TestAttemptStatus } from '../../../common/enums/test.enums';
+import { User } from '../../auth/entities/user.entity';
+import { Test } from './test.entity';
+import { TestAssignment } from './test-assignment.entity';
 
 /**
  * Lượt làm bài kiểm tra (PR-05).
@@ -13,8 +16,23 @@ export class TestAttempt extends BaseEntity {
   @Column({ name: 'test_id', type: 'uuid' })
   testId: string;
 
+  @ManyToOne(() => Test)
+  @JoinColumn({ name: 'test_id' })
+  test: Test;
+
   @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
+
+  @ManyToOne(() => User)
+  @JoinColumn({ name: 'user_id' })
+  user: User;
+
+  @Column({ name: 'assignment_id', type: 'uuid', nullable: true })
+  assignmentId: string | null;
+
+  @ManyToOne(() => TestAssignment, { nullable: true })
+  @JoinColumn({ name: 'assignment_id' })
+  assignment: TestAssignment | null;
 
   @Column({ type: 'varchar', length: 20, default: TestAttemptStatus.IN_PROGRESS })
   status: TestAttemptStatus;

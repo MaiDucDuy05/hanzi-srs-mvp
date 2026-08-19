@@ -1,5 +1,5 @@
 import { apiFetch, unwrap } from '../client';
-import type { Paginated, Single, HskLevel, Lesson, Vocabulary, GrammarPoint, LessonContent, Topic, TopicVocabulary } from '../types';
+import type { Paginated, Single, HskLevel, Lesson, Vocabulary, GrammarPoint, LessonContent, Topic, TopicVocabulary, LessonContentsAggregate, Assignment, LessonSelectionOverview } from '../types';
 import { toQuery } from './utils';
 
 export const curriculumApi = {
@@ -21,6 +21,9 @@ export const curriculumApi = {
 
   getLesson: (id: string) => unwrap(apiFetch<Single<Lesson>>(`/lessons/${id}`)),
 
+  getLessonContents: (lessonId: string) =>
+    apiFetch<{ data: LessonContentsAggregate }>(`/lessons/${lessonId}/contents`).then((r) => r.data),
+
   createLesson: (data: Partial<Lesson>) =>
     unwrap(apiFetch<Single<Lesson>>('/lessons', { method: 'POST', body: JSON.stringify(data) })),
 
@@ -29,7 +32,7 @@ export const curriculumApi = {
 
   deleteLesson: (id: string) => apiFetch(`/lessons/${id}`, { method: 'DELETE' }),
 
-  listVocabularies: (params: { levelId?: string; status?: string; page?: number; limit?: number } = {}) =>
+  listVocabularies: (params: { levelId?: string; topicId?: string; status?: string; search?: string; page?: number; limit?: number } = {}) =>
     apiFetch<Paginated<Vocabulary>>(`/vocabularies${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
 
   getVocabulary: (id: string) => unwrap(apiFetch<Single<Vocabulary>>(`/vocabularies/${id}`)),
@@ -84,4 +87,12 @@ export const curriculumApi = {
     unwrap(apiFetch<Single<TopicVocabulary>>('/topic-vocabularies', { method: 'POST', body: JSON.stringify(data) })),
 
   deleteTopicVocabulary: (id: string) => apiFetch(`/topic-vocabularies/${id}`, { method: 'DELETE' }),
+
+  // Lesson selection overview — aggregate HSK, Topics, Assignments, Mistake stats
+  getLessonSelectionOverview: () =>
+    apiFetch<{ data: LessonSelectionOverview }>('/lesson-selection/overview').then((r) => r.data),
+
+  // Assignments
+  listAssignments: (params: { assignedTo?: string; status?: string; page?: number; limit?: number } = {}) =>
+    apiFetch<Paginated<Assignment>>(`/assignments${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
 };
