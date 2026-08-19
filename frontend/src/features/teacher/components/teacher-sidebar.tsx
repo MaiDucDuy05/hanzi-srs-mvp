@@ -25,7 +25,6 @@ const NAV_ITEMS = [
   { href: '/teacher/questions', title: 'Question Bank', icon: Database },
   { href: '/teacher/hskk-grading', title: 'HSKK Grading', icon: BookOpenCheck },
   { href: '/teacher/exam-statistics', title: 'Thống kê điểm', icon: BarChart },
-  { href: '/teacher/ai-library', title: 'AI Library', icon: BrainCircuit },
 ];
 
 export function TeacherSidebar() {
