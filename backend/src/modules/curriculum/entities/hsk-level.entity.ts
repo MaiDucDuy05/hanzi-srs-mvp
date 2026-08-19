@@ -5,7 +5,7 @@ import { ContentStatus } from '../../../common/enums/curriculum.enums';
 /** Cấp HSK1–9. Seed sẵn HSK1..HSK9 (xem seeds/seed-hsk-levels.ts). */
 @Entity('hsk_levels')
 export class HskLevel extends BaseEntity {
-  @Column({ type: 'varchar', length: 10 })
+  @Column({ type: 'varchar', length: 10, unique: true })
   code: string;
 
   @Column({ type: 'varchar', length: 100 })
