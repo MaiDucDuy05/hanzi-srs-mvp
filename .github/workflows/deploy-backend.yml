@@ -1,0 +1,36 @@
+name: Deploy Backend          # Tên hiển thị trên tab Actions
+
+on:                           # KHI NÀO chạy
+  push:
+    branches: [main]          # chạy khi push vào nhánh main
+    paths:
+      - 'backend/**'          # chỉ khi file trong backend/ thay đổi
+
+jobs:                         # CÔNG VIỆC cần làm
+  deploy:                     # tên job (tự đặt)
+    runs-on: ubuntu-latest    # máy ảo GitHub cấp cho bạn để chạy job
+
+    steps:                    # CÁC BƯỚC thực hiện tuần tự
+      - name: Checkout code
+        uses: actions/checkout@v4    # lấy code từ repo về máy ảo
+
+      - name: Setup Node
+        uses: actions/setup-node@v4  # cài Node.js lên máy ảo
+        with:
+          node-version: 20
+
+      - name: Install & Build
+        run: |                       # chạy lệnh shell thường
+          npm ci
+          npm run build
+
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.3   # dùng action có sẵn để SSH
+        with:
+          host: ${{ secrets.EC2_HOST }}    # lấy giá trị từ Secrets
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            cd /home/ec2-user/app
+            git pull
+            pm2 restart backend
