@@ -29,25 +29,17 @@ export const AdminExamQuestionModal = ({
         const topicsRes: any = await adminContentApi.getTopics({ limit: 100 });
         setTopics(topicsRes.data?.items || topicsRes.data || []);
 
-        // Fetch courses to get all lessons
-        const coursesRes: any = await adminContentApi.getCourses({ limit: 100 });
-        const courses = coursesRes.data?.items || coursesRes.data || [];
+        // Fetch all lessons directly
+        const lessonsRes: any = await adminContentApi.getAllLessons({ limit: 1000 });
+        const allLessons = lessonsRes.data?.items || lessonsRes.data || [];
         
-        const lessonsPromises = courses.map((c: any) => adminContentApi.getLessons(c.id, { limit: 100 }));
-        const lessonsResults: any[] = await Promise.all(lessonsPromises);
+        // Map to include course name if available
+        const enrichedLessons = allLessons.map((l: any) => ({
+          ...l,
+          courseName: l.level?.title || l.courseName || ''
+        }));
         
-        let allLessons: any[] = [];
-        lessonsResults.forEach((res, index) => {
-          const courseLessons = res.data?.items || res.data || [];
-          // Attach course name for better display
-          const enrichedLessons = courseLessons.map((l: any) => ({
-            ...l,
-            courseName: courses[index].title
-          }));
-          allLessons = [...allLessons, ...enrichedLessons];
-        });
-        
-        setLessons(allLessons);
+        setLessons(enrichedLessons);
       } catch (error) {
         console.error('Failed to fetch metadata:', error);
       } finally {
@@ -234,7 +226,7 @@ export const AdminExamQuestionModal = ({
                     value={
                       (editForm.type === 'FILL_IN' 
                         ? (content.acceptedAnswers?.[0] || (Array.isArray(content.answer) ? content.answer[0] : content.answer) || '')
-                        : (content.correctAnswer || content.answer || ''))
+                        : (content.correctAnswer || content.correct_answer || content.answer || ''))
                     }
                     onChange={e => {
                       if (editForm.type === 'FILL_IN') {
@@ -314,7 +306,7 @@ export const AdminExamQuestionModal = ({
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Đáp án</label>
                   <select 
                     className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[#c7cf35] bg-white"
-                    value={String(content.correctAnswer ?? content.answer ?? '')}
+                    value={String(content.correctAnswer ?? content.correct_answer ?? content.answer ?? '')}
                     onChange={e => {
                       const val = e.target.value;
                       setContentField('correctAnswer', val === 'true' ? true : val === 'false' ? false : val);

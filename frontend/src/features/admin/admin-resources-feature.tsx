@@ -195,57 +195,6 @@ export function AdminResourcesFeature() {
         </div>
       </div>
 
-      {/* System Parameters Card */}
-      <div className="bg-[#fbfbf8] rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 p-8">
-        <div className="flex items-center gap-3 text-[#11321e] mb-8">
-          <Settings className="h-6 w-6 text-[#78993a]" strokeWidth={2.5} />
-          <h2 className="text-xl font-bold">Thông số Hệ thống (System Parameters)</h2>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10">
-          
-          <div>
-            <label className="block text-xs font-bold text-gray-600 mb-2">Giới hạn Chơi miễn phí Hàng ngày</label>
-            <div className="relative">
-              <input type="text" defaultValue="3" className="w-full bg-[#f3f4e1]/50 border border-[#e4e2cd] rounded-xl py-3 px-4 text-sm font-bold text-[#11321e] focus:outline-none focus:ring-2 focus:ring-[#c7cf35] transition-shadow pr-10" />
-              <Gamepad2 className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
-            </div>
-            <p className="text-[10px] font-medium text-gray-400 mt-2">Số lần học viên Free có thể tham gia trò chơi.</p>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-gray-600 mb-2">Thời gian Ân hạn VIP (Ngày)</label>
-            <div className="relative">
-              <input type="text" defaultValue="7" className="w-full bg-[#f3f4e1]/50 border border-[#e4e2cd] rounded-xl py-3 px-4 text-sm font-bold text-[#11321e] focus:outline-none focus:ring-2 focus:ring-[#c7cf35] transition-shadow pr-10" />
-              <Hourglass className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
-            </div>
-            <p className="text-[10px] font-medium text-gray-400 mt-2">Số ngày duy trì quyền lợi sau khi hết hạn.</p>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-gray-600 mb-2">Tần suất Thông báo</label>
-            <div className="relative">
-              <select className="appearance-none w-full bg-[#f3f4e1]/50 border border-[#e4e2cd] rounded-xl py-3 px-4 text-sm font-bold text-[#11321e] focus:outline-none focus:ring-2 focus:ring-[#c7cf35] transition-shadow pr-10">
-                <option>Trung bình (Hàng ngày)</option>
-                <option>Thấp (Hàng tuần)</option>
-                <option>Cao (Mỗi sự kiện)</option>
-              </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
-            </div>
-            <p className="text-[10px] font-medium text-gray-400 mt-2">Mức độ gửi email/push notification cho học viên.</p>
-          </div>
-
-        </div>
-
-        <div className="flex justify-end gap-3">
-          <button className="px-6 py-2.5 rounded-full text-sm font-bold bg-[#e4e2cd]/50 text-[#4a5a3a] hover:bg-[#e4e2cd] transition-colors border border-[#d6d4bd]">
-            Hủy bỏ
-          </button>
-          <button className="px-6 py-2.5 rounded-full text-sm font-bold bg-[#11321e] text-white hover:bg-[#1f4e31] transition-colors shadow-sm">
-            Lưu Thay đổi
-          </button>
-        </div>
-      </div>
 
       {/* Admin Create Modal */}
       {user?.role === 'ADMIN' && (

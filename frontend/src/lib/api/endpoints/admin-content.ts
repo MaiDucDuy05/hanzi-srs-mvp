@@ -16,6 +16,8 @@ export const adminContentApi = {
     apiFetch(`/admin/courses/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
 
   // Lessons
+  getAllLessons: (params?: Record<string, string | number | boolean | undefined>) =>
+    apiFetch(`/admin/lessons${toQuery(params)}`, { method: 'GET' }),
   getLessons: (courseId: string, params?: Record<string, string | number | boolean | undefined>) =>
     apiFetch(`/admin/courses/${courseId}/lessons${toQuery(params)}`, { method: 'GET' }),
   createLesson: (courseId: string, data: any) =>

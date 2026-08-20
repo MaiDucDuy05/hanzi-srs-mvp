@@ -117,9 +117,16 @@ export const AdminExamQuestionsTable = () => {
       if (finalContent.questionText && !finalContent.question) {
         finalContent.question = finalContent.questionText;
       }
-      // Remove legacy questionText if question exists
       if (finalContent.question) {
         delete finalContent.questionText;
+      }
+
+      // Migrate legacy correct_answer (snake_case) to correctAnswer
+      if (finalContent.correct_answer !== undefined && finalContent.correctAnswer === undefined) {
+        finalContent.correctAnswer = finalContent.correct_answer;
+      }
+      if (finalContent.correctAnswer !== undefined) {
+        delete finalContent.correct_answer;
       }
 
       const payload = {

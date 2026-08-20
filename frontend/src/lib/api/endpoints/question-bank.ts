@@ -21,6 +21,8 @@ export interface QuestionBankItem {
   tags: string[] | null;
   isActive: boolean;
   hiddenByAdmin: boolean;
+  hideReason: string | null;
+  hiddenAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

@@ -10,6 +10,7 @@ export enum ConfigValueType {
 
 export enum ConfigGroup {
   LIMITS = 'limits',
+  GAMIFICATION = 'gamification',
   AI = 'ai',
   COMMERCE = 'commerce',
   FEATURES = 'features',

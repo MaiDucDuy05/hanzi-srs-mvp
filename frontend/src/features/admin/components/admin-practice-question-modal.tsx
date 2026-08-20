@@ -31,25 +31,17 @@ export const AdminPracticeQuestionModal = ({
         const topicsRes: any = await adminContentApi.getTopics({ limit: 100 });
         setTopics(topicsRes.data?.items || topicsRes.data || []);
 
-        // Fetch courses to get all lessons
-        const coursesRes: any = await adminContentApi.getCourses({ limit: 100 });
-        const courses = coursesRes.data?.items || coursesRes.data || [];
+        // Fetch all lessons directly
+        const lessonsRes: any = await adminContentApi.getAllLessons({ limit: 1000 });
+        const allLessons = lessonsRes.data?.items || lessonsRes.data || [];
         
-        const lessonsPromises = courses.map((c: any) => adminContentApi.getLessons(c.id, { limit: 100 }));
-        const lessonsResults: any[] = await Promise.all(lessonsPromises);
+        // Map to include course name if available
+        const enrichedLessons = allLessons.map((l: any) => ({
+          ...l,
+          courseName: l.level?.title || l.courseName || ''
+        }));
         
-        let allLessons: any[] = [];
-        lessonsResults.forEach((res, index) => {
-          const courseLessons = res.data?.items || res.data || [];
-          // Attach course name for better display
-          const enrichedLessons = courseLessons.map((l: any) => ({
-            ...l,
-            courseName: courses[index].title
-          }));
-          allLessons = [...allLessons, ...enrichedLessons];
-        });
-        
-        setLessons(allLessons);
+        setLessons(enrichedLessons);
       } catch (error) {
         console.error('Failed to fetch metadata:', error);
       } finally {

@@ -26,7 +26,7 @@ export const TeacherContentTable = () => {
         type: filterType || undefined,
         status: filterStatus || undefined,
       }) as any;
-      setContents(res.data?.items || res.data || []);
+      setContents(res.items || res.data?.items || res.data || []);
     } catch (error) {
       console.error('Failed to fetch teacher content:', error);
     } finally {
