@@ -11,20 +11,6 @@ const CONFIGS: Partial<SystemConfig>[] = [
     description: 'Giới hạn số lần chơi miễn phí hàng ngày cho tài khoản Free',
   },
   {
-    key: 'MAX_FLASHCARDS_PER_DECK',
-    value: '100',
-    valueType: ConfigValueType.INT,
-    group: ConfigGroup.LIMITS,
-    description: 'Số lượng flashcard tối đa trong một bộ từ vựng',
-  },
-  {
-    key: 'MAX_CUSTOM_DECKS',
-    value: '5',
-    valueType: ConfigValueType.INT,
-    group: ConfigGroup.LIMITS,
-    description: 'Số bộ từ vựng cá nhân tối đa người dùng Free có thể tạo',
-  },
-  {
     key: 'max_daily_exp',
     value: '200',
     valueType: ConfigValueType.INT,

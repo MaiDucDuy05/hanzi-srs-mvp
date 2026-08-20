@@ -105,10 +105,10 @@ export function AdminResourcesFeature() {
         {/* Top Header */}
         <div className="mb-10">
         <h1 className="text-[28px] leading-tight font-extrabold text-[#11321e] mb-2">
-          Tài nguyên Toàn cầu & Cài đặt Hệ thống
+          Tài Liệu
         </h1>
         <p className="text-sm text-gray-500 font-medium">
-          Quản lý tài liệu học tập và cấu hình thông số hệ thống cốt lõi.
+          Quản lý tài liệu học tập.
         </p>
       </div>
 
