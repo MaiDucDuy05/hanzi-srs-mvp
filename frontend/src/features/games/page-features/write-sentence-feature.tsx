@@ -22,7 +22,7 @@ export function WriteSentenceFeature({ sourceId, sourceType }: WriteSentenceFeat
     practiceType: 'SENTENCE_ORDERING',
     sourceId,
     sourceType,
-    sessionKey: 'write-sentence-session',
+    sessionKey: `write-sentence-session-${sourceId}`,
   });
 
   if (engine.status === 'loading') {

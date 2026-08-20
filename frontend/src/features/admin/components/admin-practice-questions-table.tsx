@@ -3,7 +3,8 @@
 
 import { useState, useEffect } from 'react';
 import { adminContentApi } from '@/lib/api/endpoints/admin-content';
-import { Edit2, Trash2, Search, Plus, X, ListPlus } from 'lucide-react';
+import { Edit2, Trash2, Search, ListPlus } from 'lucide-react';
+import { AdminPracticeQuestionModal } from './admin-practice-question-modal';
 
 export const AdminPracticeQuestionsTable = () => {
   const [questions, setQuestions] = useState<any[]>([]);
@@ -59,8 +60,8 @@ export const AdminPracticeQuestionsTable = () => {
     if (question) {
       setEditForm({ 
         ...question, 
-        questionData: JSON.stringify(question.questionData || {}, null, 2),
-        answerData: JSON.stringify(question.answerData || {}, null, 2)
+        questionData: question.questionData || {},
+        answerData: question.answerData || {}
       });
     } else {
       setEditForm({ 
@@ -68,8 +69,8 @@ export const AdminPracticeQuestionsTable = () => {
         questionType: 'FILL_BLANK', 
         answerType: 'TEXT',
         levelId: '',
-        questionData: '{}',
-        answerData: '{}',
+        questionData: {},
+        answerData: {},
         isActive: true,
         status: 'PUBLISHED'
       });
@@ -84,21 +85,24 @@ export const AdminPracticeQuestionsTable = () => {
 
   const handleSave = async () => {
     try {
-      let parsedQuestion = {};
-      let parsedAnswer = {};
-      try {
-        parsedQuestion = JSON.parse(editForm.questionData || '{}');
-        parsedAnswer = JSON.parse(editForm.answerData || '{}');
-      } catch {
-        alert('Dữ liệu JSON không hợp lệ!');
-        return;
+      let parsedQuestion = editForm.questionData;
+      let parsedAnswer = editForm.answerData;
+      
+      // Fallback if they somehow remained strings
+      if (typeof parsedQuestion === 'string') {
+        try { parsedQuestion = JSON.parse(parsedQuestion || '{}'); } catch { alert('Dữ liệu JSON không hợp lệ!'); return; }
+      }
+      if (typeof parsedAnswer === 'string') {
+        try { parsedAnswer = JSON.parse(parsedAnswer || '{}'); } catch { alert('Dữ liệu JSON không hợp lệ!'); return; }
       }
 
       const payload = {
         ...editForm,
         questionData: parsedQuestion,
         answerData: parsedAnswer,
-        levelId: editForm.levelId ? parseInt(editForm.levelId) : null
+        levelId: editForm.levelId || null,
+        lessonId: editForm.lessonId || null,
+        topicId: editForm.topicId || null
       };
 
       if (payload.id) {
@@ -217,114 +221,13 @@ export const AdminPracticeQuestionsTable = () => {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white rounded-3xl w-full max-w-4xl overflow-hidden shadow-2xl">
-            <div className="p-6 border-b flex justify-between items-center bg-gray-50/50">
-              <h2 className="text-xl font-bold text-[#11321e]">
-                {editForm.id ? 'Sửa Câu hỏi Luyện tập' : 'Thêm Câu hỏi Luyện tập'}
-              </h2>
-              <button onClick={handleCloseModal} className="text-gray-400 hover:text-gray-700 p-2">
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Đề bài (Prompt)</label>
-                <input 
-                  type="text" 
-                  className="w-full p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[#c7cf35]" 
-                  placeholder="Ví dụ: Chọn đáp án đúng..."
-                  value={editForm.prompt || ''} 
-                  onChange={(e) => setEditForm({...editForm, prompt: e.target.value})} 
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Question Type</label>
-                  <select 
-                    className="w-full border p-2.5 rounded-xl focus:ring-2 focus:ring-[#c7cf35] outline-none bg-white border-gray-200"
-                    value={editForm.questionType || 'FILL_BLANK'} 
-                    onChange={e => setEditForm({...editForm, questionType: e.target.value})}
-                  >
-                    <option value="FILL_BLANK">FILL_BLANK</option>
-                    <option value="SENTENCE_ORDERING">SENTENCE_ORDERING</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Answer Type</label>
-                  <select 
-                    className="w-full border p-2.5 rounded-xl focus:ring-2 focus:ring-[#c7cf35] outline-none bg-white border-gray-200"
-                    value={editForm.answerType || 'TEXT'} 
-                    onChange={e => setEditForm({...editForm, answerType: e.target.value})}
-                  >
-                    <option value="TEXT">TEXT</option>
-                    <option value="AUDIO">AUDIO</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">HSK Level</label>
-                  <select 
-                    className="w-full border p-2.5 rounded-xl focus:ring-2 focus:ring-[#c7cf35] outline-none bg-white border-gray-200"
-                    value={editForm.levelId || ''} 
-                    onChange={e => setEditForm({...editForm, levelId: e.target.value})}
-                  >
-                    <option value="">-- Chọn Level --</option>
-                    {hskLevels.map(level => (
-                      <option key={level.id} value={level.id}>{level.name || `HSK ${level.level}`}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Question Data (JSON)</label>
-                  <textarea 
-                    className="w-full border p-4 rounded-xl focus:ring-2 focus:ring-[#c7cf35] outline-none font-mono text-sm h-48 border-gray-200 bg-gray-50" 
-                    value={editForm.questionData || ''} 
-                    onChange={e => setEditForm({...editForm, questionData: e.target.value})} 
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Answer Data (JSON)</label>
-                  <textarea 
-                    className="w-full border p-4 rounded-xl focus:ring-2 focus:ring-[#c7cf35] outline-none font-mono text-sm h-48 border-gray-200 bg-gray-50" 
-                    value={editForm.answerData || ''} 
-                    onChange={e => setEditForm({...editForm, answerData: e.target.value})} 
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input 
-                  type="checkbox" 
-                  id="isActive"
-                  className="w-4 h-4 text-[#c7cf35] rounded border-gray-300 focus:ring-[#c7cf35]"
-                  checked={editForm.isActive ?? true} 
-                  onChange={e => setEditForm({...editForm, isActive: e.target.checked})} 
-                />
-                <label htmlFor="isActive" className="text-sm font-semibold text-gray-700 cursor-pointer">Kích hoạt</label>
-              </div>
-            </div>
-
-            <div className="p-6 border-t bg-gray-50 flex justify-end gap-3">
-              <button 
-                onClick={handleCloseModal}
-                className="px-6 py-2 rounded-xl font-bold text-gray-600 hover:bg-gray-200 transition-colors"
-              >
-                Hủy
-              </button>
-              <button 
-                onClick={handleSave}
-                className="px-6 py-2 rounded-xl font-bold bg-[#c7cf35] text-[#11321e] hover:bg-[#dde8a6] shadow-sm transition-colors"
-              >
-                Lưu Câu hỏi
-              </button>
-            </div>
-          </div>
-        </div>
+        <AdminPracticeQuestionModal
+          editForm={editForm}
+          setEditForm={setEditForm}
+          hskLevels={hskLevels}
+          onClose={handleCloseModal}
+          onSave={handleSave}
+        />
       )}
     </div>
   );

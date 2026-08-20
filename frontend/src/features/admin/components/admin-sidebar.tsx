@@ -9,9 +9,9 @@ import {
   CreditCard,
   FolderOpen,
   Settings,
-  UserCircle,
   ShieldAlert,
-  GraduationCap
+  GraduationCap,
+  Target
 } from 'lucide-react';
 
 import { useAuth } from '@/lib/auth/auth-context';
@@ -20,6 +20,7 @@ import { LogOut } from 'lucide-react';
 const NAV_ITEMS = [
   { href: '/admin', title: 'Dashboard', icon: LayoutDashboard, exact: true },
   { href: '/admin/curriculum', title: 'Content', icon: BookOpen },
+  { href: '/admin/questions', title: 'Questions', icon: Target },
   { href: '/admin/teacher-content', title: 'Teacher', icon: GraduationCap },
   { href: '/admin/users', title: 'Users', icon: Users },
   { href: '/admin/subscriptions', title: 'Subscriptions', icon: CreditCard },

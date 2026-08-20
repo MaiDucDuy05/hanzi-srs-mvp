@@ -55,11 +55,17 @@ export function WriteSentenceBoard({
   
   // Try to reconstruct the initial string from tokenIds (in case user goes back)
   const [inputValue, setInputValue] = useState('');
+  const [shuffledTokens, setShuffledTokens] = useState<SentenceToken[]>([]);
+  const [showHints, setShowHints] = useState(false);
   
   useEffect(() => {
     if (q) {
       const tokens = currentTokenIds.map(id => q.tokens.find(t => t.id === id)?.text || '').join('');
       setInputValue(tokens);
+      
+      // Generate shuffled hints
+      const shuffled = [...q.tokens].sort(() => Math.random() - 0.5);
+      setShuffledTokens(shuffled);
     }
   }, [q?.questionId]);
 
@@ -78,6 +84,7 @@ export function WriteSentenceBoard({
     if (isLast) {
       onSubmit();
     } else {
+      setShowHints(false);
       onNext();
     }
   };
@@ -112,8 +119,36 @@ export function WriteSentenceBoard({
           }}
           placeholder="Nhập tiếng Trung..."
           autoFocus
-          className="w-full text-center text-3xl p-4 bg-transparent border-b-2 border-gray-300 focus:border-[#215b3b] outline-none transition-colors mb-8 font-sans"
+          className="w-full text-center text-3xl p-4 bg-transparent border-b-2 border-gray-300 focus:border-[#215b3b] outline-none transition-colors mb-6 font-sans"
         />
+
+        {/* Word Hints Section */}
+        <div className="w-full flex flex-col items-center mb-8">
+          {!showHints ? (
+            <button 
+              onClick={() => setShowHints(true)}
+              className="text-sm font-bold text-gray-400 hover:text-[#215b3b] transition-colors flex items-center gap-2"
+            >
+              💡 Cần gợi ý từ vựng?
+            </button>
+          ) : (
+            <div className="flex flex-wrap justify-center gap-2">
+              {shuffledTokens.map((token, idx) => (
+                <button
+                  key={`${token.id}-${idx}`}
+                  onClick={() => {
+                    const newVal = inputValue + token.text;
+                    setInputValue(newVal);
+                    onUpdateAnswers(parseTokens(newVal, q.tokens));
+                  }}
+                  className="px-4 py-2 bg-white border-2 border-gray-200 text-gray-700 font-bold text-xl rounded-xl hover:border-[#215b3b] hover:text-[#215b3b] hover:bg-[#eef7e9] transition-all shadow-sm active:scale-95"
+                >
+                  {token.text}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         <div className="flex items-center gap-3 w-full">
           <button
