@@ -2,77 +2,102 @@ import { apiFetch } from '../client';
 import { toQuery } from './utils';
 
 export const adminContentApi = {
+  // HSK Levels
+  getHskLevels: () => apiFetch(`/hsk-levels`, { method: 'GET' }),
+
   // Courses
   getCourses: (params?: Record<string, string | number | boolean | undefined>) =>
-    apiFetch(`/v1/admin/courses${toQuery(params)}`, { method: 'GET' }),
+    apiFetch(`/admin/courses${toQuery(params)}`, { method: 'GET' }),
   createCourse: (data: any) =>
-    apiFetch(`/v1/admin/courses`, { method: 'POST', body: JSON.stringify(data) }),
+    apiFetch(`/admin/courses`, { method: 'POST', body: JSON.stringify(data) }),
   updateCourse: (id: string, data: any) =>
-    apiFetch(`/v1/admin/courses/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    apiFetch(`/admin/courses/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   updateCourseStatus: (id: string, status: string) =>
-    apiFetch(`/v1/admin/courses/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+    apiFetch(`/admin/courses/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
 
   // Lessons
+  getAllLessons: (params?: Record<string, string | number | boolean | undefined>) =>
+    apiFetch(`/admin/lessons${toQuery(params)}`, { method: 'GET' }),
   getLessons: (courseId: string, params?: Record<string, string | number | boolean | undefined>) =>
-    apiFetch(`/v1/admin/courses/${courseId}/lessons${toQuery(params)}`, { method: 'GET' }),
+    apiFetch(`/admin/courses/${courseId}/lessons${toQuery(params)}`, { method: 'GET' }),
   createLesson: (courseId: string, data: any) =>
-    apiFetch(`/v1/admin/courses/${courseId}/lessons`, { method: 'POST', body: JSON.stringify(data) }),
+    apiFetch(`/admin/courses/${courseId}/lessons`, { method: 'POST', body: JSON.stringify(data) }),
   updateLesson: (id: string, data: any) =>
-    apiFetch(`/v1/admin/lessons/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    apiFetch(`/admin/lessons/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   updateLessonStatus: (id: string, status: string) =>
-    apiFetch(`/v1/admin/lessons/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+    apiFetch(`/admin/lessons/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
   reorderLessons: (items: { id: string; order: number }[]) =>
-    apiFetch(`/v1/admin/lessons/reorder`, { method: 'PUT', body: JSON.stringify({ items }) }),
+    apiFetch(`/admin/lessons/reorder`, { method: 'PUT', body: JSON.stringify({ items }) }),
+
+  // Lesson Contents (Linking vocab/grammar to lessons)
+  getLessonContents: (params?: Record<string, string | number | boolean | undefined>) =>
+    apiFetch(`/lesson-contents${toQuery(params)}`, { method: 'GET' }),
+  addLessonContent: (data: any) =>
+    apiFetch(`/lesson-contents`, { method: 'POST', body: JSON.stringify(data) }),
+  removeLessonContent: (id: string) =>
+    apiFetch(`/lesson-contents/${id}`, { method: 'DELETE' }),
 
   // Vocabularies
   getVocabularies: (params?: Record<string, string | number | boolean | undefined>) =>
-    apiFetch(`/v1/admin/vocabularies${toQuery(params)}`, { method: 'GET' }),
+    apiFetch(`/admin/vocabularies${toQuery(params)}`, { method: 'GET' }),
   importVocabulariesCsv: (data: FormData) =>
-    apiFetch(`/v1/admin/vocabularies/import`, { method: 'POST', body: data, contentType: false }),
+    apiFetch(`/admin/vocabularies/import`, { method: 'POST', body: data, contentType: false }),
   createVocabulary: (data: any) =>
-    apiFetch(`/v1/admin/vocabularies`, { method: 'POST', body: JSON.stringify(data) }),
+    apiFetch(`/admin/vocabularies`, { method: 'POST', body: JSON.stringify(data) }),
   updateVocabulary: (id: string, data: any) =>
-    apiFetch(`/v1/admin/vocabularies/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    apiFetch(`/admin/vocabularies/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteVocabulary: (id: string) =>
-    apiFetch(`/v1/admin/vocabularies/${id}`, { method: 'DELETE' }),
+    apiFetch(`/admin/vocabularies/${id}`, { method: 'DELETE' }),
   exportVocabulariesCsv: () =>
-    apiFetch(`/v1/admin/vocabularies/export`, { method: 'GET' }),
+    apiFetch(`/admin/vocabularies/export`, { method: 'GET' }),
   uploadVocabularyAudio: (id: string, data: FormData) =>
-    apiFetch(`/v1/admin/vocabularies/${id}/audio`, { method: 'POST', body: data, contentType: false }),
+    apiFetch(`/admin/vocabularies/${id}/audio`, { method: 'POST', body: data, contentType: false }),
 
   // Grammars
   getGrammars: (params?: Record<string, string | number | boolean | undefined>) =>
-    apiFetch(`/v1/admin/grammars${toQuery(params)}`, { method: 'GET' }),
+    apiFetch(`/admin/grammars${toQuery(params)}`, { method: 'GET' }),
   createGrammar: (data: any) =>
-    apiFetch(`/v1/admin/grammars`, { method: 'POST', body: JSON.stringify(data) }),
+    apiFetch(`/admin/grammars`, { method: 'POST', body: JSON.stringify(data) }),
   updateGrammar: (id: string, data: any) =>
-    apiFetch(`/v1/admin/grammars/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    apiFetch(`/admin/grammars/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteGrammar: (id: string) =>
-    apiFetch(`/v1/admin/grammars/${id}`, { method: 'DELETE' }),
+    apiFetch(`/admin/grammars/${id}`, { method: 'DELETE' }),
+  exportGrammarsCsv: () =>
+    apiFetch(`/admin/grammars/export`, { method: 'GET' }),
 
   // Topics
   getTopics: (params?: Record<string, string | number | boolean | undefined>) =>
-    apiFetch(`/v1/admin/topics${toQuery(params)}`, { method: 'GET' }),
+    apiFetch(`/admin/topics${toQuery(params)}`, { method: 'GET' }),
   createTopic: (data: any) =>
-    apiFetch(`/v1/admin/topics`, { method: 'POST', body: JSON.stringify(data) }),
+    apiFetch(`/admin/topics`, { method: 'POST', body: JSON.stringify(data) }),
   updateTopic: (id: string, data: any) =>
-    apiFetch(`/v1/admin/topics/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    apiFetch(`/admin/topics/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   updateTopicStatus: (id: string, status: string) =>
-    apiFetch(`/v1/admin/topics/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
+    apiFetch(`/admin/topics/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
   getTopicVocabularies: (topicId: string) =>
-    apiFetch(`/v1/admin/topics/${topicId}/vocabularies`, { method: 'GET' }),
+    apiFetch(`/admin/topics/${topicId}/vocabularies`, { method: 'GET' }),
   assignTopicVocabularies: (topicId: string, vocabularyIds: string[]) =>
-    apiFetch(`/v1/admin/topics/${topicId}/vocabularies`, { method: 'POST', body: JSON.stringify({ vocabularyIds }) }),
+    apiFetch(`/admin/topics/${topicId}/vocabularies`, { method: 'POST', body: JSON.stringify({ vocabularyIds }) }),
   removeTopicVocabulary: (topicId: string, vocabId: string) =>
-    apiFetch(`/v1/admin/topics/${topicId}/vocabularies/${vocabId}`, { method: 'PUT' }),
+    apiFetch(`/admin/topics/${topicId}/vocabularies/${vocabId}`, { method: 'PUT' }),
 
-  // Questions
+  // Practice Questions (Old system)
   getQuestions: (params?: Record<string, string | number | boolean | undefined>) =>
-    apiFetch(`/v1/admin/questions${toQuery(params)}`, { method: 'GET' }),
+    apiFetch(`/admin/questions${toQuery(params)}`, { method: 'GET' }),
   createQuestion: (data: any) =>
-    apiFetch(`/v1/admin/questions`, { method: 'POST', body: JSON.stringify(data) }),
+    apiFetch(`/admin/questions`, { method: 'POST', body: JSON.stringify(data) }),
   updateQuestion: (id: string, data: any) =>
-    apiFetch(`/v1/admin/questions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    apiFetch(`/admin/questions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteQuestion: (id: string) =>
-    apiFetch(`/v1/admin/questions/${id}`, { method: 'DELETE' }),
+    apiFetch(`/admin/questions/${id}`, { method: 'DELETE' }),
+
+  // Exam/Bank Questions (New system via question-bank)
+  getExamQuestions: (params?: Record<string, string | number | boolean | undefined>) =>
+    apiFetch(`/questions${toQuery(params)}`, { method: 'GET' }),
+  createExamQuestion: (data: any) =>
+    apiFetch(`/questions`, { method: 'POST', body: JSON.stringify(data) }),
+  updateExamQuestion: (id: string, data: any) =>
+    apiFetch(`/questions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteExamQuestion: (id: string) =>
+    apiFetch(`/questions/${id}`, { method: 'DELETE' }),
 };

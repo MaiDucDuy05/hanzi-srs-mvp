@@ -17,7 +17,6 @@ export class AdminCoursesService {
     const page = parseInt(query.page) || 1;
     
     const qb = this.courseRepo.createQueryBuilder('course')
-      .where('course.isActive = :isActive', { isActive: true })
       .skip((page - 1) * limit)
       .take(limit)
       .orderBy('course.displayOrder', 'ASC')
@@ -49,7 +48,7 @@ export class AdminCoursesService {
   }
 
   async update(id: string, data: any, adminId: string, ipAddress: string) {
-    const course = await this.courseRepo.findOne({ where: { id, isActive: true } });
+    const course = await this.courseRepo.findOne({ where: { id } });
     if (!course) throw new NotFoundException('Course not found');
 
     const oldValue = { ...course };
@@ -61,7 +60,7 @@ export class AdminCoursesService {
   }
 
   async changeStatus(id: string, status: string, adminId: string, ipAddress: string) {
-    const course = await this.courseRepo.findOne({ where: { id, isActive: true } });
+    const course = await this.courseRepo.findOne({ where: { id } });
     if (!course) throw new NotFoundException('Course not found');
 
     const oldStatus = course.status;

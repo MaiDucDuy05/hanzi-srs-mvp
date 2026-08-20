@@ -143,10 +143,16 @@ export function QuestionBankFeature() {
                     <Badge tone={q.difficulty === 'EASY' ? 'green' : q.difficulty === 'HARD' ? 'red' : 'amber'}>{q.difficulty}</Badge>
                     {q.hskLevel && <Badge tone="blue">HSK {q.hskLevel}</Badge>}
                     <Badge tone={q.visibility === 'PUBLIC' ? 'green' : 'gray'}>{q.visibility}</Badge>
+                    {q.hiddenByAdmin && <Badge tone="red">Bị ẩn</Badge>}
                   </div>
                   <div className="text-sm font-medium">
                     {(q.content as any)?.questionText || (q.content as any)?.prompt || (q.content as any)?.question || (q.content as any)?.sentence || '(Không có nội dung)'}
                   </div>
+                  {q.hiddenByAdmin && (
+                    <div className="mt-2 text-sm text-red-600 bg-red-50 p-2 rounded-md">
+                      <strong>Lý do phạt:</strong> {q.hideReason || 'Không có lý do'}
+                    </div>
+                  )}
                   {q.tags && q.tags.length > 0 && (
                     <div className="flex gap-1 mt-2">
                       {q.tags.map(t => <span key={t} className="text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-600">#{t}</span>)}
@@ -158,9 +164,11 @@ export function QuestionBankFeature() {
                   <Button variant="outline" size="sm" onClick={() => setPreviewQuestion(q)}>Xem</Button>
                   {(user?.role === 'ADMIN' || q.creatorId === user?.id) && (
                     <>
-                      <Link href={`/teacher/questions/create?edit=${q.id}`}>
-                        <Button variant="outline" size="sm" className="text-brand-600 border-brand-200 hover:bg-brand-50">Sửa</Button>
-                      </Link>
+                      {!q.hiddenByAdmin && (
+                        <Link href={`/teacher/questions/create?edit=${q.id}`}>
+                          <Button variant="outline" size="sm" className="text-brand-600 border-brand-200 hover:bg-brand-50">Sửa</Button>
+                        </Link>
+                      )}
                       <Button variant="danger" size="sm" onClick={() => remove(q.id)}>Xóa</Button>
                     </>
                   )}

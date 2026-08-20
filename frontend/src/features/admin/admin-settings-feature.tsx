@@ -19,10 +19,10 @@ import { adminConfigsApi, SystemConfig } from '@/lib/api/endpoints/admin-configs
 const TABS = [
   { id: 'limits', label: 'Giới hạn & Lượt chơi', icon: Gamepad2, description: 'Lượt tập miễn phí, giới hạn sĩ số' },
   { id: 'gamification', label: 'Điểm thưởng EXP', icon: ShieldCheck, description: 'Cấu hình hệ thống EXP & Game' },
-  { id: 'ai', label: 'Cấu hình AI', icon: Cpu, description: 'Provider, giới hạn lượt tạo AI' },
   { id: 'commerce', label: 'Thương mại & Giá', icon: CreditCard, description: 'Giá VIP, giới hạn dung lượng upload' },
-  { id: 'features', label: 'Feature Flags', icon: Layers, description: 'Bật/tắt các tính năng lớn' },
-  { id: 'system', label: 'Hệ thống', icon: Server, description: 'Bảo trì, email liên hệ' },
+  // { id: 'ai', label: 'Cấu hình AI', icon: Cpu, description: 'Provider, giới hạn lượt tạo AI' },
+  // { id: 'features', label: 'Feature Flags', icon: Layers, description: 'Bật/tắt các tính năng lớn' },
+  // { id: 'system', label: 'Hệ thống', icon: Server, description: 'Bảo trì, email liên hệ' },
 ];
 
 function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {

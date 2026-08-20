@@ -67,4 +67,17 @@ export class AdminGrammarsService {
 
     await this.auditLogService.logAction(adminId, 'DELETE_GRAMMAR', 'GRAMMAR', grammar.id, ipAddress, { oldValue: grammar });
   }
+
+  async exportCsv() {
+    const grammars = await this.grammarRepo.find({ 
+      where: { isActive: true },
+      relations: ['level']
+    });
+    let csv = 'title,structure,explanation,hsk_level\n';
+    grammars.forEach(g => {
+      // Format basic CSV with quotes for text fields
+      csv += `"${g.title}","${g.structure || ''}","${(g.explanation || '').replace(/"/g, '""')}","${g.level?.name || ''}"\n`;
+    });
+    return csv;
+  }
 }

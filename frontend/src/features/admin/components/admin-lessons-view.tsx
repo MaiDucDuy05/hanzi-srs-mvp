@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { adminContentApi } from '@/lib/api/endpoints/admin-content';
 import { Edit2, Plus, X, MoreVertical, Eye, EyeOff } from 'lucide-react';
+import { LessonContentManager } from './lesson-content-manager';
 
 export const AdminLessonsView = () => {
   const [courses, setCourses] = useState<any[]>([]);
@@ -18,6 +19,8 @@ export const AdminLessonsView = () => {
   const [editForm, setEditForm] = useState<any>({});
   
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  
+  const [managingLessonId, setManagingLessonId] = useState<string | null>(null);
 
   // 1. Lấy danh sách khóa học để làm Filter
   useEffect(() => {
@@ -216,7 +219,7 @@ export const AdminLessonsView = () => {
                         Sửa bài học
                       </button>
                       <button 
-                        onClick={() => { alert('Tính năng Quản lý nội dung (Thêm từ vựng/Ngữ pháp) sắp ra mắt!'); setOpenMenuId(null); }}
+                        onClick={() => { setManagingLessonId(lesson.id); setOpenMenuId(null); }}
                         className="w-full text-left px-4 py-2.5 text-[13px] font-bold text-gray-500 hover:text-[#11321e] hover:bg-gray-50 transition-colors"
                       >
                         Quản lý nội dung
@@ -337,6 +340,14 @@ export const AdminLessonsView = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {managingLessonId && (
+        <LessonContentManager 
+          lessonId={managingLessonId} 
+          courseId={selectedCourseId!} 
+          onClose={() => setManagingLessonId(null)} 
+        />
       )}
     </div>
   );

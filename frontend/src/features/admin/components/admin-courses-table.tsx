@@ -97,7 +97,7 @@ export const AdminCoursesTable = () => {
               <th className="p-4 font-semibold text-gray-600">Tên Khóa Học</th>
               <th className="p-4 font-semibold text-gray-600">Thứ tự</th>
               <th className="p-4 font-semibold text-gray-600">Trạng thái</th>
-              <th className="p-4 font-semibold text-gray-600">Hiển thị (Active)</th>
+              <th className="p-4 font-semibold text-gray-600">Hiển thị</th>
               <th className="p-4 font-semibold text-gray-600 rounded-tr-xl">Thao tác</th>
             </tr>
           </thead>
@@ -159,10 +159,11 @@ export const AdminCoursesTable = () => {
                         >
                           <option value="DRAFT">Nháp</option>
                           <option value="PUBLISHED">Công khai</option>
+                          <option value="HIDDEN">Đã ẩn</option>
                         </select>
                       ) : (
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${course.status === 'PUBLISHED' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                          {course.status === 'PUBLISHED' ? 'Đã xuất bản' : 'Bản nháp'}
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${course.status === 'PUBLISHED' ? 'bg-green-100 text-green-700' : course.status === 'HIDDEN' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-700'}`}>
+                          {course.status === 'PUBLISHED' ? 'Đã xuất bản' : course.status === 'HIDDEN' ? 'Đã ẩn' : 'Bản nháp'}
                         </span>
                       )}
                     </td>

@@ -4,10 +4,16 @@ import { Roles } from '../../auth/decorators/roles.decorator';
 import { Role } from '../../../common/enums/user.enums';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 
-@Controller('v1/admin')
+@Controller('admin')
 @Roles(Role.ADMIN)
 export class AdminLessonsController {
   constructor(private readonly adminLessonsService: AdminLessonsService) {}
+
+  @Get('lessons')
+  async findAll(@Query() query: any) {
+    const result = await this.adminLessonsService.findAll(query);
+    return { data: result, message: 'All lessons retrieved successfully' };
+  }
 
   @Get('courses/:courseId/lessons')
   async findAllByCourse(@Param('courseId') courseId: string, @Query() query: any) {

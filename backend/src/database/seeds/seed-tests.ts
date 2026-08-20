@@ -95,9 +95,9 @@ async function run(): Promise<void> {
         visibility: QuestionVisibility.PRIVATE,
         difficulty: QuestionDifficulty.MEDIUM,
         content: {
-          questionText: q.content,
+          question: q.content,
           options,
-          correct_answer: q.type !== TestQuestionType.SHORT_ANSWER ? correctAns : undefined,
+          correctAnswer: q.type !== TestQuestionType.SHORT_ANSWER ? correctAns : undefined,
           acceptedAnswers: q.type === TestQuestionType.SHORT_ANSWER ? correctAns : undefined,
         },
       });

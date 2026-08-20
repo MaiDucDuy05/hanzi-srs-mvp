@@ -16,7 +16,7 @@ export function SentenceGameFeature({ sourceType, sourceId }: { sourceType: Sour
     practiceType: 'SENTENCE_ORDERING',
     sourceType,
     sourceId,
-    sessionKey: 'sentence-ordering-session',
+    sessionKey: `sentence-ordering-session-${sourceId}`,
   });
 
   useEffect(() => {

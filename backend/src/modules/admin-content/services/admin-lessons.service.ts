@@ -34,6 +34,29 @@ export class AdminLessonsService {
     };
   }
 
+  async findAll(query: any) {
+    const limit = parseInt(query.limit) || 1000;
+    const page = parseInt(query.page) || 1;
+    
+    const qb = this.lessonRepo.createQueryBuilder('lesson')
+      .leftJoinAndSelect('lesson.level', 'course')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .orderBy('course.displayOrder', 'ASC') 
+      .addOrderBy('lesson.displayOrder', 'ASC')
+      .addOrderBy('lesson.createdAt', 'DESC');
+
+    if (query.status) qb.andWhere('lesson.status = :status', { status: query.status });
+    if (query.search) qb.andWhere('lesson.title ILIKE :search', { search: `%${query.search}%` });
+
+    const [data, total] = await qb.getManyAndCount();
+
+    return {
+      items: data,
+      meta: { total, page, limit, totalPages: Math.ceil(total / limit) }
+    };
+  }
+
   async create(courseId: string, data: any, adminId: string, ipAddress: string) {
     const newLesson = this.lessonRepo.create({
       ...data,

@@ -32,18 +32,79 @@ export const ContentDetailModal = ({ isOpen, onClose, content, loading }: Conten
               <div>
                 <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Tiêu đề / Nội dung chính</label>
                 <div className="mt-1 text-gray-900 font-medium whitespace-pre-wrap bg-gray-50 p-4 rounded-2xl">
-                  {content.title || content.name || content.prompt || '(Không có)'}
+                  {content.type === 'question' 
+                    ? (content.content?.question || content.content?.questionText || '(Không có nội dung câu hỏi)')
+                    : (content.title || content.name || content.prompt || '(Không có)')}
                 </div>
               </div>
+
+              {content.type === 'question' && content.content && (
+                <div className="mt-4 p-4 border border-gray-100 rounded-2xl bg-white shadow-sm space-y-3">
+                  <h4 className="text-sm font-bold text-gray-700">Dữ liệu Câu hỏi:</h4>
+                  
+                  {content.content.options && Array.isArray(content.content.options) && (
+                    <div>
+                      <span className="text-xs font-semibold text-gray-500">Các lựa chọn:</span>
+                      <ul className="list-disc list-inside mt-1 ml-2 text-sm text-gray-800">
+                        {content.content.options.map((opt: any, i: number) => (
+                          <li key={i}>{typeof opt === 'object' && opt !== null ? (opt.text || JSON.stringify(opt)) : String(opt)}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {(content.content.correctAnswer !== undefined || content.content.correct_answer !== undefined) && (
+                    <div>
+                      <span className="text-xs font-semibold text-gray-500">Đáp án đúng:</span>
+                      <div className="mt-1 font-mono text-sm bg-green-50 text-green-700 px-2 py-1 rounded inline-block">
+                        {typeof (content.content.correctAnswer ?? content.content.correct_answer) === 'object'
+                          ? JSON.stringify(content.content.correctAnswer ?? content.content.correct_answer)
+                          : String(content.content.correctAnswer ?? content.content.correct_answer)}
+                      </div>
+                    </div>
+                  )}
+
+                  {content.content.acceptedAnswers && Array.isArray(content.content.acceptedAnswers) && (
+                    <div>
+                      <span className="text-xs font-semibold text-gray-500">Các đáp án chấp nhận (Điền khuyết):</span>
+                      <div className="mt-1 flex flex-wrap gap-2">
+                        {content.content.acceptedAnswers.map((ans: any, i: number) => (
+                          <span key={i} className="font-mono text-sm bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                            {typeof ans === 'object' && ans !== null ? (ans.text || JSON.stringify(ans)) : String(ans)}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {content.content.correctOrder && Array.isArray(content.content.correctOrder) && (
+                    <div>
+                      <span className="text-xs font-semibold text-gray-500">Thứ tự đúng (Sắp xếp):</span>
+                      <div className="mt-1 font-mono text-sm bg-purple-50 text-purple-700 px-2 py-1 rounded inline-block">
+                        {content.content.correctOrder.map((item: any) => typeof item === 'object' && item !== null ? (item.text || JSON.stringify(item)) : String(item)).join(' ➔ ')}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {content.explanation && (
+                    <div>
+                      <span className="text-xs font-semibold text-gray-500">Giải thích:</span>
+                      <div className="mt-1 text-sm text-gray-700 italic">
+                        {content.explanation}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 mt-4">
                 <div>
                   <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">ID</label>
-                  <div className="mt-1 text-gray-900">{content.id}</div>
+                  <div className="mt-1 text-gray-900 truncate" title={content.id}>{content.id}</div>
                 </div>
                 <div>
-                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Phân loại</label>
-                  <div className="mt-1 text-gray-900">{content.type}</div>
+                  <label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Phân loại (Sub-type)</label>
+                  <div className="mt-1 text-gray-900 font-mono text-sm">{content.question_type || content.type}</div>
                 </div>
               </div>
               

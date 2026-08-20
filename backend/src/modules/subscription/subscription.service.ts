@@ -42,6 +42,7 @@ function today(): string {
 export class SubscriptionService {
   constructor(
     @InjectRepository(Subscription) private repo: Repository<Subscription>,
+    private configCache: ConfigCacheService,
   ) {}
   async findAll(q: SubscriptionQueryDto) {
     const { page = 1, limit = 20, userId, plan, status } = q;
@@ -101,7 +102,19 @@ export class SubscriptionService {
       },
     });
     if (!sub) return false;
-    if (sub.expiresAt && new Date(sub.expiresAt) < new Date()) return false;
+    
+    if (sub.expiresAt) {
+      const gracePeriodDays = await this.configCache.get('VIP_GRACE_PERIOD_DAYS', 7);
+      const expiryDate = new Date(sub.expiresAt);
+      
+      // Add grace period to expiry date
+      const effectiveExpiryDate = new Date(expiryDate);
+      effectiveExpiryDate.setDate(effectiveExpiryDate.getDate() + Number(gracePeriodDays));
+      
+      if (effectiveExpiryDate < new Date()) {
+        return false;
+      }
+    }
     return true;
   }
 }
@@ -136,7 +149,7 @@ export class DailyUsageService {
     // Read from central SystemConfig via cache
     // The previous PracticeLimitSettings entity is kept for backward compatibility if needed,
     // but the system config takes precedence in PR-31.
-    const limit = await this.configCache.get('free_attempt_limit', 3);
+    const limit = await this.configCache.get('FREE_DAILY_PLAY_LIMIT', 3);
     return Number(limit);
   }
 

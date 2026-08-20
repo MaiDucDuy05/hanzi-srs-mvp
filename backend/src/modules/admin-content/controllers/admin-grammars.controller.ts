@@ -4,7 +4,7 @@ import { Roles } from '../../auth/decorators/roles.decorator';
 import { Role } from '../../../common/enums/user.enums';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 
-@Controller('v1/admin/grammars')
+@Controller('admin/grammars')
 @Roles(Role.ADMIN)
 export class AdminGrammarsController {
   constructor(private readonly adminGrammarsService: AdminGrammarsService) {}
@@ -13,6 +13,12 @@ export class AdminGrammarsController {
   async findAll(@Query() query: any) {
     const result = await this.adminGrammarsService.findAll(query);
     return { data: result, message: 'Grammars retrieved successfully' };
+  }
+
+  @Get('export')
+  async exportCsv() {
+    const csvContent = await this.adminGrammarsService.exportCsv();
+    return csvContent;
   }
 
   @Post()

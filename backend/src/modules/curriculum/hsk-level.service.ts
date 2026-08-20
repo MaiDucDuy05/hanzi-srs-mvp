@@ -5,6 +5,7 @@ import { HskLevel } from './entities/hsk-level.entity';
 import { Vocabulary } from './entities/vocabulary.entity';
 import { CreateHskLevelDto, UpdateHskLevelDto } from './dto/curriculum.dto';
 import { PaginationQueryDto } from '../../common/pagination.dto';
+import { ContentStatus } from '../../common/enums/curriculum.enums';
 import {
   paginatedResult,
   findOrNotFound,
@@ -29,6 +30,10 @@ export class HskLevelService {
       sortOrder = 'ASC',
     } = q;
     const [data, total] = await this.repo.findAndCount({
+      where: {
+        isActive: true,
+        status: ContentStatus.PUBLISHED,
+      },
       skip: (page - 1) * limit,
       take: limit,
       order: { [sortBy]: sortOrder },
@@ -60,9 +65,10 @@ export class HskLevelService {
   }
 
   async findById(id: string): Promise<HskLevelWithCount> {
-    const level = await findOrNotFound<HskLevel>(this.repo, id, 'HSK level');
+    const level = await this.repo.findOne({ where: { id, isActive: true, status: ContentStatus.PUBLISHED } });
+    if (!level) throw new Error('HSK level not found');
     const count = await this.vocabRepo.count({ where: { levelId: id } });
-    return { ...level, vocabularyCount: count };
+    return { ...level, vocabularyCount: count } as HskLevelWithCount;
   }
 
   async create(dto: CreateHskLevelDto) {

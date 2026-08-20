@@ -20,8 +20,8 @@ export class AdminTeacherContentService {
       SELECT id, title, 'resource' as type, uploader_id as author_id, hidden_by_admin as "hiddenByAdmin", hide_reason as "hideReason", hidden_at as "hiddenAt", created_at as "createdAt", deleted_at as "deletedAt"
       FROM resources
       UNION ALL
-      SELECT id, LEFT(prompt, 100) as title, 'question' as type, NULL::uuid as author_id, hidden_by_admin as "hiddenByAdmin", hide_reason as "hideReason", hidden_at as "hiddenAt", created_at as "createdAt", deleted_at as "deletedAt"
-      FROM practice_questions
+      SELECT id, LEFT(COALESCE(content->>'question', content->>'questionText', 'Untitled Question'), 100) as title, 'question' as type, creator_id as author_id, hidden_by_admin as "hiddenByAdmin", hide_reason as "hideReason", hidden_at as "hiddenAt", created_at as "createdAt", CASE WHEN is_active = false THEN created_at ELSE NULL END as "deletedAt"
+      FROM questions
     `;
 
     // A wrapping query to filter
@@ -74,7 +74,7 @@ export class AdminTeacherContentService {
     switch (type) {
       case 'test': return 'tests';
       case 'resource': return 'resources';
-      case 'question': return 'practice_questions';
+      case 'question': return 'questions';
       default: throw new NotFoundException(`Invalid content type: ${type}`);
     }
   }
@@ -138,11 +138,18 @@ export class AdminTeacherContentService {
       throw new NotFoundException(`Content not found`);
     }
 
-    const now = new Date();
-    await this.dataSource.query(
-      `UPDATE ${tableName} SET deleted_at = $1 WHERE id = $2`,
-      [now, id]
-    );
+    if (tableName === 'questions') {
+      await this.dataSource.query(
+        `UPDATE ${tableName} SET is_active = false WHERE id = $1`,
+        [id]
+      );
+    } else {
+      const now = new Date();
+      await this.dataSource.query(
+        `UPDATE ${tableName} SET deleted_at = $1 WHERE id = $2`,
+        [now, id]
+      );
+    }
 
     await this.auditLogService.logAction(adminId, 'DELETE_TEACHER_CONTENT', type.toUpperCase(), id, ipAddress);
     return { success: true };
