@@ -4,7 +4,7 @@ import { S3UploadService } from '../services/s3-upload.service';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { Role } from '../../../common/enums/user.enums';
 
-@Controller('v1/admin/uploads')
+@Controller('admin/uploads')
 @Roles(Role.ADMIN)
 export class AdminUploadsController {
   constructor(private readonly s3UploadService: S3UploadService) {}

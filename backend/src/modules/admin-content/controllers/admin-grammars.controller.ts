@@ -4,7 +4,7 @@ import { Roles } from '../../auth/decorators/roles.decorator';
 import { Role } from '../../../common/enums/user.enums';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 
-@Controller('v1/admin/grammars')
+@Controller('admin/grammars')
 @Roles(Role.ADMIN)
 export class AdminGrammarsController {
   constructor(private readonly adminGrammarsService: AdminGrammarsService) {}

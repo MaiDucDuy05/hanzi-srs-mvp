@@ -6,7 +6,7 @@ import { Roles } from '../../auth/decorators/roles.decorator';
 import { Role } from '../../../common/enums/user.enums';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 
-@Controller('v1/admin/vocabularies')
+@Controller('admin/vocabularies')
 @Roles(Role.ADMIN)
 export class AdminVocabulariesController {
   constructor(
