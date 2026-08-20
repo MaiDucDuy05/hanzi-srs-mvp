@@ -2,23 +2,30 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { adminContentApi } from '@/lib/api/endpoints/admin-content';
-import { Edit2, Trash2, Search, Plus, X } from 'lucide-react';
+import { Edit2, Trash2, Search, Plus, X, FileDown, ListPlus } from 'lucide-react';
+import { BulkAddGrammarModal } from './bulk-add-grammar-modal';
 
 export const AdminGrammarsTable = () => {
   const [grammars, setGrammars] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [hskLevels, setHskLevels] = useState<any[]>([]);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
 
   const fetchGrammars = async () => {
     try {
       setLoading(true);
-      const res = await adminContentApi.getGrammars() as any;
-      setGrammars(res.data?.items || res.data || []);
+      const [grammarRes, levelsRes] = await Promise.all([
+        adminContentApi.getGrammars() as any,
+        adminContentApi.getHskLevels() as any
+      ]);
+      setGrammars(grammarRes.data?.items || grammarRes.data || []);
+      setHskLevels(levelsRes.data || []);
     } catch (error) {
-      console.error('Failed to fetch grammars:', error);
+      console.error('Failed to fetch data:', error);
     } finally {
       setLoading(false);
     }
@@ -75,6 +82,27 @@ export const AdminGrammarsTable = () => {
     g.structure?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const handleExportCsv = async () => {
+    try {
+      const response = await fetch('/api/v1/admin/grammars/export', {
+        method: 'GET',
+      });
+      if (!response.ok) throw new Error('Export failed');
+      const text = await response.text();
+      const blob = new Blob(['\uFEFF' + text], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'grammars_export.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Failed to export CSV', error);
+      alert('Lỗi khi xuất CSV');
+    }
+  };
+
   return (
     <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 relative">
       <div className="flex justify-between items-center mb-6">
@@ -93,8 +121,22 @@ export const AdminGrammarsTable = () => {
             />
           </div>
           <button 
+            onClick={handleExportCsv}
+            className="flex items-center gap-2 bg-white text-[#11321e] px-4 py-2 rounded-xl text-sm font-bold border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors"
+          >
+            <FileDown className="h-4 w-4" />
+            Export CSV
+          </button>
+          <button 
+            onClick={() => setIsBulkModalOpen(true)}
+            className="flex items-center gap-2 bg-[#11321e] text-[#c7cf35] px-4 py-2 rounded-xl text-sm font-bold shadow-sm hover:bg-[#1f4e31] transition-colors"
+          >
+            <ListPlus className="h-4 w-4" />
+            Thêm nhiều (Grid)
+          </button>
+          <button 
             onClick={() => handleOpenModal()}
-            className="bg-[#11321e] text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-[#1f4e31]"
+            className="bg-[#c7cf35] text-[#11321e] px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-[#dde8a6] transition-colors shadow-sm"
           >
             <Plus className="w-4 h-4" /> Tạo mới
           </button>
@@ -233,6 +275,13 @@ export const AdminGrammarsTable = () => {
           </div>
         </div>
       )}
+
+      <BulkAddGrammarModal
+        isOpen={isBulkModalOpen}
+        onClose={() => setIsBulkModalOpen(false)}
+        onSuccess={fetchGrammars}
+        hskLevels={hskLevels}
+      />
     </div>
   );
 };

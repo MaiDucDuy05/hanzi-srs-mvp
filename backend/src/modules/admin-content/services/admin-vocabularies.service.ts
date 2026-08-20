@@ -78,11 +78,14 @@ export class AdminVocabulariesService {
   }
 
   async exportCsv() {
-    const vocabs = await this.vocabRepo.find({ where: { isActive: true } });
-    let csv = 'hanzi,pinyin,meaning_vi,example\n';
+    const vocabs = await this.vocabRepo.find({ 
+      where: { isActive: true },
+      relations: ['level']
+    });
+    let csv = 'hanzi,pinyin,meaning_vi,part_of_speech,example,hsk_level\n';
     vocabs.forEach(v => {
       // Format basic CSV with quotes for text fields
-      csv += `"${v.hanzi}","${v.pinyin}","${v.meaningVi || ''}","${v.example || ''}"\n`;
+      csv += `"${v.hanzi}","${v.pinyin}","${v.meaningVi || ''}","${v.partOfSpeech || ''}","${(v.example || '').replace(/"/g, '""')}","${v.level?.name || ''}"\n`;
     });
     return csv;
   }

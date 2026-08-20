@@ -2,6 +2,9 @@ import { apiFetch } from '../client';
 import { toQuery } from './utils';
 
 export const adminContentApi = {
+  // HSK Levels
+  getHskLevels: () => apiFetch(`/hsk-levels`, { method: 'GET' }),
+
   // Courses
   getCourses: (params?: Record<string, string | number | boolean | undefined>) =>
     apiFetch(`/admin/courses${toQuery(params)}`, { method: 'GET' }),
@@ -57,6 +60,8 @@ export const adminContentApi = {
     apiFetch(`/admin/grammars/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteGrammar: (id: string) =>
     apiFetch(`/admin/grammars/${id}`, { method: 'DELETE' }),
+  exportGrammarsCsv: () =>
+    apiFetch(`/admin/grammars/export`, { method: 'GET' }),
 
   // Topics
   getTopics: (params?: Record<string, string | number | boolean | undefined>) =>

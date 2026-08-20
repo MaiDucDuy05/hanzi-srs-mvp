@@ -15,6 +15,12 @@ export class AdminGrammarsController {
     return { data: result, message: 'Grammars retrieved successfully' };
   }
 
+  @Get('export')
+  async exportCsv() {
+    const csvContent = await this.adminGrammarsService.exportCsv();
+    return csvContent;
+  }
+
   @Post()
   async create(
     @Body() dto: any,
