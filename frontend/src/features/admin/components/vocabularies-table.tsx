@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { adminContentApi } from '@/lib/api/endpoints/admin-content';
-import { FileDown, Edit2, Trash2, Mic, ListPlus } from 'lucide-react';
+import { FileDown, Edit2, Trash2, ListPlus, Search } from 'lucide-react';
 import { EditVocabularyModal } from './edit-vocabulary-modal';
 import { BulkAddVocabularyModal } from './bulk-add-vocabulary-modal';
 
@@ -17,12 +17,20 @@ export function VocabulariesTable() {
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterLevel, setFilterLevel] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
 
-  const fetchData = async () => {
+  const fetchData = async (search: string = searchQuery, levelId: string = filterLevel, status: string = filterStatus) => {
     try {
       setLoading(true);
+      const params: any = { page: 1, limit: 100 };
+      if (search) params.search = search;
+      if (levelId) params.levelId = levelId;
+      if (status) params.status = status;
+
       const [vocabRes, levelsRes] = await Promise.all([
-        adminContentApi.getVocabularies({ page: 1, limit: 100 }) as any,
+        adminContentApi.getVocabularies(params) as any,
         adminContentApi.getHskLevels() as any
       ]);
       if (vocabRes.data) {
@@ -39,8 +47,11 @@ export function VocabulariesTable() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchData(searchQuery, filterLevel, filterStatus);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery, filterLevel, filterStatus]);
 
   const handleOpenModal = (vocab?: any) => {
     if (vocab) {
@@ -76,7 +87,7 @@ export function VocabulariesTable() {
         alert('Tạo mới thành công!');
       }
       handleCloseModal();
-      fetchData();
+      fetchData(searchQuery);
     } catch (error) {
       console.error('Failed to save vocabulary', error);
       alert('Lỗi khi lưu từ vựng');
@@ -89,7 +100,7 @@ export function VocabulariesTable() {
     if (!confirm('Bạn có chắc chắn muốn xóa từ vựng này?')) return;
     try {
       await adminContentApi.deleteVocabulary(id);
-      fetchData();
+      fetchData(searchQuery);
     } catch (error) {
       console.error('Failed to delete vocabulary', error);
       alert('Lỗi khi xóa từ vựng');
@@ -119,22 +130,6 @@ export function VocabulariesTable() {
     }
   };
 
-  const handleAudioUpload = async (id: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      await adminContentApi.uploadVocabularyAudio(id, formData);
-      alert('Tải âm thanh lên thành công!');
-      fetchData();
-    } catch (error) {
-      console.error('Failed to upload audio', error);
-      alert('Lỗi khi tải âm thanh lên');
-    }
-  };
-
   const getLevelName = (levelId: string) => {
     const level = hskLevels.find(l => l.id === levelId);
     return level ? level.name : 'Chưa xếp loại';
@@ -142,23 +137,63 @@ export function VocabulariesTable() {
 
   return (
     <div className="bg-white rounded-3xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 overflow-hidden">
-      <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-        <h2 className="font-bold text-[#11321e] text-lg">Danh sách từ vựng</h2>
-        <div className="flex gap-2">
-          <button 
-            onClick={handleExportCsv}
-            className="flex items-center gap-2 bg-white text-[#11321e] px-4 py-2 rounded-full text-sm font-bold border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors"
-          >
-            <FileDown className="h-4 w-4" />
-            Export CSV
-          </button>
-          <button 
-            onClick={() => setIsBulkModalOpen(true)}
-            className="flex items-center gap-2 bg-[#11321e] text-[#c7cf35] px-4 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-[#1f4e31] transition-colors"
-          >
-            <ListPlus className="h-4 w-4" />
-            Thêm từ
-          </button>
+      <div className="p-6 border-b border-gray-100 flex flex-col gap-4 bg-gray-50/50">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <h2 className="font-bold text-[#11321e] text-lg shrink-0">Danh sách từ vựng</h2>
+          
+          <div className="relative w-full md:w-80 shrink-0">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Tìm hanzi, pinyin, nghĩa..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#c7cf35] transition-shadow bg-white"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <select 
+              value={filterLevel}
+              onChange={(e) => setFilterLevel(e.target.value)}
+              className="w-full sm:w-auto pl-4 pr-8 py-2 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#c7cf35] transition-shadow bg-white cursor-pointer"
+            >
+              <option value="">Tất cả cấp độ</option>
+              {hskLevels.map(level => (
+                <option key={level.id} value={level.id}>{level.name}</option>
+              ))}
+            </select>
+
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="w-full sm:w-auto pl-4 pr-8 py-2 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#c7cf35] transition-shadow bg-white cursor-pointer"
+            >
+              <option value="">Tất cả trạng thái</option>
+              <option value="PUBLISHED">Đã xuất bản</option>
+              <option value="DRAFT">Bản nháp</option>
+            </select>
+          </div>
+
+          <div className="flex gap-2 w-full md:w-auto shrink-0">
+            <button 
+              onClick={handleExportCsv}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white text-[#11321e] px-4 py-2 rounded-full text-sm font-bold border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors"
+            >
+              <FileDown className="h-4 w-4" />
+              Export CSV
+            </button>
+            
+            <button 
+              onClick={() => setIsBulkModalOpen(true)}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#11321e] text-[#c7cf35] px-4 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-[#1f4e31] transition-colors"
+            >
+              <ListPlus className="h-4 w-4" />
+              Thêm từ
+            </button>
+          </div>
         </div>
       </div>
 
@@ -220,22 +255,6 @@ export function VocabulariesTable() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
-                        <div>
-                          <input
-                            type="file"
-                            id={`audio-upload-${vocab.id}`}
-                            className="hidden"
-                            accept="audio/*"
-                            onChange={(e) => handleAudioUpload(vocab.id, e)}
-                          />
-                          <label 
-                            htmlFor={`audio-upload-${vocab.id}`}
-                            className={`h-8 w-8 rounded-full flex items-center justify-center cursor-pointer transition-colors ${vocab.audioKey ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}
-                            title={vocab.audioKey ? "Cập nhật âm thanh" : "Tải âm thanh lên"}
-                          >
-                            <Mic className="h-4 w-4" />
-                          </label>
-                        </div>
                         <button 
                           onClick={() => handleOpenModal(vocab)}
                           className="h-8 w-8 rounded-full bg-[#f3f4e1] flex items-center justify-center text-[#4a5a3a] hover:bg-[#dde8a6] transition-colors"

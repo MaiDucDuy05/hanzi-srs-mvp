@@ -41,10 +41,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="vi"
       className={`${poppins.variable} ${inter.variable} ${geistMono.variable} ${nunito.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <head>
       </head>
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <AuthProvider>
           <AppShell>{children}</AppShell>
         </AuthProvider>

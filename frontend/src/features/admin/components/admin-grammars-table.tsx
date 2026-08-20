@@ -9,21 +9,28 @@ export const AdminGrammarsTable = () => {
   const [grammars, setGrammars] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [filterLevel, setFilterLevel] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
   const [hskLevels, setHskLevels] = useState<any[]>([]);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
 
-  const fetchGrammars = async () => {
+  const fetchGrammars = async (searchStr: string = search, levelId: string = filterLevel, statusStr: string = filterStatus) => {
     try {
       setLoading(true);
+      const params: any = { page: 1, limit: 100 };
+      if (searchStr) params.search = searchStr;
+      if (levelId) params.levelId = levelId;
+      if (statusStr) params.status = statusStr;
+
       const [grammarRes, levelsRes] = await Promise.all([
-        adminContentApi.getGrammars() as any,
+        adminContentApi.getGrammars(params) as any,
         adminContentApi.getHskLevels() as any
       ]);
       setGrammars(grammarRes.data?.items || grammarRes.data || []);
-      setHskLevels(levelsRes.data || []);
+      setHskLevels(levelsRes.data?.items || levelsRes.data || []);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {
@@ -35,7 +42,7 @@ export const AdminGrammarsTable = () => {
     if (!confirm('Bạn có chắc chắn muốn xóa ngữ pháp này?')) return;
     try {
       await adminContentApi.deleteGrammar(id);
-      fetchGrammars();
+      fetchGrammars(search, filterLevel, filterStatus);
     } catch (error) {
       console.error('Failed to delete grammar:', error);
       alert('Lỗi khi xóa ngữ pháp');
@@ -43,8 +50,11 @@ export const AdminGrammarsTable = () => {
   };
 
   useEffect(() => {
-    fetchGrammars();
-  }, []);
+    const timer = setTimeout(() => {
+      fetchGrammars(search, filterLevel, filterStatus);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [search, filterLevel, filterStatus]);
 
   const handleOpenModal = (grammar?: any) => {
     if (grammar) {
@@ -70,17 +80,12 @@ export const AdminGrammarsTable = () => {
         alert('Tạo mới thành công!');
       }
       handleCloseModal();
-      fetchGrammars();
+      fetchGrammars(search, filterLevel, filterStatus);
     } catch (error) {
       alert('Lưu thất bại!');
       console.error(error);
     }
   };
-
-  const filteredGrammars = grammars.filter((g: any) => 
-    g.title?.toLowerCase().includes(search.toLowerCase()) || 
-    g.structure?.toLowerCase().includes(search.toLowerCase())
-  );
 
   const handleExportCsv = async () => {
     try {
@@ -104,86 +109,108 @@ export const AdminGrammarsTable = () => {
   };
 
   return (
-    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 relative">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-xl font-bold text-[#11321e]">Quản lý Ngữ pháp</h3>
-        <div className="flex gap-3">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <Search className="text-gray-400 w-4 h-4" />
-            </div>
+    <div className="bg-white rounded-3xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 overflow-hidden">
+      <div className="p-6 border-b border-gray-100 flex flex-col gap-4 bg-gray-50/50">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <h2 className="font-bold text-[#11321e] text-lg shrink-0">Danh sách ngữ pháp</h2>
+          
+          <div className="relative w-full md:w-80 shrink-0">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
             <input
               type="text"
-              className="pl-10 pr-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#c7cf35] transition-all"
-              placeholder="Tìm theo tiêu đề..."
+              placeholder="Tìm tiêu đề, cấu trúc..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#c7cf35] transition-shadow bg-white"
             />
           </div>
-          <button 
-            onClick={handleExportCsv}
-            className="flex items-center gap-2 bg-white text-[#11321e] px-4 py-2 rounded-xl text-sm font-bold border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors"
-          >
-            <FileDown className="h-4 w-4" />
-            Export CSV
-          </button>
-          <button 
-            onClick={() => setIsBulkModalOpen(true)}
-            className="flex items-center gap-2 bg-[#11321e] text-[#c7cf35] px-4 py-2 rounded-xl text-sm font-bold shadow-sm hover:bg-[#1f4e31] transition-colors"
-          >
-            <ListPlus className="h-4 w-4" />
-            Thêm nhiều (Grid)
-          </button>
-          <button 
-            onClick={() => handleOpenModal()}
-            className="bg-[#c7cf35] text-[#11321e] px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-[#dde8a6] transition-colors shadow-sm"
-          >
-            <Plus className="w-4 h-4" /> Tạo mới
-          </button>
+        </div>
+
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <select 
+              value={filterLevel}
+              onChange={(e) => setFilterLevel(e.target.value)}
+              className="w-full sm:w-auto pl-4 pr-8 py-2 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#c7cf35] transition-shadow bg-white cursor-pointer"
+            >
+              <option value="">Tất cả cấp độ</option>
+              {hskLevels.map(level => (
+                <option key={level.id} value={level.id}>{level.name}</option>
+              ))}
+            </select>
+
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+              className="w-full sm:w-auto pl-4 pr-8 py-2 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#c7cf35] transition-shadow bg-white cursor-pointer"
+            >
+              <option value="">Tất cả trạng thái</option>
+              <option value="PUBLISHED">Đã xuất bản</option>
+              <option value="DRAFT">Bản nháp</option>
+            </select>
+          </div>
+
+          <div className="flex gap-2 w-full md:w-auto shrink-0">
+            <button 
+              onClick={handleExportCsv}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white text-[#11321e] px-4 py-2 rounded-full text-sm font-bold border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors"
+            >
+              <FileDown className="h-4 w-4" />
+              Export CSV
+            </button>
+            
+            <button 
+              onClick={() => setIsBulkModalOpen(true)}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#11321e] text-[#c7cf35] px-4 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-[#1f4e31] transition-colors"
+            >
+              <ListPlus className="h-4 w-4" />
+              Thêm ngữ pháp
+            </button>
+          </div>
         </div>
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-100">
-              <th className="p-4 font-semibold text-gray-600 rounded-tl-xl">Tiêu đề</th>
-              <th className="p-4 font-semibold text-gray-600">Cấu trúc</th>
-              <th className="p-4 font-semibold text-gray-600">Trạng thái</th>
-              <th className="p-4 font-semibold text-gray-600">Hiển thị</th>
-              <th className="p-4 font-semibold text-gray-600 rounded-tr-xl">Thao tác</th>
+        <table className="min-w-full divide-y divide-gray-100">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Tiêu đề</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/3">Cấu trúc</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Trạng thái</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Hiển thị</th>
+              <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Thao tác</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="bg-white divide-y divide-gray-100">
             {loading ? (
               <tr>
                 <td colSpan={5} className="text-center p-8 text-gray-400">Đang tải dữ liệu...</td>
               </tr>
-            ) : filteredGrammars.length === 0 ? (
+            ) : grammars.length === 0 ? (
               <tr>
                 <td colSpan={5} className="text-center p-8 text-gray-400">Không tìm thấy ngữ pháp</td>
               </tr>
             ) : (
-              filteredGrammars.map((grammar: any) => (
-                <tr key={grammar.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                  <td className="p-4 font-bold text-[#11321e]">{grammar.title}</td>
-                  <td className="p-4 text-gray-600 text-sm max-w-xs truncate">{grammar.structure}</td>
-                  <td className="p-4">
+              grammars.map((grammar: any) => (
+                <tr key={grammar.id} className="transition-colors hover:bg-gray-50">
+                  <td className="px-6 py-4 font-bold text-[#11321e]">{grammar.title}</td>
+                  <td className="px-6 py-4 text-gray-600 text-sm max-w-xs truncate">{grammar.structure}</td>
+                  <td className="px-6 py-4">
                     <span className={`px-2 py-1 text-xs font-semibold rounded-full ${grammar.status === 'PUBLISHED' ? 'bg-green-100 text-green-700' : grammar.status === 'HIDDEN' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
                       {grammar.status}
                     </span>
                   </td>
-                  <td className="p-4">
-                    <span className={grammar.isActive ? 'text-green-600' : 'text-red-500'}>
+                  <td className="px-6 py-4">
+                    <span className={grammar.isActive ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>
                       {grammar.isActive ? 'Bật' : 'Tắt'}
                     </span>
                   </td>
-                  <td className="p-4">
-                    <div className="flex space-x-2">
-                      <button onClick={() => handleOpenModal(grammar)} className="p-2 text-gray-400 hover:text-[#11321e] hover:bg-gray-100 rounded-lg">
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button onClick={() => handleOpenModal(grammar)} className="h-8 w-8 rounded-full bg-[#f3f4e1] flex items-center justify-center text-[#4a5a3a] hover:bg-[#dde8a6] transition-colors" title="Sửa">
                         <Edit2 className="w-4 h-4" />
                       </button>
-                      <button onClick={() => handleDelete(grammar.id)} className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg">
+                      <button onClick={() => handleDelete(grammar.id)} className="h-8 w-8 rounded-full bg-[#f3f4e1] flex items-center justify-center text-[#4a5a3a] hover:bg-red-100 hover:text-red-500 transition-colors" title="Xóa">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>

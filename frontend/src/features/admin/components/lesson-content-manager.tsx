@@ -36,20 +36,20 @@ export const LessonContentManager = ({ lessonId, courseId, onClose }: LessonCont
     }
   };
 
-  const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const q = e.target.value;
-    setSearchQuery(q);
-    if (!q.trim()) {
-      setSearchResults([]);
-      return;
-    }
+  const fetchSearchResults = async (q: string) => {
     try {
       setIsSearching(true);
+      const limit = q.trim() ? 10 : 100; // fetch more if empty search
+      const params: any = { limit, levelId: courseId };
+      if (q.trim()) {
+        params.search = q.trim();
+      }
+
       if (activeTab === 'VOCABULARY') {
-        const res = await adminContentApi.getVocabularies({ search: q, limit: 10 }) as any;
+        const res = await adminContentApi.getVocabularies(params) as any;
         setSearchResults(res.data?.items || res.data || []);
       } else {
-        const res = await adminContentApi.getGrammars({ search: q, limit: 10 }) as any;
+        const res = await adminContentApi.getGrammars(params) as any;
         setSearchResults(res.data?.items || res.data || []);
       }
     } catch (err) {
@@ -58,6 +58,17 @@ export const LessonContentManager = ({ lessonId, courseId, onClose }: LessonCont
       setIsSearching(false);
     }
   };
+
+  const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const q = e.target.value;
+    setSearchQuery(q);
+    fetchSearchResults(q);
+  };
+
+  useEffect(() => {
+    setSearchQuery('');
+    fetchSearchResults('');
+  }, [activeTab, courseId]);
 
   const handleAddContent = async (contentId: string) => {
     try {
@@ -105,7 +116,7 @@ export const LessonContentManager = ({ lessonId, courseId, onClose }: LessonCont
         {/* Tabs */}
         <div className="flex border-b border-gray-100 bg-gray-50/50 shrink-0 px-6">
           <button
-            onClick={() => { setActiveTab('VOCABULARY'); setSearchQuery(''); setSearchResults([]); }}
+            onClick={() => { setActiveTab('VOCABULARY'); }}
             className={`py-3 px-6 text-sm font-bold border-b-2 flex items-center gap-2 transition-colors ${
               activeTab === 'VOCABULARY' ? 'border-[#11321e] text-[#11321e]' : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
@@ -113,7 +124,7 @@ export const LessonContentManager = ({ lessonId, courseId, onClose }: LessonCont
             <BookOpen className="w-4 h-4" /> Từ Vựng
           </button>
           <button
-            onClick={() => { setActiveTab('GRAMMAR'); setSearchQuery(''); setSearchResults([]); }}
+            onClick={() => { setActiveTab('GRAMMAR'); }}
             className={`py-3 px-6 text-sm font-bold border-b-2 flex items-center gap-2 transition-colors ${
               activeTab === 'GRAMMAR' ? 'border-[#11321e] text-[#11321e]' : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
@@ -192,6 +203,9 @@ export const LessonContentManager = ({ lessonId, courseId, onClose }: LessonCont
             <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50/50">
               {searchQuery && searchResults.length === 0 && !isSearching && (
                 <div className="text-center p-6 text-gray-500 text-sm">Không tìm thấy kết quả.</div>
+              )}
+              {!searchQuery && searchResults.length === 0 && !isSearching && (
+                <div className="text-center p-6 text-gray-500 text-sm">Không có dữ liệu trong khóa học này.</div>
               )}
               {isSearching && (
                 <div className="text-center p-6 text-gray-400 text-sm">Đang tìm...</div>

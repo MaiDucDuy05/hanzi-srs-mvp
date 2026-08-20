@@ -1,27 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { curriculumApi } from '@/lib/api/endpoints';
-import { adminContentApi } from '@/lib/api/endpoints/admin-content';
+import { useState } from 'react';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
 import { 
-  Search, 
-  Plus, 
-  MoreVertical, 
-  Eye, 
-  Edit2, 
-  Trash2, 
   CloudUpload,
   FileImage,
   FileAudio,
   FileUp
 } from 'lucide-react';
-import { CsvImportModal } from './components/csv-import-modal';
 import { AdminCoursesTable } from './components/admin-courses-table';
 import { AdminGrammarsTable } from './components/admin-grammars-table';
 import { AdminTopicsTable } from './components/admin-topics-table';
-import { AdminQuestionsTable } from './components/admin-questions-table';
 import { VocabulariesTable } from './components/vocabularies-table';
 import { AdminLessonsView } from './components/admin-lessons-view';
 
@@ -30,7 +20,7 @@ export function AdminCurriculumFeature() {
   const [error, setError] = useState<string | null>(null);
   
   const [activeTab, setActiveTab] = useState('Bài học');
-  const tabs = ['Khóa học', 'Bài học', 'Từ vựng', 'Ngữ pháp', 'Chủ đề', 'Câu hỏi Public'];
+  const tabs = ['Khóa học', 'Bài học', 'Từ vựng', 'Ngữ pháp', 'Chủ đề'];
 
   if (loading) return <PageLoading label="Đang tải dữ liệu chương trình..." />;
   if (error) return <ErrorState message={error} onRetry={() => location.reload()} />;
@@ -68,24 +58,6 @@ export function AdminCurriculumFeature() {
           ))}
         </div>
 
-        {/* Search & Actions */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className="relative flex-1 max-w-md">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <Search className="h-4 w-4 text-gray-400" />
-            </div>
-            <input
-              type="text"
-              className="block w-full pl-11 pr-4 py-2.5 border border-gray-200 rounded-full text-sm bg-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#c7cf35] shadow-sm transition-shadow"
-              placeholder="Tìm bài học, HSK..."
-            />
-          </div>
-          <button className="bg-[#11321e] text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-[#1f4e31] transition-colors shadow-sm flex items-center justify-center gap-2">
-            <Plus className="h-4 w-4" strokeWidth={3} />
-            Tạo bài giảng
-          </button>
-        </div>
-
         {/* Filters */}
         {activeTab === 'Khóa học' && (
           <div className="space-y-6">
@@ -107,10 +79,6 @@ export function AdminCurriculumFeature() {
 
         {activeTab === 'Chủ đề' && (
           <AdminTopicsTable />
-        )}
-
-        {activeTab === 'Câu hỏi Public' && (
-          <AdminQuestionsTable />
         )}
 
         {/* Mặc định cho các tab khác */}

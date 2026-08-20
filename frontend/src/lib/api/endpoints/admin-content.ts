@@ -79,7 +79,7 @@ export const adminContentApi = {
   removeTopicVocabulary: (topicId: string, vocabId: string) =>
     apiFetch(`/admin/topics/${topicId}/vocabularies/${vocabId}`, { method: 'PUT' }),
 
-  // Questions
+  // Practice Questions (Old system)
   getQuestions: (params?: Record<string, string | number | boolean | undefined>) =>
     apiFetch(`/admin/questions${toQuery(params)}`, { method: 'GET' }),
   createQuestion: (data: any) =>
@@ -88,4 +88,14 @@ export const adminContentApi = {
     apiFetch(`/admin/questions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteQuestion: (id: string) =>
     apiFetch(`/admin/questions/${id}`, { method: 'DELETE' }),
+
+  // Exam/Bank Questions (New system via question-bank)
+  getExamQuestions: (params?: Record<string, string | number | boolean | undefined>) =>
+    apiFetch(`/questions${toQuery(params)}`, { method: 'GET' }),
+  createExamQuestion: (data: any) =>
+    apiFetch(`/questions`, { method: 'POST', body: JSON.stringify(data) }),
+  updateExamQuestion: (id: string, data: any) =>
+    apiFetch(`/questions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteExamQuestion: (id: string) =>
+    apiFetch(`/questions/${id}`, { method: 'DELETE' }),
 };
