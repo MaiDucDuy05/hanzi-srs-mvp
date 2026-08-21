@@ -120,7 +120,7 @@ export function WritingMode({ items, initialState, onStateChange, onComplete }: 
             <div className="w-full text-center mb-6 mt-2 border-b border-[#d0c9b7] pb-4">
               <p className="text-xl font-bold text-[#8b7e66] mb-1">{ctx.currentPinyin}</p>
               <p className="text-sm font-medium text-[#5a5038] mb-3">{ctx.currentMeaning}</p>
-              <AudioButton audioKey={items[ctx.charIndex]?.audioKey} className="text-[#8b7e66] hover:bg-[#e8e2d2] bg-white border border-[#d0c9b7]" />
+              <AudioButton audioKey={items[ctx.charIndex]?.audioKey} text={items[ctx.charIndex]?.hanzi} className="text-[#8b7e66] hover:bg-[#e8e2d2] bg-white border border-[#d0c9b7]" />
             </div>
 
             <h3 className="text-sm font-bold text-[#5a5038] mb-3">Animation Preview</h3>

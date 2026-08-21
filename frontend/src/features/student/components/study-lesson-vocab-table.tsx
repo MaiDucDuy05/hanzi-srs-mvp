@@ -1,5 +1,8 @@
 import React from 'react';
+import { Eye, Headset, Volume2 } from 'lucide-react';
 import type { Vocabulary, UserVocabProgress } from '@/lib/api/types';
+import { ClickableHanzi } from '@/features/ui/components/clickable-hanzi';
+import { speakText } from '@/lib/utils/tts';
 
 interface StudyLessonVocabTableProps {
   filteredVocab: Vocabulary[];
@@ -27,7 +30,7 @@ export function StudyLessonVocabTable({ filteredVocab, progressMap }: StudyLesso
             return (
               <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                 <td className="p-4">
-                  <span className="text-3xl font-bold text-[#111]">{item.hanzi}</span>
+                  <ClickableHanzi text={item.hanzi} charClassName="text-3xl font-bold text-[#111]" />
                 </td>
                 <td className="p-4">
                   <span className="text-base font-semibold text-[#215b3b]">{item.pinyin}</span>
@@ -51,9 +54,15 @@ export function StudyLessonVocabTable({ filteredVocab, progressMap }: StudyLesso
                 </td>
                 <td className="p-4">
                   <div className="flex justify-center gap-2">
-                    {item.audioKey && (
+                    {(item.audioKey || item.hanzi) && (
                       <button
-                        onClick={() => new Audio(`https://cdn.duguyih.cn/audio/${item.audioKey}`).play().catch(() => {})}
+                        onClick={() => {
+                          if (item.hanzi) {
+                            speakText(item.hanzi);
+                          } else if (item.audioKey) {
+                            new Audio(`https://cdn.duguyih.cn/audio/${item.audioKey}`).play().catch(() => {});
+                          }
+                        }}
                         className="w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-[#215b3b] transition-colors"
                       >
                         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

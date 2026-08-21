@@ -5,6 +5,7 @@ import { computeScore, type ModeProps, type ModeResult } from './practice-models
 import { Button } from '@/features/ui/components/button';
 import { Input } from '@/features/ui/components/form';
 import { AudioButton } from '@/features/ui/components/audio-button';
+import { ClickableHanzi } from '@/features/ui/components/clickable-hanzi';
 import { cn } from '@/lib/utils/cn';
 
 export interface FillBlankState {
@@ -81,7 +82,7 @@ export function FillBlankMode({
         <p className="text-lg font-semibold text-brand">{current.pinyin}</p>
         <p className="mt-1 text-gray-600">{current.meaning}</p>
         <div className="mt-3 flex justify-center">
-          <AudioButton audioKey={current.audioKey} />
+          <AudioButton audioKey={current.audioKey} text={current.hanzi} />
         </div>
         <div className="mt-4 flex justify-center gap-2">
           <Input
@@ -101,7 +102,7 @@ export function FillBlankMode({
         )}
         {state.feedback === 'wrong' && (
           <p className="mt-3 font-medium text-red-600">
-            Sai — đáp án: <span className="hanzi">{current.hanzi}</span>
+            Sai - đáp án: <ClickableHanzi text={current.hanzi} className="hanzi font-bold" />
           </p>
         )}
       </div>

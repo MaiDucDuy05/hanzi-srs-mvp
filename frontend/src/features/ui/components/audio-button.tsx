@@ -14,12 +14,14 @@ const AUDIO_BASE_URL = process.env.NEXT_PUBLIC_AUDIO_BASE_URL ?? '/api/audio';
 export function AudioButton({
   audioKey,
   src,
+  text,
   size = 'md',
   label,
   className,
 }: {
   audioKey?: string | null;
   src?: string | null;
+  text?: string | null;
   size?: 'sm' | 'md';
   label?: string;
   className?: string;
@@ -27,36 +29,65 @@ export function AudioButton({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const hookedRef = useRef(false);
   const [playing, setPlaying] = useState(false);
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
 
   const url = src ?? (audioKey ? `${AUDIO_BASE_URL}/${encodeURIComponent(audioKey)}` : null);
 
   useEffect(() => {
     return () => {
       audioRef.current?.pause();
+      if (utteranceRef.current) {
+        window.speechSynthesis.cancel();
+      }
     };
   }, []);
 
-  if (!url) return null;
+  if (!url && !text) return null;
 
   const toggle = () => {
-    const audio = audioRef.current ?? new Audio(url);
-    audioRef.current = audio;
-    if (!hookedRef.current) {
-      hookedRef.current = true;
-      audio.addEventListener('play', () => setPlaying(true));
-      audio.addEventListener('ended', () => setPlaying(false));
-      audio.addEventListener('pause', () => setPlaying(false));
-      // Audio chưa có nguồn (404/CDN chưa cấu hình) — không treo trạng thái phát.
-      audio.addEventListener('error', () => setPlaying(false));
+    // If text is provided, prefer TTS
+    if (text) {
+      if (playing) {
+        window.speechSynthesis.cancel();
+        setPlaying(false);
+      } else {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'zh-CN';
+        
+        // Try to find a good Chinese voice
+        const voices = window.speechSynthesis.getVoices();
+        const zhVoice = voices.find(v => v.lang.includes('zh') || v.lang.includes('cmn')) || voices.find(v => v.lang.includes('zh-CN'));
+        if (zhVoice) {
+          utterance.voice = zhVoice;
+        }
+        
+        utterance.onstart = () => setPlaying(true);
+        utterance.onend = () => setPlaying(false);
+        utterance.onerror = () => setPlaying(false);
+        
+        utteranceRef.current = utterance;
+        window.speechSynthesis.speak(utterance);
+      }
+      return;
     }
-    if (playing) {
-      audio.pause();
-    } else {
-      // DOM Audio element là đối tượng mutable theo thiết kế — rule immutability
-      // của React Compiler đánh nhầm vì element được giữ trong ref.
-      // eslint-disable-next-line react-hooks/immutability
-      audio.currentTime = 0;
-      void audio.play().catch(() => setPlaying(false));
+
+    // Fallback to legacy audio player if url exists
+    if (url) {
+      const audio = audioRef.current ?? new Audio(url);
+      audioRef.current = audio;
+      if (!hookedRef.current) {
+        hookedRef.current = true;
+        audio.addEventListener('play', () => setPlaying(true));
+        audio.addEventListener('ended', () => setPlaying(false));
+        audio.addEventListener('pause', () => setPlaying(false));
+        audio.addEventListener('error', () => setPlaying(false));
+      }
+      if (playing) {
+        audio.pause();
+      } else {
+        audio.currentTime = 0;
+        void audio.play().catch(() => setPlaying(false));
+      }
     }
   };
 

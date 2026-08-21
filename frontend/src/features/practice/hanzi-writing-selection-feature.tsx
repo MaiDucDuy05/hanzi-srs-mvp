@@ -8,6 +8,7 @@ import { Button } from '@/features/ui/components/button';
 import { PageLoading } from '@/features/ui/components/spinner';
 import type { HanziChar } from '@/lib/api/types';
 import { AudioButton } from '@/features/ui/components/audio-button';
+import { ClickableHanzi } from '@/features/ui/components/clickable-hanzi';
 
 /** PR-13: Chọn nguồn từ vựng để luyện viết chữ Hán. */
 export function HanziWritingSelectionFeature() {
@@ -137,13 +138,11 @@ export function HanziWritingSelectionFeature() {
                 className="bg-white rounded-[1.5rem] p-4 shadow-sm border-4 border-transparent hover:border-[#aadd4a] hover:shadow-md transition-all group flex flex-col items-center justify-center relative cursor-pointer"
                 onClick={() => !loading && handleStartSingle(charData.char)}
               >
-                <div className="text-5xl font-['Ma_Shan_Zheng','KaiTi',sans-serif] text-[#2c281e] mb-2 group-hover:scale-110 transition-transform">
-                  {charData.char}
-                </div>
+                <ClickableHanzi text={charData.char} charClassName="text-5xl font-['Ma_Shan_Zheng','KaiTi',sans-serif] text-[#2c281e] mb-2 group-hover:scale-110 transition-transform" />
                 <div className="text-sm font-bold text-[#5a5038]">{charData.pinyin}</div>
                 <div className="text-xs text-gray-500 text-center line-clamp-1">{charData.meaning}</div>
                 <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity" onClick={e => e.stopPropagation()}>
-                  <AudioButton audioKey={charData.audioKey} className="w-6 h-6 p-1 text-[#8b7e66]" />
+                  <AudioButton audioKey={charData.audioKey} text={charData.char} className="w-6 h-6 p-1 text-[#8b7e66]" />
                 </div>
               </div>
             ))}
