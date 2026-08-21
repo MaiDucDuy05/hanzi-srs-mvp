@@ -20,6 +20,7 @@ import { Button } from '@/features/ui/components/button';
 import { Modal } from '@/features/ui/components/modal';
 import { Field } from '@/features/ui/components/form';
 import { formatDate } from '@/lib/utils/format';
+import { AdminViolationBadge } from '@/components/shared/admin-violation-badge';
 
 export function TeacherExamsFeature() {
   const { user } = useAuth();
@@ -320,6 +321,10 @@ export function TeacherExamsFeature() {
                         >
                           {getStatusLabel(test.status === 'PUBLISHED' ? 'ACTIVE' : test.status)}
                         </span>
+                        <AdminViolationBadge 
+                          hiddenByAdmin={test.hiddenByAdmin} 
+                          hideReason={test.hideReason} 
+                        />
                       </div>
                       <div className="flex items-center gap-4 text-[13px] text-gray-500 font-medium">
                         {test.hskLevel && (

@@ -280,6 +280,12 @@ export interface Test {
   status: TestStatus;
   accessCode: string | null;
   showScoreImmediately: boolean;
+  hskLevel?: number | null;
+  shuffleQuestions?: boolean;
+  showAnswersAfter?: boolean;
+  hiddenByAdmin?: boolean;
+  hideReason?: string | null;
+  hiddenAt?: string | null;
   deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -604,21 +610,7 @@ export interface HanziWritingCompleteResult {
   totalMistakes: number;
 }
 
-export interface Test {
-  id: string;
-  teacherId: string;
-  name: string;
-  description: string | null;
-  hskLevel: number | null;
-  timeLimitMinutes: number;
-  shuffleQuestions: boolean;
-  showAnswersAfter: boolean;
-  attemptLimit: number;
-  status: TestStatus;
-  accessCode: string | null;
-  showScoreImmediately: boolean;
-  createdAt: string;
-}
+
 
 
 export interface TestAssignment {
