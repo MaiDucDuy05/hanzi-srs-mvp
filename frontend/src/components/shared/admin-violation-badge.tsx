@@ -2,7 +2,7 @@ import { AlertCircle } from 'lucide-react';
 
 interface AdminViolationBadgeProps {
   hiddenByAdmin?: boolean;
-  hideReason?: string;
+  hideReason?: string | null;
   className?: string;
 }
 

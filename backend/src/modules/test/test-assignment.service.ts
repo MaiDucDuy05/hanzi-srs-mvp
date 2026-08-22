@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
+import { Repository } from 'typeorm';
 import { TestAssignment } from './entities/test-assignment.entity';
 import { CreateTestAssignmentDto } from './dto/test-assignment.dto';
 
@@ -57,6 +57,7 @@ export class TestAssignmentService {
         studentId, 
         classroomIds: classroomIds.length ? classroomIds : [null] 
       })
+      .andWhere('test.hiddenByAdmin = :hiddenByAdmin', { hiddenByAdmin: false })
       .orderBy('ta.createdAt', 'DESC');
 
     return query.getMany();

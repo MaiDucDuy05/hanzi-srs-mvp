@@ -22,6 +22,7 @@ import type { Test, TestStatus } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/auth-context';
 import { formatDate } from '@/lib/utils/format';
 import { cn } from '@/lib/utils/cn';
+import { AdminViolationBadge } from '@/components/shared/admin-violation-badge';
 
 // Modals
 import { ExamCreateModal } from './components/exam-create-modal';
@@ -259,7 +260,7 @@ export function TeacherExamManagementFeature() {
                         {test.description && (
                           <p className="text-[13px] text-gray-600 line-clamp-1 mb-2">{test.description}</p>
                         )}
-                        <div className="flex items-center gap-4 text-[13px] text-gray-500 font-medium">
+                        <div className="flex items-center gap-4 text-[13px] text-gray-500 font-medium mb-3">
                           <span className="flex items-center gap-1.5">
                             <Clock className="h-3.5 w-3.5" /> {test.timeLimitMinutes} phút
                           </span>
@@ -269,58 +270,66 @@ export function TeacherExamManagementFeature() {
                           {test.accessCode && <span>🔑 {test.accessCode}</span>}
                           <span>Tạo {formatDate(test.createdAt)}</span>
                         </div>
+                        <AdminViolationBadge 
+                          hiddenByAdmin={test.hiddenByAdmin} 
+                          hideReason={test.hideReason} 
+                        />
                       </div>
                     </div>
                     <div className="flex items-center gap-2 sm:opacity-0 group-hover:opacity-100 transition-opacity pl-15 sm:pl-0">
-                      {test.status === 'DRAFT' && (
-                        <button
-                          onClick={() => handleChangeStatus(test, 'PUBLISHED')}
-                          className="p-2 text-gray-400 hover:text-[#78993a] hover:bg-[#f4f7ed] rounded-lg transition-colors"
-                          title="Phát hành bài thi"
-                        >
-                          <PlayCircle className="h-4 w-4" />
-                        </button>
-                      )}
-                      {(test.status === 'PUBLISHED' || test.status === 'CLOSED') && (
-                        <button
-                          onClick={() => handleChangeStatus(test, test.status === 'PUBLISHED' ? 'CLOSED' : 'PUBLISHED')}
-                          className="p-2 text-gray-400 hover:text-[#e55353] hover:bg-[#fff4f4] rounded-lg transition-colors"
-                          title={test.status === 'PUBLISHED' ? "Đóng bài thi" : "Mở lại bài thi"}
-                        >
-                          <Lock className="h-4 w-4" />
-                        </button>
-                      )}
-                      
-                      <button
-                        onClick={() => setAssigningTestId(test.id)}
-                        className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                        title="Giao bài kiểm tra"
-                      >
-                        <Send className="h-4 w-4" />
-                      </button>
+                      {!test.hiddenByAdmin && (
+                        <>
+                          {test.status === 'DRAFT' && (
+                            <button
+                              onClick={() => handleChangeStatus(test, 'PUBLISHED')}
+                              className="p-2 text-gray-400 hover:text-[#78993a] hover:bg-[#f4f7ed] rounded-lg transition-colors"
+                              title="Phát hành bài thi"
+                            >
+                              <PlayCircle className="h-4 w-4" />
+                            </button>
+                          )}
+                          {(test.status === 'PUBLISHED' || test.status === 'CLOSED') && (
+                            <button
+                              onClick={() => handleChangeStatus(test, test.status === 'PUBLISHED' ? 'CLOSED' : 'PUBLISHED')}
+                              className="p-2 text-gray-400 hover:text-[#e55353] hover:bg-[#fff4f4] rounded-lg transition-colors"
+                              title={test.status === 'PUBLISHED' ? "Đóng bài thi" : "Mở lại bài thi"}
+                            >
+                              <Lock className="h-4 w-4" />
+                            </button>
+                          )}
+                          
+                          <button
+                            onClick={() => setAssigningTestId(test.id)}
+                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="Giao bài kiểm tra"
+                          >
+                            <Send className="h-4 w-4" />
+                          </button>
 
-                      <Link href={`/teacher/exams/${test.id}`}>
-                        <button
-                          className="p-2 text-gray-400 hover:text-[#1f5333] hover:bg-gray-100 rounded-lg transition-colors"
-                          title="Chi tiết bài kiểm tra"
-                        >
-                          <FileEdit className="h-4 w-4" />
-                        </button>
-                      </Link>
-                      <button
-                        onClick={() => openQuestionModal(test.id)}
-                        className="p-2 text-gray-400 hover:text-[#1f5333] hover:bg-gray-100 rounded-lg transition-colors"
-                        title="Quản lý câu hỏi"
-                      >
-                        <Library className="h-4 w-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteExam(test)}
-                        className="p-2 text-gray-400 hover:text-[#e55353] hover:bg-red-50 rounded-lg transition-colors"
-                        title="Xóa"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                          <Link href={`/teacher/exams/${test.id}`}>
+                            <button
+                              className="p-2 text-gray-400 hover:text-[#1f5333] hover:bg-gray-100 rounded-lg transition-colors"
+                              title="Chi tiết bài kiểm tra"
+                            >
+                              <FileEdit className="h-4 w-4" />
+                            </button>
+                          </Link>
+                          <button
+                            onClick={() => openQuestionModal(test.id)}
+                            className="p-2 text-gray-400 hover:text-[#1f5333] hover:bg-gray-100 rounded-lg transition-colors"
+                            title="Quản lý câu hỏi"
+                          >
+                            <Library className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteExam(test)}
+                            className="p-2 text-gray-400 hover:text-[#e55353] hover:bg-red-50 rounded-lg transition-colors"
+                            title="Xóa"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 );
