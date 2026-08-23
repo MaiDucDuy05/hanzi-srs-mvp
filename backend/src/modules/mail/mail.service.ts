@@ -73,4 +73,52 @@ export class MailService {
       this.logger.log(`[DEV MODE] OTP Khôi phục mật khẩu cho ${to}: ${otp}`);
     }
   }
+  async sendContactConfirmationEmail(to: string, name: string) {
+    const mailOptions = {
+      from: `"Hanzi SRS" <${this.configService.get<string>('SMTP_USER')}>`,
+      to,
+      subject: 'Xác nhận yêu cầu liên hệ - Hanzi SRS',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+          <h2 style="color: #1a472a;">Chào ${name},</h2>
+          <p>Cảm ơn bạn đã liên hệ với Khu Rừng Xanh (Hanzi SRS). Chúng tôi đã nhận được yêu cầu của bạn và sẽ phản hồi trong thời gian sớm nhất (thường là trong vòng 24 giờ).</p>
+          <p>Chúc bạn một ngày tốt lành!</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="font-size: 12px; color: #777;">Vui lòng không trả lời trực tiếp email tự động này.</p>
+        </div>
+      `,
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      this.logger.log(`Gửi email xác nhận liên hệ thành công đến ${to}`);
+    } catch (error) {
+      this.logger.error(`Lỗi khi gửi email xác nhận liên hệ đến ${to}`, error);
+    }
+  }
+
+  async sendContactReplyEmail(to: string, name: string, replyMessage: string) {
+    const mailOptions = {
+      from: `"Hanzi SRS Support" <${this.configService.get<string>('SMTP_USER')}>`,
+      to,
+      subject: 'Phản hồi liên hệ từ Hanzi SRS',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+          <h2 style="color: #1a472a;">Chào ${name},</h2>
+          <p>Cảm ơn bạn đã chờ đợi. Dưới đây là phản hồi từ đội ngũ hỗ trợ của chúng tôi:</p>
+          <div style="background-color: #fbfbe9; border-left: 4px solid #1a472a; padding: 15px; margin: 20px 0; white-space: pre-wrap;">${replyMessage}</div>
+          <p>Nếu bạn cần hỗ trợ thêm, vui lòng tạo một yêu cầu liên hệ mới trên website.</p>
+          <p>Trân trọng,<br/>Đội ngũ Hanzi SRS</p>
+        </div>
+      `,
+    };
+
+    try {
+      await this.transporter.sendMail(mailOptions);
+      this.logger.log(`Gửi email phản hồi liên hệ thành công đến ${to}`);
+    } catch (error) {
+      this.logger.error(`Lỗi khi gửi email phản hồi liên hệ đến ${to}`, error);
+      this.logger.log(`[DEV MODE] Phản hồi liên hệ cho ${to}: ${replyMessage}`);
+    }
+  }
 }

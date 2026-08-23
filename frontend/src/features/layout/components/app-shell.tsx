@@ -37,13 +37,16 @@ export function AppShell({ children }: { children: ReactNode }) {
         />
       </div>
 
-      <div className="absolute top-8 left-1/2 z-20 flex w-[80%] lg:w-[40%] -translate-x-1/2 items-center justify-between rounded-full bg-gradient-to-r from-[#e5f5eb] via-[#e9f9ef] to-[#e0f5e9] shadow-md px-8 py-2 font-[family-name:var(--font-nunito)] text-lg font-black text-[#215b3b] sm:text-xl lg:text-2xl">
+      <div className="absolute top-8 left-1/2 z-20 flex w-[90%] lg:w-[50%] max-w-3xl -translate-x-1/2 items-center justify-between rounded-full bg-gradient-to-r from-[#e5f5eb] via-[#e9f9ef] to-[#e0f5e9] shadow-md px-6 py-2 font-[family-name:var(--font-nunito)] text-base sm:text-lg font-black text-[#215b3b]">
         <Link href="/">
-          <img src="/assets/illustrations/panda/panda-at-beach.svg" alt="Panda" className="h-18 w-auto sm:h-24" />
+          <img src="/assets/illustrations/panda/panda-at-beach.svg" alt="Panda" className="h-14 w-auto sm:h-16 lg:h-20" />
         </Link>
-        <Link href="/dashboard/courses" className="transition-colors hover:text-[#5E7F26]">Courses</Link>
-        <Link href="/dashboard" className="transition-colors hover:text-[#5E7F26]">Dashboard</Link>
-        <Link href="/leaderboard" className="transition-colors hover:text-[#5E7F26]">Leaderboard</Link>
+        <div className="flex items-center gap-4 sm:gap-6 lg:gap-8 pr-2">
+          <Link href="/dashboard/courses" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Courses</Link>
+          <Link href="/dashboard" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Dashboard</Link>
+          <Link href="/leaderboard" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Leaderboard</Link>
+          <Link href="/contact" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Contact Us</Link>
+        </div>
       </div>
       <main className="mx-auto flex-1 w-full max-w-6xl px-4 py-6 pt-32 relative z-10 flex flex-col">
         {children}

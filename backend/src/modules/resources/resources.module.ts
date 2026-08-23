@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { SubscriptionModule } from '../subscription/subscription.module';
+import { MailModule } from '../mail/mail.module';
 import { Resource } from './entities/resource.entity';
 import { AiGenerationJob } from './entities/ai-generation-job.entity';
 import { ContactRequest } from './entities/contact-request.entity';
@@ -21,6 +22,7 @@ import { SpeakingController } from './speaking-attempt.controller';
   imports: [
     TypeOrmModule.forFeature([Resource, AiGenerationJob, ContactRequest, MistakeBook, SpeakingAttempt]),
     SubscriptionModule,
+    MailModule,
   ],
   controllers: [
     ResourceController, AiJobController, ContactController, MistakeBookController, SpeakingController,
