@@ -34,18 +34,76 @@ export class AuthController {
   ) {}
 
   @Public()
-  @Post('register')
+  @Post('register/request-otp')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async requestRegisterOtp(@Body() dto: RegisterDto) {
+    await this.authService.requestRegisterOtp(dto);
+    return {
+      data: null,
+      message: 'OTP has been sent to your email',
+    };
+  }
+
+  @Public()
+  @Post('register/verify-otp')
   @HttpCode(HttpStatus.CREATED)
-  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 attempts per minute
-  async register(
-    @Body() dto: RegisterDto,
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async verifyRegisterOtp(
+    @Body('email') email: string,
+    @Body('otp') otp: string,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { accessToken, user } = await this.authService.register(dto);
-    this.setAccessTokenCookie(res, accessToken);
+    const { accessToken, user, exp } = await this.authService.verifyRegisterOtp(email, otp);
+    this.setAccessTokenCookie(res, accessToken, user.role);
     return {
-      data: { user: this.authService.sanitizeUser(user) },
+      data: { user: this.authService.sanitizeUser(user), exp },
       message: 'Registered successfully',
+    };
+  }
+
+  @Public()
+  @Post('forgot-password/request-otp')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async requestForgotPasswordOtp(@Body('email') email: string) {
+    await this.authService.requestForgotPasswordOtp(email);
+    return {
+      data: null,
+      message: 'OTP has been sent to your email',
+    };
+  }
+
+  @Public()
+  @Post('forgot-password/verify-otp')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async verifyForgotPasswordOtp(
+    @Body('email') email: string,
+    @Body('otp') otp: string,
+  ) {
+    await this.authService.verifyForgotPasswordOtp(email, otp);
+    return {
+      data: null,
+      message: 'OTP is valid',
+    };
+  }
+
+  @Public()
+  @Post('forgot-password/reset')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  async resetPassword(
+    @Body('email') email: string,
+    @Body('otp') otp: string,
+    @Body('newPassword') newPassword: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { accessToken, user, exp } = await this.authService.resetPassword(email, otp, newPassword);
+    this.setAccessTokenCookie(res, accessToken, user.role);
+    return {
+      data: { user: this.authService.sanitizeUser(user), exp },
+      message: 'Password reset successfully',
     };
   }
 
@@ -56,10 +114,10 @@ export class AuthController {
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { accessToken, user } = await this.authService.login(dto);
-    this.setAccessTokenCookie(res, accessToken);
+    const { accessToken, user, exp } = await this.authService.login(dto);
+    this.setAccessTokenCookie(res, accessToken, user.role);
     return {
-      data: { user: this.authService.sanitizeUser(user) },
+      data: { user: this.authService.sanitizeUser(user), exp },
       message: 'Logged in successfully',
     };
   }
@@ -71,12 +129,11 @@ export class AuthController {
     return { data: null, message: 'Logged out successfully' };
   }
 
-  /** Profile hiện tại theo cookie — thay cho user lưu localStorage ở FE. */
   @Get('me')
   async me(@CurrentUser() current: JwtPayload) {
     const user = await this.userService.findById(current.sub);
     return {
-      data: this.authService.sanitizeUser(user),
+      data: { user: this.authService.sanitizeUser(user), exp: current.exp },
       message: 'Profile retrieved successfully',
     };
   }
@@ -91,16 +148,20 @@ export class AuthController {
     };
   }
 
-  private setAccessTokenCookie(res: Response, token: string) {
-    res.cookie(ACCESS_TOKEN_COOKIE, token, this.cookieOptions());
+  private setAccessTokenCookie(res: Response, token: string, role: string) {
+    res.cookie(ACCESS_TOKEN_COOKIE, token, this.cookieOptions(role));
   }
 
-  private cookieOptions() {
+  private cookieOptions(role?: string) {
+    const maxAge = role === 'ADMIN' 
+      ? 24 * 60 * 60 * 1000       // 1 ngày
+      : 7 * 24 * 60 * 60 * 1000;  // 7 ngày
+
     return {
       httpOnly: true,
       secure: this.configService.get<string>('NODE_ENV') === 'production',
       sameSite: 'lax' as const,
-      maxAge: MAX_AGE_MS,
+      maxAge,
       path: '/',
     };
   }

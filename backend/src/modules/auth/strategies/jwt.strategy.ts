@@ -9,6 +9,7 @@ export interface JwtPayload {
   sub: string; // user id
   email: string;
   role: string;
+  exp?: number;
 }
 
 @Injectable()
@@ -48,6 +49,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Token không hợp lệ hoặc người dùng không tồn tại');
     }
     
-    return { sub: payload.sub, email: payload.email, role: payload.role };
+    return { sub: payload.sub, email: payload.email, role: payload.role, exp: payload.exp };
   }
 }

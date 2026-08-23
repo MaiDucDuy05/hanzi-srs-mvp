@@ -20,8 +20,9 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isAdmin = pathname?.startsWith('/admin');
 
   const isTeacher = pathname?.startsWith('/teacher');
+  const isAuth = pathname?.startsWith('/login') || pathname?.startsWith('/register') || pathname?.startsWith('/forgot-password');
 
-  if (isHome || isDashboard || isStudy || isGames || isAdmin || isTeacher) {
+  if (isHome || isDashboard || isStudy || isGames || isAdmin || isTeacher || isAuth) {
     return <main className="flex min-h-screen w-full flex-col">{children}</main>;
   }
 
@@ -40,8 +41,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Link href="/">
           <img src="/assets/illustrations/panda/panda-at-beach.svg" alt="Panda" className="h-18 w-auto sm:h-24" />
         </Link>
-        <Link href="/learn" className="transition-colors hover:text-[#5E7F26]">Courses</Link>
-        <Link href="/games" className="transition-colors hover:text-[#5E7F26]">Games</Link>
+        <Link href="/dashboard/courses" className="transition-colors hover:text-[#5E7F26]">Courses</Link>
+        <Link href="/dashboard" className="transition-colors hover:text-[#5E7F26]">Dashboard</Link>
         <Link href="/leaderboard" className="transition-colors hover:text-[#5E7F26]">Leaderboard</Link>
       </div>
       <main className="mx-auto flex-1 w-full max-w-6xl px-4 py-6 pt-32 relative z-10 flex flex-col">
