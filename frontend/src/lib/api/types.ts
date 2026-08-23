@@ -112,6 +112,18 @@ export interface LessonContentsAggregate {
   grammarPoints: GrammarPoint[];
 }
 
+export interface UserLessonProgress {
+  id: string;
+  userId: string;
+  lessonId: string;
+  vocabCompleted: boolean;
+  grammarCompleted: boolean;
+  isCompleted: boolean;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Vocabulary {
   id: string;
   levelId: string;

@@ -4,12 +4,14 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { FlashcardGameFeature } from '@/features/games/page-features/flashcard-game-feature';
 import { curriculumApi } from '@/lib/api/endpoints/curriculum';
 import { srsApi } from '@/lib/api/endpoints/srs';
-import type { Vocabulary, GrammarPoint, UserVocabProgress } from '@/lib/api/types';
+import { studentApi } from '@/lib/api/endpoints/student';
+import type { Vocabulary, GrammarPoint, UserVocabProgress, UserLessonProgress } from '@/lib/api/types';
 import { StudyLessonVocabTable } from './components/study-lesson-vocab-table';
 import { StudyLessonGrammarList } from './components/study-lesson-grammar-list';
 import { StudyLessonFilterBar } from './components/study-lesson-filter-bar';
 import { LearnWordFlow } from '@/features/study/learn-word/learn-word-flow';
 import { LearnGrammarFlow } from '@/features/study/learn-grammar/learn-grammar-flow';
+import { CheckCircle2 } from 'lucide-react';
 
 export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: string }> }) {
   const resolvedParams = React.use(params);
@@ -25,6 +27,7 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
   const [vocabularies, setVocabularies] = useState<Vocabulary[]>([]);
   const [grammarPoints, setGrammarPoints] = useState<GrammarPoint[]>([]);
   const [progressMap, setProgressMap] = useState<Record<string, UserVocabProgress>>({});
+  const [lessonProgress, setLessonProgress] = useState<UserLessonProgress | null>(null);
   const [search, setSearch] = useState('');
 
   // Fetch lesson contents
@@ -37,9 +40,10 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
       .catch(console.error);
   }, [lessonId]);
 
-  // Fetch SRS progress
+  // Fetch SRS progress and Lesson progress
   useEffect(() => {
     srsApi.getProgress(lessonId, 'lesson').then(setProgressMap).catch(console.error);
+    studentApi.getLessonProgress(lessonId).then(setLessonProgress).catch(console.error);
   }, [lessonId]);
 
   // Filtered vocabularies by search
@@ -54,8 +58,15 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
     );
   }, [vocabularies, search]);
 
-  const handleComplete = () => {
+  const handleComplete = (type?: 'vocab' | 'grammar') => {
     setMode('list');
+    
+    if (type === 'vocab') {
+      studentApi.completeLessonVocab(lessonId).then(setLessonProgress).catch(console.error);
+    } else if (type === 'grammar') {
+      studentApi.completeLessonGrammar(lessonId).then(setLessonProgress).catch(console.error);
+    }
+
     // Refresh progress after completing flashcards
     srsApi.getProgress(lessonId, 'lesson').then(setProgressMap);
   };
@@ -67,7 +78,7 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
           vocabularies={vocabularies}
           initialIndex={learnIndex}
           onClose={() => setMode('list')}
-          onComplete={handleComplete}
+          onComplete={() => handleComplete('vocab')}
         />
       </div>
     );
@@ -80,7 +91,7 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
           grammarPoints={grammarPoints}
           initialIndex={learnGrammarIndex}
           onClose={() => setMode('list')}
-          onComplete={handleComplete}
+          onComplete={() => handleComplete('grammar')}
         />
       </div>
     );
@@ -95,15 +106,17 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
           <div className="flex gap-4 mb-8 justify-center">
             <button
               onClick={() => setListTab('vocab')}
-              className={`px-8 py-3 rounded-full font-bold transition-all border-2 ${listTab === 'vocab' ? 'bg-white border-gray-100 shadow-sm text-[#215b3b]' : 'bg-[#f9f9f9] border-transparent text-gray-500 hover:bg-gray-100'}`}
+              className={`px-8 py-3 flex items-center gap-2 rounded-full font-bold transition-all border-2 ${listTab === 'vocab' ? 'bg-white border-gray-100 shadow-sm text-[#215b3b]' : 'bg-[#f9f9f9] border-transparent text-gray-500 hover:bg-gray-100'}`}
             >
               Từ vựng ({vocabularies.length})
+              {lessonProgress?.vocabCompleted && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
             </button>
             <button
               onClick={() => setListTab('grammar')}
-              className={`px-8 py-3 rounded-full font-bold transition-all border-2 ${listTab === 'grammar' ? 'bg-white border-gray-100 shadow-sm text-[#215b3b]' : 'bg-[#f9f9f9] border-transparent text-gray-500 hover:bg-gray-100'}`}
+              className={`px-8 py-3 flex items-center gap-2 rounded-full font-bold transition-all border-2 ${listTab === 'grammar' ? 'bg-white border-gray-100 shadow-sm text-[#215b3b]' : 'bg-[#f9f9f9] border-transparent text-gray-500 hover:bg-gray-100'}`}
             >
               Ngữ pháp ({grammarPoints.length})
+              {lessonProgress?.grammarCompleted && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
             </button>
           </div>
 
