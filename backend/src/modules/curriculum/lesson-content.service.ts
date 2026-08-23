@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LessonContent } from './entities/lesson-content.entity';
-import { CreateLessonContentDto, UpdateLessonContentDto, LessonContentQueryDto } from './dto/curriculum.dto';
+import { LessonContentQueryDto } from './dto/curriculum.dto';
 import { paginatedResult, findOrNotFound } from '../../common/helpers/query-helpers';
 
 @Injectable()
@@ -28,7 +28,4 @@ export class LessonContentService {
     return paginatedResult(data, total, page, limit);
   }
   async findById(id: string) { return findOrNotFound(this.repo, id, 'Lesson content'); }
-  async create(dto: CreateLessonContentDto) { return this.repo.save(this.repo.create(dto as any)); }
-  async update(id: string, dto: UpdateLessonContentDto) { const e = await this.findById(id); Object.assign(e, dto); return this.repo.save(e); }
-  async delete(id: string) { await this.repo.remove(await this.findById(id)); }
 }

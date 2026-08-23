@@ -4,8 +4,6 @@ import { Repository, FindOptionsWhere } from 'typeorm';
 import { Topic } from './entities/topic.entity';
 import { TopicVocabulary } from './entities/topic-vocabulary.entity';
 import {
-  CreateTopicDto,
-  UpdateTopicDto,
   TopicQueryDto,
 } from './dto/curriculum.dto';
 import {
@@ -74,19 +72,5 @@ export class TopicService {
     const topic = await findOrNotFound<Topic>(this.repo, id, 'Topic');
     const count = await this.tvRepo.count({ where: { topicId: id } });
     return { ...topic, vocabularyCount: count };
-  }
-
-  async create(dto: CreateTopicDto) {
-    return this.repo.save(this.repo.create(dto as any));
-  }
-
-  async update(id: string, dto: UpdateTopicDto) {
-    const e = await this.findById(id);
-    Object.assign(e, dto);
-    return this.repo.save(e);
-  }
-
-  async softDelete(id: string) {
-    await this.repo.softRemove(await this.findById(id));
   }
 }

@@ -5,7 +5,7 @@ import { Lesson } from './entities/lesson.entity';
 import { LessonContent } from './entities/lesson-content.entity';
 import { Vocabulary } from './entities/vocabulary.entity';
 import { GrammarPoint } from './entities/grammar-point.entity';
-import { CreateLessonDto, UpdateLessonDto, LessonQueryDto } from './dto/curriculum.dto';
+import { LessonQueryDto } from './dto/curriculum.dto';
 import { paginatedResult, findOrNotFound } from '../../common/helpers/query-helpers';
 import { ContentType } from '../../common/enums/curriculum.enums';
 
@@ -31,9 +31,6 @@ export class LessonService {
     return paginatedResult(data, total, page, limit);
   }
   async findById(id: string) { return findOrNotFound(this.repo, id, 'Lesson'); }
-  async create(dto: CreateLessonDto) { return this.repo.save(this.repo.create(dto as any)); }
-  async update(id: string, dto: UpdateLessonDto) { const e = await this.findById(id); Object.assign(e, dto); return this.repo.save(e); }
-  async softDelete(id: string) { await this.repo.softRemove(await this.findById(id)); }
 
   /**
    * Tổng hợp nội dung bài học — join qua lesson_contents trả vocab + grammar
