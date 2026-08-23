@@ -2,6 +2,7 @@ import { Controller, Post, Body } from '@nestjs/common';
 import { StudyService } from './study.service';
 import { GenerateStoryDto } from './dto/generate-story.dto';
 import { GenerateGrammarExamplesDto, GenerateGrammarPracticeDto, GradeGrammarPracticeDto, GenerateGrammarStoryDto } from './dto/grammar.dto';
+import { CheckSpellingDto } from './dto/check-spelling.dto';
 
 @Controller('study')
 export class StudyController {
@@ -30,5 +31,10 @@ export class StudyController {
   @Post('grammar-story')
   async generateGrammarStory(@Body() dto: GenerateGrammarStoryDto) {
     return this.studyService.generateGrammarStory(dto.grammarTitles, dto.topic, dto.level);
+  }
+
+  @Post('check-spelling')
+  async checkSpelling(@Body() dto: CheckSpellingDto) {
+    return this.studyService.checkSpelling(dto.text);
   }
 }

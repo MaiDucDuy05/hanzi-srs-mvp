@@ -1,6 +1,7 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { GoogleGenAI } from '@google/genai';
+import { STUDY_PROMPTS, GEMINI_JSON_CONFIG, GEMINI_FALLBACK_MODELS } from './study.prompts';
 
 @Injectable()
 export class StudyService {
@@ -15,6 +16,28 @@ export class StudyService {
     this.ai = new GoogleGenAI(apiKey ? { apiKey } : {});
   }
 
+  private async generateWithRetry(prompt: string) {
+    let lastError: any;
+
+    for (const model of GEMINI_FALLBACK_MODELS) {
+      try {
+        return await this.ai.models.generateContent({
+          ...GEMINI_JSON_CONFIG,
+          model,
+          contents: prompt,
+        });
+      } catch (error: any) {
+        lastError = error;
+        console.warn(`[StudyService] Error with model ${model}: ${error.message || error.status}. Retrying with next model...`);
+        // Continue to the next model in the array on ANY error (rate limit, service down, etc)
+        continue;
+      }
+    }
+
+    console.error('[StudyService] All fallback models failed.');
+    throw lastError;
+  }
+
   async generateStory(words: string[], topic: string, level: string) {
     if (!words || words.length === 0) {
       throw new Error('Words list is required.');
@@ -22,23 +45,10 @@ export class StudyService {
 
     const wordsStr = words.join(', ');
     
-    const prompt = `You are a professional Chinese language teacher. Write a short, engaging story in simplified Chinese based on the topic "${topic}" suitable for a student at the "${level}" proficiency level.
-You MUST include all of the following vocabulary words naturally in the story: ${wordsStr}.
-
-Return ONLY a valid JSON object matching this schema exactly, with no markdown formatting or backticks:
-{
-  "storyZh": "The Chinese story here...",
-  "storyVi": "The Vietnamese translation here..."
-}`;
+    const prompt = STUDY_PROMPTS.generateStory(topic, level, wordsStr);
 
     try {
-      const response = await this.ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-        }
-      });
+      const response = await this.generateWithRetry(prompt);
       
       const responseText = response.text;
       if (!responseText) throw new Error('Empty response from model');
@@ -58,29 +68,10 @@ Return ONLY a valid JSON object matching this schema exactly, with no markdown f
   }
 
   async generateGrammarExamples(title: string, structure: string, explanation: string) {
-    const prompt = `You are a professional Chinese language teacher. The student is learning the following grammar point:
-Title: ${title}
-Structure: ${structure}
-Explanation: ${explanation}
-
-Generate exactly 3 practical and common examples using this grammar structure.
-Return ONLY a valid JSON array of objects matching this schema exactly, with no markdown formatting:
-[
-  {
-    "zh": "Chinese sentence here",
-    "pinyin": "Pinyin here (with tone marks)",
-    "vi": "Vietnamese translation here"
-  }
-]`;
+    const prompt = STUDY_PROMPTS.generateGrammarExamples(title, structure, explanation);
 
     try {
-      const response = await this.ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-        }
-      });
+      const response = await this.generateWithRetry(prompt);
       
       const jsonStr = response.text?.replace(/```json/gi, '').replace(/```/g, '').trim() || '[]';
       return JSON.parse(jsonStr);
@@ -91,25 +82,10 @@ Return ONLY a valid JSON array of objects matching this schema exactly, with no 
   }
 
   async generateGrammarPractice(title: string, structure: string) {
-    const prompt = `You are a professional Chinese language teacher. The student is practicing the grammar point:
-Title: ${title}
-Structure: ${structure}
-
-Generate 1 sentence in Vietnamese that the student must translate into Chinese using this exact grammar structure.
-Return ONLY a valid JSON object matching this schema exactly, with no markdown formatting:
-{
-  "promptVi": "Vietnamese sentence for the student to translate",
-  "expectedZh": "The expected Chinese translation"
-}`;
+    const prompt = STUDY_PROMPTS.generateGrammarPractice(title, structure);
 
     try {
-      const response = await this.ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-        }
-      });
+      const response = await this.generateWithRetry(prompt);
       
       const jsonStr = response.text?.replace(/```json/gi, '').replace(/```/g, '').trim() || '{}';
       return JSON.parse(jsonStr);
@@ -120,32 +96,10 @@ Return ONLY a valid JSON object matching this schema exactly, with no markdown f
   }
 
   async gradeGrammarPractice(title: string, structure: string, promptVi: string, userAnswer: string) {
-    const prompt = `You are a strict but encouraging Chinese language teacher. The student is practicing the grammar point:
-Title: ${title}
-Structure: ${structure}
-
-The student was asked to translate this Vietnamese sentence into Chinese: "${promptVi}"
-The student's answer: "${userAnswer}"
-
-Evaluate their answer. 
-1. Is it grammatically correct and natural?
-2. Did they successfully use the required grammar structure?
-
-Return ONLY a valid JSON object matching this schema exactly, with no markdown formatting:
-{
-  "isCorrect": boolean,
-  "score": number (0-100),
-  "feedback": "Your detailed feedback in Vietnamese explaining what was good, what was wrong, and how to improve. If incorrect, provide the correct answer."
-}`;
+    const prompt = STUDY_PROMPTS.gradeGrammarPractice(title, structure, promptVi, userAnswer);
 
     try {
-      const response = await this.ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-        }
-      });
+      const response = await this.generateWithRetry(prompt);
       
       const jsonStr = response.text?.replace(/```json/gi, '').replace(/```/g, '').trim() || '{}';
       return JSON.parse(jsonStr);
@@ -162,23 +116,10 @@ Return ONLY a valid JSON object matching this schema exactly, with no markdown f
 
     const grammarsStr = grammarTitles.join(', ');
     
-    const prompt = `You are a professional Chinese language teacher. Write a short, engaging dialogue or story in simplified Chinese based on the topic "${topic}" suitable for a student at the "${level}" proficiency level.
-You MUST include all of the following grammar points naturally in the text: ${grammarsStr}.
-
-Return ONLY a valid JSON object matching this schema exactly, with no markdown formatting:
-{
-  "storyZh": "The Chinese text here...",
-  "storyVi": "The Vietnamese translation here..."
-}`;
+    const prompt = STUDY_PROMPTS.generateGrammarStory(topic, level, grammarsStr);
 
     try {
-      const response = await this.ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: 'application/json',
-        }
-      });
+      const response = await this.generateWithRetry(prompt);
       
       const jsonStr = response.text?.replace(/```json/gi, '').replace(/```/g, '').trim() || '{}';
       const result = JSON.parse(jsonStr);
@@ -190,6 +131,39 @@ Return ONLY a valid JSON object matching this schema exactly, with no markdown f
     } catch (error) {
       console.error('Error generating grammar story:', error);
       throw new InternalServerErrorException('Failed to generate grammar story.');
+    }
+  }
+
+  async checkSpelling(text: string) {
+    if (!text || !text.trim()) {
+      return { hasError: false, suggestions: [] };
+    }
+
+    const prompt = STUDY_PROMPTS.checkSpelling(text);
+
+    try {
+      const response = await this.generateWithRetry(prompt);
+
+      const jsonStr = response.text?.replace(/```json/gi, '').replace(/```/g, '').trim() || '{}';
+      const result = JSON.parse(jsonStr);
+      
+      const suggestions = (result.suggestions || []).map((sug: any) => {
+        const start = text.indexOf(sug.wrong);
+        return {
+          wrong: sug.wrong,
+          correct: sug.correct,
+          start: start >= 0 ? start : 0,
+          end: start >= 0 ? start + sug.wrong.length : 0,
+        };
+      }).filter((sug: any) => sug.start >= 0 && sug.wrong);
+
+      return {
+        hasError: suggestions.length > 0,
+        suggestions: suggestions,
+      };
+    } catch (error) {
+      console.error('Error checking spelling with Gemini:', error);
+      return { hasError: false, suggestions: [] };
     }
   }
 }
