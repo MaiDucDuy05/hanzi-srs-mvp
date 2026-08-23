@@ -15,7 +15,8 @@ import {
   Trash2, 
   PlayCircle, 
   Lock,
-  Send 
+  Send,
+  Gamepad2
 } from 'lucide-react';
 import { testApi } from '@/lib/api/endpoints/test';
 import type { Test, TestStatus } from '@/lib/api/types';
@@ -28,6 +29,7 @@ import { AdminViolationBadge } from '@/components/shared/admin-violation-badge';
 import { ExamCreateModal } from './components/exam-create-modal';
 import { ExamQuestionModal } from './components/exam-question-modal';
 import { ExamAssignModal } from './components/exam-assign-modal';
+import { LiveQuizConfigModal } from './components/live-quiz-config-modal';
 
 type ExamFilter = 'All' | 'Drafts' | 'Active' | 'Completed';
 
@@ -46,6 +48,7 @@ export function TeacherExamManagementFeature() {
   const [managingTestId, setManagingTestId] = useState<string | null>(null);
 
   const [assigningTestId, setAssigningTestId] = useState<string | null>(null);
+  const [hostingTestId, setHostingTestId] = useState<string | null>(null);
 
   const loadTests = () => {
     if (!user) return;
@@ -279,6 +282,15 @@ export function TeacherExamManagementFeature() {
                     <div className="flex items-center gap-2 sm:opacity-0 group-hover:opacity-100 transition-opacity pl-15 sm:pl-0">
                       {!test.hiddenByAdmin && (
                         <>
+                          {test.status === 'PUBLISHED' && (
+                            <button
+                              onClick={() => setHostingTestId(test.id)}
+                              className="p-2 text-[#1f5333] hover:bg-[#eaf3c5] rounded-lg transition-colors font-bold flex items-center gap-1"
+                              title="Host Live Quiz (Khởi động)"
+                            >
+                              <Gamepad2 className="h-5 w-5" />
+                            </button>
+                          )}
                           {test.status === 'DRAFT' && (
                             <button
                               onClick={() => handleChangeStatus(test, 'PUBLISHED')}
@@ -373,6 +385,14 @@ export function TeacherExamManagementFeature() {
         onClose={() => setAssigningTestId(null)}
         testId={assigningTestId}
       />
+
+      {hostingTestId && (
+        <LiveQuizConfigModal
+          open={!!hostingTestId}
+          onClose={() => setHostingTestId(null)}
+          testId={hostingTestId}
+        />
+      )}
     </div>
   );
 }

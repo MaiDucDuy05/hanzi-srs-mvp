@@ -13,6 +13,7 @@ import { Badge } from '@/features/ui/components/badge';
 import { QuestionRenderer } from './components/question-renderer';
 import { TestAddBankModal } from './components/test-add-bank-modal';
 import { TestCreateQuestionModal } from './components/test-create-question-modal';
+import { LiveQuizConfigModal } from './components/live-quiz-config-modal';
 
 export function TestDetailFeature() {
   const { testId } = useParams<{ testId: string }>();
@@ -26,6 +27,7 @@ export function TestDetailFeature() {
   // Modal states
   const [showBankModal, setShowBankModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
 
   const load = async () => {
     try {
@@ -182,6 +184,8 @@ export function TestDetailFeature() {
         testId={testId}
         nextDisplayOrder={questions.length + 1}
       />
+
+     
     </div>
   );
 }

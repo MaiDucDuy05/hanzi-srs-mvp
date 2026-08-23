@@ -24,6 +24,7 @@ import { AchievementsModule } from './modules/achievements/achievements.module';
 import { AdminContentModule } from './modules/admin-content/admin-content.module';
 import { SystemConfigModule } from './modules/config/config.module';
 import { QuestionBankModule } from './modules/question-bank/question-bank.module';
+import { LiveQuizModule } from './modules/live-quiz/live-quiz.module';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { QuestionBankModule } from './modules/question-bank/question-bank.module
     AdminContentModule,
     SystemConfigModule,
     QuestionBankModule,
+    LiveQuizModule,
   ],
   controllers: [AppController],
   providers: [
