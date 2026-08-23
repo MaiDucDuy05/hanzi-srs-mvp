@@ -32,7 +32,7 @@ export default function StudyLayout({ children }: { children: React.ReactNode })
       </header>
 
       {/* Study Area */}
-      <main className="flex-1 w-full max-w-5xl mx-auto flex flex-col justify-center relative z-10 pt-20 pb-8">
+      <main className="flex-1 w-full max-w-5xl mx-auto flex flex-col justify-center relative z-10 pb-8">
         {children}
       </main>
     </StudyBackground>

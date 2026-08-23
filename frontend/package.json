@@ -18,6 +18,7 @@
     "hanzi-writer-data": "^2.0.1",
     "lucide-react": "^1.31.0",
     "next": "16.3.0",
+    "pinyin-pro": "^3.29.3",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-scan": "^0.5.7",

@@ -11,6 +11,8 @@ import { StudyLessonFilterBar } from '@/features/student/components/study-lesson
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
 
+import { LearnWordFlow } from './learn-word/learn-word-flow';
+
 type StudyMode = 'level' | 'topic';
 
 export function StudyFeature() {
@@ -18,13 +20,15 @@ export function StudyFeature() {
   const levelId = searchParams.get('levelId');
   const topicId = searchParams.get('topicId');
 
-  const [mode, setMode] = useState<'list' | 'flashcard'>('list');
+  const [mode, setMode] = useState<'list' | 'flashcard' | 'learn-word'>('list');
   const [listTab, setListTab] = useState<'vocab' | 'grammar'>('vocab');
   const [vocabularies, setVocabularies] = useState<Vocabulary[]>([]);
   const [progressMap, setProgressMap] = useState<Record<string, UserVocabProgress>>({});
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [learnIndex, setLearnIndex] = useState(0);
 
   // Determine study mode
   const studyMode: StudyMode | null = levelId ? 'level' : topicId ? 'topic' : null;
@@ -79,6 +83,19 @@ export function StudyFeature() {
   };
 
   if (error) return <ErrorState message={error} onRetry={() => location.reload()} />;
+
+  if (mode === 'learn-word') {
+    return (
+      <div className="w-full h-[80vh] pt-4 pb-12">
+        <LearnWordFlow
+          vocabularies={vocabularies}
+          initialIndex={learnIndex}
+          onClose={() => setMode('list')}
+          onComplete={handleComplete}
+        />
+      </div>
+    );
+  }
 
   // Flashcard mode — unified for all sources
   if (mode === 'flashcard') {
@@ -149,7 +166,15 @@ export function StudyFeature() {
               </p>
             </div>
           ) : (
-            <StudyLessonVocabTable filteredVocab={filteredVocab} progressMap={progressMap} />
+            <StudyLessonVocabTable 
+              filteredVocab={filteredVocab} 
+              progressMap={progressMap} 
+              onLearn={(id) => {
+                const idx = vocabularies.findIndex(v => v.id === id);
+                setLearnIndex(idx !== -1 ? idx : 0);
+                setMode('learn-word');
+              }}
+            />
           )
         ) : (
           <StudyLessonGrammarList grammarPoints={[]} />
@@ -158,12 +183,18 @@ export function StudyFeature() {
 
       {/* Floating Action Button */}
       {vocabularies.length > 0 && !loading && (
-        <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50">
+        <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50 flex gap-4">
+          <button
+            onClick={() => setMode('learn-word')}
+            className="px-12 py-4 bg-[#1f5333] hover:bg-[#163f25] text-white text-lg font-bold rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2"
+          >
+            Bắt đầu học từ mới
+          </button>
           <button
             onClick={() => setMode('flashcard')}
             className="px-12 py-4 bg-[#8BC34A] hover:bg-[#7CB342] text-white text-lg font-bold rounded-full shadow-[0_8px_30px_rgb(139,195,74,0.3)] transition-transform hover:scale-105 flex items-center gap-2"
           >
-            Bắt đầu ôn tập Flashcard
+            Ôn tập Flashcard
           </button>
         </div>
       )}
