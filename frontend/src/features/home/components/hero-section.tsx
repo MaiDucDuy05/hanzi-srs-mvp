@@ -12,8 +12,8 @@ export function HeroSection({ user }: { user: User | null }) {
       {/* Floating Navbar (Bên trong hero như thiết kế) */}
       <div className="absolute top-8 left-1/2 z-20 flex w-[80%] lg:w-[40%] -translate-x-1/2 items-center justify-between rounded-full bg-gradient-to-r from-[#e5f5eb] via-[#e9f9ef] to-[#e0f5e9] shadow-md px-8 py-2 font-[family-name:var(--font-nunito)] text-lg font-black text-[#215b3b] sm:text-xl lg:text-2xl">
         <img src="/assets/illustrations/panda/panda-at-beach.svg" alt="Panda" className="h-18 w-auto sm:h-24" />
-        <Link href="/learn" className="transition-colors hover:text-[#5E7F26]">Courses</Link>
-        <Link href="/games" className="transition-colors hover:text-[#5E7F26]">Games</Link>
+        <Link href="/dashboard/courses" className="transition-colors hover:text-[#5E7F26]">Courses</Link>
+        <Link href="/dashboard" className="transition-colors hover:text-[#5E7F26]">Dashboard</Link>
         <Link href="/leaderboard" className="transition-colors hover:text-[#5E7F26]">Leaderboard</Link>
       </div>
 

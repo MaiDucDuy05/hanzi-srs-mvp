@@ -60,6 +60,7 @@ export interface User {
 export interface AuthResponse {
   // accessToken nằm trong HttpOnly cookie (backend set) — body chỉ trả user.
   user: User;
+  exp: number;
 }
 
 // ── Curriculum ──

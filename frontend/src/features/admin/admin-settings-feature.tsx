@@ -11,10 +11,13 @@ import {
   Bell,
   Save,
   Cpu,
-  Layers
+  Layers,
+  LogOut
 } from 'lucide-react';
 import { AuthGuard } from '@/features/layout/components/auth-guard';
 import { adminConfigsApi, SystemConfig } from '@/lib/api/endpoints/admin-configs';
+import { useAuth } from '@/lib/auth/auth-context';
+import { useRouter } from 'next/navigation';
 
 const TABS = [
   { id: 'limits', label: 'Giới hạn & Lượt chơi', icon: Gamepad2, description: 'Lượt tập miễn phí, giới hạn sĩ số' },
@@ -38,6 +41,8 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: b
 }
 
 export function AdminSettingsFeature() {
+  const { logout } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('limits');
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -86,6 +91,15 @@ export function AdminSettingsFeature() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   if (isLoading) return <div className="p-10 text-center animate-pulse">Đang tải cấu hình hệ thống...</div>;
 
   const currentTabConfigs = configs.filter(c => c.group === activeTab);
@@ -123,6 +137,16 @@ export function AdminSettingsFeature() {
                 </button>
               );
             })}
+
+            <div className="mt-8 border-t border-gray-100 pt-6">
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl bg-[#fff4f4] text-red-600 font-bold hover:bg-red-50 hover:text-red-700 transition-colors border border-red-100 shadow-sm"
+              >
+                <LogOut className="h-5 w-5" strokeWidth={2.5} />
+                Đăng xuất
+              </button>
+            </div>
           </div>
         </div>
 
