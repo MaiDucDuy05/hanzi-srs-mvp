@@ -44,7 +44,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="flex items-center gap-4 sm:gap-6 lg:gap-8 pr-2">
           <Link href="/dashboard/courses" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Courses</Link>
           <Link href="/dashboard" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Dashboard</Link>
-          <Link href="/leaderboard" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Leaderboard</Link>
+          <Link href="/dashboard/achievements" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Leaderboard</Link>
           <Link href="/contact" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Contact Us</Link>
         </div>
       </div>

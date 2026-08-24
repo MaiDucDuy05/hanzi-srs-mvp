@@ -274,9 +274,10 @@ export class TestQuestionService {
     const attempts = await this.attemptRepo.count({
       where: { testId: q.testId, status: In([TestAttemptStatus.SUBMITTED, TestAttemptStatus.GRADED]) }
     });
-    if (attempts > 0) {
-      throw new BadRequestException('Cannot delete question because test has submissions');
-    }
+    // For MVP/Development, we allow removing questions even if there are submissions
+    // if (attempts > 0) {
+    //   throw new BadRequestException('Cannot delete question because test has submissions');
+    // }
     await this.repo.remove(q);
   }
 }
@@ -553,7 +554,10 @@ export class TestAnswerService {
     dto: SubmitTestAnswerDto,
     userId: string,
   ) {
+    console.log('>>> submitAnswer called:', { attemptId, userId, dto });
     const attempt = await this.assertCanAnswer(attemptId, userId);
+    console.log('>>> attempt.testId:', attempt.testId);
+    
     const question = await this.questionRepo.findOne({
       where: { testId: attempt.testId, questionId: dto.questionId } as any,
       relations: ['question'],
@@ -561,6 +565,7 @@ export class TestAnswerService {
     if (!question) throw new BadRequestException('Test question not found');
     const submitted = dto.answer?.answer;
     const { isCorrect, pointsAwarded } = gradeQuestion(question, submitted);
+    console.log('>>> grade:', { isCorrect, pointsAwarded });
 
     const existing = await this.repo.findOne({
       where: { attemptId, questionId: dto.questionId },

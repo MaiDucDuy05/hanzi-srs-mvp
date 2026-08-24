@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, JoinColumn, Index } from 'typeorm';
+import { Column, Entity, ManyToOne, JoinColumn, Index, PrimaryGeneratedColumn, PrimaryColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
 import { BaseEntity } from '../../../common/base.entity';
 import {
   PracticeAttemptStatus,
@@ -14,13 +14,24 @@ import { User } from '../../auth/entities/user.entity';
  * - question_data / answer_data: JSONB snapshot bộ câu hỏi + đáp án.
  */
 @Entity('practice_attempts')
-@Index('uq_practice_attempts_idem', ['userId', 'idempotencyKey'], {
+@Index('uq_practice_attempts_idem', ['userId', 'idempotencyKey', 'createdAt'], {
   unique: true,
   where: 'idempotency_key IS NOT NULL',
 })
 @Index('idx_practice_attempts_user_status', ['userId', 'status'])
 @Index('idx_practice_attempts_user_type_created', ['userId', 'practiceType', 'createdAt'])
-export class PracticeAttempt extends BaseEntity {
+export class PracticeAttempt {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @PrimaryColumn({ name: 'created_at', type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
+  updatedAt: Date;
+
+  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz', nullable: true })
+  deletedAt: Date;
   @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
 

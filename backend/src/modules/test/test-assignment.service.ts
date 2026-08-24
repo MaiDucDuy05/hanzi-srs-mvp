@@ -3,11 +3,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TestAssignment } from './entities/test-assignment.entity';
 import { CreateTestAssignmentDto } from './dto/test-assignment.dto';
+import { Test } from './entities/test.entity';
+import { TestStatus } from '../../common/enums/test.enums';
 
 @Injectable()
 export class TestAssignmentService {
   constructor(
     @InjectRepository(TestAssignment) private repo: Repository<TestAssignment>,
+    @InjectRepository(Test) private testRepo: Repository<Test>,
   ) {}
 
   async create(dto: CreateTestAssignmentDto, assignerId: string) {
@@ -44,7 +47,12 @@ export class TestAssignmentService {
     }
 
     const assignments = this.repo.create(assignmentsToCreate);
-    return this.repo.save(assignments);
+    const saved = await this.repo.save(assignments);
+    
+    // Automatically publish the test so students can actually take it
+    await this.testRepo.update(dto.testId, { status: TestStatus.PUBLISHED });
+    
+    return saved;
   }
 
   async findAssignedToStudent(studentId: string, classroomIds: string[]) {

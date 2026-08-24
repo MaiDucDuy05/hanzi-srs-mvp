@@ -71,14 +71,35 @@ export function TestCreateQuestionModal({ open, onClose, onSuccess, testId, next
         .map((s) => s.trim())
         .filter(Boolean);
 
+      let contentData: any = {
+        questionText: createForm.content,
+      };
+
+      if (createForm.type === 'SINGLE_CHOICE') {
+        contentData.options = optionsArr.length > 0 ? optionsArr : null;
+        contentData.correctAnswer = createForm.correctAnswer || null;
+      } else if (createForm.type === 'TRUE_FALSE') {
+        contentData.correctAnswer = createForm.correctAnswer === 'true';
+      } else if (createForm.type === 'FILL_IN') {
+        contentData.acceptedAnswers = createForm.correctAnswer ? createForm.correctAnswer.split(',').map(s => s.trim()).filter(Boolean) : [];
+        contentData.correctAnswer = createForm.correctAnswer || null; // for fallback in UI
+      } else if (createForm.type === 'ORDERING') {
+        const orderArr = createForm.correctAnswer.split(' ').map(s => s.trim()).filter(Boolean);
+        contentData.correctOrder = orderArr.length >= 2 ? orderArr : [createForm.correctAnswer, '(cần nhập nhiều từ)'];
+        contentData.items = [...contentData.correctOrder].sort(() => Math.random() - 0.5);
+      } else if (createForm.type === 'SHORT_ANSWER') {
+        contentData.acceptedAnswers = createForm.correctAnswer ? [createForm.correctAnswer] : [];
+        contentData.correctAnswer = createForm.correctAnswer || null;
+      } else {
+        contentData.correctAnswer = createForm.correctAnswer || null;
+      }
+
       const qData = {
         type: createForm.type as any,
         visibility: 'PRIVATE' as const,
         difficulty: 'MEDIUM' as const,
         content: {
-          questionText: createForm.content,
-          options: optionsArr.length > 0 ? optionsArr : null,
-          correctAnswer: createForm.correctAnswer || null,
+          ...contentData,
           imageUrl: createForm.imageUrl || undefined,
           audioUrl: createForm.audioUrl || undefined,
           audioPlayLimit: createForm.audioPlayLimit ? Number(createForm.audioPlayLimit) : undefined,
