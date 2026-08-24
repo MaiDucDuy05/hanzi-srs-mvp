@@ -96,7 +96,10 @@ export class SentenceOrderingController {
     // Cập nhật attempt với snapshot (xáo trộn)
     await this.dataSource.transaction(async (em) => {
       const repo = em.getRepository(attempt.constructor as any);
-      await repo.update(attempt.id, { questionData: snapshot as any });
+      await repo.update(
+        { id: attempt.id } as any,
+        { questionData: snapshot as any }
+      );
     });
 
     return ok(
@@ -140,7 +143,7 @@ export class SentenceOrderingController {
     let expAwarded = 0;
     await this.dataSource.transaction(async (em) => {
       const repo = em.getRepository(attempt.constructor as any);
-      await repo.update(attemptId, {
+      await repo.update({ id: attemptId } as any, {
         answerData: { answers: dto.answers } as any,
         score: gradingResult.score,
         correctCount: gradingResult.totalCorrect,

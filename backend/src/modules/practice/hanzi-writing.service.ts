@@ -105,7 +105,7 @@ export class HanziWritingService {
    * Save session chars into attempt.questionData.
    */
   async saveSessionChars(attemptId: string, chars: HanziChar[]): Promise<void> {
-    await this.attemptRepo.update(attemptId, {
+    await this.attemptRepo.update({ id: attemptId } as any, {
       questionData: { characters: chars } as any,
     });
   }
@@ -159,7 +159,7 @@ export class HanziWritingService {
       }
     }
 
-    await this.attemptRepo.update(attemptId, {
+    await this.attemptRepo.update({ id: attemptId } as any, {
       answerData: { characters: dto.characters } as any,
       score: completedChars,
       correctCount: completedChars,
