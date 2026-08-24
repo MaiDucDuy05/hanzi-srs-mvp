@@ -81,6 +81,10 @@ export class UpdateContactRequestDto {
   @IsOptional() @IsEnum(ContactStatus) status?: ContactStatus;
 }
 
+export class ReplyContactDto {
+  @IsString() replyMessage: string;
+}
+
 export class CreateMistakeBookDto {
   @IsUUID() userId: string;
   @IsString() sourceType: string;

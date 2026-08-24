@@ -26,6 +26,12 @@ export const resourceApi = {
   createContact: (data: { name: string; email: string; phone?: string; message: string }) =>
     unwrap(apiFetch<Single<{ id: string }>>('/contact-requests', { method: 'POST', body: JSON.stringify(data), auth: false })),
 
+  listContacts: (params: { status?: string; page?: number; limit?: number } = {}) =>
+    apiFetch<Paginated<any>>(`/contact-requests${toQuery({ ...params, limit: params.limit ?? 20 })}`).then((r) => r.data),
+
+  replyContact: (id: string, replyMessage: string) =>
+    unwrap(apiFetch<Single<any>>(`/contact-requests/${id}/reply`, { method: 'POST', body: JSON.stringify({ replyMessage }) })),
+
   listMistakes: (params: { userId?: string; since?: string; page?: number; limit?: number } = {}) =>
     apiFetch<Paginated<MistakeBookEntry>>(`/mistake-book${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
 
