@@ -10,6 +10,7 @@ import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
 import { formatDateTime } from '@/lib/utils/format';
 import { cn } from '@/lib/utils/cn';
+import { CheckCircle } from 'lucide-react';
 
 export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: { attemptId?: string; onBack?: () => void } = {}) {
   const params = useParams<{ attemptId: string }>();
@@ -87,11 +88,15 @@ export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: {
           const q = qObj.question;
           const qContent = (q?.content || {}) as Record<string, any>;
           const type = q?.type || 'UNKNOWN';
-          let text = qContent.questionText || qContent.sentence || JSON.stringify(qContent);
+          let text = qContent.questionText || qContent.question || qContent.text || qContent.sentence;
           if (type === 'ORDERING') text = (qContent.correctOrder || []).join(' / ');
           if (type === 'MATCHING') text = 'Nối từ';
 
-          const correctAnswer = qContent.correct_answer || qContent.correctOrder || qContent.acceptedAnswers;
+          if (!text && typeof qContent === 'object') {
+            text = JSON.stringify(qContent);
+          }
+
+          const correctAnswer = qContent.correctAnswer || qContent.correct_answer || qContent.correctOrder || qContent.acceptedAnswers;
 
           const ans = answerMap.get(qObj.question.id);
           const isCorrect = ans?.isCorrect;
@@ -105,9 +110,35 @@ export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: {
                     <div className="text-gray-900 leading-relaxed font-medium">
                       {text}
                       {type === 'FILL_IN' && <span className="inline-block w-16 border-b-2 border-gray-400 mx-2" />}
+                      
+                      {qContent.options && Array.isArray(qContent.options) && (
+                        <div className="mt-4 space-y-2">
+                          {qContent.options.map((opt: any, i: number) => {
+                            const optText = typeof opt === 'object' && opt !== null ? (opt.text || opt.label || JSON.stringify(opt)) : String(opt);
+                            return (
+                              <div key={i} className="text-sm text-gray-700 flex items-start gap-3 bg-gray-50/50 p-2 rounded-lg border border-gray-100">
+                                <span className="font-semibold text-gray-400 w-5">{String.fromCharCode(65 + i)}.</span>
+                                <span>{optText}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      
+                      {qContent.imageUrl && (
+                        <div className="mt-4">
+                          <img src={qContent.imageUrl} alt="Question image" className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm" style={{ maxHeight: '250px' }} />
+                        </div>
+                      )}
+                      
+                      {qContent.audioUrl && (
+                        <div className="mt-4">
+                          <audio src={qContent.audioUrl} controls className="w-full max-w-sm rounded-full" />
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="text-sm font-semibold text-gray-500 whitespace-nowrap bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
+                  <div className="text-sm font-semibold text-gray-500 whitespace-nowrap bg-gray-50 px-3 py-1 rounded-full border border-gray-100 h-fit">
                     {ans?.pointsAwarded || 0} / {qObj.points} điểm
                   </div>
                 </div>

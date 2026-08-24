@@ -45,7 +45,7 @@ export function StudentExamsFeature() {
   };
 
   const getAssignmentState = (assignment: TestAssignment) => {
-    const testAttempts = attempts.filter((a) => a.testId === assignment.testId);
+    const testAttempts = attempts.filter((a) => a.testId === assignment.testId && a.assignmentId === assignment.id);
     const inProgress = testAttempts.find((a) => a.status === 'IN_PROGRESS');
     const submittedCount = testAttempts.filter((a) => a.status === 'SUBMITTED' || a.status === 'GRADED').length;
     const limit = assignment.test?.attemptLimit || 1;
@@ -60,7 +60,23 @@ export function StudentExamsFeature() {
     return { testAttempts, inProgress, submittedCount, limit, isStarted, isEnded, category };
   };
 
-  const enrichedAssignments = assignments.map(a => ({ ...a, state: getAssignmentState(a) }));
+  // Deduplicate assignments by testId, keeping the latest one
+  const uniqueAssignments = assignments.reduce((acc, current) => {
+    const existingIndex = acc.findIndex(a => a.testId === current.testId);
+    if (existingIndex === -1) {
+      acc.push(current);
+    } else {
+      // If current is newer, replace the existing one
+      const currentVal = (current as any).createdAt || current.startTime;
+      const existingVal = (acc[existingIndex] as any).createdAt || acc[existingIndex].startTime;
+      if (new Date(currentVal) > new Date(existingVal)) {
+        acc[existingIndex] = current;
+      }
+    }
+    return acc;
+  }, [] as typeof assignments);
+
+  const enrichedAssignments = uniqueAssignments.map(a => ({ ...a, state: getAssignmentState(a) }));
   
   const stats = {
     pending: enrichedAssignments.filter(a => a.state.category === 'PENDING').length,
@@ -84,9 +100,6 @@ export function StudentExamsFeature() {
         <div className="relative z-10 max-w-xl">
           <p className="text-brand-100 mb-2 font-medium tracking-wider text-sm uppercase">My Exams & Assessments</p>
           <h1 className="text-4xl font-extrabold mb-4 font-display">Bài kiểm tra của tôi</h1>
-          <p className="text-brand-50 text-lg opacity-90 leading-relaxed">
-            Manage and track your upcoming, pending, and completed assessments in one serene clearing.
-          </p>
         </div>
         
         {/* Placeholder for Panda Illustration */}
@@ -95,42 +108,6 @@ export function StudentExamsFeature() {
         </div>
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 -mt-4 relative z-20 px-4">
-        <Card className="rounded-2xl shadow-sm border-none hover:shadow-md transition-shadow">
-          <CardBody className="flex items-center gap-4 p-5">
-            <div className="bg-brand-50 p-3 rounded-full text-brand-600">
-              <TargetIcon className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Pending (Sẽ cần làm)</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.pending}</p>
-            </div>
-          </CardBody>
-        </Card>
-        <Card className="rounded-2xl shadow-sm border-none hover:shadow-md transition-shadow">
-          <CardBody className="flex items-center gap-4 p-5">
-            <div className="bg-yellow-50 p-3 rounded-full text-yellow-600">
-              <Hourglass className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Submitted (Đang chờ chấm)</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.submitted}</p>
-            </div>
-          </CardBody>
-        </Card>
-        <Card className="rounded-2xl shadow-sm border-none hover:shadow-md transition-shadow">
-          <CardBody className="flex items-center gap-4 p-5">
-            <div className="bg-blue-50 p-3 rounded-full text-blue-600">
-              <Trophy className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-500">Completed (Đã hoàn thành)</p>
-              <p className="text-3xl font-bold text-gray-900">{stats.completed}</p>
-            </div>
-          </CardBody>
-        </Card>
-      </div>
 
       {/* Controls: Tabs & Search */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between px-2">
@@ -146,10 +123,10 @@ export function StudentExamsFeature() {
                   : "bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50"
               )}
             >
-              {f === 'ALL' ? 'Tất cả (All)' :
-               f === 'PENDING' ? 'Đang chờ làm' :
-               f === 'SUBMITTED' ? 'Đang chờ chấm' :
-               'Đã hoàn thành'}
+              {f === 'ALL' ? `Tất cả (${enrichedAssignments.length})` :
+               f === 'PENDING' ? `Đang chờ làm (${stats.pending})` :
+               f === 'SUBMITTED' ? `Đang chờ chấm (${stats.submitted})` :
+               `Đã hoàn thành (${stats.completed})`}
             </button>
           ))}
         </div>

@@ -340,7 +340,7 @@ export function StudentExamTakingPage() {
           <div className="bg-[#fdfefc] w-full rounded-t-3xl p-6 max-h-[70vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="font-bold text-xl">Question Palette</h3>
-              <Button variant="ghost" className="rounded-full bg-gray-100" size="icon" onClick={() => setShowNavigator(false)}>
+              <Button variant="ghost" className="rounded-full bg-gray-100"  onClick={() => setShowNavigator(false)}>
                 <X className="h-5 w-5" />
               </Button>
             </div>
