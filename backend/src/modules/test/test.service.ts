@@ -374,7 +374,7 @@ export class TestAttemptService {
         order: { displayOrder: 'ASC' },
       }),
     ]);
-    const qIds = new Set(questions.map((q) => q.id));
+    const qIds = new Set(questions.map((q) => q.questionId));
     const totalPoints = questions.reduce((s, q) => s + q.points, 0);
     // Chỉ tính điểm cho câu thuộc đúng bài test của attempt (chặn inject câu bài khác).
     const earned = answers
@@ -453,7 +453,7 @@ export class TestAttemptService {
         relations: ['question'],
       }),
     ]);
-    const qIds = new Set(questions.map((q) => q.id));
+    const qIds = new Set(questions.map((q) => q.questionId));
     const totalPoints = questions.reduce((s, q) => s + q.points, 0);
     const earned = answers
       .filter((a) => qIds.has(a.questionId))
@@ -555,13 +555,10 @@ export class TestAnswerService {
   ) {
     const attempt = await this.assertCanAnswer(attemptId, userId);
     const question = await this.questionRepo.findOne({
-      where: { id: dto.questionId } as any,
+      where: { testId: attempt.testId, questionId: dto.questionId } as any,
       relations: ['question'],
     });
     if (!question) throw new BadRequestException('Test question not found');
-    // Chống inject: câu hỏi phải thuộc đúng bài test của attempt.
-    if (question.testId !== attempt.testId)
-      throw new BadRequestException('Question does not belong to this test');
     const submitted = dto.answer?.answer;
     const { isCorrect, pointsAwarded } = gradeQuestion(question, submitted);
 

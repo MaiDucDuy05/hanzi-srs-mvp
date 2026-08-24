@@ -112,6 +112,10 @@ export class ResourceService {
     return { uploadUrl: url, key };
   }
 
+  async getPublicDownloadUrl(key: string) {
+    return this.s3Svc.generateDownloadUrl(key, 3600);
+  }
+
   async getDownloadUrl(id: string, userId?: string, role?: string) {
     // We reuse findById to check if the user is allowed to access this resource
     // maskFileKey will remove fileKey if they are not VIP!

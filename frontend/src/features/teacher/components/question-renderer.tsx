@@ -1,5 +1,7 @@
 'use client';
 
+import { useState, useRef } from 'react';
+
 import { Card, CardBody } from '@/features/ui/components/card';
 import { Badge } from '@/features/ui/components/badge';
 import type { TestQuestion } from '@/lib/api/types';
@@ -18,6 +20,26 @@ export function QuestionRenderer({ question, index = 0, compact = false, mode = 
   const q = question.question;
   const content = (q?.content || {}) as Record<string, any>;
   const type = q?.type || 'UNKNOWN';
+
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const [playCount, setPlayCount] = useState(0);
+
+  const handlePlay = (e: any) => {
+    if (mode === 'take' && content.audioPlayLimit && playCount >= content.audioPlayLimit) {
+      e.preventDefault();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      alert(`Bạn đã hết số lần nghe (${content.audioPlayLimit} lần).`);
+    }
+  };
+
+  const handleEnded = () => {
+    if (mode === 'take' && content.audioPlayLimit) {
+      setPlayCount(prev => prev + 1);
+    }
+  };
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -323,7 +345,31 @@ export function QuestionRenderer({ question, index = 0, compact = false, mode = 
           </div>
         </div>
 
-        <div className="space-y-4">{renderQuestionContent()}</div>
+        <div className="space-y-4">
+          {content.imageUrl && (
+            <div className="mb-4">
+              <img src={content.imageUrl} alt="Question Image" className="max-w-full h-auto rounded-lg border border-gray-200" style={{ maxHeight: '300px' }} />
+            </div>
+          )}
+          {content.audioUrl && (
+            <div className="mb-4 flex flex-col gap-2">
+              <audio 
+                ref={audioRef}
+                src={content.audioUrl} 
+                controls 
+                className="w-full"
+                onPlay={handlePlay}
+                onEnded={handleEnded}
+              />
+              {mode === 'take' && content.audioPlayLimit && (
+                <span className="text-xs text-amber-600 font-medium">
+                  Số lần nghe còn lại: {Math.max(0, content.audioPlayLimit - playCount)} / {content.audioPlayLimit}
+                </span>
+              )}
+            </div>
+          )}
+          {renderQuestionContent()}
+        </div>
       </CardBody>
     </Card>
   );

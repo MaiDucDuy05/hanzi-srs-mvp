@@ -123,7 +123,7 @@ export function StudentExamTakingPage() {
   };
 
   const toggleMarkForReview = () => {
-    const qId = questions[currentQuestion]?.id;
+    const qId = questions[currentQuestion]?.questionId;
     if (qId) {
       const newMarked = new Set(markedForReview);
       if (newMarked.has(qId)) {
@@ -171,7 +171,7 @@ export function StudentExamTakingPage() {
   if (error || !test) return <ErrorState message={error || 'Không tìm thấy bài kiểm tra'} />;
 
   const q = questions[currentQuestion];
-  const isMarked = markedForReview.has(q?.id || '');
+  const isMarked = markedForReview.has(q?.questionId || '');
   const timerColor = timeLeft < 300 ? 'text-red-600' : timeLeft < 600 ? 'text-amber-600' : 'text-gray-900';
 
   return (
@@ -241,8 +241,8 @@ export function StudentExamTakingPage() {
                   question={q}
                   index={currentQuestion}
                   mode="take"
-                  value={answers[q.id]}
-                  onChange={(val) => handleAnswerChange(q.id, val)}
+                  value={answers[q.questionId]}
+                  onChange={(val) => handleAnswerChange(q.questionId, val)}
                 />
               </div>
 
@@ -269,11 +269,11 @@ export function StudentExamTakingPage() {
                       className={cn(
                         'w-full aspect-square text-sm font-semibold rounded-lg transition-all flex items-center justify-center',
                         currentQuestion === idx && 'ring-2 ring-blue-500 bg-blue-100 text-blue-600',
-                        answers[question.id] !== undefined && currentQuestion !== idx && 'bg-green-100 text-green-600',
-                        markedForReview.has(question.id) && currentQuestion !== idx && 'bg-amber-100 text-amber-600',
-                        !answers[question.id] && currentQuestion !== idx && 'bg-gray-100 text-gray-600'
+                        answers[question.questionId] !== undefined && currentQuestion !== idx && 'bg-green-100 text-green-600',
+                        markedForReview.has(question.questionId) && currentQuestion !== idx && 'bg-amber-100 text-amber-600',
+                        !answers[question.questionId] && currentQuestion !== idx && 'bg-gray-100 text-gray-600'
                       )}
-                      title={`Câu ${idx + 1}${answers[question.id] ? ' (Đã trả lời)' : ''}`}
+                      title={`Câu ${idx + 1}${answers[question.questionId] ? ' (Đã trả lời)' : ''}`}
                     >
                       {idx + 1}
                     </button>
@@ -303,9 +303,9 @@ export function StudentExamTakingPage() {
                   className={cn(
                     'w-full aspect-square text-sm font-semibold rounded-lg transition-all flex items-center justify-center',
                     currentQuestion === idx && 'ring-2 ring-blue-500 bg-blue-100 text-blue-600',
-                    answers[question.id] !== undefined && currentQuestion !== idx && 'bg-green-100 text-green-600',
-                    markedForReview.has(question.id) && currentQuestion !== idx && 'bg-amber-100 text-amber-600',
-                    !answers[question.id] && currentQuestion !== idx && 'bg-gray-100 text-gray-600'
+                    answers[question.questionId] !== undefined && currentQuestion !== idx && 'bg-green-100 text-green-600',
+                    markedForReview.has(question.questionId) && currentQuestion !== idx && 'bg-amber-100 text-amber-600',
+                    !answers[question.questionId] && currentQuestion !== idx && 'bg-gray-100 text-gray-600'
                   )}
                 >
                   {idx + 1}

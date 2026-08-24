@@ -1,9 +1,11 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Query, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Query, HttpCode, HttpStatus, Res, Req } from '@nestjs/common';
+import type { Response, Request } from 'express';
 import { ResourceService } from './resource.service';
 import * as DTO from './dto/resources.dto';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Role } from '../../common/enums/user.enums';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
+import { Public } from '../auth/decorators/public.decorator';
 import type { JwtPayload } from '../auth/strategies/jwt.strategy';
 
 function ok(data: any, msg: string) { return data?.meta ? { ...data, message: msg } : { data, message: msg }; }
@@ -29,6 +31,32 @@ export class ResourceController {
     @CurrentUser() user: JwtPayload,
   ) {
     return ok(await this.svc.getDownloadUrl(id, user?.sub, user?.role), 'Download URL generated');
+  }
+
+  @Public()
+  @Get('public/*')
+  async getPublicFile(@Req() req: Request, @Res() res: Response) {
+    let key: string | undefined;
+    const param = req.params[0] || req.params.path;
+    
+    if (Array.isArray(param)) {
+      key = param.join('/');
+    } else if (typeof param === 'string') {
+      key = param;
+    }
+
+    if (!key) {
+      const parts = req.url.split('/public/');
+      if (parts.length > 1) {
+        key = parts[1].split('?')[0];
+      }
+    }
+    
+    if (!key) {
+      return res.status(400).send('Missing file key');
+    }
+    const url = await this.svc.getPublicDownloadUrl(key);
+    res.redirect(url);
   }
 
   @Post('upload-request') 

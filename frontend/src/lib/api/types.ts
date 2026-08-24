@@ -303,6 +303,17 @@ export interface Test {
   updatedAt: string;
 }
 
+export interface QuestionContent {
+  questionText?: string;
+  imageUrl?: string;
+  audioUrl?: string;
+  audioPlayLimit?: number;
+  options?: string[] | null;
+  correctAnswer?: any;
+  acceptedAnswers?: any;
+  [key: string]: any;
+}
+
 export interface TestQuestion {
   id: string;
   testId: string;
@@ -311,7 +322,7 @@ export interface TestQuestion {
     id: string;
     type: TestQuestionType;
     difficulty: string;
-    content: Record<string, any>;
+    content: QuestionContent;
   };
   points: number;
   displayOrder: number;
