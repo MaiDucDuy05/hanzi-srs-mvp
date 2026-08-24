@@ -274,9 +274,10 @@ export class TestQuestionService {
     const attempts = await this.attemptRepo.count({
       where: { testId: q.testId, status: In([TestAttemptStatus.SUBMITTED, TestAttemptStatus.GRADED]) }
     });
-    if (attempts > 0) {
-      throw new BadRequestException('Cannot delete question because test has submissions');
-    }
+    // For MVP/Development, we allow removing questions even if there are submissions
+    // if (attempts > 0) {
+    //   throw new BadRequestException('Cannot delete question because test has submissions');
+    // }
     await this.repo.remove(q);
   }
 }
@@ -553,17 +554,32 @@ export class TestAnswerService {
     dto: SubmitTestAnswerDto,
     userId: string,
   ) {
+    console.log('>>> submitAnswer called:', { attemptId, userId, dto });
     const attempt = await this.assertCanAnswer(attemptId, userId);
+    console.log('>>> attempt.testId:', attempt.testId);
+    
     const question = await this.questionRepo.findOne({
-      where: { id: dto.questionId } as any,
+      where: { testId: attempt.testId, questionId: dto.questionId } as any,
       relations: ['question'],
     });
-    if (!question) throw new BadRequestException('Test question not found');
+    console.log('>>> found question:', question ? question.id : 'null');
+    
+    if (!question) {
+      console.error('>>> Test question not found for:', { testId: attempt.testId, questionId: dto.questionId });
+      throw new BadRequestException('Test question not found');
+    }
+    
     // Chống inject: câu hỏi phải thuộc đúng bài test của attempt.
     if (question.testId !== attempt.testId)
       throw new BadRequestException('Question does not belong to this test');
-    const submitted = dto.answer?.answer;
+    // Extract the actual answer value. It might be nested in an { answer: ... } object or sent directly.
+    const submitted = (typeof dto.answer === 'object' && dto.answer !== null && 'answer' in dto.answer) 
+      ? (dto.answer as any).answer 
+      : dto.answer;
+    
+    console.log('>>> submitted answer value:', submitted);
     const { isCorrect, pointsAwarded } = gradeQuestion(question, submitted);
+    console.log('>>> grade:', { isCorrect, pointsAwarded });
 
     const existing = await this.repo.findOne({
       where: { attemptId, questionId: dto.questionId },

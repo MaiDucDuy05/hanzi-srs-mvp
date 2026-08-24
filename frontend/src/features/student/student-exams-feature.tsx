@@ -10,6 +10,7 @@ import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
 import { formatDateTime } from '@/lib/utils/format';
 import { cn } from '@/lib/utils/cn';
+import { Clock, Calendar, Target, Search, Trophy, Hourglass, Target as TargetIcon } from 'lucide-react';
 
 export function StudentExamsFeature() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export function StudentExamsFeature() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'SUBMITTED' | 'COMPLETED'>('ALL');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     Promise.all([
@@ -48,93 +50,212 @@ export function StudentExamsFeature() {
     const submittedCount = testAttempts.filter((a) => a.status === 'SUBMITTED' || a.status === 'GRADED').length;
     const limit = assignment.test?.attemptLimit || 1;
     
-    // Check if the assignment is still valid based on dates
     const now = new Date();
     const isStarted = new Date(assignment.startTime) <= now;
     const isEnded = new Date(assignment.endTime) < now;
+    
+    const hasSubmitted = testAttempts.some(t => t.status === 'SUBMITTED');
+    const category = hasSubmitted ? 'SUBMITTED' : (submittedCount >= limit || isEnded ? 'COMPLETED' : 'PENDING');
 
-    return { testAttempts, inProgress, submittedCount, limit, isStarted, isEnded };
+    return { testAttempts, inProgress, submittedCount, limit, isStarted, isEnded, category };
   };
+
+  const enrichedAssignments = assignments.map(a => ({ ...a, state: getAssignmentState(a) }));
+  
+  const stats = {
+    pending: enrichedAssignments.filter(a => a.state.category === 'PENDING').length,
+    submitted: enrichedAssignments.filter(a => a.state.category === 'SUBMITTED').length,
+    completed: enrichedAssignments.filter(a => a.state.category === 'COMPLETED').length,
+  };
+
+  const filteredAssignments = enrichedAssignments.filter(a => {
+    const matchesFilter = filter === 'ALL' || a.state.category === filter;
+    const matchesSearch = (a.test?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesFilter && matchesSearch;
+  });
 
   if (loading) return <PageLoading label="Đang tải danh sách bài kiểm tra..." />;
   if (error) return <ErrorState message={error} />;
 
   return (
-    <div className="space-y-6">
-      <header className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Bài kiểm tra của tôi</h1>
-          <p className="text-gray-500 mt-1">Danh sách bài kiểm tra bạn được giao.</p>
+    <div className="space-y-8 max-w-7xl mx-auto pb-12">
+      {/* Hero Section */}
+      <div className="bg-[#466a50] rounded-3xl p-8 relative overflow-hidden shadow-lg text-white">
+        <div className="relative z-10 max-w-xl">
+          <p className="text-brand-100 mb-2 font-medium tracking-wider text-sm uppercase">My Exams & Assessments</p>
+          <h1 className="text-4xl font-extrabold mb-4 font-display">Bài kiểm tra của tôi</h1>
+          <p className="text-brand-50 text-lg opacity-90 leading-relaxed">
+            Manage and track your upcoming, pending, and completed assessments in one serene clearing.
+          </p>
         </div>
-      </header>
-
-      <div className="flex gap-2 border-b">
-        {(['ALL', 'PENDING', 'SUBMITTED', 'COMPLETED'] as const).map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={cn(
-              "px-4 py-2 border-b-2 font-medium text-sm transition-colors",
-              filter === f 
-                ? "border-brand-600 text-brand-600" 
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            )}
-          >
-            {f === 'ALL' ? 'Tất cả' :
-             f === 'PENDING' ? 'Đang chờ làm' :
-             f === 'SUBMITTED' ? 'Đang chờ chấm' :
-             'Đã hoàn thành'}
-          </button>
-        ))}
+        
+        {/* Placeholder for Panda Illustration */}
+        <div className="absolute right-0 bottom-0 top-0 w-1/3 hidden md:block opacity-80 mix-blend-luminosity">
+          <div className="w-full h-full bg-gradient-to-l from-white/20 to-transparent" />
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {assignments
-          .map(a => ({ ...a, state: getAssignmentState(a) }))
-          .filter(({ state }) => {
-            const hasSubmitted = state.testAttempts.some(t => t.status === 'SUBMITTED');
-            const category = hasSubmitted ? 'SUBMITTED' : (state.submittedCount >= state.limit || state.isEnded ? 'COMPLETED' : 'PENDING');
-            if (filter === 'ALL') return true;
-            return filter === category;
-          })
-          .map(a => {
-          const { inProgress, submittedCount, limit, isEnded, isStarted, testAttempts } = a.state;
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 -mt-4 relative z-20 px-4">
+        <Card className="rounded-2xl shadow-sm border-none hover:shadow-md transition-shadow">
+          <CardBody className="flex items-center gap-4 p-5">
+            <div className="bg-brand-50 p-3 rounded-full text-brand-600">
+              <TargetIcon className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500">Pending (Sẽ cần làm)</p>
+              <p className="text-3xl font-bold text-gray-900">{stats.pending}</p>
+            </div>
+          </CardBody>
+        </Card>
+        <Card className="rounded-2xl shadow-sm border-none hover:shadow-md transition-shadow">
+          <CardBody className="flex items-center gap-4 p-5">
+            <div className="bg-yellow-50 p-3 rounded-full text-yellow-600">
+              <Hourglass className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500">Submitted (Đang chờ chấm)</p>
+              <p className="text-3xl font-bold text-gray-900">{stats.submitted}</p>
+            </div>
+          </CardBody>
+        </Card>
+        <Card className="rounded-2xl shadow-sm border-none hover:shadow-md transition-shadow">
+          <CardBody className="flex items-center gap-4 p-5">
+            <div className="bg-blue-50 p-3 rounded-full text-blue-600">
+              <Trophy className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-500">Completed (Đã hoàn thành)</p>
+              <p className="text-3xl font-bold text-gray-900">{stats.completed}</p>
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+
+      {/* Controls: Tabs & Search */}
+      <div className="flex flex-col md:flex-row gap-4 items-center justify-between px-2">
+        <div className="flex gap-2 bg-white p-1.5 rounded-full shadow-sm border border-gray-100 overflow-x-auto max-w-full">
+          {(['ALL', 'PENDING', 'SUBMITTED', 'COMPLETED'] as const).map(f => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={cn(
+                "px-5 py-2.5 rounded-full font-semibold text-sm transition-all duration-300 whitespace-nowrap",
+                filter === f 
+                  ? "bg-[#466a50] text-white shadow-md transform scale-105" 
+                  : "bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50"
+              )}
+            >
+              {f === 'ALL' ? 'Tất cả (All)' :
+               f === 'PENDING' ? 'Đang chờ làm' :
+               f === 'SUBMITTED' ? 'Đang chờ chấm' :
+               'Đã hoàn thành'}
+            </button>
+          ))}
+        </div>
+        
+        <div className="relative w-full md:w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input 
+            type="text" 
+            placeholder="Tìm kiếm bài thi..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all shadow-sm"
+          />
+        </div>
+      </div>
+
+      {/* Exam Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {filteredAssignments.map(a => {
+          const { inProgress, submittedCount, limit, isEnded, isStarted, testAttempts, category } = a.state;
           const hasReachedLimit = submittedCount >= limit;
           const bestAttempt = testAttempts.filter(t => t.status === 'GRADED').sort((a, b) => (b.score || 0) - (a.score || 0))[0];
+          
+          // Determine badge styling based on state
+          let badgeText = 'Pending';
+          let badgeClass = 'bg-brand-50 text-brand-700 border-brand-200';
+          
+          const hoursUntilEnd = (new Date(a.endTime).getTime() - new Date().getTime()) / (1000 * 60 * 60);
+          if (category === 'COMPLETED') {
+            badgeText = 'Completed';
+            badgeClass = 'bg-gray-100 text-gray-700 border-gray-200';
+          } else if (category === 'SUBMITTED') {
+            badgeText = 'Submitted';
+            badgeClass = 'bg-yellow-50 text-yellow-700 border-yellow-200';
+          } else if (hoursUntilEnd > 0 && hoursUntilEnd < 24 && !hasReachedLimit) {
+            badgeText = 'Expiring Soon';
+            badgeClass = 'bg-red-50 text-red-600 border-red-200';
+          } else if (!isStarted) {
+            badgeText = 'Upcoming';
+            badgeClass = 'bg-blue-50 text-blue-600 border-blue-200';
+          }
 
           return (
-            <Card key={a.id} className={cn(!isStarted && "opacity-60")}>
-              <CardBody className="space-y-3">
-                <h3 className="font-semibold text-lg">{a.test?.name || 'Bài kiểm tra không tên'}</h3>
-                <p className="text-sm text-gray-600 line-clamp-2">{a.test?.description || 'Không có mô tả'}</p>
+            <Card key={a.id} className={cn("group rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100", !isStarted && "opacity-75")}>
+              <CardBody className="p-6 flex flex-col h-full relative">
                 
-                <div className="text-xs text-gray-500 space-y-1">
-                  <p>Thời gian làm: <strong>{a.test?.timeLimitMinutes} phút</strong></p>
-                  <p>Mở từ: {formatDateTime(a.startTime)}</p>
-                  <p>Đóng lúc: {formatDateTime(a.endTime)}</p>
-                  <p>Số lần đã làm: {submittedCount} / {limit}</p>
-                  {bestAttempt && <p className="text-brand font-medium">Điểm cao nhất: {bestAttempt.score}%</p>}
+                {/* Header Row: Badge & Score */}
+                <div className="flex justify-between items-start mb-4">
+                  <div className={cn("px-3 py-1 text-xs font-semibold rounded-full border", badgeClass)}>
+                    {badgeText}
+                  </div>
+                  {bestAttempt && (
+                    <div className="w-10 h-10 rounded-full bg-green-100 text-green-700 flex items-center justify-center font-bold text-sm border-2 border-green-200">
+                      {bestAttempt.score}%
+                    </div>
+                  )}
                 </div>
 
-                <div className="pt-2">
+                {/* Content */}
+                <div className="flex-grow space-y-3 mb-6">
+                  <h3 className="font-bold text-xl text-gray-900 group-hover:text-brand-700 transition-colors">{a.test?.name || 'Bài kiểm tra không tên'}</h3>
+                  <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed">{a.test?.description || 'Không có mô tả cho bài kiểm tra này.'}</p>
+                </div>
+                
+                {/* Metadata */}
+                <div className="space-y-2 mb-6">
+                  <div className="flex items-center text-xs text-gray-500">
+                    <Clock className="w-4 h-4 mr-2 opacity-70" />
+                    <span>{a.test?.timeLimitMinutes} Minutes</span>
+                  </div>
+                  <div className="flex items-center text-xs text-gray-500">
+                    <Calendar className="w-4 h-4 mr-2 opacity-70" />
+                    <span>Due: {formatDateTime(a.endTime)}</span>
+                  </div>
+                  <div className="flex items-center text-xs text-gray-500">
+                    <Target className="w-4 h-4 mr-2 opacity-70" />
+                    <span>{submittedCount} / {limit} Attempts</span>
+                  </div>
+                </div>
+
+                {/* CTA Button */}
+                <div className="pt-4 border-t border-gray-100 mt-auto">
                   {!isStarted ? (
-                    <Button className="w-full" disabled variant="outline">Chưa tới giờ mở đề</Button>
+                    <Button className="w-full rounded-full font-medium" disabled variant="outline">Chưa tới giờ mở đề</Button>
                   ) : inProgress ? (
-                    <Button className="w-full" onClick={() => router.push(`/dashboard/exams/${inProgress.id}`)}>
+                    <Button className="w-full rounded-full font-medium bg-amber-500 hover:bg-amber-600 text-white" onClick={() => router.push(`/dashboard/exams/${inProgress.id}`)}>
                       Tiếp tục làm bài
                     </Button>
                   ) : hasReachedLimit ? (
                     bestAttempt ? (
-                      <Button className="w-full" variant="outline" onClick={() => router.push(`/dashboard/exams/${bestAttempt.id}/result`)}>
+                      <Button className="w-full rounded-full font-medium" variant="outline" onClick={() => router.push(`/dashboard/exams/${bestAttempt.id}/result`)}>
                         Xem kết quả
                       </Button>
                     ) : (
-                      <Button className="w-full" disabled variant="outline">Đã nộp</Button>
+                      <Button className="w-full rounded-full font-medium" disabled variant="outline">Đã nộp</Button>
                     )
                   ) : isEnded ? (
-                    <Button className="w-full" disabled variant="outline">Đã hết hạn</Button>
+                    <Button className="w-full rounded-full font-medium" disabled variant="outline">Đã hết hạn</Button>
                   ) : (
-                    <Button className="w-full" onClick={() => handleStart(a)}>
+                    <Button 
+                      className={cn(
+                        "w-full rounded-full font-semibold transition-all duration-300 shadow-md",
+                        badgeText === 'Expiring Soon' ? "bg-red-600 hover:bg-red-700 text-white" : "bg-[#466a50] hover:bg-[#344f3b] text-white hover:shadow-lg"
+                      )} 
+                      onClick={() => handleStart(a)}
+                    >
                       Bắt đầu làm bài
                     </Button>
                   )}
@@ -144,13 +265,13 @@ export function StudentExamsFeature() {
           );
         })}
         
-        {assignments.filter(a => {
-          const state = getAssignmentState(a);
-          const category = state.testAttempts.some(t => t.status === 'SUBMITTED') ? 'SUBMITTED' : (state.submittedCount >= state.limit || state.isEnded ? 'COMPLETED' : 'PENDING');
-          return filter === 'ALL' || filter === category;
-        }).length === 0 && (
-          <div className="col-span-full py-8 text-center text-gray-500 border border-dashed rounded-lg">
-            Bạn hiện không có bài kiểm tra nào trong danh sách này.
+        {filteredAssignments.length === 0 && (
+          <div className="col-span-full py-16 flex flex-col items-center justify-center text-center bg-white rounded-3xl border-2 border-dashed border-gray-200 shadow-sm">
+            <div className="w-24 h-24 mb-4 opacity-20 text-gray-400">
+              <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5.5-8.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm11 0c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/></svg>
+            </div>
+            <h3 className="text-lg font-bold text-gray-700 mb-2">Không có bài kiểm tra nào</h3>
+            <p className="text-gray-500 max-w-sm">Bạn hiện không có bài kiểm tra nào trong danh mục này. Hãy thư giãn và luyện tập thêm nhé!</p>
           </div>
         )}
       </div>

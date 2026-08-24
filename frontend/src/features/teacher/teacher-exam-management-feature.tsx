@@ -23,6 +23,8 @@ import { useAuth } from '@/lib/auth/auth-context';
 import { formatDate } from '@/lib/utils/format';
 import { cn } from '@/lib/utils/cn';
 
+import { useRouter } from 'next/navigation';
+
 // Modals
 import { ExamCreateModal } from './components/exam-create-modal';
 import { ExamQuestionModal } from './components/exam-question-modal';
@@ -31,6 +33,7 @@ import { ExamAssignModal } from './components/exam-assign-modal';
 type ExamFilter = 'All' | 'Drafts' | 'Active' | 'Completed';
 
 export function TeacherExamManagementFeature() {
+  const router = useRouter();
   const { user } = useAuth();
   const [tests, setTests] = useState<Test[]>([]);
   const [loading, setLoading] = useState(true);
@@ -227,6 +230,7 @@ export function TeacherExamManagementFeature() {
                 return (
                   <div
                     key={test.id}
+                    onClick={() => router.push(`/teacher/exams/${test.id}`)}
                     className={cn(
                       'rounded-2xl p-4 pr-5 border border-gray-100 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all duration-300 group cursor-pointer relative overflow-hidden',
                       index % 2 === 1 ? 'bg-gray-50' : 'bg-white hover:shadow-md hover:border-[#dde8a6]'
@@ -274,7 +278,7 @@ export function TeacherExamManagementFeature() {
                     <div className="flex items-center gap-2 sm:opacity-0 group-hover:opacity-100 transition-opacity pl-15 sm:pl-0">
                       {test.status === 'DRAFT' && (
                         <button
-                          onClick={() => handleChangeStatus(test, 'PUBLISHED')}
+                          onClick={(e) => { e.stopPropagation(); handleChangeStatus(test, 'PUBLISHED'); }}
                           className="p-2 text-gray-400 hover:text-[#78993a] hover:bg-[#f4f7ed] rounded-lg transition-colors"
                           title="Phát hành bài thi"
                         >
@@ -283,7 +287,7 @@ export function TeacherExamManagementFeature() {
                       )}
                       {(test.status === 'PUBLISHED' || test.status === 'CLOSED') && (
                         <button
-                          onClick={() => handleChangeStatus(test, test.status === 'PUBLISHED' ? 'CLOSED' : 'PUBLISHED')}
+                          onClick={(e) => { e.stopPropagation(); handleChangeStatus(test, test.status === 'PUBLISHED' ? 'CLOSED' : 'PUBLISHED'); }}
                           className="p-2 text-gray-400 hover:text-[#e55353] hover:bg-[#fff4f4] rounded-lg transition-colors"
                           title={test.status === 'PUBLISHED' ? "Đóng bài thi" : "Mở lại bài thi"}
                         >
@@ -292,7 +296,7 @@ export function TeacherExamManagementFeature() {
                       )}
                       
                       <button
-                        onClick={() => setAssigningTestId(test.id)}
+                        onClick={(e) => { e.stopPropagation(); setAssigningTestId(test.id); }}
                         className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         title="Giao bài kiểm tra"
                       >

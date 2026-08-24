@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Flag, Send, Menu, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flag, Send, Menu, X, Bookmark, BookmarkCheck, Clock } from 'lucide-react';
 import { testApi } from '@/lib/api/endpoints/test';
 import type { Test, TestAttempt, TestQuestion } from '@/lib/api/types';
 import { Button } from '@/features/ui/components/button';
@@ -123,7 +123,7 @@ export function StudentExamTakingPage() {
   };
 
   const toggleMarkForReview = () => {
-    const qId = questions[currentQuestion]?.id;
+    const qId = questions[currentQuestion]?.question.id;
     if (qId) {
       const newMarked = new Set(markedForReview);
       if (newMarked.has(qId)) {
@@ -171,207 +171,237 @@ export function StudentExamTakingPage() {
   if (error || !test) return <ErrorState message={error || 'Không tìm thấy bài kiểm tra'} />;
 
   const q = questions[currentQuestion];
-  const isMarked = markedForReview.has(q?.id || '');
-  const timerColor = timeLeft < 300 ? 'text-red-600' : timeLeft < 600 ? 'text-amber-600' : 'text-gray-900';
+  const isMarked = markedForReview.has(q?.questionId || '');
+  const timerColor = timeLeft < 300 ? 'text-red-600 bg-red-50 border-red-200' : 'text-gray-700 bg-brand-50 border-brand-100';
 
   return (
-    <div className="flex flex-col h-screen bg-gray-50">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white border-b border-gray-200 px-4 py-3">
-        <div className="flex justify-between items-center max-w-5xl mx-auto">
-          <div className="flex items-center gap-2 min-w-0">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => router.push('/dashboard/exams')}
-              className="shrink-0"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="font-bold text-gray-900 truncate text-sm sm:text-base">
-              {test.name}
-            </h1>
+    <div className="flex flex-col h-screen bg-[#f7f9f6] font-sans">
+      {/* Top Header */}
+      <header className="sticky top-0 z-40 bg-[#fefdfb] border-b border-[#e9efe7] px-6 py-4 shadow-sm flex items-center justify-between">
+        {/* Left: Breadcrumb */}
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" size="sm" onClick={() => router.push('/dashboard/exams')} className="shrink-0 rounded-full hover:bg-brand-50">
+            <ChevronLeft className="h-5 w-5 text-gray-600" />
+          </Button>
+          <div className="hidden sm:block text-sm font-semibold text-gray-700">
+            <span className="text-brand-700">Cute Panda Forest</span>
+            <span className="mx-2 text-gray-300">|</span>
+            <span>{test.name}</span>
           </div>
+        </div>
 
-          <div className="flex items-center gap-4 text-sm">
-            <span className="font-semibold text-gray-600 whitespace-nowrap">
-              Câu {currentQuestion + 1}/{questions.length}
-            </span>
-            <span className={cn('font-mono font-bold text-lg whitespace-nowrap', timerColor)}>
-              {formatTime(timeLeft)}
-            </span>
+        {/* Center: Progress Bar */}
+        <div className="hidden md:flex items-center gap-4 flex-1 max-w-md mx-8">
+          <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Progress</span>
+          <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-[#466a50] transition-all duration-300 ease-out" 
+              style={{ width: `${(answeredCount / questions.length) * 100}%` }}
+            />
           </div>
+          <span className="text-sm font-bold text-gray-700 w-12 text-right">{answeredCount} / {questions.length}</span>
+        </div>
+
+        {/* Right: Timer & Submit */}
+        <div className="flex items-center gap-4">
+          <div className={cn('flex items-center gap-2 px-4 py-2 rounded-full border shadow-inner font-mono font-bold text-lg', timerColor)}>
+            <Clock className="w-5 h-5" />
+            {formatTime(timeLeft)}
+          </div>
+          <Button 
+            onClick={() => setShowSubmitConfirm(true)} 
+            className="bg-[#466a50] hover:bg-[#344f3b] text-white rounded-full px-6 font-semibold shadow-md transition-transform active:scale-95"
+          >
+            Submit Exam
+          </Button>
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-y-auto p-4 sm:p-6">
-        <div className="max-w-3xl mx-auto">
+      {/* Main Content Split Layout */}
+      <main className="flex-1 overflow-hidden flex max-w-[1400px] w-full mx-auto">
+        
+        {/* Left Column: Question Area */}
+        <div className="flex-1 p-4 sm:p-8 overflow-y-auto">
           {q && (
-            <div className="bg-white rounded-lg border border-gray-200 p-6 space-y-6">
+            <div className="bg-white rounded-[2rem] shadow-sm border border-[#e9efe7] p-8 sm:p-12 min-h-full flex flex-col relative">
+              
               {/* Question Header */}
-              <div className="border-b border-gray-200 pb-4 flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center justify-center w-8 h-8 bg-blue-100 text-blue-600 rounded-full font-bold text-sm">
-                    {currentQuestion + 1}
-                  </span>
-                  <Badge tone="blue">
-                    {q.question?.type === 'SINGLE_CHOICE'
-                      ? 'Trắc nghiệm'
-                      : q.question?.type === 'TRUE_FALSE'
-                      ? 'Đúng/Sai'
-                      : q.question?.type === 'SHORT_ANSWER'
-                      ? 'Trả lời ngắn'
-                      : 'Câu hỏi'}
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-4">
+                  <Badge className="bg-[#e9efe7] text-[#466a50] border-none font-bold uppercase tracking-wider px-3 py-1">
+                    {q.question?.type === 'SINGLE_CHOICE' ? 'Trắc nghiệm' : q.question?.type === 'TRUE_FALSE' ? 'Đúng/Sai' : q.question?.type === 'SPEAKING' ? 'Luyện nói' : q.question?.type === 'WRITING' ? 'Viết chữ' : 'Câu hỏi'}
                   </Badge>
+                  <h2 className="text-3xl font-extrabold text-gray-800">
+                    Question {currentQuestion + 1}
+                  </h2>
                 </div>
+                
                 <Button
                   variant="ghost"
-                  size="sm"
                   onClick={toggleMarkForReview}
-                  className={cn(isMarked && 'text-amber-500')}
+                  className={cn("rounded-full px-4 text-gray-500 hover:bg-amber-50 hover:text-amber-600 transition-colors", isMarked && 'text-amber-600 bg-amber-50 font-medium')}
                 >
-                  <Flag className={cn('h-5 w-5', isMarked && 'fill-current')} />
+                  {isMarked ? <BookmarkCheck className="h-5 w-5 mr-2" /> : <Bookmark className="h-5 w-5 mr-2" />}
+                  {isMarked ? 'Bookmarked' : 'Bookmark'}
                 </Button>
               </div>
 
-              {/* Question Content */}
-              <div>
+              {/* Question Render */}
+              <div className="flex-grow flex flex-col">
                 <QuestionRenderer
                   question={q}
                   index={currentQuestion}
                   mode="take"
-                  value={answers[q.id]}
-                  onChange={(val) => handleAnswerChange(q.id, val)}
+                  value={answers[q.questionId]}
+                  onChange={(val) => handleAnswerChange(q.questionId, val)}
                 />
               </div>
 
-              {/* Question Navigator Button (Mobile) */}
-              <div className="sm:hidden">
+              {/* Bottom Nav Buttons */}
+              <div className="mt-12 flex items-center justify-between pt-6 border-t border-gray-100">
                 <Button
                   variant="outline"
-                  onClick={() => setShowNavigator(!showNavigator)}
-                  className="w-full"
+                  onClick={() => goToQuestion(currentQuestion - 1)}
+                  disabled={currentQuestion === 0}
+                  className="rounded-full px-6 border-gray-200 text-gray-600 hover:bg-gray-50 font-semibold"
                 >
-                  <Menu className="h-4 w-4 mr-2" />
-                  Xem tất cả câu ({answeredCount}/{questions.length})
+                  <ChevronLeft className="w-5 h-5 mr-2" /> Previous
                 </Button>
-              </div>
 
-              {/* Question Navigator (Desktop) */}
-              <div className="hidden sm:block border-t border-gray-200 pt-6">
-                <p className="text-xs font-bold text-gray-600 uppercase mb-3">Điều hướng câu hỏi</p>
-                <div className="grid grid-cols-8 gap-2">
-                  {questions.map((question, idx) => (
-                    <button
-                      key={question.id}
-                      onClick={() => goToQuestion(idx)}
-                      className={cn(
-                        'w-full aspect-square text-sm font-semibold rounded-lg transition-all flex items-center justify-center',
-                        currentQuestion === idx && 'ring-2 ring-blue-500 bg-blue-100 text-blue-600',
-                        answers[question.id] !== undefined && currentQuestion !== idx && 'bg-green-100 text-green-600',
-                        markedForReview.has(question.id) && currentQuestion !== idx && 'bg-amber-100 text-amber-600',
-                        !answers[question.id] && currentQuestion !== idx && 'bg-gray-100 text-gray-600'
-                      )}
-                      title={`Câu ${idx + 1}${answers[question.id] ? ' (Đã trả lời)' : ''}`}
-                    >
-                      {idx + 1}
-                    </button>
-                  ))}
-                </div>
+                <Button
+                  onClick={() => goToQuestion(currentQuestion + 1)}
+                  disabled={currentQuestion === questions.length - 1}
+                  className="rounded-full px-8 bg-[#466a50] hover:bg-[#344f3b] text-white font-semibold shadow-md"
+                >
+                  Next <ChevronRight className="w-5 h-5 ml-2" />
+                </Button>
               </div>
             </div>
           )}
         </div>
-      </main>
 
-      {/* Question Navigator Modal (Mobile) */}
-      {showNavigator && (
-        <div className="fixed inset-0 bg-black/50 z-50 sm:hidden flex items-end">
-          <div className="bg-white w-full rounded-t-2xl p-4 max-h-[60vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-lg">Chọn câu hỏi</h3>
-              <Button variant="ghost" size="sm" onClick={() => setShowNavigator(false)}>
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-            <div className="grid grid-cols-6 gap-2">
-              {questions.map((question, idx) => (
+        {/* Right Column: Question Palette */}
+        <aside className="w-80 hidden lg:flex flex-col p-8 border-l border-[#e9efe7] bg-[#fdfefc]">
+          <h3 className="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <Menu className="w-5 h-5 text-gray-400" /> Question Palette
+          </h3>
+          
+          <div className="grid grid-cols-5 gap-3">
+            {questions.map((question, idx) => {
+              const isCurrent = currentQuestion === idx;
+              const isAnswered = answers[question.questionId] !== undefined;
+              const isReview = markedForReview.has(question.questionId);
+
+              return (
                 <button
                   key={question.id}
                   onClick={() => goToQuestion(idx)}
                   className={cn(
-                    'w-full aspect-square text-sm font-semibold rounded-lg transition-all flex items-center justify-center',
-                    currentQuestion === idx && 'ring-2 ring-blue-500 bg-blue-100 text-blue-600',
-                    answers[question.id] !== undefined && currentQuestion !== idx && 'bg-green-100 text-green-600',
-                    markedForReview.has(question.id) && currentQuestion !== idx && 'bg-amber-100 text-amber-600',
-                    !answers[question.id] && currentQuestion !== idx && 'bg-gray-100 text-gray-600'
+                    "w-full aspect-square rounded-full font-bold text-sm transition-all duration-200 flex items-center justify-center border-2",
+                    isCurrent 
+                      ? "bg-[#466a50] text-white border-[#466a50] transform scale-110 shadow-md" 
+                      : isReview
+                        ? "border-amber-400 text-amber-700 bg-amber-50"
+                        : isAnswered
+                          ? "bg-[#e9efe7] border-[#e9efe7] text-[#466a50]"
+                          : "bg-white border-gray-200 text-gray-500 hover:border-gray-300"
                   )}
                 >
                   {idx + 1}
                 </button>
-              ))}
+              )
+            })}
+          </div>
+
+          <div className="mt-8 pt-6 border-t border-gray-100 space-y-3">
+            <div className="flex items-center gap-3 text-sm text-gray-600">
+              <div className="w-4 h-4 rounded-full bg-[#e9efe7] border-2 border-[#e9efe7]" /> Answered
+            </div>
+            <div className="flex items-center gap-3 text-sm text-gray-600">
+              <div className="w-4 h-4 rounded-full bg-white border-2 border-gray-200" /> Not Answered
+            </div>
+            <div className="flex items-center gap-3 text-sm text-gray-600">
+              <div className="w-4 h-4 rounded-full bg-amber-50 border-2 border-amber-400" /> Bookmarked
+            </div>
+          </div>
+        </aside>
+
+      </main>
+
+      {/* Mobile Palette Drawer (unchanged logic, just styled) */}
+      <div className="lg:hidden p-4 bg-white border-t border-gray-200 flex items-center justify-between">
+        <Button variant="outline" className="rounded-full" onClick={() => setShowNavigator(true)}>
+          <Menu className="w-4 h-4 mr-2" /> Palette ({answeredCount}/{questions.length})
+        </Button>
+      </div>
+
+      {showNavigator && (
+        <div className="fixed inset-0 bg-black/60 z-50 lg:hidden flex flex-col justify-end">
+          <div className="bg-[#fdfefc] w-full rounded-t-3xl p-6 max-h-[70vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-bold text-xl">Question Palette</h3>
+              <Button variant="ghost" className="rounded-full bg-gray-100" size="icon" onClick={() => setShowNavigator(false)}>
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            <div className="grid grid-cols-6 gap-3">
+              {questions.map((question, idx) => {
+                const isCurrent = currentQuestion === idx;
+                const isAnswered = answers[question.questionId] !== undefined;
+                const isReview = markedForReview.has(question.questionId);
+                return (
+                  <button
+                    key={question.id}
+                    onClick={() => goToQuestion(idx)}
+                    className={cn(
+                      "w-full aspect-square rounded-full font-bold text-sm transition-all duration-200 flex items-center justify-center border-2",
+                      isCurrent 
+                        ? "bg-[#466a50] text-white border-[#466a50]" 
+                        : isReview
+                          ? "border-amber-400 text-amber-700 bg-amber-50"
+                          : isAnswered
+                            ? "bg-[#e9efe7] border-[#e9efe7] text-[#466a50]"
+                            : "bg-white border-gray-200 text-gray-500"
+                    )}
+                  >
+                    {idx + 1}
+                  </button>
+                )
+              })}
             </div>
           </div>
         </div>
       )}
 
-      {/* Footer Navigation */}
-      <footer className="bg-white border-t border-gray-200 p-4 space-y-3">
-        <div className="max-w-3xl mx-auto flex gap-3">
-          <Button
-            variant="outline"
-            disabled={currentQuestion === 0}
-            onClick={() => goToQuestion(currentQuestion - 1)}
-            className="flex-1"
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" /> Câu trước
-          </Button>
-
-          <Button
-            variant="outline"
-            disabled={currentQuestion === questions.length - 1}
-            onClick={() => goToQuestion(currentQuestion + 1)}
-            className="flex-1"
-          >
-            Câu sau <ChevronRight className="h-4 w-4 ml-1" />
-          </Button>
-        </div>
-
-        {/* Submit Section */}
-        {!showSubmitConfirm ? (
-          <Button
-            onClick={() => setShowSubmitConfirm(true)}
-            className="w-full"
-            size="lg"
-          >
-            <Send className="h-4 w-4 mr-2" />
-            Nộp bài ({answeredCount}/{questions.length} đã trả lời)
-          </Button>
-        ) : (
-          <div className="space-y-3 bg-amber-50 border border-amber-200 rounded-lg p-4">
-            <p className="text-sm font-medium text-amber-900">
-              Bạn có chắc chắn muốn nộp bài không? Bạn đã trả lời {answeredCount}/{questions.length} câu.
+      {/* Submit Confirmation Modal */}
+      {showSubmitConfirm && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl transform scale-100 animate-in zoom-in-95 duration-200">
+            <h3 className="text-2xl font-bold text-gray-900 mb-2">Xác nhận nộp bài?</h3>
+            <p className="text-gray-600 mb-8">
+              Bạn đã trả lời {answeredCount} trên tổng số {questions.length} câu hỏi. Sau khi nộp, bạn không thể thay đổi đáp án.
             </p>
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               <Button
                 variant="outline"
                 onClick={() => setShowSubmitConfirm(false)}
-                className="flex-1"
+                className="flex-1 rounded-full font-semibold border-gray-200"
+                size="lg"
               >
-                Tiếp tục làm bài
+                Hủy bỏ
               </Button>
               <Button
                 loading={submitting}
                 onClick={submitTest}
-                className="flex-1"
+                className="flex-1 rounded-full bg-[#466a50] hover:bg-[#344f3b] text-white font-semibold"
+                size="lg"
               >
-                Xác nhận nộp
+                Nộp bài ngay
               </Button>
             </div>
           </div>
-        )}
-      </footer>
+        </div>
+      )}
     </div>
   );
 }
