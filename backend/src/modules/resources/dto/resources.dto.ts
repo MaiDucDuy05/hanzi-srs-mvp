@@ -50,15 +50,18 @@ export class CreateResourceDto {
   @IsString() title: string;
   @IsOptional() @IsString() description?: string | null;
   @IsString() fileKey: string;
+  @IsOptional() @IsString() coverImageKey?: string | null;
   @IsEnum(ResourceTier) tier: ResourceTier;
-  @IsUUID() uploaderId: string;
+  @IsOptional() @IsUUID() uploaderId?: string;
 }
 
 export class UpdateResourceDto {
   @IsOptional() @IsString() title?: string;
   @IsOptional() @IsString() description?: string | null;
   @IsOptional() @IsString() fileKey?: string;
+  @IsOptional() @IsString() coverImageKey?: string | null;
   @IsOptional() @IsEnum(ResourceTier) tier?: ResourceTier;
+  @IsOptional() @IsString() status?: string;
 }
 
 export class CreateAiJobDto {

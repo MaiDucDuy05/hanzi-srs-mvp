@@ -26,6 +26,7 @@ import { SystemConfigModule } from './modules/config/config.module';
 import { QuestionBankModule } from './modules/question-bank/question-bank.module';
 import { LiveQuizModule } from './modules/live-quiz/live-quiz.module';
 import { StudyModule } from './modules/study/study.module';
+import { AwsModule } from './modules/aws/aws.module';
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { StudyModule } from './modules/study/study.module';
     QuestionBankModule,
     LiveQuizModule,
     StudyModule,
+    AwsModule,
   ],
   controllers: [AppController],
   providers: [

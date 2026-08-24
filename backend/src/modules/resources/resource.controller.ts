@@ -23,7 +23,30 @@ export class ResourceController {
   ) {
     return ok(await this.svc.findById(id, user?.sub, user?.role), 'Resource retrieved');
   }
-  @Post() @Roles(Role.TEACHER, Role.ADMIN) @HttpCode(HttpStatus.CREATED) async create(@Body() dto: DTO.CreateResourceDto) { return ok(await this.svc.create(dto), 'Resource created'); }
+
+  @Get(':id/download-url') async getDownloadUrl(
+    @Param('id') id: string,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return ok(await this.svc.getDownloadUrl(id, user?.sub, user?.role), 'Download URL generated');
+  }
+
+  @Post('upload-request') 
+  @Roles(Role.TEACHER, Role.ADMIN) 
+  @HttpCode(HttpStatus.OK)
+  async requestUploadUrl(@Body() body: { fileName: string; contentType: string }) {
+    const key = `resources/${Date.now()}-${body.fileName}`;
+    return ok(await this.svc.getUploadUrl(key, body.contentType), 'Upload URL generated');
+  }
+
+  @Post() 
+  @Roles(Role.TEACHER, Role.ADMIN) 
+  @HttpCode(HttpStatus.CREATED) 
+  async create(@Body() dto: DTO.CreateResourceDto, @CurrentUser() user: JwtPayload) { 
+    dto.uploaderId = user.sub;
+    return ok(await this.svc.create(dto), 'Resource created'); 
+  }
+  
   @Patch(':id') @Roles(Role.TEACHER, Role.ADMIN) async update(@Param('id') id: string, @Body() dto: DTO.UpdateResourceDto) { return ok(await this.svc.update(id, dto), 'Resource updated'); }
   @Delete(':id') @Roles(Role.ADMIN) @HttpCode(HttpStatus.NO_CONTENT) async remove(@Param('id') id: string) { await this.svc.softDelete(id); }
 }

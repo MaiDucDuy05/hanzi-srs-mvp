@@ -384,6 +384,8 @@ export interface Resource {
   title: string;
   description: string | null;
   fileKey: string;
+  coverImageKey?: string | null;
+  coverImageUrl?: string | null;
   tier: ResourceTier;
   uploaderId: string;
   status: ContentStatus;

@@ -6,6 +6,7 @@ import * as DTO from './dto/resources.dto';
 import { ResourceTier } from '../../common/enums/resources.enums';
 import { Role } from '../../common/enums/user.enums';
 import { SubscriptionService } from '../subscription/subscription.service';
+import { S3Service } from '../aws/s3.service';
 import {
   paginatedResult,
   findOrNotFound,
@@ -16,6 +17,7 @@ export class ResourceService {
   constructor(
     @InjectRepository(Resource) private repo: Repository<Resource>,
     private readonly subscriptionSvc: SubscriptionService,
+    private readonly s3Svc: S3Service,
   ) {}
 
   /**
@@ -27,19 +29,35 @@ export class ResourceService {
     resources: Resource | Resource[],
     userId: string | undefined,
     role: string | undefined,
-  ): Promise<Resource | Resource[]> {
+  ): Promise<any | any[]> {
     const isEntitled =
       role === Role.TEACHER ||
       role === Role.ADMIN ||
       (!!userId && (await this.subscriptionSvc.checkVipEntitlement(userId)));
-    if (isEntitled) return resources;
-    const mask = (r: Resource): Resource => {
-      if (r.tier !== ResourceTier.VIP) return r;
-      const copy = { ...r };
-      delete (copy as Partial<Resource>).fileKey;
-      return copy as Resource;
+      
+    const mask = async (r: Resource): Promise<any> => {
+      const copy = { ...r } as any;
+      
+      // Che giấu fileKey nếu là VIP và user chưa có quyền
+      if (!isEntitled && r.tier === ResourceTier.VIP) {
+        delete copy.fileKey;
+      }
+      
+      // Tạo URL ảnh bìa public (nếu có)
+      if (r.coverImageKey) {
+        try {
+          copy.coverImageUrl = await this.s3Svc.generateDownloadUrl(r.coverImageKey, 3600);
+        } catch (e) {
+          copy.coverImageUrl = null;
+        }
+      }
+      
+      return copy;
     };
-    return Array.isArray(resources) ? resources.map(mask) : mask(resources);
+    
+    return Array.isArray(resources) 
+      ? Promise.all(resources.map(mask)) 
+      : mask(resources);
   }
 
   async findAll(q: DTO.ResourceQueryDto, userId?: string, role?: string) {
@@ -73,16 +91,38 @@ export class ResourceService {
   }
 
   async create(dto: DTO.CreateResourceDto) {
-    return this.repo.save(this.repo.create(dto as any));
+    const r = await this.repo.save(this.repo.create(dto as any));
+    return this.maskFileKey(r, undefined, Role.ADMIN);
   }
 
   async update(id: string, dto: DTO.UpdateResourceDto) {
     const e = await findOrNotFound(this.repo, id, 'Resource');
     Object.assign(e, dto);
-    return this.repo.save(e);
+    const r = await this.repo.save(e);
+    return this.maskFileKey(r, undefined, Role.ADMIN);
   }
 
   async softDelete(id: string) {
     await this.repo.softRemove(await findOrNotFound(this.repo, id, 'Resource'));
+  }
+
+  async getUploadUrl(key: string, contentType: string) {
+    // Generate an S3 upload URL valid for 15 minutes
+    const url = await this.s3Svc.generateUploadUrl(key, contentType, 900);
+    return { uploadUrl: url, key };
+  }
+
+  async getDownloadUrl(id: string, userId?: string, role?: string) {
+    // We reuse findById to check if the user is allowed to access this resource
+    // maskFileKey will remove fileKey if they are not VIP!
+    const resource = await this.findById(id, userId, role) as Resource;
+    
+    if (!resource.fileKey) {
+      throw new ForbiddenException('You must be a VIP member to download this resource');
+    }
+
+    // Generate an S3 download URL valid for 1 hour
+    const url = await this.s3Svc.generateDownloadUrl(resource.fileKey, 3600);
+    return { downloadUrl: url, resource };
   }
 }
