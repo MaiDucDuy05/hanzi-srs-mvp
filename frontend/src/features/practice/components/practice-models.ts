@@ -19,6 +19,7 @@ export interface ModeResult {
   moveCount: number;
   score: number;
   answerData: Record<string, unknown>;
+  vocabResults?: Record<string, boolean>; // id -> isCorrect
 }
 
 /** Props chung cho mọi mode: dữ liệu câu hỏi + callback kết quả/trạng thái. */

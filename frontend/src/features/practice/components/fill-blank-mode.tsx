@@ -15,6 +15,7 @@ export interface FillBlankState {
   wrong: number;
   moves: number;
   feedback: 'correct' | 'wrong' | null;
+  vocabResults: Record<string, boolean>;
 }
 
 /** Điền chữ Hán theo pinyin + nghĩa (PR-09). */
@@ -25,7 +26,7 @@ export function FillBlankMode({
   onComplete,
 }: ModeProps<FillBlankState>) {
   const [state, setState] = useState<FillBlankState>(
-    initialState ?? { index: 0, input: '', correct: 0, wrong: 0, moves: 0, feedback: null },
+    initialState ?? { index: 0, input: '', correct: 0, wrong: 0, moves: 0, feedback: null, vocabResults: {} },
   );
 
   const update = (next: FillBlankState) => {
@@ -39,7 +40,11 @@ export function FillBlankMode({
     e.preventDefault();
     if (!state.input.trim() || state.feedback) return;
     const ok = state.input.trim() === current.hanzi;
-    update({ ...state, feedback: ok ? 'correct' : 'wrong', moves: state.moves + 1 });
+    
+    const nextVocabResults = { ...state.vocabResults };
+    nextVocabResults[current.id] = ok;
+
+    update({ ...state, feedback: ok ? 'correct' : 'wrong', moves: state.moves + 1, vocabResults: nextVocabResults });
     setTimeout(() => {
       const index = state.index + 1;
       const next: FillBlankState = {
@@ -49,6 +54,7 @@ export function FillBlankMode({
         wrong: state.wrong + (ok ? 0 : 1),
         moves: state.moves + 1,
         feedback: null,
+        vocabResults: nextVocabResults,
       };
       if (index >= items.length) {
         const result: ModeResult = {
@@ -57,6 +63,7 @@ export function FillBlankMode({
           moveCount: next.moves,
           score: computeScore(next.correct, items.length),
           answerData: { blanks: items.length },
+          vocabResults: nextVocabResults,
         };
         onComplete(result);
       } else {

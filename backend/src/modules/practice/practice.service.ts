@@ -76,6 +76,9 @@ export class PracticeQuestionService {
   }
 }
 
+import { SrsService } from '../srs/srs.service';
+import { SrsRating } from '../srs/dto/srs.dto';
+
 @Injectable()
 export class PracticeAttemptService {
   constructor(
@@ -83,6 +86,7 @@ export class PracticeAttemptService {
     @InjectRepository(PracticeAttempt)
     private repo: Repository<PracticeAttempt>,
     private readonly limitSvc: DailyUsageService,
+    private readonly srsService: SrsService,
   ) {}
 
   /** Học viên chỉ xem attempt của mình; teacher/admin được lọc theo userId (PR-03..13). */
@@ -167,6 +171,23 @@ export class PracticeAttemptService {
     if (attempt.status !== PracticeAttemptStatus.IN_PROGRESS) {
       throw new BadRequestException('Attempt is not in progress');
     }
+
+    // Tích hợp SRS: duyệt qua vocabResults nếu có
+    if (dto.answerData && dto.answerData.vocabResults) {
+      const vocabResults = dto.answerData.vocabResults as Record<string, boolean>;
+      for (const [vocabId, isCorrect] of Object.entries(vocabResults)) {
+        try {
+          await this.srsService.submitReview(userId, {
+            vocabularyId: vocabId,
+            rating: isCorrect ? SrsRating.GOOD : SrsRating.AGAIN,
+          });
+        } catch (e) {
+          // Bỏ qua lỗi nếu từ vựng không tồn tại để không làm hỏng việc submit practice
+          console.warn(`Failed to update SRS for vocab ${vocabId}:`, e);
+        }
+      }
+    }
+
     Object.assign(attempt, dto, {
       status: PracticeAttemptStatus.COMPLETED,
       completedAt: new Date(),

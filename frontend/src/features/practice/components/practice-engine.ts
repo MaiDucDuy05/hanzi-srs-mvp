@@ -511,7 +511,7 @@ export function usePracticeEngine<TState = unknown>(options: {
           wrongCount: res.wrongCount,
           moveCount: res.moveCount,
           durationSeconds: duration,
-          answerData: res.answerData,
+          answerData: { ...res.answerData, vocabResults: res.vocabResults },
         });
       }
     } catch {
