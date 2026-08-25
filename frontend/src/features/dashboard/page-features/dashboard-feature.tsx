@@ -136,14 +136,17 @@ export function DashboardFeature() {
         </div>
 
         {/* Ready for Review */}
-        {/* <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center text-center">
+        <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center text-center">
           <h2 className="font-black text-[#215b3b] font-[family-name:var(--font-nunito)] text-2xl mb-6">
-            Ready for Review
+            Review Today
           </h2>
-          <button className="bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold py-3 px-8 rounded-full shadow-md transition-transform hover:scale-105">
+          <button 
+            onClick={() => window.location.href = '/review'}
+            className="bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold py-3 px-8 rounded-full shadow-md transition-transform hover:scale-105"
+          >
             Review Now
           </button>
-        </div> */}
+        </div>
       </div>
 
       {/* Recommended Lessons */}

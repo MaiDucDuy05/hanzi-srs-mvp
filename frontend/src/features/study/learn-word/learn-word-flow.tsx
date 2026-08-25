@@ -7,6 +7,7 @@ import { HanziPracticeStep } from './steps/hanzi-practice-step';
 import { SentenceWritingStep } from './steps/sentence-writing-step';
 import { ReverseTranslationStep } from './steps/reverse-translation-step';
 import { StorySummary } from './story-summary';
+import { srsApi } from '@/lib/api/endpoints/srs';
 
 import { ArrowLeft } from 'lucide-react';
 
@@ -40,6 +41,8 @@ export function LearnWordFlow({ vocabularies, initialIndex = 0, onClose, onCompl
         setCurrentStep('REVERSE');
         break;
       case 'REVERSE':
+        // Submit SRS
+        srsApi.submitReview(currentWord.id, 'GOOD').catch(console.error);
         // Next word
         if (currentWordIndex < vocabularies.length - 1) {
           setCurrentWordIndex((prev) => prev + 1);
@@ -52,6 +55,8 @@ export function LearnWordFlow({ vocabularies, initialIndex = 0, onClose, onCompl
   };
 
   const handleSkipToNextWord = () => {
+    // Treat skip as easy/good so it initializes SRS
+    srsApi.submitReview(currentWord.id, 'EASY').catch(console.error);
     if (currentWordIndex < vocabularies.length - 1) {
       setCurrentWordIndex((prev) => prev + 1);
       setCurrentStep('INTRO');

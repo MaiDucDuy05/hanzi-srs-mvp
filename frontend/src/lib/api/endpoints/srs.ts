@@ -27,4 +27,11 @@ export const srsApi = {
         : `topicId=${key}`;
     return apiFetch<{ data: Record<string, UserVocabProgress> }>(`/srs/progress?${params}`).then((r) => r.data);
   },
+
+  /**
+   * Lấy danh sách các từ vựng đến hạn ôn tập hôm nay
+   * @returns Vocabulary[]
+   */
+  getDueItems: () =>
+    apiFetch<{ data: any[] }>('/srs/due').then((r) => r.data),
 };

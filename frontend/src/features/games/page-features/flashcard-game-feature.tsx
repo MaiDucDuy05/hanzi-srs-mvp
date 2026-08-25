@@ -5,6 +5,8 @@ import { BambooProgressBar } from '@/features/ui/components/bamboo-progress-bar'
 import { ClickableHanzi } from '@/features/ui/components/clickable-hanzi';
 import { srsApi } from '@/lib/api/endpoints/srs';
 import { SrsRating } from '@/lib/api/types';
+import { Modal } from '@/features/ui/components/modal';
+import { HanziWriterAnimation } from '@/features/games/components/hanzi-writer-animation';
 
 export interface FlashcardGameFeatureProps {
   /** Danh sách từ vựng cần ôn tập */
@@ -24,6 +26,7 @@ export function FlashcardGameFeature({ vocabularies, onComplete }: FlashcardGame
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showStrokeOrder, setShowStrokeOrder] = useState(false);
 
   const total = vocabularies.length;
   const current = vocabularies[currentIndex];
@@ -107,7 +110,13 @@ export function FlashcardGameFeature({ vocabularies, onComplete }: FlashcardGame
                   <span className="text-[10px] sm:text-xs font-bold text-[#4a6b38]">Audio</span>
                 </div>
               )}
-              <div className="flex flex-col items-center gap-1 sm:gap-2 group" onClick={(e) => e.stopPropagation()}>
+              <div 
+                className="flex flex-col items-center gap-1 sm:gap-2 group" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowStrokeOrder(true);
+                }}
+              >
                 <button className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-[#7bc62d] text-white flex items-center justify-center shadow-md group-hover:bg-[#6ab322] group-hover:scale-105 transition-all">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 sm:h-7 sm:w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                 </button>
@@ -156,6 +165,26 @@ export function FlashcardGameFeature({ vocabularies, onComplete }: FlashcardGame
         </button>
       </div>
 
+      {/* Stroke Order Modal */}
+      <Modal
+        open={showStrokeOrder}
+        onClose={() => setShowStrokeOrder(false)}
+        title="Gợi ý nét viết"
+      >
+        <div className="flex flex-wrap justify-center items-center py-6 gap-4">
+          {showStrokeOrder && current && current.hanzi.split('').map((char, i) => (
+            <div key={i} className="relative bg-white border-2 border-[#d0c9b7] rounded-xl w-[160px] h-[160px] shadow-sm overflow-hidden flex items-center justify-center">
+              <div className="absolute inset-0 pointer-events-none opacity-60">
+                <div className="absolute top-1/2 left-0 w-full border-t border-dashed border-[#d0c9b7]" />
+                <div className="absolute left-1/2 top-0 h-full border-l border-dashed border-[#d0c9b7]" />
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <HanziWriterAnimation char={char} speed="normal" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </Modal>
     </div>
   );
 }
