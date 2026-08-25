@@ -21,6 +21,7 @@ const NAV_ITEMS = [
   { label: 'Practice', href: '/dashboard/practice' },
   { label: 'Exams', href: '/dashboard/exams' },
   { label: 'Achievements', href: '/dashboard/achievements' },
+  { label: 'Tài liệu', href: '/dashboard/resources' },
   { label: 'Settings', href: '/dashboard/settings' },
 ];
 

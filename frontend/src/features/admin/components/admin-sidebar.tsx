@@ -26,6 +26,7 @@ const NAV_ITEMS = [
   { href: '/admin/messages', title: 'Messages', icon: FolderOpen }, // Replaced Resources with Messages to match mockup
   { href: '/admin/subscriptions', title: 'Subscriptions', icon: CreditCard },
   { href: '/admin/rewards', title: 'Rewards', icon: ShieldAlert },
+  { href: '/admin/resources', title: 'Resources', icon: FolderOpen },
   { href: '/admin/settings', title: 'Forest Settings', icon: Settings },
 ];
 
