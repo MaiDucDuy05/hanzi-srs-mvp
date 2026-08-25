@@ -121,6 +121,17 @@ export function sortByFailCount(arr: Mistake[]): Mistake[] {
   return [...arr].sort((a, b) => Number(b.failCount || 0) - Number(a.failCount || 0));
 }
 
-export function formatActivityLabel(type: string): string {
-  return ACTIVITY_LABELS[type] || type;
+export function formatActivityLabel(activity: { activityType: string; details?: Record<string, unknown> }): string {
+  if (activity.activityType === 'PRACTICE_COMPLETED') {
+    const pType = activity.details?.type as string | undefined;
+    if (pType === 'SENTENCE_ORDERING') return 'Hoàn thành luyện tập: Sắp xếp câu';
+    if (pType === 'HANZI_WRITING') return 'Hoàn thành luyện tập: Viết Hán tự';
+    if (pType === 'FILL_BLANK') return 'Hoàn thành luyện tập: Điền vào chỗ trống';
+    if (pType === 'WORD_MATCHING') return 'Hoàn thành luyện tập: Nối từ';
+    if (pType === 'FLASHCARD') return 'Hoàn thành luyện tập: Flashcard';
+    if (pType === 'PINYIN_BALLOON_GAME') return 'Hoàn thành luyện tập: Bóng bay Pinyin';
+    if (pType === 'MEMORY_GAME') return 'Hoàn thành luyện tập: Lật thẻ ghi nhớ';
+    if (pType === 'TEST') return `Hoàn thành Bài kiểm tra (Điểm: ${activity.details?.score || 0})`;
+  }
+  return ACTIVITY_LABELS[activity.activityType] || activity.activityType;
 }

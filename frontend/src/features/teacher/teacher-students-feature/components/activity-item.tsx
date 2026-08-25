@@ -3,7 +3,7 @@ import { formatDate, formatActivityLabel, ACTIVITY_ICONS } from '../utils';
 
 export function ActivityItem({ activity }: { activity: StudentActivity }) {
   const icon = ACTIVITY_ICONS[activity.activityType] || '📌';
-  const label = formatActivityLabel(activity.activityType);
+  const label = formatActivityLabel(activity);
 
   return (
     <div className="flex items-center gap-3 py-2.5 border-b border-gray-100 last:border-0">
