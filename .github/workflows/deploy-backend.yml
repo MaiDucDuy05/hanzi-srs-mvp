@@ -34,7 +34,7 @@ jobs:                         # CÔNG VIỆC cần làm
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ec2-user/app
+            cd /home/ec2-user/app/hanzi-srs-mvp
             git pull
             cd backend
             npm install
