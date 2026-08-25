@@ -11,13 +11,18 @@ export class S3UploadService {
 
   constructor(private configService: ConfigService) {
     this.bucketName = this.configService.get<string>('AWS_S3_BUCKET_NAME') || 'hanzi-srs-bucket';
-    this.s3Client = new S3Client({
+    const s3Config: any = {
       region: this.configService.get<string>('AWS_REGION') || 'ap-southeast-1',
-      credentials: {
-        accessKeyId: this.configService.get<string>('AWS_ACCESS_KEY_ID') || '',
-        secretAccessKey: this.configService.get<string>('AWS_SECRET_ACCESS_KEY') || '',
-      },
-    });
+    };
+    const accessKeyId = this.configService.get<string>('AWS_ACCESS_KEY_ID');
+    const secretAccessKey = this.configService.get<string>('AWS_SECRET_ACCESS_KEY');
+    if (accessKeyId && secretAccessKey) {
+      s3Config.credentials = {
+        accessKeyId,
+        secretAccessKey,
+      };
+    }
+    this.s3Client = new S3Client(s3Config);
   }
 
   async uploadFile(file: Express.Multer.File, folder: string = 'uploads'): Promise<string> {
