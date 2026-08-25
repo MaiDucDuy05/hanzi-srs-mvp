@@ -1,13 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 export class MailService {
   private transporter: nodemailer.Transporter;
   private readonly logger = new Logger(MailService.name);
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private dataSource: DataSource
+  ) {
     this.transporter = nodemailer.createTransport({
       host: this.configService.get<string>('SMTP_HOST', 'smtp.gmail.com'),
       port: this.configService.get<number>('SMTP_PORT', 587),
@@ -17,6 +21,18 @@ export class MailService {
         pass: this.configService.get<string>('SMTP_PASS'),
       },
     });
+  }
+
+  private async logSilentError(jobName: string, errorMessage: string) {
+    try {
+      await this.dataSource.query(
+        `INSERT INTO system_job_logs (job_name, status, last_run, error_message, created_at, updated_at) 
+         VALUES ($1, 'ERROR', NOW(), $2, NOW(), NOW())`,
+        [jobName, errorMessage]
+      );
+    } catch (e) {
+      this.logger.error('Failed to log silent error to system_job_logs', e);
+    }
   }
 
   async sendRegistrationOtp(to: string, otp: string) {
@@ -39,8 +55,10 @@ export class MailService {
     try {
       await this.transporter.sendMail(mailOptions);
       this.logger.log(`Gửi OTP thành công đến ${to}`);
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Lỗi khi gửi email đến ${to}`, error);
+      const msg = error.message?.substring(0, 1000) || 'Unknown SMTP error';
+      this.logSilentError('External API - Email Service', msg).catch(() => {});
       // Fallback: log the OTP to console if SMTP is not configured yet
       this.logger.log(`[DEV MODE] OTP cho ${to}: ${otp}`);
       // Không ném lỗi để người dùng có thể test trong log
@@ -67,10 +85,13 @@ export class MailService {
     try {
       await this.transporter.sendMail(mailOptions);
       this.logger.log(`Gửi OTP khôi phục mật khẩu thành công đến ${to}`);
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Lỗi khi gửi email khôi phục mật khẩu đến ${to}`, error);
+      const msg = error.message?.substring(0, 1000) || 'Unknown SMTP error';
+      this.logSilentError('External API - Email Service', msg).catch(() => {});
       // Fallback: log the OTP to console if SMTP is not configured yet
-      this.logger.log(`[DEV MODE] OTP Khôi phục mật khẩu cho ${to}: ${otp}`);
+      this.logger.log(`[DEV MODE] OTP khôi phục mật khẩu cho ${to}: ${otp}`);
+      // Không ném lỗi để người dùng có thể test trong log
     }
   }
   async sendContactConfirmationEmail(to: string, name: string) {
@@ -116,8 +137,10 @@ export class MailService {
     try {
       await this.transporter.sendMail(mailOptions);
       this.logger.log(`Gửi email phản hồi liên hệ thành công đến ${to}`);
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`Lỗi khi gửi email phản hồi liên hệ đến ${to}`, error);
+      const msg = error.message?.substring(0, 1000) || 'Unknown SMTP error';
+      this.logSilentError('External API - Email Service', msg).catch(() => {});
       this.logger.log(`[DEV MODE] Phản hồi liên hệ cho ${to}: ${replyMessage}`);
     }
   }
