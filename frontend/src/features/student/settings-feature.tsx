@@ -258,7 +258,7 @@ export function SettingsFeature() {
               </div>
 
               {/* Notifications */}
-              <div>
+              {/* <div>
                 <h3 className="font-bold text-[#11321e] text-[15px] mb-4">Thông báo</h3>
                 <div className="space-y-4">
                   {[
@@ -275,7 +275,7 @@ export function SettingsFeature() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </div> */}
             </div>
           )}
 
