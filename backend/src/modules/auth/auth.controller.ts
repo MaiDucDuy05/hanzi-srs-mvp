@@ -13,7 +13,7 @@ import { ConfigService } from '@nestjs/config';
 import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { UserService } from './user.service';
-import { RegisterDto, LoginDto, UpdateMeDto } from './dto/auth.dto';
+import { RegisterDto, LoginDto, UpdateMeDto, ChangePasswordDto } from './dto/auth.dto';
 import { Public } from './decorators/public.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
 import type { JwtPayload } from './strategies/jwt.strategy';
@@ -145,6 +145,15 @@ export class AuthController {
     return {
       data: this.authService.sanitizeUser(user),
       message: 'Profile updated successfully',
+    };
+  }
+
+  @Patch('change-password')
+  async changePassword(@CurrentUser() current: JwtPayload, @Body() dto: ChangePasswordDto) {
+    await this.authService.changePassword(current.sub, dto);
+    return {
+      data: null,
+      message: 'Password changed successfully',
     };
   }
 

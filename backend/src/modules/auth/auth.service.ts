@@ -13,7 +13,7 @@ import * as bcrypt from 'bcrypt';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import type { Cache } from 'cache-manager';
 import { User } from './entities/user.entity';
-import { RegisterDto, LoginDto, UpdateMeDto } from './dto/auth.dto';
+import { RegisterDto, LoginDto, UpdateMeDto, ChangePasswordDto } from './dto/auth.dto';
 import { Role, UserStatus } from '../../common/enums/user.enums';
 import { Subscription } from '../subscription/entities/subscription.entity';
 import { SubscriptionPlan, SubscriptionStatus } from '../../common/enums/subscription.enums';
@@ -164,5 +164,24 @@ export class AuthService {
     if (fullName !== undefined) user.fullName = fullName;
     if (dailyGoal !== undefined) user.dailyGoal = dailyGoal;
     return this.userRepo.save(user);
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
+    const user = await this.userRepo.createQueryBuilder('user')
+      .where('user.id = :userId', { userId })
+      .addSelect('user.passwordHash')
+      .getOne();
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const valid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
+    if (!valid) {
+      throw new BadRequestException('Mật khẩu hiện tại không đúng');
+    }
+
+    user.passwordHash = await bcrypt.hash(dto.newPassword, 10);
+    await this.userRepo.save(user);
   }
 }

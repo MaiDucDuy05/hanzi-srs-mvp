@@ -106,3 +106,15 @@ export class UpdateMeDto {
   @Max(10000)
   dailyGoal?: number;
 }
+
+export class ChangePasswordDto {
+  @IsString()
+  currentPassword: string;
+
+  @IsString()
+  @MinLength(8)
+  @Matches(PASSWORD_REGEX, {
+    message: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character',
+  })
+  newPassword: string;
+}

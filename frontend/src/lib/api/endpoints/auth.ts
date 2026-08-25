@@ -27,6 +27,9 @@ export const authApi = {
   updateMe: (data: { fullName?: string; dailyGoal?: number }) =>
     unwrap(apiFetch<Single<User>>('/auth/me', { method: 'PATCH', body: JSON.stringify(data) })),
 
+  changePassword: (data: { currentPassword?: string; newPassword?: string }) =>
+    apiFetch('/auth/change-password', { method: 'PATCH', body: JSON.stringify(data) }),
+
   // Xoá cookie phía server (client không tự xoá được HttpOnly).
   logout: () => apiFetch('/auth/logout', { method: 'POST' }),
 };
