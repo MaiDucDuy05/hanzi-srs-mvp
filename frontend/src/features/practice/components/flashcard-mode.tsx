@@ -8,6 +8,7 @@ import {
 } from './practice-models';
 import { Button } from '@/features/ui/components/button';
 import { AudioButton } from '@/features/ui/components/audio-button';
+import { ClickableHanzi } from '@/features/ui/components/clickable-hanzi';
 
 export interface FlashcardState {
   index: number;
@@ -81,7 +82,7 @@ export function FlashcardMode({
               state.revealed ? 'rotate-y-180' : ''
             }`}
           >
-            <span className="hanzi text-6xl font-bold text-brand">{current.hanzi}</span>
+            <ClickableHanzi text={current.hanzi} charClassName="hanzi text-6xl font-bold text-brand" />
             <p className="mt-3 text-xs text-gray-400">Nhấn để lật thẻ</p>
           </div>
           <div
@@ -91,7 +92,7 @@ export function FlashcardMode({
           >
             <span className="text-lg font-semibold text-brand">{current.pinyin}</span>
             <span className="text-gray-700 ">{current.meaning}</span>
-            <AudioButton audioKey={current.audioKey} />
+            <AudioButton audioKey={current.audioKey} text={current.hanzi} />
           </div>
         </div>
       </button>

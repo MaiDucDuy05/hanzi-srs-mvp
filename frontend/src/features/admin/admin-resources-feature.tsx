@@ -8,6 +8,7 @@ import { AuthGuard } from '@/features/layout/components/auth-guard';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
 import { Modal } from '@/features/ui/components/modal';
+import { DocumentViewerModal } from '@/features/ui/components/document-viewer-modal';
 import { Field, Input, Select, Textarea } from '@/features/ui/components/form';
 import { Button } from '@/features/ui/components/button';
 import { 
@@ -31,14 +32,34 @@ export function AdminResourcesFeature() {
   const [loading, setLoading] = useState(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [createForm, setCreateForm] = useState({ title: '', description: '', fileKey: '', tier: 'FREE' as 'FREE' | 'VIP', status: 'PUBLISHED' as 'DRAFT' | 'PUBLISHED' });
+  const [createForm, setCreateForm] = useState({ title: '', description: '', tier: 'FREE' as 'FREE' | 'VIP', status: 'PUBLISHED' as 'DRAFT' | 'PUBLISHED' });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedCoverFile, setSelectedCoverFile] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState<{ id: string; title: string; description: string; tier: 'FREE' | 'VIP'; status: 'DRAFT' | 'PUBLISHED' } | null>(null);
+  const [editFile, setEditFile] = useState<File | null>(null);
+  const [editCoverFile, setEditCoverFile] = useState<File | null>(null);
+
+  const [viewerState, setViewerState] = useState<{ open: boolean; url: string; title: string; fileKey: string; tier: 'FREE'|'VIP' }>({
+    open: false, url: '', title: '', fileKey: '', tier: 'FREE'
+  });
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+
+  // Đóng menu khi click ra ngoài
+  useEffect(() => {
+    const closeMenu = () => setActiveMenuId(null);
+    window.addEventListener('click', closeMenu);
+    return () => window.removeEventListener('click', closeMenu);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const list = await resourceApi.list({ status: 'PUBLISHED' });
+        const list = await resourceApi.list({});
         if (cancelled) return;
         setResources(list.filter((r) => !r.deletedAt));
         
@@ -68,25 +89,156 @@ export function AdminResourcesFeature() {
   }, [user]);
 
   const handleCreate = async () => {
-    if (!createForm.title || !createForm.fileKey) {
-      window.alert('Vui lòng nhập đủ tên và đường dẫn file');
+    if (!createForm.title || !selectedFile) {
+      window.alert('Vui lòng nhập đủ tên và chọn file tải lên');
       return;
     }
     try {
       setCreating(true);
-      const newRes = await resourceApi.create(createForm);
+      setUploadProgress(10);
+      
+      // 1. Get Presigned URL for Document
+      const { uploadUrl, key } = await resourceApi.requestUploadUrl({ 
+        fileName: selectedFile.name.replace(/[^a-zA-Z0-9.-]/g, '_'), 
+        contentType: selectedFile.type || 'application/octet-stream'
+      });
+      setUploadProgress(30);
+
+      // 2. Upload Document to S3 directly
+      const uploadRes = await fetch(uploadUrl, {
+        method: 'PUT',
+        body: selectedFile,
+        headers: { 'Content-Type': selectedFile.type || 'application/octet-stream' },
+      });
+      if (!uploadRes.ok) throw new Error('Không thể tải tài liệu lên máy chủ (AWS S3)');
+      setUploadProgress(60);
+
+      // 3. Upload Cover Image (if any)
+      let coverKey: string | undefined = undefined;
+      if (selectedCoverFile) {
+        const coverReq = await resourceApi.requestUploadUrl({ 
+          fileName: 'cover_' + selectedCoverFile.name.replace(/[^a-zA-Z0-9.-]/g, '_'), 
+          contentType: selectedCoverFile.type || 'image/jpeg'
+        });
+        const coverUploadRes = await fetch(coverReq.uploadUrl, {
+          method: 'PUT',
+          body: selectedCoverFile,
+          headers: { 'Content-Type': selectedCoverFile.type || 'image/jpeg' },
+        });
+        if (!coverUploadRes.ok) throw new Error('Không thể tải ảnh bìa lên máy chủ (AWS S3)');
+        coverKey = coverReq.key;
+      }
+      setUploadProgress(80);
+
+      // 4. Save to DB
+      const newRes = await resourceApi.create({ ...createForm, fileKey: key, coverImageKey: coverKey });
       setResources([newRes, ...resources]);
       setIsModalOpen(false);
-      setCreateForm({ title: '', description: '', fileKey: '', tier: 'FREE', status: 'PUBLISHED' });
+      setCreateForm({ title: '', description: '', tier: 'FREE', status: 'PUBLISHED' });
+      setSelectedFile(null);
+      setSelectedCoverFile(null);
     } catch (e) {
       window.alert(e instanceof Error ? e.message : 'Lỗi tạo tài liệu');
     } finally {
       setCreating(false);
+      setUploadProgress(0);
     }
   };
 
-  const getFileIcon = (title: string, fileKey: string) => {
-    const name = (title + fileKey).toLowerCase();
+  const handleEditSubmit = async () => {
+    if (!editForm || !editForm.title) {
+      window.alert('Vui lòng nhập tên tài liệu');
+      return;
+    }
+    try {
+      setCreating(true);
+      setUploadProgress(10);
+      
+      const updateData: any = {
+        title: editForm.title,
+        description: editForm.description,
+        tier: editForm.tier,
+        status: editForm.status
+      };
+
+      if (editFile) {
+        setUploadProgress(30);
+        const { uploadUrl, key } = await resourceApi.requestUploadUrl({ 
+          fileName: editFile.name.replace(/[^a-zA-Z0-9.-]/g, '_'), 
+          contentType: editFile.type || 'application/octet-stream'
+        });
+        const uploadRes = await fetch(uploadUrl, { method: 'PUT', body: editFile, headers: { 'Content-Type': editFile.type || 'application/octet-stream' }});
+        if (!uploadRes.ok) throw new Error('Không thể tải tài liệu lên máy chủ');
+        updateData.fileKey = key;
+      }
+
+      if (editCoverFile) {
+        setUploadProgress(60);
+        const { uploadUrl, key } = await resourceApi.requestUploadUrl({ 
+          fileName: 'cover_' + editCoverFile.name.replace(/[^a-zA-Z0-9.-]/g, '_'), 
+          contentType: editCoverFile.type || 'image/jpeg'
+        });
+        const uploadRes = await fetch(uploadUrl, { method: 'PUT', body: editCoverFile, headers: { 'Content-Type': editCoverFile.type || 'image/jpeg' }});
+        if (!uploadRes.ok) throw new Error('Không thể tải ảnh bìa lên máy chủ');
+        updateData.coverImageKey = key;
+      }
+      
+      setUploadProgress(80);
+      const updatedRes = await resourceApi.update(editForm.id, updateData);
+      setResources(resources.map(r => r.id === updatedRes.id ? { ...updatedRes, coverImageUrl: updatedRes.coverImageUrl || r.coverImageUrl } : r));
+      setIsEditModalOpen(false);
+      setEditForm(null);
+      setEditFile(null);
+      setEditCoverFile(null);
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : 'Lỗi cập nhật tài liệu');
+    } finally {
+      setCreating(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const handleViewResource = async (resource: Resource) => {
+    try {
+      const { downloadUrl } = await resourceApi.getDownloadUrl(resource.id);
+      setViewerState({
+        open: true,
+        url: downloadUrl,
+        title: resource.title,
+        fileKey: resource.fileKey,
+        tier: resource.tier as 'FREE' | 'VIP',
+      });
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : 'Bạn không có quyền xem tài liệu này.');
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa tài liệu này? Hành động này không thể hoàn tác.')) return;
+    try {
+      await resourceApi.delete(id);
+      setResources(resources.filter(r => r.id !== id));
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : 'Lỗi xóa tài liệu');
+    }
+  };
+
+  const handleEditStatus = async (id: string, currentStatus: string) => {
+    try {
+      const newStatus = currentStatus === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED';
+      const updated = await resourceApi.update(id, { status: newStatus as 'PUBLISHED' | 'DRAFT' });
+      setResources(resources.map(r => r.id === id ? { ...r, status: newStatus } : r));
+    } catch (e) {
+      window.alert(e instanceof Error ? e.message : 'Lỗi cập nhật trạng thái');
+    }
+  };
+
+  const getFileIcon = (res: Resource) => {
+    if (res.coverImageUrl) {
+      // eslint-disable-next-line @next/next/no-img-element
+      return <img src={res.coverImageUrl} alt={res.title} className="w-full h-full object-cover" />;
+    }
+    const name = (res.title + res.fileKey).toLowerCase();
     if (name.includes('.mp4') || name.includes('.avi') || name.includes('.mov')) return <FileVideo className="h-5 w-5 text-gray-500" />;
     if (name.includes('.pdf') || name.includes('.ppt') || name.includes('.doc')) return <FileText className="h-5 w-5 text-gray-500" />;
     return <File className="h-5 w-5 text-gray-500" />;
@@ -141,19 +293,59 @@ export function AdminResourcesFeature() {
             
             <div className="space-y-4">
               {freeResources.map(res => (
-                <div key={res.id} className="bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border border-gray-100">
-                  <div className="flex items-center gap-4 overflow-hidden">
-                    <div className="h-10 w-10 shrink-0 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-100">
-                      {getFileIcon(res.title, res.fileKey)}
+                <div key={res.id} className="bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border border-gray-100 transition-colors hover:border-gray-300">
+                  <div 
+                    className="flex items-center gap-4 overflow-hidden cursor-pointer flex-1"
+                    onClick={() => handleViewResource(res)}
+                  >
+                    <div className="h-10 w-10 shrink-0 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-100 overflow-hidden">
+                      {getFileIcon(res)}
                     </div>
                     <div className="truncate">
-                      <p className="text-sm font-bold text-gray-800 truncate">{res.title}</p>
-                      <p className="text-[11px] text-gray-400 font-medium mt-0.5">2.4 MB • Cập nhật: Hôm nay</p>
+                      <p className="text-sm font-bold text-gray-800 truncate hover:text-[#78993a] transition-colors">{res.title}</p>
+                      <p className="text-[11px] text-gray-400 font-medium mt-0.5">
+                        {res.description || 'Tài liệu miễn phí'} • 
+                        <span className={res.status === 'PUBLISHED' ? 'text-green-500 ml-1' : 'text-amber-500 ml-1'}>
+                          {res.status === 'PUBLISHED' ? 'Công khai' : 'Nháp'}
+                        </span>
+                      </p>
                     </div>
                   </div>
-                  <button className="text-gray-400 hover:text-gray-700 transition-colors shrink-0">
-                    <MoreVertical className="h-5 w-5" />
-                  </button>
+                  <div className="relative shrink-0">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === res.id ? null : res.id); }}
+                      className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      <MoreVertical className="h-5 w-5" />
+                    </button>
+                    {activeMenuId === res.id && (
+                      <div className="absolute right-0 mt-1 w-36 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-10">
+                        <button 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setEditForm({ id: res.id, title: res.title, description: res.description || '', tier: res.tier as 'FREE'|'VIP', status: res.status as 'DRAFT'|'PUBLISHED' });
+                            setIsEditModalOpen(true);
+                            setActiveMenuId(null); 
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          Chỉnh sửa
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleEditStatus(res.id, res.status); setActiveMenuId(null); }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          {res.status === 'PUBLISHED' ? 'Chuyển về Nháp' : 'Đăng Công khai'}
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDelete(res.id); setActiveMenuId(null); }}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          Xóa tài liệu
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
               {freeResources.length === 0 && (
@@ -171,19 +363,59 @@ export function AdminResourcesFeature() {
 
             <div className="space-y-4">
               {vipResources.map(res => (
-                <div key={res.id} className="bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border border-gray-100">
-                  <div className="flex items-center gap-4 overflow-hidden">
-                    <div className="h-10 w-10 shrink-0 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-100">
-                      {getFileIcon(res.title, res.fileKey)}
+                <div key={res.id} className="bg-white rounded-xl p-4 flex items-center justify-between shadow-sm border border-gray-100 transition-colors hover:border-gray-300">
+                  <div 
+                    className="flex items-center gap-4 overflow-hidden cursor-pointer flex-1"
+                    onClick={() => handleViewResource(res)}
+                  >
+                    <div className="h-10 w-10 shrink-0 flex items-center justify-center bg-gray-50 rounded-lg border border-gray-100 overflow-hidden">
+                      {getFileIcon(res)}
                     </div>
                     <div className="truncate">
-                      <p className="text-sm font-bold text-gray-800 truncate">{res.title}</p>
-                      <p className="text-[11px] text-gray-400 font-medium mt-0.5">45 MB • Cập nhật: Tuần trước</p>
+                      <p className="text-sm font-bold text-gray-800 truncate hover:text-[#78993a] transition-colors">{res.title}</p>
+                      <p className="text-[11px] text-gray-400 font-medium mt-0.5">
+                        {res.description || 'Tài liệu độc quyền'} • 
+                        <span className={res.status === 'PUBLISHED' ? 'text-green-500 ml-1' : 'text-amber-500 ml-1'}>
+                          {res.status === 'PUBLISHED' ? 'Công khai' : 'Nháp'}
+                        </span>
+                      </p>
                     </div>
                   </div>
-                  <button className="text-gray-400 hover:text-gray-700 transition-colors shrink-0">
-                    <MoreVertical className="h-5 w-5" />
-                  </button>
+                  <div className="relative shrink-0">
+                    <button 
+                      onClick={(e) => { e.stopPropagation(); setActiveMenuId(activeMenuId === res.id ? null : res.id); }}
+                      className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    >
+                      <MoreVertical className="h-5 w-5" />
+                    </button>
+                    {activeMenuId === res.id && (
+                      <div className="absolute right-0 mt-1 w-36 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-10">
+                        <button 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setEditForm({ id: res.id, title: res.title, description: res.description || '', tier: res.tier as 'FREE'|'VIP', status: res.status as 'DRAFT'|'PUBLISHED' });
+                            setIsEditModalOpen(true);
+                            setActiveMenuId(null); 
+                          }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          Chỉnh sửa
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleEditStatus(res.id, res.status); setActiveMenuId(null); }}
+                          className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                        >
+                          {res.status === 'PUBLISHED' ? 'Chuyển về Nháp' : 'Đăng Công khai'}
+                        </button>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleDelete(res.id); setActiveMenuId(null); }}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          Xóa tài liệu
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
               {vipResources.length === 0 && (
@@ -205,7 +437,9 @@ export function AdminResourcesFeature() {
           footer={
             <>
               <Button variant="outline" onClick={() => setIsModalOpen(false)} disabled={creating}>Hủy</Button>
-              <Button onClick={handleCreate} disabled={creating}>{creating ? 'Đang đăng...' : 'Đăng'}</Button>
+              <Button onClick={handleCreate} disabled={creating}>
+                {creating ? `Đang tải lên... ${uploadProgress}%` : 'Đăng tài liệu'}
+              </Button>
             </>
           }
         >
@@ -216,8 +450,26 @@ export function AdminResourcesFeature() {
             <Field label="Mô tả">
               <Textarea value={createForm.description} onChange={e => setCreateForm({...createForm, description: e.target.value})} disabled={creating} />
             </Field>
-            <Field label="URL/Đường dẫn (*)">
-              <Input value={createForm.fileKey} onChange={e => setCreateForm({...createForm, fileKey: e.target.value})} disabled={creating} />
+            <Field label="Tệp tài liệu (PDF, PPT, Word, Ảnh) (*)">
+              <div className="relative">
+                <input
+                  type="file"
+                  onChange={e => setSelectedFile(e.target.files?.[0] || null)}
+                  disabled={creating}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-[#11321e] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-[#1f4e31]"
+                />
+              </div>
+            </Field>
+            <Field label="Ảnh bìa (Tùy chọn)">
+              <div className="relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={e => setSelectedCoverFile(e.target.files?.[0] || null)}
+                  disabled={creating}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-gray-700 hover:file:bg-gray-300"
+                />
+              </div>
             </Field>
             <div className="grid grid-cols-2 gap-4">
               <Field label="Loại tài liệu">
@@ -236,6 +488,77 @@ export function AdminResourcesFeature() {
           </div>
         </Modal>
       )}
+
+      {/* Admin Edit Modal */}
+      {user?.role === 'ADMIN' && editForm && (
+        <Modal 
+          open={isEditModalOpen} 
+          onClose={() => !creating && setIsEditModalOpen(false)} 
+          title="Chỉnh sửa tài liệu"
+          footer={
+            <>
+              <Button variant="outline" onClick={() => setIsEditModalOpen(false)} disabled={creating}>Hủy</Button>
+              <Button onClick={handleEditSubmit} disabled={creating}>
+                {creating ? `Đang lưu... ${uploadProgress}%` : 'Lưu thay đổi'}
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <Field label="Tên tài liệu (*)">
+              <Input value={editForm.title} onChange={e => setEditForm({...editForm, title: e.target.value})} disabled={creating} />
+            </Field>
+            <Field label="Mô tả">
+              <Textarea value={editForm.description} onChange={e => setEditForm({...editForm, description: e.target.value})} disabled={creating} />
+            </Field>
+            <Field label="Tải lại tài liệu (Bỏ trống nếu không đổi)">
+              <div className="relative">
+                <input
+                  type="file"
+                  onChange={e => setEditFile(e.target.files?.[0] || null)}
+                  disabled={creating}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-[#11321e] file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-[#1f4e31]"
+                />
+              </div>
+            </Field>
+            <Field label="Đổi Ảnh bìa (Bỏ trống nếu không đổi)">
+              <div className="relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={e => setEditCoverFile(e.target.files?.[0] || null)}
+                  disabled={creating}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-gray-200 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-gray-700 hover:file:bg-gray-300"
+                />
+              </div>
+            </Field>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Loại tài liệu">
+                <Select value={editForm.tier} onChange={e => setEditForm({...editForm, tier: e.target.value as 'FREE'|'VIP'})} disabled={creating}>
+                  <option value="FREE">Miễn phí</option>
+                  <option value="VIP">VIP</option>
+                </Select>
+              </Field>
+              <Field label="Trạng thái">
+                <Select value={editForm.status} onChange={e => setEditForm({...editForm, status: e.target.value as 'DRAFT'|'PUBLISHED'})} disabled={creating}>
+                  <option value="PUBLISHED">Công khai (Published)</option>
+                  <option value="DRAFT">Nháp (Draft)</option>
+                </Select>
+              </Field>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Document Viewer Modal */}
+      <DocumentViewerModal
+        open={viewerState.open}
+        onClose={() => setViewerState({ ...viewerState, open: false })}
+        title={viewerState.title}
+        url={viewerState.url}
+        fileKey={viewerState.fileKey}
+        tier={viewerState.tier}
+      />
 
     </div>
     </AuthGuard>

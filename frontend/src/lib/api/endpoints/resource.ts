@@ -11,8 +11,26 @@ export const resourceApi = {
   create: (data: Partial<Resource>) =>
     unwrap(apiFetch<Single<Resource>>('/resources', { method: 'POST', body: JSON.stringify(data) })),
 
+  update: (id: string, data: Partial<Resource>) =>
+    unwrap(apiFetch<Single<Resource>>(`/resources/${id}`, { method: 'PATCH', body: JSON.stringify(data) })),
+
+  delete: (id: string) => apiFetch(`/resources/${id}`, { method: 'DELETE' }),
+
+  requestUploadUrl: (data: { fileName: string; contentType: string }) =>
+    unwrap(apiFetch<Single<{ uploadUrl: string; key: string }>>('/resources/upload-request', { method: 'POST', body: JSON.stringify(data) })),
+
+  getDownloadUrl: (id: string) =>
+    unwrap(apiFetch<Single<{ downloadUrl: string; resource: Resource }>>(`/resources/${id}/download-url`)),
+
+
   createContact: (data: { name: string; email: string; phone?: string; message: string }) =>
     unwrap(apiFetch<Single<{ id: string }>>('/contact-requests', { method: 'POST', body: JSON.stringify(data), auth: false })),
+
+  listContacts: (params: { status?: string; page?: number; limit?: number } = {}) =>
+    apiFetch<Paginated<any>>(`/contact-requests${toQuery({ ...params, limit: params.limit ?? 20 })}`).then((r) => r.data),
+
+  replyContact: (id: string, replyMessage: string) =>
+    unwrap(apiFetch<Single<any>>(`/contact-requests/${id}/reply`, { method: 'POST', body: JSON.stringify({ replyMessage }) })),
 
   listMistakes: (params: { userId?: string; since?: string; page?: number; limit?: number } = {}) =>
     apiFetch<Paginated<MistakeBookEntry>>(`/mistake-book${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),

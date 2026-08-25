@@ -3,6 +3,7 @@
 import React, { use, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { curriculumApi } from '@/lib/api/endpoints';
+import { studentApi } from '@/lib/api/endpoints/student';
 import type { HskLevel, Lesson } from '@/lib/api/types';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
@@ -11,6 +12,7 @@ export function CourseDetailFeature({ params }: { params: Promise<{ id: string }
   const resolvedParams = use(params);
   const [level, setLevel] = useState<HskLevel | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
+  const [progressMap, setProgressMap] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -21,13 +23,23 @@ export function CourseDetailFeature({ params }: { params: Promise<{ id: string }
     let cancelled = false;
     (async () => {
       try {
-        const [levelData, lessonsData] = await Promise.all([
+        const [levelData, lessonsData, progressData] = await Promise.all([
           curriculumApi.getLevel(resolvedParams.id),
           curriculumApi.listLessons({ levelId: resolvedParams.id, status: 'PUBLISHED' }),
+          studentApi.getLevelLessonProgress(resolvedParams.id).catch(() => []),
         ]);
         if (cancelled) return;
         setLevel(levelData);
         setLessons(lessonsData.slice().sort((a, b) => a.displayOrder - b.displayOrder));
+        
+        const pMap: Record<string, number> = {};
+        for (const p of progressData) {
+          let score = 0;
+          if (p.vocabCompleted) score += 0.5;
+          if (p.grammarCompleted) score += 0.5;
+          pMap[p.lessonId] = score;
+        }
+        setProgressMap(pMap);
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Lỗi tải bài học.');
       } finally {
@@ -94,8 +106,8 @@ export function CourseDetailFeature({ params }: { params: Promise<{ id: string }
                 <circle cx="32" cy="32" r="28" stroke="#eef7e9" strokeWidth="6" fill="none" />
                 <circle cx="32" cy="32" r="28" stroke="#8BC34A" strokeWidth="6" fill="none"
                   strokeDasharray={2 * Math.PI * 28}
-                  strokeDashoffset={(2 * Math.PI * 28) * (lesson.status === 'PUBLISHED' ? 0 : 1)}
-                  strokeLinecap="round" />
+                  strokeDashoffset={(2 * Math.PI * 28) * (1 - (progressMap[lesson.id] ?? 0))}
+                  strokeLinecap="round" className="transition-all duration-1000 ease-out" />
               </svg>
               <span className="absolute text-sm font-bold text-[#4a6b38]">{lesson.displayOrder}</span>
             </div>
@@ -106,7 +118,7 @@ export function CourseDetailFeature({ params }: { params: Promise<{ id: string }
             <div className="mt-auto w-full pt-2">
               <Link href={`/study/${lesson.id}`} className="w-full block">
                 <button className="w-full py-2.5 px-4 bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold rounded-full transition-colors shadow-sm">
-                  Học
+                  {progressMap[lesson.id] === 1 ? 'Ôn tập' : (progressMap[lesson.id] > 0 ? 'Tiếp tục học' : 'Học')}
                 </button>
               </Link>
             </div>

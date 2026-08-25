@@ -60,6 +60,7 @@ export interface User {
 export interface AuthResponse {
   // accessToken nằm trong HttpOnly cookie (backend set) — body chỉ trả user.
   user: User;
+  exp: number;
 }
 
 // ── Curriculum ──
@@ -110,6 +111,18 @@ export interface UserVocabProgress {
 export interface LessonContentsAggregate {
   vocabularies: Vocabulary[];
   grammarPoints: GrammarPoint[];
+}
+
+export interface UserLessonProgress {
+  id: string;
+  userId: string;
+  lessonId: string;
+  vocabCompleted: boolean;
+  grammarCompleted: boolean;
+  isCompleted: boolean;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Vocabulary {
@@ -280,9 +293,26 @@ export interface Test {
   status: TestStatus;
   accessCode: string | null;
   showScoreImmediately: boolean;
+  hskLevel?: number | null;
+  shuffleQuestions?: boolean;
+  showAnswersAfter?: boolean;
+  hiddenByAdmin?: boolean;
+  hideReason?: string | null;
+  hiddenAt?: string | null;
   deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface QuestionContent {
+  questionText?: string;
+  imageUrl?: string;
+  audioUrl?: string;
+  audioPlayLimit?: number;
+  options?: string[] | null;
+  correctAnswer?: any;
+  acceptedAnswers?: any;
+  [key: string]: any;
 }
 
 export interface TestQuestion {
@@ -293,7 +323,7 @@ export interface TestQuestion {
     id: string;
     type: TestQuestionType;
     difficulty: string;
-    content: Record<string, any>;
+    content: QuestionContent;
   };
   points: number;
   displayOrder: number;
@@ -366,6 +396,8 @@ export interface Resource {
   title: string;
   description: string | null;
   fileKey: string;
+  coverImageKey?: string | null;
+  coverImageUrl?: string | null;
   tier: ResourceTier;
   uploaderId: string;
   status: ContentStatus;
@@ -604,21 +636,7 @@ export interface HanziWritingCompleteResult {
   totalMistakes: number;
 }
 
-export interface Test {
-  id: string;
-  teacherId: string;
-  name: string;
-  description: string | null;
-  hskLevel: number | null;
-  timeLimitMinutes: number;
-  shuffleQuestions: boolean;
-  showAnswersAfter: boolean;
-  attemptLimit: number;
-  status: TestStatus;
-  accessCode: string | null;
-  showScoreImmediately: boolean;
-  createdAt: string;
-}
+
 
 
 export interface TestAssignment {

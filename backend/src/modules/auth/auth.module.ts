@@ -16,9 +16,14 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 
+import { MailModule } from '../mail/mail.module';
+import { CacheModule } from '@nestjs/cache-manager';
+
 @Module({
   imports: [
     TypeOrmModule.forFeature([User, Subscription, TestAttempt, UserVocabularyProgress, UserActivity]),
+    CacheModule.register(),
+    MailModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -45,4 +50,4 @@ import { RolesGuard } from './guards/roles.guard';
   providers: [AuthService, UserService, JwtStrategy, JwtAuthGuard, RolesGuard],
   exports: [JwtAuthGuard, RolesGuard, AuthService, UserService, TypeOrmModule],
 })
-export class AuthModule {}
+export class AuthModule { }

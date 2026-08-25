@@ -4,6 +4,7 @@ import { Button } from '@/features/ui/components/button';
 import { Field, Input, Select, Textarea } from '@/features/ui/components/form';
 import { questionBankApi } from '@/lib/api/endpoints/question-bank';
 import { testApi } from '@/lib/api/endpoints/test';
+import { resourceApi } from '@/lib/api/endpoints';
 
 interface TestCreateQuestionModalProps {
   open: boolean;
@@ -23,7 +24,42 @@ export function TestCreateQuestionModal({ open, onClose, onSuccess, testId, next
     correctAnswer: '',
     explanation: '',
     points: '1',
+    imageUrl: '',
+    audioUrl: '',
+    audioPlayLimit: '',
   });
+
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingAudio, setUploadingAudio] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'audio') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (type === 'image') setUploadingImage(true);
+    else setUploadingAudio(true);
+
+    try {
+      const ext = file.name.split('.').pop() || '';
+      const uniqueName = `question-${type}-${Date.now()}.${ext}`;
+      const { uploadUrl, key } = await resourceApi.requestUploadUrl({ fileName: uniqueName, contentType: file.type });
+      
+      await fetch(uploadUrl, { method: 'PUT', body: file });
+      
+      const publicUrl = `/api/v1/resources/public/${key}`;
+      
+      if (type === 'image') {
+        setCreateForm({ ...createForm, imageUrl: publicUrl });
+      } else {
+        setCreateForm({ ...createForm, audioUrl: publicUrl });
+      }
+    } catch (err) {
+      alert(`Upload ${type} thất bại: ` + (err as Error).message);
+    } finally {
+      if (type === 'image') setUploadingImage(false);
+      else setUploadingAudio(false);
+    }
+  };
 
   const handleCreateQuestion = async (e: FormEvent) => {
     e.preventDefault();
@@ -35,14 +71,38 @@ export function TestCreateQuestionModal({ open, onClose, onSuccess, testId, next
         .map((s) => s.trim())
         .filter(Boolean);
 
+      let contentData: any = {
+        questionText: createForm.content,
+      };
+
+      if (createForm.type === 'SINGLE_CHOICE') {
+        contentData.options = optionsArr.length > 0 ? optionsArr : null;
+        contentData.correctAnswer = createForm.correctAnswer || null;
+      } else if (createForm.type === 'TRUE_FALSE') {
+        contentData.correctAnswer = createForm.correctAnswer === 'true';
+      } else if (createForm.type === 'FILL_IN') {
+        contentData.acceptedAnswers = createForm.correctAnswer ? createForm.correctAnswer.split(',').map(s => s.trim()).filter(Boolean) : [];
+        contentData.correctAnswer = createForm.correctAnswer || null; // for fallback in UI
+      } else if (createForm.type === 'ORDERING') {
+        const orderArr = createForm.correctAnswer.split(' ').map(s => s.trim()).filter(Boolean);
+        contentData.correctOrder = orderArr.length >= 2 ? orderArr : [createForm.correctAnswer, '(cần nhập nhiều từ)'];
+        contentData.items = [...contentData.correctOrder].sort(() => Math.random() - 0.5);
+      } else if (createForm.type === 'SHORT_ANSWER') {
+        contentData.acceptedAnswers = createForm.correctAnswer ? [createForm.correctAnswer] : [];
+        contentData.correctAnswer = createForm.correctAnswer || null;
+      } else {
+        contentData.correctAnswer = createForm.correctAnswer || null;
+      }
+
       const qData = {
         type: createForm.type as any,
         visibility: 'PRIVATE' as const,
         difficulty: 'MEDIUM' as const,
         content: {
-          questionText: createForm.content,
-          options: optionsArr.length > 0 ? optionsArr : null,
-          correctAnswer: createForm.correctAnswer || null,
+          ...contentData,
+          imageUrl: createForm.imageUrl || undefined,
+          audioUrl: createForm.audioUrl || undefined,
+          audioPlayLimit: createForm.audioPlayLimit ? Number(createForm.audioPlayLimit) : undefined,
         },
         explanation: createForm.explanation || null,
       };
@@ -62,6 +122,9 @@ export function TestCreateQuestionModal({ open, onClose, onSuccess, testId, next
         correctAnswer: '',
         explanation: '',
         points: '1',
+        imageUrl: '',
+        audioUrl: '',
+        audioPlayLimit: '',
       });
       onSuccess();
       onClose();
@@ -117,6 +180,38 @@ export function TestCreateQuestionModal({ open, onClose, onSuccess, testId, next
             rows={3}
           />
         </Field>
+
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Hình ảnh đính kèm (Tùy chọn)">
+            {createForm.imageUrl ? (
+              <div className="flex flex-col gap-2">
+                <img src={createForm.imageUrl} alt="preview" className="h-20 object-contain rounded border" />
+                <Button type="button" variant="outline" size="sm" onClick={() => setCreateForm({ ...createForm, imageUrl: '' })}>Xóa ảnh</Button>
+              </div>
+            ) : (
+              <Input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, 'image')} disabled={uploadingImage} />
+            )}
+            {uploadingImage && <span className="text-xs text-brand-600">Đang tải...</span>}
+          </Field>
+
+          <Field label="Âm thanh đính kèm (Tùy chọn)">
+            {createForm.audioUrl ? (
+              <div className="flex flex-col gap-2">
+                <audio src={createForm.audioUrl} controls className="h-10 w-full" />
+                <Button type="button" variant="outline" size="sm" onClick={() => setCreateForm({ ...createForm, audioUrl: '' })}>Xóa âm thanh</Button>
+              </div>
+            ) : (
+              <Input type="file" accept="audio/*" onChange={(e) => handleFileUpload(e, 'audio')} disabled={uploadingAudio} />
+            )}
+            {uploadingAudio && <span className="text-xs text-brand-600">Đang tải...</span>}
+          </Field>
+        </div>
+
+        {createForm.audioUrl && (
+          <Field label="Giới hạn số lần nghe (Để trống = Vô hạn)">
+            <Input type="number" min={1} value={createForm.audioPlayLimit} onChange={(e) => setCreateForm({ ...createForm, audioPlayLimit: e.target.value })} placeholder="VD: 2" />
+          </Field>
+        )}
 
         {createForm.type === 'SINGLE_CHOICE' && (
           <Field label="Các lựa chọn (mỗi dòng một lựa chọn)">

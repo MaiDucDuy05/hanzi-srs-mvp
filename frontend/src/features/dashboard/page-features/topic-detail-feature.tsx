@@ -129,7 +129,7 @@ export function TopicDetailFeature({ params }: { params: Promise<{ slug: string 
                 <span className="w-24 sm:w-32 text-sm sm:text-base font-semibold text-gray-500">{v.pinyin}</span>
                 <span className="flex-1 text-sm sm:text-base text-gray-700 font-medium">{v.meaningVi}</span>
                 <div className="bg-[#f3f9f5] rounded-full p-1 border border-[#e5f5eb]">
-                  <AudioButton audioKey={v.audioKey} />
+                  <AudioButton audioKey={v.audioKey} text={v.hanzi} />
                 </div>
               </li>
             ))}

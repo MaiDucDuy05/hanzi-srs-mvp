@@ -15,7 +15,7 @@ export const ACCESS_TOKEN_COOKIE = 'access_token';
 
 /** Route yêu cầu đăng nhập — khớp AuthGuard client-side ở từng page. */
 const AUTH_REQUIRED = [
-  '/learn',
+  '/dashboard',
   '/practice',
   '/games',
   '/tests',
@@ -35,7 +35,7 @@ const ADMIN_ONLY = ['/admin'] as const;
 const TEACHER_OR_ADMIN = ['/teacher'] as const;
 
 /** Trang đăng nhập/đăng ký — đã có phiên thì không vào. */
-const AUTH_PAGES = ['/login', '/register'] as const;
+const AUTH_PAGES = ['/login', '/register', '/forgot-password'] as const;
 
 interface JwtPayload {
   sub?: string;
@@ -102,7 +102,7 @@ export function proxy(req: NextRequest) {
 
 export const config = {
   matcher: [
-    '/learn/:path*',
+    '/dashboard/:path*',
     '/practice/:path*',
     '/games/:path*',
     '/tests/:path*',
@@ -115,5 +115,6 @@ export const config = {
     '/upgrade-vip/:path*',
     '/login',
     '/register',
+    '/forgot-password',
   ],
 };

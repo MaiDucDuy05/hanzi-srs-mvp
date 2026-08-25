@@ -43,6 +43,23 @@ export function QuestionPreviewModal({ open, onClose, question }: QuestionPrevie
 
         {/* Content based on Type */}
         <div className="text-base text-gray-800">
+          {/* Media (Image & Audio) */}
+          {((question.content as any).imageUrl || (question.content as any).audioUrl) && (
+            <div className="space-y-4 mb-6">
+              {(question.content as any).imageUrl && (
+                <img src={(question.content as any).imageUrl} alt="preview" className="max-w-full h-auto rounded border" style={{ maxHeight: '300px' }} />
+              )}
+              {(question.content as any).audioUrl && (
+                <div className="flex flex-col gap-1">
+                  <audio src={(question.content as any).audioUrl} controls className="w-full" />
+                  {(question.content as any).audioPlayLimit && (
+                    <span className="text-xs text-amber-600 font-medium">Giới hạn số lần nghe: {(question.content as any).audioPlayLimit} lần</span>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {question.type === 'SINGLE_CHOICE' && (
             <div className="space-y-4">
               <p className="font-medium text-lg">{(question.content as any).questionText}</p>

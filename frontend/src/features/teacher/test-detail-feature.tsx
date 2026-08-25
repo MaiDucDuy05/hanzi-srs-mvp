@@ -13,6 +13,7 @@ import { Badge } from '@/features/ui/components/badge';
 import { QuestionRenderer } from './components/question-renderer';
 import { TestAddBankModal } from './components/test-add-bank-modal';
 import { TestCreateQuestionModal } from './components/test-create-question-modal';
+import { LiveQuizConfigModal } from './components/live-quiz-config-modal';
 
 export function TestDetailFeature() {
   const { testId } = useParams<{ testId: string }>();
@@ -26,6 +27,7 @@ export function TestDetailFeature() {
   // Modal states
   const [showBankModal, setShowBankModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showConfigModal, setShowConfigModal] = useState(false);
 
   const load = async () => {
     try {
@@ -72,6 +74,20 @@ export function TestDetailFeature() {
         <Badge tone={test.status === 'DRAFT' ? 'red' : test.status === 'PUBLISHED' ? 'green' : 'gray'}>
           {test.status === 'DRAFT' ? 'Nháp' : test.status === 'PUBLISHED' ? 'Hoạt động' : 'Đóng'}
         </Badge>
+        <Button 
+          variant={test.status === 'PUBLISHED' ? 'outline' : 'primary'} 
+          onClick={async () => {
+            try {
+              const newStatus = test.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED';
+              await testApi.update(testId, { status: newStatus });
+              await load();
+            } catch (err) {
+              alert('Lỗi cập nhật trạng thái');
+            }
+          }}
+        >
+          {test.status === 'PUBLISHED' ? 'Chuyển về Nháp' : 'Xuất bản (Publish)'}
+        </Button>
       </div>
 
       {/* Test Info */}
@@ -154,11 +170,9 @@ export function TestDetailFeature() {
                       className="w-12 border border-gray-200 rounded px-1 py-0.5 text-sm text-center outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                     />
                   </div>
-                  <button onClick={() => handleDeleteQuestion(q)}>
-                    <Button size="sm" variant="danger" className="h-8 px-2">
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </button>
+                  <Button size="sm" variant="danger" className="h-8 px-2" onClick={() => handleDeleteQuestion(q)}>
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
               </div>
             ))}
@@ -182,6 +196,8 @@ export function TestDetailFeature() {
         testId={testId}
         nextDisplayOrder={questions.length + 1}
       />
+
+     
     </div>
   );
 }

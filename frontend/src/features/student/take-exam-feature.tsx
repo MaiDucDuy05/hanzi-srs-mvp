@@ -186,7 +186,7 @@ export function TakeExamFeature() {
           const options = qContent.options as string[] | undefined;
 
           return (
-          <Card key={qObj.id}>
+          <Card key={qObj.questionId}>
             <CardBody className="space-y-4">
               <div className="flex gap-3">
                 <span className="font-semibold text-lg">{index + 1}.</span>
@@ -200,10 +200,10 @@ export function TakeExamFeature() {
                       <label key={opt} className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                         <input
                           type="radio"
-                          name={`q-${qObj.id}`}
+                          name={`q-${qObj.questionId}`}
                           value={opt}
-                          checked={answers[qObj.id] === opt}
-                          onChange={() => handleAnswerChange(qObj.id, opt)}
+                          checked={answers[qObj.questionId] === opt}
+                          onChange={() => handleAnswerChange(qObj.questionId, opt)}
                           className="w-4 h-4 text-brand"
                         />
                         <span>{opt}</span>
@@ -217,9 +217,9 @@ export function TakeExamFeature() {
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
-                        name={`q-${qObj.id}`}
-                        checked={answers[qObj.id] === true}
-                        onChange={() => handleAnswerChange(qObj.id, true)}
+                        name={`q-${qObj.questionId}`}
+                        checked={answers[qObj.questionId] === true}
+                        onChange={() => handleAnswerChange(qObj.questionId, true)}
                         className="w-4 h-4"
                       />
                       <span>Đúng (True)</span>
@@ -227,9 +227,9 @@ export function TakeExamFeature() {
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
                         type="radio"
-                        name={`q-${qObj.id}`}
-                        checked={answers[qObj.id] === false}
-                        onChange={() => handleAnswerChange(qObj.id, false)}
+                        name={`q-${qObj.questionId}`}
+                        checked={answers[qObj.questionId] === false}
+                        onChange={() => handleAnswerChange(qObj.questionId, false)}
                         className="w-4 h-4"
                       />
                       <span>Sai (False)</span>
@@ -242,9 +242,9 @@ export function TakeExamFeature() {
                     rows={3}
                     className="w-full p-3 border rounded-lg focus:ring focus:ring-brand focus:border-brand"
                     placeholder="Nhập câu trả lời của bạn..."
-                    value={(answers[qObj.id] as string) || ''}
-                    onBlur={(e) => handleAnswerChange(qObj.id, e.target.value)}
-                    onChange={(e) => setAnswers(prev => ({ ...prev, [qObj.id]: e.target.value }))}
+                    value={(answers[qObj.questionId] as string) || ''}
+                    onBlur={(e) => handleAnswerChange(qObj.questionId, e.target.value)}
+                    onChange={(e) => setAnswers(prev => ({ ...prev, [qObj.questionId]: e.target.value }))}
                   />
                 )}
               </div>

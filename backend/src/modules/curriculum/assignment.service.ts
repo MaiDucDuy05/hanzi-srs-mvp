@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Assignment } from './entities/assignment.entity';
-import { CreateAssignmentDto, UpdateAssignmentDto, AssignmentQueryDto } from './dto/assignment.dto';
+import { AssignmentQueryDto } from './dto/assignment.dto';
 import { paginatedResult, findOrNotFound } from '../../common/helpers/query-helpers';
 
 @Injectable()
@@ -26,28 +26,5 @@ export class AssignmentService {
 
   async findById(id: string) {
     return findOrNotFound(this.repo, id, 'Assignment');
-  }
-
-  async create(dto: CreateAssignmentDto) {
-    const entity = this.repo.create({
-      ...dto,
-      dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
-      vocabularyCount: 0,
-    });
-    return this.repo.save(entity);
-  }
-
-  async update(id: string, dto: UpdateAssignmentDto) {
-    const entity = await this.findById(id);
-    Object.assign(entity, dto);
-    if (dto.dueDate !== undefined) {
-      entity.dueDate = dto.dueDate ? new Date(dto.dueDate) : null;
-    }
-    return this.repo.save(entity);
-  }
-
-  async delete(id: string) {
-    const entity = await this.findById(id);
-    await this.repo.remove(entity);
   }
 }

@@ -6,6 +6,7 @@ import { PracticeAttempt } from '../practice/entities/practice-attempt.entity';
 import { Lesson } from '../curriculum/entities/lesson.entity';
 import { LessonContent } from '../curriculum/entities/lesson-content.entity';
 import { UserVocabularyProgress } from '../srs/entities/user-vocabulary-progress.entity';
+import { UserLessonProgress } from './entities/user-lesson-progress.entity';
 import { PracticeAttemptStatus } from '../../common/enums/practice.enums';
 import { ContentType } from '../../common/enums/curriculum.enums';
 
@@ -33,7 +34,41 @@ export class StudentProgressService {
     private contentRepo: Repository<LessonContent>,
     @InjectRepository(UserVocabularyProgress)
     private progressRepo: Repository<UserVocabularyProgress>,
+    @InjectRepository(UserLessonProgress)
+    private lessonProgressRepo: Repository<UserLessonProgress>,
   ) {}
+
+  async getLessonProgress(userId: string, lessonId: string) {
+    let progress = await this.lessonProgressRepo.findOneBy({ userId, lessonId });
+    if (!progress) {
+      progress = this.lessonProgressRepo.create({
+        userId,
+        lessonId,
+      });
+      await this.lessonProgressRepo.save(progress);
+    }
+    return progress;
+  }
+
+  async markVocabCompleted(userId: string, lessonId: string) {
+    const progress = await this.getLessonProgress(userId, lessonId);
+    progress.vocabCompleted = true;
+    if (progress.grammarCompleted) {
+      progress.isCompleted = true;
+      progress.completedAt = new Date();
+    }
+    return this.lessonProgressRepo.save(progress);
+  }
+
+  async markGrammarCompleted(userId: string, lessonId: string) {
+    const progress = await this.getLessonProgress(userId, lessonId);
+    progress.grammarCompleted = true;
+    if (progress.vocabCompleted) {
+      progress.isCompleted = true;
+      progress.completedAt = new Date();
+    }
+    return this.lessonProgressRepo.save(progress);
+  }
 
   async getProgress(userId: string): Promise<StudentProgress> {
     const user = await this.userRepo.findOneBy({ id: userId });
@@ -63,6 +98,21 @@ export class StudentProgressService {
     const streak = await this.calculateStreak(userId);
 
     return { dailyXp, dailyGoal, progressPercent, currentStreak: streak };
+  }
+
+  async getLevelProgress(userId: string, levelId: string) {
+    const lessons = await this.lessonRepo.find({
+      where: { levelId, status: 'PUBLISHED' as any },
+      select: ['id'],
+    });
+    const lessonIds = lessons.map(l => l.id);
+    if (!lessonIds.length) return [];
+    
+    return this.lessonProgressRepo
+      .createQueryBuilder('lp')
+      .where('lp.user_id = :userId', { userId })
+      .andWhere('lp.lesson_id IN (:...lessonIds)', { lessonIds })
+      .getMany();
   }
 
   /**

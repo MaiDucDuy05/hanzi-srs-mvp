@@ -10,6 +10,7 @@ import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
 import { formatDateTime } from '@/lib/utils/format';
 import { cn } from '@/lib/utils/cn';
+import { CheckCircle } from 'lucide-react';
 
 export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: { attemptId?: string; onBack?: () => void } = {}) {
   const params = useParams<{ attemptId: string }>();
@@ -87,44 +88,88 @@ export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: {
           const q = qObj.question;
           const qContent = (q?.content || {}) as Record<string, any>;
           const type = q?.type || 'UNKNOWN';
-          let text = qContent.questionText || qContent.sentence || JSON.stringify(qContent);
+          let text = qContent.questionText || qContent.question || qContent.text || qContent.sentence;
           if (type === 'ORDERING') text = (qContent.correctOrder || []).join(' / ');
           if (type === 'MATCHING') text = 'Nối từ';
 
-          const correctAnswer = qContent.correct_answer || qContent.correctOrder || qContent.acceptedAnswers;
+          if (!text && typeof qContent === 'object') {
+            text = JSON.stringify(qContent);
+          }
 
-          const ans = answerMap.get(qObj.id);
+          const correctAnswer = qContent.correctAnswer || qContent.correct_answer || qContent.correctOrder || qContent.acceptedAnswers;
+
+          const ans = answerMap.get(qObj.question.id);
           const isCorrect = ans?.isCorrect;
           
           return (
             <Card key={qObj.id} className={cn("border-l-4", attempt.status === 'SUBMITTED' ? "border-l-gray-300" : (isCorrect ? "border-l-green-500" : (isCorrect === false ? "border-l-red-500" : "border-l-gray-300")))}>
-              <CardBody className="space-y-3">
-                <div className="flex justify-between gap-4">
-                  <div className="flex gap-2">
-                    <span className="font-bold">{index + 1}.</span>
-                    <span className="font-medium whitespace-pre-wrap">{text}</span>
-                  </div>
-                  {attempt.status !== 'SUBMITTED' && (
-                    <div className="shrink-0 text-sm font-semibold text-gray-500">
-                      {ans?.pointsAwarded || 0} / {qObj.points} điểm
+              <CardBody className="p-6">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex gap-4">
+                    <span className="font-bold text-gray-700">{index + 1}.</span>
+                    <div className="text-gray-900 leading-relaxed font-medium">
+                      {text}
+                      {type === 'FILL_IN' && <span className="inline-block w-16 border-b-2 border-gray-400 mx-2" />}
+                      
+                      {qContent.options && Array.isArray(qContent.options) && (
+                        <div className="mt-4 space-y-2">
+                          {qContent.options.map((opt: any, i: number) => {
+                            const optText = typeof opt === 'object' && opt !== null ? (opt.text || opt.label || JSON.stringify(opt)) : String(opt);
+                            return (
+                              <div key={i} className="text-sm text-gray-700 flex items-start gap-3 bg-gray-50/50 p-2 rounded-lg border border-gray-100">
+                                <span className="font-semibold text-gray-400 w-5">{String.fromCharCode(65 + i)}.</span>
+                                <span>{optText}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                      
+                      {qContent.imageUrl && (
+                        <div className="mt-4">
+                          <img src={qContent.imageUrl} alt="Question image" className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm" style={{ maxHeight: '250px' }} />
+                        </div>
+                      )}
+                      
+                      {qContent.audioUrl && (
+                        <div className="mt-4">
+                          <audio src={qContent.audioUrl} controls className="w-full max-w-sm rounded-full" />
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
+                  <div className="text-sm font-semibold text-gray-500 whitespace-nowrap bg-gray-50 px-3 py-1 rounded-full border border-gray-100 h-fit">
+                    {ans?.pointsAwarded || 0} / {qObj.points} điểm
+                  </div>
                 </div>
 
-                <div className="bg-gray-50 p-3 rounded-lg text-sm">
-                  <p className="mb-1"><span className="font-medium text-gray-700">Câu trả lời của bạn: </span> 
+                <div className="ml-8 space-y-4">
+                  <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 text-sm">
+                    <p className="text-gray-500 font-medium mb-1 text-xs uppercase tracking-wider">Câu trả lời của bạn</p>
                     {ans?.answer ? (
-                      <span className="font-bold text-gray-900">{(ans.answer as any).answer || JSON.stringify(ans.answer)}</span>
+                      <p className={cn("font-medium text-base", attempt.status === 'SUBMITTED' ? "text-gray-900" : (isCorrect ? "text-green-700" : "text-red-700"))}>
+                        {typeof ans.answer === 'object' ? JSON.stringify(ans.answer) : String(ans.answer)}
+                      </p>
                     ) : (
-                      <span className="text-gray-400 italic">Không trả lời</span>
+                      <p className="text-gray-400 font-medium italic">Không trả lời</p>
                     )}
-                  </p>
-                  
-                  {attempt.status !== 'SUBMITTED' && correctAnswer && (
-                    <p className="text-green-700 mt-2 bg-green-50 p-2 rounded border border-green-100">
-                      <span className="font-bold">Đáp án đúng: </span> 
-                      {typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : String(correctAnswer)}
-                    </p>
+                  </div>
+
+                  {attempt.status === 'GRADED' && !isCorrect && correctAnswer && (
+                    <div className="p-4 bg-green-50 rounded-2xl border border-green-100 text-sm mt-3 relative overflow-hidden">
+                      <div className="absolute top-0 left-0 w-1 h-full bg-green-500" />
+                      <p className="text-green-700 font-medium mb-1 text-xs uppercase tracking-wider flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" /> Đáp án đúng
+                      </p>
+                      <p className="text-green-900 font-semibold text-base">
+                        {Array.isArray(correctAnswer) ? correctAnswer.join(' hoặc ') : (typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : String(correctAnswer))}
+                      </p>
+                      {qContent.explanation && (
+                        <p className="text-green-800 mt-2 text-xs opacity-90 border-t border-green-200/50 pt-2">
+                          Giải thích: {qContent.explanation}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
               </CardBody>

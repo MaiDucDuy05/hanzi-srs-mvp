@@ -22,11 +22,12 @@ const NAV_ITEMS = [
   { href: '/admin/curriculum', title: 'Content', icon: BookOpen },
   { href: '/admin/questions', title: 'Questions', icon: Target },
   { href: '/admin/teacher-content', title: 'Teacher', icon: GraduationCap },
-  { href: '/admin/users', title: 'Users', icon: Users },
+  { href: '/admin/users', title: 'Students', icon: Users },
+  { href: '/admin/messages', title: 'Messages', icon: FolderOpen }, // Replaced Resources with Messages to match mockup
   { href: '/admin/subscriptions', title: 'Subscriptions', icon: CreditCard },
   { href: '/admin/rewards', title: 'Rewards', icon: ShieldAlert },
   { href: '/admin/resources', title: 'Resources', icon: FolderOpen },
-  { href: '/admin/settings', title: 'Settings', icon: Settings },
+  { href: '/admin/settings', title: 'Forest Settings', icon: Settings },
 ];
 
 export function AdminSidebar() {

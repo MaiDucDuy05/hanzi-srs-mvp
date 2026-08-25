@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { HskLevel } from './entities/hsk-level.entity';
 import { Vocabulary } from './entities/vocabulary.entity';
-import { CreateHskLevelDto, UpdateHskLevelDto } from './dto/curriculum.dto';
 import { PaginationQueryDto } from '../../common/pagination.dto';
 import { ContentStatus } from '../../common/enums/curriculum.enums';
 import {
@@ -69,19 +68,5 @@ export class HskLevelService {
     if (!level) throw new Error('HSK level not found');
     const count = await this.vocabRepo.count({ where: { levelId: id } });
     return { ...level, vocabularyCount: count } as HskLevelWithCount;
-  }
-
-  async create(dto: CreateHskLevelDto) {
-    return this.repo.save(this.repo.create(dto));
-  }
-
-  async update(id: string, dto: UpdateHskLevelDto) {
-    const e = await this.findById(id);
-    Object.assign(e, dto);
-    return this.repo.save(e);
-  }
-
-  async delete(id: string) {
-    await this.repo.remove(await this.findById(id));
   }
 }

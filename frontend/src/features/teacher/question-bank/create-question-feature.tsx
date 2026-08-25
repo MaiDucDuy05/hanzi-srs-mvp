@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect } from 'react';
 import { questionBankApi, type QuestionBankItem } from '@/lib/api/endpoints/question-bank';
+import { resourceApi } from '@/lib/api/endpoints';
 import { Card, CardBody } from '@/features/ui/components/card';
 import { Button } from '@/features/ui/components/button';
 import { Input, Field } from '@/features/ui/components/form';
@@ -24,6 +25,41 @@ export function CreateQuestionFeature() {
   const [visibility, setVisibility] = useState<'PUBLIC'|'PRIVATE'>('PRIVATE');
   const [tags, setTags] = useState<string>('');
   const [explanation, setExplanation] = useState<string>('');
+
+  const [imageUrl, setImageUrl] = useState<string>('');
+  const [audioUrl, setAudioUrl] = useState<string>('');
+  const [audioPlayLimit, setAudioPlayLimit] = useState<string>('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingAudio, setUploadingAudio] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, fileType: 'image' | 'audio') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (fileType === 'image') setUploadingImage(true);
+    else setUploadingAudio(true);
+
+    try {
+      const ext = file.name.split('.').pop() || '';
+      const uniqueName = `question-${fileType}-${Date.now()}.${ext}`;
+      const { uploadUrl, key } = await resourceApi.requestUploadUrl({ fileName: uniqueName, contentType: file.type });
+      
+      await fetch(uploadUrl, { method: 'PUT', body: file });
+      
+      const publicUrl = `/api/v1/resources/public/${key}`;
+      
+      if (fileType === 'image') {
+        setImageUrl(publicUrl);
+      } else {
+        setAudioUrl(publicUrl);
+      }
+    } catch (err) {
+      alert(`Upload ${fileType} thất bại: ` + (err as Error).message);
+    } finally {
+      if (fileType === 'image') setUploadingImage(false);
+      else setUploadingAudio(false);
+    }
+  };
 
   // Type-specific states
   const [mcqText, setMcqText] = useState('');
@@ -53,6 +89,10 @@ export function CreateQuestionFeature() {
         setExplanation(q.explanation || '');
         
         const content = q.content as any;
+        setImageUrl(content.imageUrl || '');
+        setAudioUrl(content.audioUrl || '');
+        setAudioPlayLimit(content.audioPlayLimit ? String(content.audioPlayLimit) : '');
+
         if (q.type === 'SINGLE_CHOICE') {
           setMcqText(content.questionText || '');
           if (Array.isArray(content.options)) {
@@ -124,6 +164,12 @@ export function CreateQuestionFeature() {
         acceptedAnswers: shortAnswerAccepted.split(',').map(s => s.trim()).filter(Boolean),
         correctAnswer: shortAnswerAccepted.split(',')[0]?.trim() || '',
       };
+    }
+
+    if (imageUrl) content.imageUrl = imageUrl;
+    if (audioUrl) {
+      content.audioUrl = audioUrl;
+      if (audioPlayLimit) content.audioPlayLimit = Number(audioPlayLimit);
     }
 
     try {
@@ -214,6 +260,38 @@ export function CreateQuestionFeature() {
         <Card>
           <CardBody className="space-y-4">
             <h2 className="font-semibold text-lg border-b pb-2">Nội dung câu hỏi</h2>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Hình ảnh đính kèm (Tùy chọn)">
+                {imageUrl ? (
+                  <div className="flex flex-col gap-2">
+                    <img src={imageUrl} alt="preview" className="h-20 object-contain rounded border" />
+                    <Button type="button" variant="outline" size="sm" onClick={() => setImageUrl('')}>Xóa ảnh</Button>
+                  </div>
+                ) : (
+                  <Input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, 'image')} disabled={uploadingImage} />
+                )}
+                {uploadingImage && <span className="text-xs text-brand-600">Đang tải...</span>}
+              </Field>
+
+              <Field label="Âm thanh đính kèm (Tùy chọn)">
+                {audioUrl ? (
+                  <div className="flex flex-col gap-2">
+                    <audio src={audioUrl} controls className="h-10 w-full" />
+                    <Button type="button" variant="outline" size="sm" onClick={() => setAudioUrl('')}>Xóa âm thanh</Button>
+                  </div>
+                ) : (
+                  <Input type="file" accept="audio/*" onChange={(e) => handleFileUpload(e, 'audio')} disabled={uploadingAudio} />
+                )}
+                {uploadingAudio && <span className="text-xs text-brand-600">Đang tải...</span>}
+              </Field>
+            </div>
+
+            {audioUrl && (
+              <Field label="Giới hạn số lần nghe (Để trống = Vô hạn)">
+                <Input type="number" min={1} value={audioPlayLimit} onChange={(e) => setAudioPlayLimit(e.target.value)} placeholder="VD: 2" />
+              </Field>
+            )}
             
             {type === 'SINGLE_CHOICE' && (
               <div className="space-y-4">

@@ -10,6 +10,7 @@ import {
 } from './practice-models';
 import { Button } from '@/features/ui/components/button';
 import { cn } from '@/lib/utils/cn';
+import { speakText } from '@/lib/utils/tts';
 
 interface Pair {
   item: QuestionItem;
@@ -60,6 +61,12 @@ export function MatchingMode({
   };
 
   const selectHanzi = (id: string) => {
+    // Speak the hanzi text when selected
+    const hanziText = state.hanziSide.find(p => p.item.id === id)?.item.hanzi;
+    if (hanziText) {
+      speakText(hanziText);
+    }
+
     if (state.selectedMeaning) {
       // đã chọn nghĩa → kiểm tra cặp
       const pair = state.hanziSide.find((p) => p.item.id === id);

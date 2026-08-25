@@ -24,6 +24,9 @@ import { AchievementsModule } from './modules/achievements/achievements.module';
 import { AdminContentModule } from './modules/admin-content/admin-content.module';
 import { SystemConfigModule } from './modules/config/config.module';
 import { QuestionBankModule } from './modules/question-bank/question-bank.module';
+import { LiveQuizModule } from './modules/live-quiz/live-quiz.module';
+import { StudyModule } from './modules/study/study.module';
+import { AwsModule } from './modules/aws/aws.module';
 
 @Module({
   imports: [
@@ -64,6 +67,9 @@ import { QuestionBankModule } from './modules/question-bank/question-bank.module
     AdminContentModule,
     SystemConfigModule,
     QuestionBankModule,
+    LiveQuizModule,
+    StudyModule,
+    AwsModule,
   ],
   controllers: [AppController],
   providers: [

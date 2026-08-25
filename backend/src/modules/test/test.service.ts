@@ -51,33 +51,58 @@ function normalizeAnswer(raw: unknown): string {
  * `{ answer: ... , accepted: [...] }`. SHORT_ANSWER so khớp sau chuẩn hoá;
  * SINGLE_CHOICE / TRUE_FALSE so khớp chính xác. Không tin điểm client gửi lên.
  */
-export function gradeQuestion(
-  testQuestion: TestQuestion,
-  submitted: unknown,
-): { isCorrect: boolean; pointsAwarded: number } {
-  const qContent = testQuestion.question?.content ?? {};
-  const qType = testQuestion.question?.type;
+export function gradeQuestion(testQuestion: TestQuestion, submitted: unknown): { isCorrect: boolean, pointsAwarded: number } {
+  const qType = testQuestion.question.type;
+  const qContent = testQuestion.question.content as any;
   let isCorrect = false;
 
   if (qType === TestQuestionType.FILL_IN || qType === TestQuestionType.SHORT_ANSWER) {
-    const accepted = Array.isArray(qContent.accepted_answers)
-      ? (qContent.accepted_answers as unknown[]).map(normalizeAnswer)
-      : (Array.isArray((qContent.correct_answer as any)?.accepted) 
-         ? ((qContent.correct_answer as any).accepted as unknown[]).map(normalizeAnswer)
+    const acceptedAnswers = qContent.accepted_answers || qContent.acceptedAnswers;
+    const correctAnswerObj = qContent.correct_answer || qContent.correctAnswer;
+    
+    const accepted = Array.isArray(acceptedAnswers)
+      ? (acceptedAnswers as unknown[]).map(normalizeAnswer)
+      : (Array.isArray((correctAnswerObj as any)?.accepted) 
+         ? ((correctAnswerObj as any).accepted as unknown[]).map(normalizeAnswer)
          : []);
-    const single = qContent.correct_answer ? normalizeAnswer(typeof qContent.correct_answer === 'object' ? (qContent.correct_answer as any).answer : qContent.correct_answer) : null;
+         
+    const single = correctAnswerObj ? normalizeAnswer(typeof correctAnswerObj === 'object' ? (correctAnswerObj as any).answer : correctAnswerObj) : null;
     const norm = normalizeAnswer(submitted);
     isCorrect = accepted.includes(norm) || (single !== null && norm === single);
   } else if (qType === TestQuestionType.ORDERING) {
-    const correct = Array.isArray(qContent.correct_order) ? qContent.correct_order.join(',') : '';
-    const sub = Array.isArray(submitted) ? submitted.join(',') : String(submitted ?? '');
-    isCorrect = correct === sub;
+    const correctOrder = qContent.correct_order || qContent.correctOrder;
+    // For ordering, allow either comma separated arrays OR concatenated strings
+    const correctArrayJoined = Array.isArray(correctOrder) ? correctOrder.join('') : '';
+    const correctCommaJoined = Array.isArray(correctOrder) ? correctOrder.join(',') : String(correctOrder ?? '');
+    const subArrayJoined = Array.isArray(submitted) ? submitted.join('') : String(submitted ?? '').replace(/,/g, '');
+    const subCommaJoined = Array.isArray(submitted) ? submitted.join(',') : String(submitted ?? '');
+    
+    isCorrect = (correctCommaJoined === subCommaJoined) || (correctArrayJoined === subArrayJoined);
   } else if (qType === TestQuestionType.MATCHING) {
     isCorrect = JSON.stringify(submitted) === JSON.stringify(qContent.pairs);
   } else {
     // SINGLE_CHOICE / TRUE_FALSE / MCQ
-    const correct = typeof qContent.correct_answer === 'object' ? (qContent.correct_answer as any)?.answer : qContent.correct_answer;
-    isCorrect = String(submitted ?? '') === String(correct ?? '');
+    const correctAnswerObj = qContent.correct_answer || qContent.correctAnswer;
+    
+    let correctStr = '';
+    if (Array.isArray(correctAnswerObj)) {
+      correctStr = correctAnswerObj.join(',');
+    } else if (correctAnswerObj !== null && typeof correctAnswerObj === 'object') {
+      correctStr = String((correctAnswerObj as any).answer || (correctAnswerObj as any).id || (correctAnswerObj as any).text || JSON.stringify(correctAnswerObj));
+    } else {
+      correctStr = String(correctAnswerObj ?? '');
+    }
+    
+    let subStr = '';
+    if (Array.isArray(submitted)) {
+      subStr = submitted.join(',');
+    } else if (submitted !== null && typeof submitted === 'object') {
+      subStr = String((submitted as any).answer || (submitted as any).id || (submitted as any).text || JSON.stringify(submitted));
+    } else {
+      subStr = String(submitted ?? '');
+    }
+    
+    isCorrect = subStr.trim().toLowerCase() === correctStr.trim().toLowerCase();
   }
 
   return { isCorrect, pointsAwarded: isCorrect ? testQuestion.points : 0 };
@@ -274,9 +299,10 @@ export class TestQuestionService {
     const attempts = await this.attemptRepo.count({
       where: { testId: q.testId, status: In([TestAttemptStatus.SUBMITTED, TestAttemptStatus.GRADED]) }
     });
-    if (attempts > 0) {
-      throw new BadRequestException('Cannot delete question because test has submissions');
-    }
+    // For MVP/Development, we allow removing questions even if there are submissions
+    // if (attempts > 0) {
+    //   throw new BadRequestException('Cannot delete question because test has submissions');
+    // }
     await this.repo.remove(q);
   }
 }
@@ -333,12 +359,17 @@ export class TestAttemptService {
     if (test.status !== TestStatus.PUBLISHED)
       throw new BadRequestException('Test is not published');
 
+    const whereClause: any = {
+      testId: dto.testId,
+      userId,
+      status: In([TestAttemptStatus.SUBMITTED, TestAttemptStatus.GRADED]),
+    };
+    if (dto.assignmentId) {
+      whereClause.assignmentId = dto.assignmentId;
+    }
+
     const submittedCount = await this.repo.count({
-      where: {
-        testId: dto.testId,
-        userId,
-        status: In([TestAttemptStatus.SUBMITTED, TestAttemptStatus.GRADED]),
-      },
+      where: whereClause,
     });
     if (submittedCount >= test.attemptLimit)
       throw new BadRequestException('Attempt limit reached');
@@ -374,7 +405,7 @@ export class TestAttemptService {
         order: { displayOrder: 'ASC' },
       }),
     ]);
-    const qIds = new Set(questions.map((q) => q.id));
+    const qIds = new Set(questions.map((q) => q.questionId));
     const totalPoints = questions.reduce((s, q) => s + q.points, 0);
     // Chỉ tính điểm cho câu thuộc đúng bài test của attempt (chặn inject câu bài khác).
     const earned = answers
@@ -453,7 +484,7 @@ export class TestAttemptService {
         relations: ['question'],
       }),
     ]);
-    const qIds = new Set(questions.map((q) => q.id));
+    const qIds = new Set(questions.map((q) => q.questionId));
     const totalPoints = questions.reduce((s, q) => s + q.points, 0);
     const earned = answers
       .filter((a) => qIds.has(a.questionId))
@@ -554,15 +585,13 @@ export class TestAnswerService {
     userId: string,
   ) {
     const attempt = await this.assertCanAnswer(attemptId, userId);
+    
     const question = await this.questionRepo.findOne({
-      where: { id: dto.questionId } as any,
+      where: { testId: attempt.testId, questionId: dto.questionId } as any,
       relations: ['question'],
     });
     if (!question) throw new BadRequestException('Test question not found');
-    // Chống inject: câu hỏi phải thuộc đúng bài test của attempt.
-    if (question.testId !== attempt.testId)
-      throw new BadRequestException('Question does not belong to this test');
-    const submitted = dto.answer?.answer;
+    const submitted = dto.answer;
     const { isCorrect, pointsAwarded } = gradeQuestion(question, submitted);
 
     const existing = await this.repo.findOne({

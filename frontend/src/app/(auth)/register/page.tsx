@@ -1,13 +1,12 @@
 import type { Metadata } from 'next';
 import { RegisterForm } from '@/features/auth/components/register-form';
-import { Card, CardBody, CardHeader } from '@/features/ui/components/card';
+import Image from 'next/image';
 
 export const metadata: Metadata = {
   title: 'Đăng ký tài khoản',
   description: 'Đăng ký tài khoản miễn phí để bắt đầu học tiếng Trung với Hán Tự HSK.',
 };
 
-/** RSC (FE-006): shell server render sẵn; form là client island (RegisterForm). */
 export default async function RegisterPage({
   searchParams,
 }: {
@@ -17,13 +16,29 @@ export default async function RegisterPage({
   const safeNext = typeof next === 'string' ? next : undefined;
 
   return (
-    <div className="mx-auto mt-10 max-w-md">
-      <Card>
-        <CardHeader title="Đăng ký tài khoản" subtitle="Bắt đầu học tiếng Trung miễn phí." />
-        <CardBody>
-          <RegisterForm next={safeNext} />
-        </CardBody>
-      </Card>
+    <div className="relative flex flex-1 w-full min-h-screen items-center justify-center p-4 overflow-hidden">
+      {/* Background Image */}
+      <div className="absolute inset-0 z-0 bg-[#415e44]">
+        <Image 
+          src="/images/auth-bg.jpg" 
+          alt="Cute Panda Forest" 
+          fill 
+          className="object-cover opacity-80 mix-blend-overlay"
+          priority
+        />
+      </div>
+
+      {/* Form Card */}
+      <div className="w-full max-w-md px-8 py-10 bg-white/95 backdrop-blur-md rounded-[2.5rem] shadow-2xl relative z-10 flex flex-col justify-center">
+        <h1 className="text-3xl md:text-4xl font-serif font-bold text-[#1a472a] mb-2 text-center">
+          Welcome!
+        </h1>
+        <p className="text-gray-600 mb-8 text-sm md:text-base text-center">
+          Create your account to start nurturing your classroom.
+        </p>
+        
+        <RegisterForm next={safeNext} />
+      </div>
     </div>
   );
 }

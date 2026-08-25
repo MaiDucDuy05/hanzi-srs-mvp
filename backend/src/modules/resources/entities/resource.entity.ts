@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, JoinColumn, Index } from 'typeorm';
+import { Column, Entity, ManyToOne, JoinColumn, Index, DeleteDateColumn } from 'typeorm';
 import { BaseEntity } from '../../../common/base.entity';
 import { ContentStatus } from '../../../common/enums/curriculum.enums';
 import { ResourceTier } from '../../../common/enums/resources.enums';
@@ -18,6 +18,9 @@ export class Resource extends BaseEntity {
 
   @Column({ name: 'file_key', type: 'varchar', length: 255 })
   fileKey: string;
+
+  @Column({ name: 'cover_image_key', type: 'varchar', length: 255, nullable: true })
+  coverImageKey: string | null;
 
   @Column({ name: 'file_size', type: 'int', default: 0 })
   fileSize: number;
@@ -44,6 +47,6 @@ export class Resource extends BaseEntity {
   @Column({ name: 'hidden_at', type: 'timestamptz', nullable: true })
   hiddenAt: Date | null;
 
-  @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true })
+  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz', nullable: true })
   deletedAt: Date | null;
 }

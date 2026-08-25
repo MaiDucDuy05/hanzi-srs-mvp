@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { User, GraduationCap, Lock, Save, Bell } from 'lucide-react';
+import { User, GraduationCap, Lock, Save, Bell, LogOut } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { authApi } from '@/lib/api/endpoints';
+import { useRouter } from 'next/navigation';
 
 const TABS = [
   { id: 'profile', label: 'Hồ sơ', icon: User, description: 'Tên hiển thị, thông tin cá nhân.' },
@@ -24,7 +25,8 @@ function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: b
 }
 
 export function SettingsFeature() {
-  const { user, refresh } = useAuth();
+  const { user, refresh, logout } = useAuth();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('profile');
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -107,6 +109,15 @@ export function SettingsFeature() {
     showMessage('success', 'Mật khẩu đã được thay đổi.');
   };
 
+  const handleLogout = async () => {
+    try {
+      await logout();
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   return (
     <div className="flex flex-col md:flex-row gap-8 pb-10 max-w-[1200px]">
 
@@ -140,6 +151,16 @@ export function SettingsFeature() {
               </button>
             );
           })}
+
+          <div className="mt-8 border-t border-gray-100 pt-6">
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-2 p-4 rounded-2xl bg-[#fff4f4] text-red-600 font-bold hover:bg-red-50 hover:text-red-700 transition-colors border border-red-100 shadow-sm"
+            >
+              <LogOut className="h-5 w-5" strokeWidth={2.5} />
+              Đăng xuất
+            </button>
+          </div>
         </div>
       </div>
 
