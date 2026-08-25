@@ -11,13 +11,18 @@ export class S3Service {
     this.bucketName = process.env.AWS_S3_BUCKET_NAME || '';
     
     // AWS SDK automatically uses AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY from env
-    this.s3Client = new S3Client({
+    const s3Config: any = {
       region: process.env.AWS_REGION || 'ap-southeast-1',
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-      }
-    });
+    };
+
+    if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+      s3Config.credentials = {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      };
+    }
+
+    this.s3Client = new S3Client(s3Config);
   }
 
   /**
