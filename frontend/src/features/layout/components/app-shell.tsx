@@ -3,8 +3,6 @@
 import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Footer } from '@/features/layout/components/footer';
-
 import { ForestBackground } from '@/features/background/components/forest-background';
 
 /**
@@ -22,6 +20,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const isTeacher = pathname?.startsWith('/teacher');
   const isAuth = pathname?.startsWith('/login') || pathname?.startsWith('/register') || pathname?.startsWith('/forgot-password');
 
+  const isContact = pathname?.startsWith('/contact');
+
   if (isHome || isDashboard || isStudy || isGames || isAdmin || isTeacher || isAuth) {
     return <main className="flex min-h-screen w-full flex-col">{children}</main>;
   }
@@ -29,13 +29,15 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <ForestBackground className="flex min-h-screen flex-col font-[family-name:var(--font-nunito)] relative">
       {/* Gấu trúc trang trí góc trái */}
-      <div className="fixed bottom-0 left-0 z-0 hidden lg:block h-[300px] xl:h-[400px] pointer-events-none opacity-90">
-        <img
-          src="/assets/illustrations/panda/panda.png"
-          alt="Panda Decorative"
-          className="h-full w-auto object-contain object-bottom"
-        />
-      </div>
+      {!isContact && (
+        <div className="fixed bottom-0 left-0 z-0 hidden lg:block h-[300px] xl:h-[400px] pointer-events-none opacity-90">
+          <img
+            src="/assets/illustrations/panda/panda.png"
+            alt="Panda Decorative"
+            className="h-full w-auto object-contain object-bottom"
+          />
+        </div>
+      )}
 
       <div className="absolute top-8 left-1/2 z-20 flex w-[90%] lg:w-[50%] max-w-3xl -translate-x-1/2 items-center justify-between rounded-full bg-gradient-to-r from-[#e5f5eb] via-[#e9f9ef] to-[#e0f5e9] shadow-md px-6 py-2 font-[family-name:var(--font-nunito)] text-base sm:text-lg font-black text-[#215b3b]">
         <Link href="/">
