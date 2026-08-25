@@ -91,7 +91,7 @@ export function DashboardFeature() {
         </div>
 
         {/* Daily Streak */}
-        <div className="bg-white rounded-[2rem] p-6 shadow-sm flex items-center gap-6">
+        <div className="bg-white rounded-[2rem] p-6 shadow-sm flex items-center gap-6 h-full">
           <div className="flex-shrink-0">
             <BambooShoot className="w-auto h-32" />
           </div>
@@ -109,41 +109,47 @@ export function DashboardFeature() {
           </div>
         </div>
 
-        {/* Live Quiz */}
-        <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center text-center">
-          <h2 className="font-black text-[#215b3b] font-[family-name:var(--font-nunito)] text-2xl mb-4">
-            Tham gia Live Quiz
-          </h2>
-          <div className="flex w-full gap-2 px-2">
-             <input 
-                id="live-pin-input"
-                type="text" 
-                placeholder="Nhập mã PIN"
-                className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-2 font-bold text-center text-xs tracking-widest focus:border-[#8BC34A] focus:outline-none"
-             />
-             <button 
-               onClick={() => {
-                 const pin = (document.getElementById('live-pin-input') as HTMLInputElement)?.value;
-                 if (pin && pin.length >= 4) {
-                   window.location.href = `/live-quiz?pin=${pin}`;
-                 }
-               }}
-               className="bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold py-2 px-6 rounded-xl shadow-md transition-transform hover:scale-105 whitespace-nowrap"
-             >
-               Tham gia
-             </button>
+        {/* Third Column: Live Quiz & Review */}
+        <div className="flex flex-col gap-6 h-full">
+          {/* Live Quiz */}
+          <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center text-center flex-1">
+            <h2 className="font-black text-[#215b3b] font-[family-name:var(--font-nunito)] text-xl mb-4">
+              Tham gia Live Quiz
+            </h2>
+            <div className="flex w-full gap-2 px-2">
+               <input 
+                  id="live-pin-input"
+                  type="text" 
+                  placeholder="Nhập mã PIN"
+                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-2 font-bold text-center text-xs tracking-widest focus:border-[#8BC34A] focus:outline-none"
+               />
+               <button 
+                 onClick={() => {
+                   const pin = (document.getElementById('live-pin-input') as HTMLInputElement)?.value;
+                   if (pin && pin.length >= 4) {
+                     window.location.href = `/live-quiz?pin=${pin}`;
+                   }
+                 }}
+                 className="bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold py-2 px-4 rounded-xl shadow-md transition-transform hover:scale-105 whitespace-nowrap"
+               >
+                 Tham gia
+               </button>
+            </div>
+          </div>
+
+          {/* Ready for Review */}
+          <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center text-center flex-1">
+            <h2 className="font-black text-[#215b3b] font-[family-name:var(--font-nunito)] text-xl mb-4">
+              Review Today
+            </h2>
+            <button 
+              onClick={() => window.location.href = '/review'}
+              className="bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold py-2 px-6 rounded-full shadow-md transition-transform hover:scale-105"
+            >
+              Review Now
+            </button>
           </div>
         </div>
-
-        {/* Ready for Review */}
-        {/* <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center text-center">
-          <h2 className="font-black text-[#215b3b] font-[family-name:var(--font-nunito)] text-2xl mb-6">
-            Ready for Review
-          </h2>
-          <button className="bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold py-3 px-8 rounded-full shadow-md transition-transform hover:scale-105">
-            Review Now
-          </button>
-        </div> */}
       </div>
 
       {/* Recommended Lessons */}
@@ -160,6 +166,7 @@ export function DashboardFeature() {
             {recommendedLessons.map((item) => (
               <div
                 key={item.id}
+                onClick={() => window.location.href = `/study/${item.id}`}
                 className="bg-white rounded-[2rem] p-4 shadow-sm flex items-center gap-4 hover:-translate-y-1 transition-transform cursor-pointer"
               >
                 <img

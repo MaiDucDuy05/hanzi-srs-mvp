@@ -75,10 +75,6 @@ export function TeacherSidebar() {
           <Settings className="h-[18px] w-[18px]" />
           Settings
         </Link>
-        <Link href="/teacher/support" className="flex items-center gap-4 rounded-xl px-4 py-3 text-[13px] font-bold text-gray-600 hover:bg-[#f3f4e1]/50 hover:text-[#11321e] transition-colors">
-          <HelpCircle className="h-[18px] w-[18px]" />
-          Support
-        </Link>
         <button 
           onClick={() => logout()}
           className="w-full flex items-center gap-4 rounded-xl px-4 py-3 text-[13px] font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"

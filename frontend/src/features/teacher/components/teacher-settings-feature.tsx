@@ -1,30 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { User, GraduationCap, Lock, Save, Bell, LogOut } from 'lucide-react';
+import { User, Lock, Save, LogOut } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { authApi } from '@/lib/api/endpoints';
 import { useRouter } from 'next/navigation';
 
 const TABS = [
   { id: 'profile', label: 'Hồ sơ', icon: User, description: 'Tên hiển thị, thông tin cá nhân.' },
-  { id: 'learning', label: 'Học tập', icon: GraduationCap, description: 'Mục tiêu hàng ngày, cấu hình ôn tập.' },
   { id: 'account', label: 'Tài khoản', icon: Lock, description: 'Đổi mật khẩu, bảo mật.' },
 ];
 
-function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(!checked)}
-      className={`w-12 h-6 rounded-full flex items-center p-1 transition-colors duration-200 ${checked ? 'bg-[#85d038]' : 'bg-gray-200'}`}
-    >
-      <div className={`bg-white w-4 h-4 rounded-full shadow-sm transform transition-transform duration-200 ${checked ? 'translate-x-6' : 'translate-x-0'}`} />
-    </button>
-  );
-}
-
-export function SettingsFeature() {
+export function TeacherSettingsFeature() {
   const { user, refresh, logout } = useAuth();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('profile');
@@ -33,12 +20,6 @@ export function SettingsFeature() {
 
   // Profile state
   const [fullName, setFullName] = useState(user?.fullName ?? '');
-
-  // Learning state
-  const [dailyGoal, setDailyGoal] = useState(user?.dailyGoal ?? 50);
-  const [notifNewLesson, setNotifNewLesson] = useState(true);
-  const [notifStreak, setNotifStreak] = useState(true);
-  const [notifMistake, setNotifMistake] = useState(false);
 
   // Account state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -61,23 +42,6 @@ export function SettingsFeature() {
       await authApi.updateMe({ fullName: fullName.trim() });
       await refresh();
       showMessage('success', 'Hồ sơ đã được lưu.');
-    } catch {
-      showMessage('error', 'Lưu thất bại. Vui lòng thử lại.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleSaveLearning = async () => {
-    if (dailyGoal < 1 || dailyGoal > 10000) {
-      showMessage('error', 'Mục tiêu phải từ 1 đến 10000 XP.');
-      return;
-    }
-    setIsSaving(true);
-    try {
-      await authApi.updateMe({ dailyGoal });
-      await refresh();
-      showMessage('success', 'Cấu hình học tập đã được lưu.');
     } catch {
       showMessage('error', 'Lưu thất bại. Vui lòng thử lại.');
     } finally {
@@ -132,7 +96,7 @@ export function SettingsFeature() {
       <div className="w-full md:w-72 shrink-0">
         <div className="mb-6">
           <h1 className="text-3xl font-extrabold text-[#11321e] mb-2">Cài đặt</h1>
-          <p className="text-sm text-gray-500 font-medium">Tùy chỉnh tài khoản cá nhân.</p>
+          <p className="text-sm text-gray-500 font-medium">Tùy chỉnh tài khoản giáo viên.</p>
         </div>
 
         <div className="flex flex-col gap-2">
@@ -197,7 +161,7 @@ export function SettingsFeature() {
               {/* Avatar placeholder */}
               <div className="flex items-center gap-5">
                 <div className="h-20 w-20 rounded-full bg-[#c7cf35] flex items-center justify-center text-3xl font-extrabold text-[#11321e] shadow-inner">
-                  {fullName.charAt(0).toUpperCase() || 'U'}
+                  {fullName.charAt(0).toUpperCase() || 'T'}
                 </div>
                 <div>
                   <p className="text-sm text-gray-500 font-medium">Ảnh đại diện</p>
@@ -227,55 +191,6 @@ export function SettingsFeature() {
                   <p className="text-[11px] text-gray-400 mt-2 font-medium">Email không thể thay đổi.</p>
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* ── Learning Tab ── */}
-          {activeTab === 'learning' && (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="mb-8 border-b border-gray-100 pb-4">
-                <h2 className="text-2xl font-bold text-[#11321e]">Cấu hình Học tập</h2>
-                <p className="text-sm text-gray-500 mt-1">Mục tiêu hàng ngày và tùy chọn thông báo.</p>
-              </div>
-
-              {/* Daily Goal */}
-              <div className="bg-[#fcfbe8] rounded-2xl p-6 border border-[#f3f4e1]">
-                <h3 className="font-bold text-[#11321e] text-[15px] mb-4">Mục tiêu XP hàng ngày</h3>
-                <div className="flex items-center gap-4">
-                  <input
-                    type="number"
-                    min={1}
-                    max={10000}
-                    value={dailyGoal}
-                    onChange={e => setDailyGoal(Number(e.target.value))}
-                    className="w-28 bg-white border border-gray-200 rounded-xl py-2.5 px-4 text-sm font-bold text-[#11321e] focus:outline-none focus:ring-2 focus:ring-[#c7cf35]"
-                  />
-                  <span className="text-sm font-bold text-gray-600">XP / ngày</span>
-                </div>
-                <p className="text-[11px] text-gray-400 mt-2 font-medium">
-                  Gợi ý: Người mới nên bắt đầu 20–50 XP. Khi quen dần, tăng lên 80–100 XP.
-                </p>
-              </div>
-
-              {/* Notifications */}
-              {/* <div>
-                <h3 className="font-bold text-[#11321e] text-[15px] mb-4">Thông báo</h3>
-                <div className="space-y-4">
-                  {[
-                    { label: 'Bài học mới', desc: 'Nhắc khi có bài học mới được thêm vào.', checked: notifNewLesson, onChange: setNotifNewLesson },
-                    { label: 'Nhắc streak', desc: 'Nhắc ôn tập khi chuỗi ngày học có thể bị gián đoạn.', checked: notifStreak, onChange: setNotifStreak },
-                    { label: 'Từ mới sai thường xuyên', desc: 'Nhắc khi có từ mới được thêm vào sổ lỗi.', checked: notifMistake, onChange: setNotifMistake },
-                  ].map(item => (
-                    <div key={item.label} className="flex items-center justify-between p-4 bg-[#fbfbf8] rounded-xl border border-gray-100">
-                      <div>
-                        <p className="font-bold text-[13px] text-gray-700">{item.label}</p>
-                        <p className="text-[11px] text-gray-400 font-medium mt-0.5">{item.desc}</p>
-                      </div>
-                      <ToggleSwitch checked={item.checked} onChange={item.onChange} />
-                    </div>
-                  ))}
-                </div>
-              </div> */}
             </div>
           )}
 
@@ -346,7 +261,6 @@ export function SettingsFeature() {
             <button
               onClick={() => {
                 if (activeTab === 'profile') handleSaveProfile();
-                else if (activeTab === 'learning') handleSaveLearning();
                 else handleSavePassword();
               }}
               disabled={isSaving}

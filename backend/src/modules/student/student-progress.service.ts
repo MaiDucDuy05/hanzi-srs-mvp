@@ -121,7 +121,7 @@ export class StudentProgressService {
    */
   async getRecommendedLessons(
     userId: string,
-    limit = 5,
+    limit = 3,
   ): Promise<LessonProgressItem[]> {
     // Get all published lessons
     const lessons = await this.lessonRepo.find({

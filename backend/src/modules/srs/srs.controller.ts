@@ -45,4 +45,13 @@ export class SrsController {
     const map = await this.srsService.getProgress(userId, q.lessonId, q.levelId, q.topicId);
     return ok(Object.fromEntries(map), 'Progress retrieved');
   }
+
+  /**
+   * GET /srs/due — lấy danh sách các từ vựng đến hạn ôn tập hôm nay
+   */
+  @Get('due')
+  async getDueItems(@CurrentUser('sub') userId: string) {
+    const items = await this.srsService.getDueItems(userId);
+    return ok(items, 'Due items retrieved');
+  }
 }

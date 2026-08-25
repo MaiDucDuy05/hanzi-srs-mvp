@@ -208,7 +208,16 @@ export function TeacherDashboardFeature() {
                   } else if (activity.activityType === 'PRACTICE_COMPLETED') {
                     Icon = Lightbulb;
                     colorClass = "text-[#e55353] bg-[#fff4f4]";
-                    message = "completed a practice session";
+                    const pType = activity.details?.type || '';
+                    if (pType === 'SENTENCE_ORDERING') message = "completed a Sentence Ordering game";
+                    else if (pType === 'HANZI_WRITING') message = "practiced Hanzi Writing";
+                    else if (pType === 'FILL_BLANK') message = "completed a Fill in the Blank game";
+                    else if (pType === 'WORD_MATCHING') message = "played a Word Matching game";
+                    else if (pType === 'FLASHCARD') message = "reviewed Flashcards";
+                    else if (pType === 'PINYIN_BALLOON_GAME') message = "played the Pinyin Balloon game";
+                    else if (pType === 'MEMORY_GAME') message = "played the Memory game";
+                    else if (pType === 'TEST') message = `completed a Test (Score: ${activity.details?.score || 0})`;
+                    else message = "completed a practice session";
                   } else if (activity.activityType === 'REWARD_REDEEMED') {
                     Icon = Trophy;
                     colorClass = "text-yellow-600 bg-yellow-100";

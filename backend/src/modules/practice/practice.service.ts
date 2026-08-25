@@ -76,6 +76,13 @@ export class PracticeQuestionService {
   }
 }
 
+import { SrsService } from '../srs/srs.service';
+import { SrsRating } from '../srs/dto/srs.dto';
+import { ExpService } from '../achievements/exp.service';
+import { ActivityService } from '../achievements/activity.service';
+import { StreakService } from '../achievements/streak.service';
+import { ActivityType } from '../../common/enums/achievements.enums';
+
 @Injectable()
 export class PracticeAttemptService {
   constructor(
@@ -83,6 +90,10 @@ export class PracticeAttemptService {
     @InjectRepository(PracticeAttempt)
     private repo: Repository<PracticeAttempt>,
     private readonly limitSvc: DailyUsageService,
+    private readonly srsService: SrsService,
+    private readonly expService: ExpService,
+    private readonly activityService: ActivityService,
+    private readonly streakService: StreakService,
   ) {}
 
   /** Học viên chỉ xem attempt của mình; teacher/admin được lọc theo userId (PR-03..13). */
@@ -167,10 +178,53 @@ export class PracticeAttemptService {
     if (attempt.status !== PracticeAttemptStatus.IN_PROGRESS) {
       throw new BadRequestException('Attempt is not in progress');
     }
+
+    // Tích hợp SRS: duyệt qua vocabResults nếu có
+    if (dto.answerData && dto.answerData.vocabResults) {
+      const vocabResults = dto.answerData.vocabResults as Record<string, boolean>;
+      for (const [vocabId, isCorrect] of Object.entries(vocabResults)) {
+        try {
+          await this.srsService.submitReview(userId, {
+            vocabularyId: vocabId,
+            rating: isCorrect ? SrsRating.GOOD : SrsRating.AGAIN,
+          });
+        } catch (e) {
+          // Bỏ qua lỗi nếu từ vựng không tồn tại để không làm hỏng việc submit practice
+          console.warn(`Failed to update SRS for vocab ${vocabId}:`, e);
+        }
+      }
+    }
+
     Object.assign(attempt, dto, {
       status: PracticeAttemptStatus.COMPLETED,
       completedAt: new Date(),
     });
-    return this.repo.save(attempt);
+
+    const savedAttempt = await this.repo.save(attempt);
+
+    // Bắt đầu logging activity và cộng EXP
+    try {
+      await this.dataSource.transaction(async (em) => {
+        const totalQ = dto.answerData && (dto.answerData as any).totalQuestions ? (dto.answerData as any).totalQuestions : (attempt.correctCount + attempt.wrongCount);
+        const expAwarded = await this.expService.awardFromAttempt(
+          em, userId,
+          { correct: attempt.correctCount || 0, total: totalQ || 0, combo: 0, refId: attempt.id },
+          `${attempt.id}:practice`
+        );
+        
+        if (expAwarded > 0) {
+          await this.activityService.log(
+            em, userId, ActivityType.PRACTICE_COMPLETED,
+            { attemptId: attempt.id, type: attempt.practiceType, correct: attempt.correctCount, total: totalQ },
+            expAwarded
+          );
+        }
+        await this.streakService.recordActivityAndCheckMilestones(em, userId);
+      });
+    } catch (e) {
+      console.warn(`Failed to log activity/exp for generic practice ${id}:`, e);
+    }
+
+    return savedAttempt;
   }
 }

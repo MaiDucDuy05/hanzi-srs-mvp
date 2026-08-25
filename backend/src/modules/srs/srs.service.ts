@@ -118,6 +118,21 @@ export class SrsService {
     return map;
   }
 
+  /**
+   * Lấy danh sách các từ vựng đến hạn ôn tập cho hôm nay
+   */
+  async getDueItems(userId: string): Promise<Vocabulary[]> {
+    const dueProgresses = await this.progressRepo
+      .createQueryBuilder('p')
+      .innerJoinAndSelect('p.vocabulary', 'v')
+      .where('p.userId = :userId', { userId })
+      .andWhere('p.nextReviewAt <= :now', { now: new Date() })
+      .orderBy('p.nextReviewAt', 'ASC')
+      .getMany();
+
+    return dueProgresses.map((p) => p.vocabulary);
+  }
+
   /** @deprecated Use getProgress() directly with lessonId */
   async getProgressByLesson(userId: string, lessonId: string) {
     return this.getProgress(userId, lessonId);

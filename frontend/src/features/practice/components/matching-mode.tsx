@@ -25,6 +25,7 @@ export interface MatchingState {
   correct: number;
   wrong: number;
   moves: number;
+  vocabResults: Record<string, boolean>;
 }
 
 /** Chọn N cặp (tối đa 10, tối thiểu 4) để chơi. */
@@ -51,6 +52,7 @@ export function MatchingMode({
       correct: 0,
       wrong: 0,
       moves: 0,
+      vocabResults: {},
     },
   );
   const [flashWrong, setFlashWrong] = useState(false);
@@ -73,6 +75,17 @@ export function MatchingMode({
       const meaning = state.meaningSide.find((p) => p.item.id === state.selectedMeaning);
       if (!pair || !meaning) return;
       const matched = pair.item.id === meaning.item.id;
+      
+      const nextVocabResults = { ...state.vocabResults };
+      if (!matched) {
+        nextVocabResults[pair.item.id] = false;
+        nextVocabResults[meaning.item.id] = false;
+      } else {
+        if (nextVocabResults[pair.item.id] !== false) {
+          nextVocabResults[pair.item.id] = true;
+        }
+      }
+
       const next = {
         ...state,
         selectedHanzi: null,
@@ -80,6 +93,7 @@ export function MatchingMode({
         moves: state.moves + 1,
         correct: state.correct + (matched ? 1 : 0),
         wrong: state.wrong + (matched ? 0 : 1),
+        vocabResults: nextVocabResults,
         hanziSide: state.hanziSide.map((p) =>
           p.item.id === id ? { ...p, matched: p.matched || matched } : p,
         ),
@@ -99,6 +113,7 @@ export function MatchingMode({
           moveCount: next.moves,
           score: computeScore(next.correct, pairs.length),
           answerData: { matchedPairs: next.correct, totalPairs: pairs.length },
+          vocabResults: next.vocabResults,
         };
         onComplete(result);
       } else {
@@ -189,6 +204,7 @@ export function MatchingMode({
       correct: 0,
       wrong: 0,
       moves: 0,
+      vocabResults: {},
     };
   }
 }

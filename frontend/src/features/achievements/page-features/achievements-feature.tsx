@@ -14,6 +14,7 @@ import {
 import { SkillRadar } from '../components/skill-radar';
 import { StreakHeatmap } from '../components/streak-heatmap';
 import { RedeemModal } from '../components/redeem-modal';
+import { ErrorNotebookModal } from '@/features/teacher/teacher-students-feature/components/error-notebook-modal';
 
 type Tab = 'overview' | 'shop' | 'inventory';
 
@@ -142,6 +143,8 @@ function OverviewTab({
   radar: RadarEntry[];
   timeline: TimelineResult | null;
 }) {
+  const [mistakeModalOpen, setMistakeModalOpen] = useState(false);
+
   if (!dashboard) return null;
   const { balance, level, streak } = dashboard;
   return (
@@ -212,14 +215,24 @@ function OverviewTab({
                 <p className="text-sm text-[#9b2c2c]">Bạn có một số từ vựng cần ôn tập lại để nhận EXP!</p>
               </div>
             </div>
-            <Link 
-              href="/dashboard/practice" 
-              className="rounded-xl bg-[#c53030] px-4 py-2 font-bold text-white transition-colors hover:bg-[#9b2c2c]"
-            >
-              Ôn tập ngay
-            </Link>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => setMistakeModalOpen(true)}
+                className="rounded-xl bg-white px-4 py-2 font-bold text-[#c53030] transition-colors border border-[#ffcdcd] hover:bg-[#fff5f5]"
+              >
+                Chi tiết
+              </button>
+              <Link 
+                href="/dashboard/practice" 
+                className="rounded-xl bg-[#c53030] px-4 py-2 font-bold text-white transition-colors hover:bg-[#9b2c2c]"
+              >
+                Ôn tập ngay
+              </Link>
+            </div>
           </div>
         </div>
+
+        <ErrorNotebookModal open={mistakeModalOpen} onClose={() => setMistakeModalOpen(false)} />
 
         {/* Timeline */}
         <div className="rounded-[2rem] bg-white p-6 shadow-sm">
@@ -235,8 +248,26 @@ function OverviewTab({
               <p className="text-sm text-gray-400">Hãy hoàn thành một bài học để nhận EXP nhé!</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {timeline.data.map((item) => (
+            <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+              {timeline.data.map((item) => {
+                let label = item.activityType.replace(/_/g, ' ');
+                if (item.activityType === 'LESSON_COMPLETED') label = 'Hoàn thành bài học';
+                else if (item.activityType === 'PRACTICE_COMPLETED') {
+                  const pType = item.details?.type as string | undefined;
+                  if (pType === 'SENTENCE_ORDERING') label = 'Hoàn thành luyện tập: Sắp xếp câu';
+                  else if (pType === 'HANZI_WRITING') label = 'Hoàn thành luyện tập: Viết Hán tự';
+                  else if (pType === 'FILL_BLANK') label = 'Hoàn thành luyện tập: Điền vào chỗ trống';
+                  else if (pType === 'WORD_MATCHING') label = 'Hoàn thành luyện tập: Nối từ';
+                  else if (pType === 'FLASHCARD') label = 'Hoàn thành luyện tập: Flashcard';
+                  else if (pType === 'PINYIN_BALLOON_GAME') label = 'Hoàn thành luyện tập: Bóng bay Pinyin';
+                  else if (pType === 'MEMORY_GAME') label = 'Hoàn thành luyện tập: Lật thẻ ghi nhớ';
+                  else if (pType === 'TEST') label = `Hoàn thành Bài kiểm tra (Điểm: ${item.details?.score || 0})`;
+                  else label = 'Hoàn thành luyện tập';
+                }
+                else if (item.activityType.includes('BONUS')) label = 'Thưởng thêm EXP';
+                else if (item.activityType === 'MISTAKE_REVIEWED') label = 'Ôn tập lỗi sai';
+
+                return (
                 <div key={item.id} className="flex items-start gap-4 rounded-xl border border-gray-100 p-4 transition-colors hover:bg-gray-50">
                   <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#f3f9f5] text-lg">
                     {item.activityType === 'LESSON_COMPLETED' ? '📚' : 
@@ -245,7 +276,7 @@ function OverviewTab({
                      item.activityType === 'MISTAKE_REVIEWED' ? '🔧' : '🕹️'}
                   </div>
                   <div className="flex-1">
-                    <p className="font-bold text-[#215b3b]">{item.activityType.replace(/_/g, ' ')}</p>
+                    <p className="font-bold text-[#215b3b]">{label}</p>
                     {!!item.details?.lessonId && (
                       <p className="text-sm text-gray-500">Bài học ID: {String(item.details.lessonId)}</p>
                     )}
@@ -263,7 +294,8 @@ function OverviewTab({
                     </div>
                   )}
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
