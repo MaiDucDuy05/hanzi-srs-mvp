@@ -47,10 +47,7 @@ export function LiveHostFeature({ testId }: LiveHostFeatureProps) {
     if (!user || loading) return;
 
     // Use absolute URL to bypass Next.js rewrites for sockets
-    const socketUrl = process.env.NEXT_PUBLIC_API_URL 
-      ? process.env.NEXT_PUBLIC_API_URL.replace('/api/v1', '/live-quiz')
-      : 'http://localhost:8000/live-quiz';
-
+    const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL
     const newSocket = io(socketUrl);
     setSocket(newSocket);
 
