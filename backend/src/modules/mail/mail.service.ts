@@ -17,7 +17,7 @@ export class MailService {
       port: this.configService.get<number>('SMTP_PORT', 587),
       secure: this.configService.get<boolean>('SMTP_SECURE', false),
       auth: {
-        user: this.configService.get<string>('SMTP_USER'),
+        user: this.configService.get<string>('SMTP_USER', 'no-reply@hanzi-srs.com'),
         pass: this.configService.get<string>('SMTP_PASS'),
       },
     });
@@ -37,7 +37,7 @@ export class MailService {
 
   async sendRegistrationOtp(to: string, otp: string) {
     const mailOptions = {
-      from: `"Hanzi SRS" <${this.configService.get<string>('SMTP_USER')}>`,
+      from: `"Hanzi SRS" <${this.configService.get<string>('SMTP_FROM', 'no-reply@hanzi-srs.com')}>`,
       to,
       subject: 'Xác thực tài khoản Hanzi SRS',
       html: `
@@ -67,7 +67,7 @@ export class MailService {
 
   async sendForgotPasswordOtp(to: string, otp: string) {
     const mailOptions = {
-      from: `"Hanzi SRS" <${this.configService.get<string>('SMTP_USER')}>`,
+      from: `"Hanzi SRS" <${this.configService.get<string>('SMTP_FROM', 'no-reply@hanzi-srs.com')}>`,
       to,
       subject: 'Khôi phục mật khẩu Hanzi SRS',
       html: `
@@ -96,7 +96,7 @@ export class MailService {
   }
   async sendContactConfirmationEmail(to: string, name: string) {
     const mailOptions = {
-      from: `"Hanzi SRS" <${this.configService.get<string>('SMTP_USER')}>`,
+      from: `"Hanzi SRS" <${this.configService.get<string>('SMTP_FROM', 'no-reply@hanzi-srs.com')}>`,
       to,
       subject: 'Xác nhận yêu cầu liên hệ - Hanzi SRS',
       html: `
@@ -120,7 +120,7 @@ export class MailService {
 
   async sendContactReplyEmail(to: string, name: string, replyMessage: string) {
     const mailOptions = {
-      from: `"Hanzi SRS Support" <${this.configService.get<string>('SMTP_USER')}>`,
+      from: `"Hanzi SRS Support" <${this.configService.get<string>('SMTP_FROM', 'no-reply@hanzi-srs.com')}>`,
       to,
       subject: 'Phản hồi liên hệ từ Hanzi SRS',
       html: `

@@ -38,6 +38,7 @@ jobs:                         # CÔNG VIỆC cần làm
             git pull
             cd backend
             npm install
+            npm run test
             npm run build
             npm run migration:run
             pm2 restart backend
