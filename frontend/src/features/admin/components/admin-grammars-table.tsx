@@ -2,6 +2,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { adminContentApi } from '@/lib/api/endpoints/admin-content';
+import { useConfirm } from '@/providers/confirm-provider';
 import { Edit2, Trash2, Search, Plus, X, FileDown, ListPlus } from 'lucide-react';
 import { BulkAddGrammarModal } from './bulk-add-grammar-modal';
 
@@ -13,6 +14,7 @@ export const AdminGrammarsTable = () => {
   const [filterStatus, setFilterStatus] = useState('');
   const [hskLevels, setHskLevels] = useState<any[]>([]);
   
+  const confirm = useConfirm();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
@@ -39,7 +41,7 @@ export const AdminGrammarsTable = () => {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa ngữ pháp này?')) return;
+    if (!(await confirm({ title: 'Xóa ngữ pháp', message: 'Bạn có chắc chắn muốn xóa ngữ pháp này?', variant: 'danger' }))) return;
     try {
       await adminContentApi.deleteGrammar(id);
       fetchGrammars(search, filterLevel, filterStatus);

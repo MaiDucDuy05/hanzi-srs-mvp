@@ -6,6 +6,7 @@ import { adminContentApi } from '@/lib/api/endpoints/admin-content';
 import { FileDown, Edit2, Trash2, ListPlus, Search } from 'lucide-react';
 import { EditVocabularyModal } from './edit-vocabulary-modal';
 import { BulkAddVocabularyModal } from './bulk-add-vocabulary-modal';
+import { useConfirm } from '@/providers/confirm-provider';
 
 export function VocabulariesTable() {
   const [vocabularies, setVocabularies] = useState<any[]>([]);
@@ -18,6 +19,7 @@ export function VocabulariesTable() {
   const [editForm, setEditForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const confirm = useConfirm();
   const [filterLevel, setFilterLevel] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
@@ -97,7 +99,7 @@ export function VocabulariesTable() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa từ vựng này?')) return;
+    if (!(await confirm({ title: 'Xóa từ vựng', message: 'Bạn có chắc chắn muốn xóa từ vựng này?', variant: 'danger' }))) return;
     try {
       await adminContentApi.deleteVocabulary(id);
       fetchData(searchQuery);

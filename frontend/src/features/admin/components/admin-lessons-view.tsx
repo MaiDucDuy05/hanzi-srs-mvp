@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { adminContentApi } from '@/lib/api/endpoints/admin-content';
 import { Edit2, Plus, X, MoreVertical, Eye, EyeOff } from 'lucide-react';
 import { LessonContentManager } from './lesson-content-manager';
+import { useConfirm } from '@/providers/confirm-provider';
 
 export const AdminLessonsView = () => {
   const [courses, setCourses] = useState<any[]>([]);
@@ -21,6 +22,7 @@ export const AdminLessonsView = () => {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   
   const [managingLessonId, setManagingLessonId] = useState<string | null>(null);
+  const confirm = useConfirm();
 
   // 1. Lấy danh sách khóa học để làm Filter
   useEffect(() => {
@@ -61,8 +63,15 @@ export const AdminLessonsView = () => {
   }, [selectedCourseId]);
 
   const handleToggleStatus = async (id: string, currentStatus: string) => {
+    const isPublishing = currentStatus !== 'PUBLISHED';
+    if (!(await confirm({ 
+      title: isPublishing ? 'Xuất bản bài học' : 'Ẩn bài học', 
+      message: `Bạn có chắc chắn muốn ${isPublishing ? 'xuất bản' : 'ẩn'} bài học này?`, 
+      variant: isPublishing ? 'info' : 'warning' 
+    }))) return;
+
     try {
-      const newStatus = currentStatus === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED';
+      const newStatus = isPublishing ? 'PUBLISHED' : 'DRAFT';
       await adminContentApi.updateLessonStatus(id, newStatus);
       // Cập nhật local state thay vì fetch lại để mượt hơn
       setLessons(lessons.map(l => l.id === id ? { ...l, status: newStatus } : l));
@@ -124,6 +133,7 @@ export const AdminLessonsView = () => {
 
   const handleSave = async () => {
     if (!selectedCourseId) return;
+    if (!(await confirm({ title: 'Lưu thay đổi', message: 'Bạn có chắc chắn muốn lưu các thay đổi này?', variant: 'info' }))) return;
     try {
       if (editForm.id) {
         await adminContentApi.updateLesson(editForm.id, editForm);

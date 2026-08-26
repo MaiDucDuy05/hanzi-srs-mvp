@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { HskLevel } from '../curriculum/entities/hsk-level.entity';
 import { Lesson } from '../curriculum/entities/lesson.entity';
+import { LessonContent } from '../curriculum/entities/lesson-content.entity';
 import { Vocabulary } from '../curriculum/entities/vocabulary.entity';
 import { GrammarPoint } from '../curriculum/entities/grammar-point.entity';
 import { Topic } from '../curriculum/entities/topic.entity';
@@ -34,6 +35,7 @@ import { AdminTeacherContentService } from './services/admin-teacher-content.ser
     TypeOrmModule.forFeature([
       HskLevel,
       Lesson,
+      LessonContent,
       Vocabulary,
       GrammarPoint,
       Topic,

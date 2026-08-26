@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { adminContentApi } from '@/lib/api/endpoints/admin-content';
 import { Edit2, Search, Plus, X, Image as ImageIcon, Eye, EyeOff, BookOpen } from 'lucide-react';
 import { AdminTopicVocabulariesModal } from './admin-topic-vocabularies-modal';
+import { useConfirm } from '@/providers/confirm-provider';
 
 export const AdminTopicsTable = () => {
   const [topics, setTopics] = useState<any[]>([]);
@@ -14,6 +15,7 @@ export const AdminTopicsTable = () => {
   const [editForm, setEditForm] = useState<any>({});
   
   const [selectedTopicForVocabs, setSelectedTopicForVocabs] = useState<any>(null);
+  const confirm = useConfirm();
 
   const fetchTopics = async () => {
     try {
@@ -28,8 +30,15 @@ export const AdminTopicsTable = () => {
   };
 
   const handleToggleStatus = async (id: string, currentStatus: string) => {
+    const isPublishing = currentStatus !== 'PUBLISHED';
+    if (!(await confirm({ 
+      title: isPublishing ? 'Xuất bản chủ đề' : 'Ẩn chủ đề', 
+      message: `Bạn có chắc chắn muốn ${isPublishing ? 'xuất bản' : 'ẩn'} chủ đề này?`, 
+      variant: isPublishing ? 'info' : 'warning' 
+    }))) return;
+
     try {
-      const newStatus = currentStatus === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED';
+      const newStatus = isPublishing ? 'PUBLISHED' : 'DRAFT';
       await adminContentApi.updateTopicStatus(id, newStatus);
       fetchTopics();
     } catch (error) {
@@ -57,6 +66,7 @@ export const AdminTopicsTable = () => {
   };
 
   const handleSave = async () => {
+    if (!(await confirm({ title: 'Lưu thay đổi', message: 'Bạn có chắc chắn muốn lưu các thay đổi này?', variant: 'info' }))) return;
     try {
       if (editForm.id) {
         await adminContentApi.updateTopic(editForm.id, editForm);
@@ -184,15 +194,6 @@ export const AdminTopicsTable = () => {
                   value={editForm.slug || ''} 
                   onChange={e => setEditForm({...editForm, slug: e.target.value})} 
                   placeholder="vd: am-thuc"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">URL Hình ảnh</label>
-                <input 
-                  className="w-full border p-2 rounded-xl focus:ring-2 focus:ring-[#c7cf35] outline-none" 
-                  value={editForm.thumbnailKey || ''} 
-                  onChange={e => setEditForm({...editForm, thumbnailKey: e.target.value})} 
-                  placeholder="https://..."
                 />
               </div>
               <div>

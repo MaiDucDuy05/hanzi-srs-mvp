@@ -60,7 +60,7 @@ export function TestAddBankModal({ open, onClose, onSuccess, testId, existingQue
       open={open}
       onClose={onClose}
       title="Thêm từ Ngân hàng câu hỏi"
-      wide
+      className="!max-w-[1400px] !w-[95vw] !h-[90vh] !max-h-[90vh] flex flex-col"
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
@@ -76,11 +76,13 @@ export function TestAddBankModal({ open, onClose, onSuccess, testId, existingQue
       {loading ? (
         <div className="py-8 text-center text-gray-500">Đang tải...</div>
       ) : (
-        <QuestionBankContent
-          questions={bankQuestions}
-          selectedIds={selectedBankIds}
-          onSelectionChange={setSelectedBankIds}
-        />
+        <div className="flex-1 overflow-hidden h-full flex flex-col -mx-6 -my-5">
+          <QuestionBankContent
+            questions={bankQuestions}
+            selectedIds={selectedBankIds}
+            onSelectionChange={setSelectedBankIds}
+          />
+        </div>
       )}
     </Modal>
   );

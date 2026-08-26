@@ -58,7 +58,9 @@ export class QuestionBankService {
     const { page = 1, limit = 50, type, visibility, hskLevel, difficulty, tags, search } = q;
     
     // Build query builder
-    const qb = this.repo.createQueryBuilder('q');
+    const qb = this.repo.createQueryBuilder('q')
+      .leftJoin('q.creator', 'creator')
+      .addSelect(['creator.id', 'creator.email', 'creator.fullName']);
     
     // Visibility/Ownership rules
     if (role === Role.ADMIN) {

@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Flag, Send, Menu, X, Bookmark, BookmarkCheck, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Flag, Send, Menu, X, Bookmark, BookmarkCheck, Clock, Maximize } from 'lucide-react';
 import { testApi } from '@/lib/api/endpoints/test';
 import type { Test, TestAttempt, TestQuestion } from '@/lib/api/types';
 import { Button } from '@/features/ui/components/button';
@@ -32,6 +32,37 @@ export function StudentExamTakingPage() {
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const durationSecondsRef = useRef<number>(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    // Initial check
+    if (typeof document !== 'undefined') {
+      setIsFullscreen(!!document.fullscreenElement);
+    }
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
+  const requestFullscreen = async () => {
+    try {
+      if (containerRef.current && containerRef.current.requestFullscreen) {
+        await containerRef.current.requestFullscreen();
+      } else if (document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+      }
+    } catch (err) {
+      console.error('Lỗi khi mở toàn màn hình:', err);
+      alert('Trình duyệt của bạn không hỗ trợ tính năng này.');
+    }
+  };
 
   // Load exam data
   useEffect(() => {
@@ -137,16 +168,23 @@ export function StudentExamTakingPage() {
 
   const handleAutoSubmit = async () => {
     alert('Đã hết thời gian! Hệ thống sẽ tự động nộp bài.');
-    await submitTest();
+    await handleSubmit();
   };
 
-  const submitTest = async () => {
-    if (submitting) return;
-    setSubmitting(true);
+  const handleSubmit = async () => {
     try {
+      setSubmitting(true);
+      if (timerRef.current) clearInterval(timerRef.current);
+
       await testApi.submitAttempt(attemptId, durationSecondsRef.current);
-      router.push(`/dashboard/exams/${attemptId}/result`);
-    } catch (e) {
+      
+      // Exit fullscreen if active
+      if (document.fullscreenElement && document.exitFullscreen) {
+        await document.exitFullscreen().catch(console.error);
+      }
+      
+      router.push(`/dashboard/student/tests/${test?.id}/results/${attemptId}`);
+    } catch (error) {
       setError('Lỗi nộp bài. Vui lòng thử lại.');
       setSubmitting(false);
     }
@@ -175,8 +213,28 @@ export function StudentExamTakingPage() {
   const timerColor = timeLeft < 300 ? 'text-red-600' : timeLeft < 600 ? 'text-amber-600' : 'text-gray-900';
 
   return (
-    <div className="flex flex-col h-screen bg-[#f7f9f6] font-sans">
-      {/* Top Header */}
+    <div ref={containerRef} className="flex flex-col h-screen bg-[#f7f9f6] font-sans">
+      {!isFullscreen ? (
+        <div className="flex flex-col h-full items-center justify-center p-4 text-center">
+          <div className="bg-white p-8 sm:p-12 rounded-[2rem] shadow-sm border border-gray-100 max-w-lg w-full flex flex-col items-center">
+            <div className="w-20 h-20 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mb-6">
+              <Maximize className="w-10 h-10" />
+            </div>
+            <h2 className="text-3xl font-extrabold text-[#11321e] mb-4">Chế độ Thi</h2>
+            <p className="text-gray-600 font-medium mb-8">
+              Bài kiểm tra này yêu cầu bạn làm bài trong <strong className="text-[#11321e]">Chế độ Toàn màn hình</strong> để đảm bảo tính công bằng. Vui lòng không thoát toàn màn hình trong suốt quá trình làm bài.
+            </p>
+            <Button 
+              onClick={requestFullscreen} 
+              className="w-full bg-[#11321e] hover:bg-[#1a4a2c] text-white rounded-full py-6 text-lg font-bold shadow-lg transition-transform active:scale-95"
+            >
+              Mở Toàn Màn Hình
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Top Header */}
       <header className="sticky top-0 z-40 bg-[#fefdfb] border-b border-[#e9efe7] px-6 py-4 shadow-sm flex items-center justify-between">
         {/* Left: Breadcrumb */}
         <div className="flex items-center gap-3">
@@ -392,7 +450,7 @@ export function StudentExamTakingPage() {
               </Button>
               <Button
                 loading={submitting}
-                onClick={submitTest}
+                onClick={handleSubmit}
                 className="flex-1 rounded-full bg-[#466a50] hover:bg-[#344f3b] text-white font-semibold"
                 size="lg"
               >
@@ -401,6 +459,8 @@ export function StudentExamTakingPage() {
             </div>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

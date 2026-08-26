@@ -8,6 +8,7 @@ export type QuestionSourceType = 'PRACTICE' | 'EXAM' | 'BOTH';
 export interface QuestionBankItem {
   id: string;
   creatorId: string;
+  creator?: { id: string; email: string; fullName: string };
   type: TestQuestionType;
   questionType: string | null;
   sourceType: QuestionSourceType;

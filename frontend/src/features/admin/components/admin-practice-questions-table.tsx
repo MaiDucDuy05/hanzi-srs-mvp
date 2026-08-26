@@ -3,15 +3,17 @@
 
 import { useState, useEffect } from 'react';
 import { adminContentApi } from '@/lib/api/endpoints/admin-content';
+import { useConfirm } from '@/providers/confirm-provider';
 import { Edit2, Trash2, Search, ListPlus } from 'lucide-react';
 import { AdminPracticeQuestionModal } from './admin-practice-question-modal';
 
 export const AdminPracticeQuestionsTable = () => {
   const [questions, setQuestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const confirm = useConfirm();
   
   // Filters
-  const [search, setSearch] = useState('');
   const [filterLevel, setFilterLevel] = useState('');
   
   const [hskLevels, setHskLevels] = useState<any[]>([]);
@@ -46,7 +48,7 @@ export const AdminPracticeQuestionsTable = () => {
   }, [search, filterLevel]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa câu hỏi này?')) return;
+    if (!(await confirm({ title: 'Xóa câu hỏi', message: 'Bạn có chắc chắn muốn xóa câu hỏi này?', variant: 'danger' }))) return;
     try {
       await adminContentApi.deleteQuestion(id);
       fetchQuestions(search, filterLevel);

@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { adminTeacherContentApi } from '@/lib/api/endpoints/admin-teacher-content';
+import { useConfirm } from '@/providers/confirm-provider';
 import { Search, Filter, ShieldAlert, Eye, CheckCircle2, AlertCircle, Trash2 } from 'lucide-react';
 import { HideReasonModal } from './modals/hide-reason-modal';
 import { ContentDetailModal } from './modals/content-detail-modal';
@@ -15,7 +16,8 @@ export const TeacherContentTable = () => {
   const [hideModalOpen, setHideModalOpen] = useState(false);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [selectedContent, setSelectedContent] = useState<any>(null);
+  const [selectedContent, setSelectedContent] = useState<{type: string, id: string} | null>(null);
+  const confirm = useConfirm();
   const [detailData, setDetailData] = useState<any>(null);
 
   const fetchContents = async () => {
@@ -42,7 +44,7 @@ export const TeacherContentTable = () => {
   }, [filterType, filterStatus, searchQuery]);
 
   const handleUnhide = async (type: string, id: string) => {
-    if (!confirm('Bạn có chắc muốn gỡ phạt và mở lại nội dung này?')) return;
+    if (!(await confirm({ title: 'Gỡ phạt nội dung', message: 'Bạn có chắc muốn gỡ phạt và mở lại nội dung này?', variant: 'info' }))) return;
     try {
       await adminTeacherContentApi.unhideContent(type, id);
       fetchContents();
@@ -60,7 +62,7 @@ export const TeacherContentTable = () => {
   };
 
   const handleDelete = async (type: string, id: string) => {
-    if (!confirm('Bạn có chắc muốn XÓA MỀM nội dung này? Hành động này không thể hoàn tác trên giao diện.')) return;
+    if (!(await confirm({ title: 'Xóa nội dung', message: 'Bạn có chắc muốn XÓA MỀM nội dung này? Hành động này không thể hoàn tác trên giao diện.', variant: 'danger' }))) return;
     try {
       await adminTeacherContentApi.deleteContent(type, id);
       fetchContents();
@@ -150,6 +152,7 @@ export const TeacherContentTable = () => {
               <tr className="bg-gray-50 text-gray-500 text-sm">
                 <th className="p-4 font-semibold whitespace-nowrap">Nội dung</th>
                 <th className="p-4 font-semibold whitespace-nowrap text-center">Phân loại</th>
+                <th className="p-4 font-semibold whitespace-nowrap text-left">Người tạo</th>
                 <th className="p-4 font-semibold whitespace-nowrap text-center">Trạng thái</th>
                 <th className="p-4 font-semibold whitespace-nowrap text-center">Thời gian tạo</th>
                 <th className="p-4 font-semibold whitespace-nowrap text-center">Hành động</th>
@@ -158,11 +161,11 @@ export const TeacherContentTable = () => {
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-gray-500">Đang tải...</td>
+                  <td colSpan={6} className="p-8 text-center text-gray-500">Đang tải...</td>
                 </tr>
               ) : contents.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-gray-500 flex items-center justify-center gap-2">
+                  <td colSpan={6} className="p-8 text-center text-gray-500 flex items-center justify-center gap-2">
                     <ShieldAlert className="w-5 h-5" /> Không có nội dung nào
                   </td>
                 </tr>
@@ -185,6 +188,11 @@ export const TeacherContentTable = () => {
                       <span className={`px-3 py-1 rounded-full text-xs font-bold ${getTypeColor(item.type)}`}>
                         {getTypeLabel(item.type)}
                       </span>
+                    </td>
+                    <td className="p-4 text-left">
+                      <div className="text-sm font-semibold text-gray-800 truncate max-w-[150px]" title={item.author_name || item.author_email}>
+                        {item.author_name || (item.author_email ? item.author_email.split('@')[0] : 'Unknown')}
+                      </div>
                     </td>
                     <td className="p-4 text-center">
                       {item.hiddenByAdmin ? (

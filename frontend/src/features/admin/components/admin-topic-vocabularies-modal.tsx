@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { adminContentApi } from '@/lib/api/endpoints/admin-content';
+import { useConfirm } from '@/providers/confirm-provider';
 import { X, Search, Check, Trash2, Plus } from 'lucide-react';
 
 interface Props {
@@ -12,6 +13,7 @@ export const AdminTopicVocabulariesModal = ({ topic, onClose }: Props) => {
   const [allVocabs, setAllVocabs] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const confirm = useConfirm();
 
   useEffect(() => {
     const fetchVocabs = async () => {
@@ -54,6 +56,7 @@ export const AdminTopicVocabulariesModal = ({ topic, onClose }: Props) => {
   };
 
   const handleRemove = async (vocabId: string) => {
+    if (!(await confirm({ title: 'Bỏ gán từ vựng', message: 'Bạn có chắc chắn muốn bỏ gán từ vựng này khỏi chủ đề?', variant: 'danger' }))) return;
     try {
       await adminContentApi.removeTopicVocabulary(topic.id, vocabId);
       setTopicVocabs(topicVocabs.filter(v => v.id !== vocabId));

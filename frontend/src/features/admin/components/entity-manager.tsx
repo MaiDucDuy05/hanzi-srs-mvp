@@ -4,6 +4,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Card, CardBody } from '@/features/ui/components/card';
 import { Button } from '@/features/ui/components/button';
 import { Modal } from '@/features/ui/components/modal';
+import { useConfirm } from '@/providers/confirm-provider';
 import { Field, Input, Select } from '@/features/ui/components/form';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
@@ -41,6 +42,7 @@ export function EntityManager<T>({ config }: { config: EntityConfig<T> }) {
   const [items, setItems] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const confirm = useConfirm();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, string>>(config.initialForm);
@@ -101,7 +103,7 @@ export function EntityManager<T>({ config }: { config: EntityConfig<T> }) {
   const remove = async (item: T) => {
     const id = (item as { id?: string }).id;
     if (!id) return;
-    if (!window.confirm('Xóa mục này?')) return;
+    if (!(await confirm({ title: 'Xóa mục này', message: 'Bạn có chắc chắn muốn xóa mục này?', variant: 'danger' }))) return;
     try {
       await config.remove(id);
       load();

@@ -33,9 +33,9 @@ export const adminContentApi = {
   getLessonContents: (params?: Record<string, string | number | boolean | undefined>) =>
     apiFetch(`/lesson-contents${toQuery(params)}`, { method: 'GET' }),
   addLessonContent: (data: any) =>
-    apiFetch(`/lesson-contents`, { method: 'POST', body: JSON.stringify(data) }),
+    apiFetch(`/admin/lesson-contents`, { method: 'POST', body: JSON.stringify(data) }),
   removeLessonContent: (id: string) =>
-    apiFetch(`/lesson-contents/${id}`, { method: 'DELETE' }),
+    apiFetch(`/admin/lesson-contents/${id}`, { method: 'DELETE' }),
 
   // Vocabularies
   getVocabularies: (params?: Record<string, string | number | boolean | undefined>) =>
@@ -58,6 +58,10 @@ export const adminContentApi = {
     apiFetch(`/admin/grammars${toQuery(params)}`, { method: 'GET' }),
   createGrammar: (data: any) =>
     apiFetch(`/admin/grammars`, { method: 'POST', body: JSON.stringify(data) }),
+
+  // Uploads
+  uploadFile: (data: FormData) =>
+    apiFetch(`/admin/uploads/file`, { method: 'POST', body: data, contentType: false }),
   updateGrammar: (id: string, data: any) =>
     apiFetch(`/admin/grammars/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteGrammar: (id: string) =>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { adminContentApi } from '@/lib/api/endpoints/admin-content';
 import { Edit2, Save, X, Search, Eye, EyeOff } from 'lucide-react';
+import { useConfirm } from '@/providers/confirm-provider';
 
 export const AdminCoursesTable = () => {
   const [courses, setCourses] = useState<any[]>([]);
@@ -11,6 +12,7 @@ export const AdminCoursesTable = () => {
   
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<any>({});
+  const confirm = useConfirm();
 
   const fetchCourses = async () => {
     try {
@@ -25,8 +27,15 @@ export const AdminCoursesTable = () => {
   };
 
   const handleToggleStatus = async (id: string, currentStatus: string) => {
+    const isPublishing = currentStatus !== 'PUBLISHED';
+    if (!(await confirm({ 
+      title: isPublishing ? 'Xuất bản khóa học' : 'Ẩn khóa học', 
+      message: `Bạn có chắc chắn muốn ${isPublishing ? 'xuất bản' : 'ẩn'} khóa học này?`, 
+      variant: isPublishing ? 'info' : 'warning' 
+    }))) return;
+
     try {
-      const newStatus = currentStatus === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED';
+      const newStatus = isPublishing ? 'PUBLISHED' : 'DRAFT';
       await adminContentApi.updateCourseStatus(id, newStatus);
       fetchCourses();
     } catch (error) {
@@ -50,6 +59,7 @@ export const AdminCoursesTable = () => {
   };
 
   const handleSave = async (id: string) => {
+    if (!(await confirm({ title: 'Lưu thay đổi', message: 'Bạn có chắc chắn muốn lưu các thay đổi này?', variant: 'info' }))) return;
     try {
       await adminContentApi.updateCourse(id, {
         name: editForm.name,

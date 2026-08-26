@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { adminContentApi } from '@/lib/api/endpoints/admin-content';
+import { useConfirm } from '@/providers/confirm-provider';
 import { X, Search, Plus, Trash2, BookOpen, PenTool } from 'lucide-react';
 
 interface LessonContentManagerProps {
@@ -18,6 +19,7 @@ export const LessonContentManager = ({ lessonId, courseId, onClose }: LessonCont
 
   // Search Results
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const confirm = useConfirm();
   const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
@@ -79,15 +81,13 @@ export const LessonContentManager = ({ lessonId, courseId, onClose }: LessonCont
         displayOrder: contents.length + 1
       });
       fetchContents();
-      setSearchQuery('');
-      setSearchResults([]);
     } catch (err) {
       alert('Lỗi khi thêm nội dung vào bài học (có thể đã tồn tại)');
     }
   };
 
   const handleRemoveContent = async (id: string) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa khỏi bài học?')) return;
+    if (!(await confirm({ title: 'Xóa khỏi bài học', message: 'Bạn có chắc chắn muốn xóa nội dung này khỏi bài học?', variant: 'danger' }))) return;
     try {
       await adminContentApi.removeLessonContent(id);
       fetchContents();

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { adminContentApi } from '@/lib/api/endpoints/admin-content';
+import { resourceApi } from '@/lib/api/endpoints';
 
 interface AdminExamQuestionModalProps {
   editForm: any;
@@ -20,6 +21,35 @@ export const AdminExamQuestionModal = ({
   const [topics, setTopics] = useState<any[]>([]);
   const [lessons, setLessons] = useState<any[]>([]);
   const [isLoadingMetadata, setIsLoadingMetadata] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'image' | 'audio') => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (type === 'image') setIsUploadingImage(true);
+    else setIsUploadingAudio(true);
+
+    try {
+      const ext = file.name.split('.').pop() || '';
+      const uniqueName = `exam-question-${type}-${Date.now()}.${ext}`;
+      const { uploadUrl, key } = await resourceApi.requestUploadUrl({ fileName: uniqueName, contentType: file.type });
+      
+      const uploadRes = await fetch(uploadUrl, { method: 'PUT', body: file, headers: { 'Content-Type': file.type } });
+      if (!uploadRes.ok) throw new Error('Không thể tải file lên S3');
+      
+      const publicUrl = `/api/v1/resources/public/${key}`;
+      
+      setContentField(type === 'image' ? 'mediaUrl' : 'audioUrl', publicUrl);
+    } catch (error) {
+      console.error('Lỗi upload file:', error);
+      alert('Upload file thất bại');
+    } finally {
+      if (type === 'image') setIsUploadingImage(false);
+      else setIsUploadingAudio(false);
+    }
+  };
 
   useEffect(() => {
     const fetchMetadata = async () => {
@@ -172,6 +202,57 @@ export const AdminExamQuestionModal = ({
                   </option>
                 ))}
               </select>
+            </div>
+          </div>
+
+          {/* Row 3: Media Upload */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">Hình ảnh minh họa (Tùy chọn)</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  className="flex-1 p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[#c7cf35]" 
+                  placeholder="URL hình ảnh hoặc tải lên..."
+                  value={content.mediaUrl || ''} 
+                  onChange={(e) => setContentField('mediaUrl', e.target.value)} 
+                />
+                <label className={`cursor-pointer px-4 py-2 bg-gray-100 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-200 flex items-center justify-center min-w-[100px] ${isUploadingImage ? 'opacity-50' : ''}`}>
+                  {isUploadingImage ? 'Đang tải...' : 'Tải lên'}
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFileUpload(e, 'image')} disabled={isUploadingImage} />
+                </label>
+              </div>
+              {content.mediaUrl && (
+                <div className="mt-2 relative inline-block">
+                  <img src={content.mediaUrl} alt="Preview" className="h-20 rounded-lg border object-cover" />
+                  <button type="button" onClick={() => setContentField('mediaUrl', null)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">File Audio (Tùy chọn)</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  className="flex-1 p-2.5 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-[#c7cf35]" 
+                  placeholder="URL audio hoặc tải lên..."
+                  value={content.audioUrl || ''} 
+                  onChange={(e) => setContentField('audioUrl', e.target.value)} 
+                />
+                <label className={`cursor-pointer px-4 py-2 bg-gray-100 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-200 flex items-center justify-center min-w-[100px] ${isUploadingAudio ? 'opacity-50' : ''}`}>
+                  {isUploadingAudio ? 'Đang tải...' : 'Tải lên'}
+                  <input type="file" accept="audio/*" className="hidden" onChange={(e) => handleFileUpload(e, 'audio')} disabled={isUploadingAudio} />
+                </label>
+              </div>
+              {content.audioUrl && (
+                <div className="mt-2 flex items-center gap-2">
+                  <audio controls src={content.audioUrl} className="h-8 max-w-[200px]" />
+                  <button type="button" onClick={() => setContentField('audioUrl', null)} className="text-red-500 hover:text-red-700 text-sm font-semibold">Xóa</button>
+                </div>
+              )}
             </div>
           </div>
 

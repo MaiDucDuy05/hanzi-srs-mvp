@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { adminContentApi } from '@/lib/api/endpoints/admin-content';
+import { useConfirm } from '@/providers/confirm-provider';
 import { Edit2, Trash2, Search, ListPlus } from 'lucide-react';
 import { AdminExamQuestionModal } from './admin-exam-question-modal';
 
@@ -15,6 +16,7 @@ export const AdminExamQuestionsTable = () => {
   const [filterSourceType, setFilterSourceType] = useState('');
   const [filterType, setFilterType] = useState('');
   const [filterLevel, setFilterLevel] = useState('');
+  const confirm = useConfirm();
   
   const [hskLevels, setHskLevels] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -50,7 +52,7 @@ export const AdminExamQuestionsTable = () => {
   }, [search, filterSourceType, filterType, filterLevel]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa câu hỏi này?')) return;
+    if (!(await confirm({ title: 'Xóa câu hỏi', message: 'Bạn có chắc chắn muốn xóa câu hỏi này?', variant: 'danger' }))) return;
     try {
       await adminContentApi.deleteExamQuestion(id);
       fetchQuestions(search, filterSourceType, filterType, filterLevel);
@@ -228,19 +230,20 @@ export const AdminExamQuestionsTable = () => {
               <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Loại</th>
               <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Nguồn</th>
               <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">HSK</th>
-              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/3">Nội dung (Preview)</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/4">Nội dung (Preview)</th>
               <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Trạng thái</th>
+              <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Người tạo</th>
               <th className="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Thao tác</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
             {loading ? (
               <tr>
-                <td colSpan={6} className="text-center p-8 text-gray-400">Đang tải dữ liệu...</td>
+                <td colSpan={7} className="text-center p-8 text-gray-400">Đang tải dữ liệu...</td>
               </tr>
             ) : questions.length === 0 ? (
               <tr>
-                <td colSpan={6} className="text-center p-8 text-gray-400">Không tìm thấy câu hỏi</td>
+                <td colSpan={7} className="text-center p-8 text-gray-400">Không tìm thấy câu hỏi</td>
               </tr>
             ) : (
               questions.map((q: any) => (
@@ -261,6 +264,9 @@ export const AdminExamQuestionsTable = () => {
                     <span className={q.isActive ? 'text-green-600 font-bold text-sm' : 'text-red-500 font-bold text-sm'}>
                       {q.isActive ? 'Bật' : 'Tắt'}
                     </span>
+                  </td>
+                  <td className="px-6 py-4 text-gray-600 text-sm font-medium">
+                    {q.creator ? (q.creator.fullName || q.creator.email.split('@')[0]) : 'Admin'}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
