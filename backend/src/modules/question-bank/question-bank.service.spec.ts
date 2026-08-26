@@ -99,6 +99,8 @@ describe('QuestionBankService', () => {
   describe('findAll', () => {
     it('ADMIN can filter by explicit visibility', async () => {
       const qb: any = {
+        leftJoin: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         take: jest.fn().mockReturnThis(),
@@ -115,6 +117,8 @@ describe('QuestionBankService', () => {
 
     it('TEACHER without explicit visibility shows public OR own private', async () => {
       const qb: any = {
+        leftJoin: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         take: jest.fn().mockReturnThis(),
@@ -131,6 +135,8 @@ describe('QuestionBankService', () => {
 
     it('applies tags array filter and search ilike', async () => {
       const qb: any = {
+        leftJoin: jest.fn().mockReturnThis(),
+        addSelect: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         take: jest.fn().mockReturnThis(),
