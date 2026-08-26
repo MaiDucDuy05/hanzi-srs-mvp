@@ -37,6 +37,7 @@ describe('SubscriptionService', () => {
       providers: [
         SubscriptionService,
         { provide: getRepositoryToken(Subscription), useValue: mockRepo },
+        { provide: ConfigCacheService, useValue: { get: jest.fn().mockResolvedValue(7) } },
       ],
     }).compile();
 
@@ -174,9 +175,19 @@ describe('SubscriptionService', () => {
       expect(result).toBe(false);
     });
 
-    it('should return false for expired VIP subscription', async () => {
+    it('should return true for expired VIP subscription within grace period', async () => {
+      // Sub expired 1 second ago, but default 7-day grace keeps it valid.
       const expiredSub = { ...mockSubscription, expiresAt: new Date(Date.now() - 1000) };
       repo.findOne.mockResolvedValue(expiredSub);
+
+      const result = await service.checkVipEntitlement('user-1');
+
+      expect(result).toBe(true);
+    });
+
+    it('should return false for VIP subscription expired beyond grace period', async () => {
+      const longExpiredSub = { ...mockSubscription, expiresAt: new Date(Date.now() - 30 * 86_400_000) };
+      repo.findOne.mockResolvedValue(longExpiredSub);
 
       const result = await service.checkVipEntitlement('user-1');
 

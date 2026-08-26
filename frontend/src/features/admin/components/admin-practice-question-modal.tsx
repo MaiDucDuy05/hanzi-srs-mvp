@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { adminContentApi } from '@/lib/api/endpoints/admin-content';
+import { resourceApi } from '@/lib/api/endpoints';
 
 interface AdminPracticeQuestionModalProps {
   editForm: any;

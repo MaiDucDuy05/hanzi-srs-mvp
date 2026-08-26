@@ -84,9 +84,9 @@ export function QuestionBankModal({
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+    <div className="flex flex-col lg:flex-row h-full w-full">
       {/* Filters Sidebar */}
-      <div className="lg:col-span-1 space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200 h-fit">
+      <div className="w-full lg:w-72 flex-shrink-0 space-y-4 p-6 bg-gray-50 border-r border-gray-200 h-full overflow-y-auto">
         <h3 className="font-bold text-gray-900">Lọc câu hỏi</h3>
 
         {/* Search */}
@@ -221,39 +221,41 @@ export function QuestionBankModal({
       </div>
 
       {/* Questions List */}
-      <div className="lg:col-span-3 space-y-3">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-white relative">
         {filteredQuestions.length === 0 ? (
           <div className="col-span-full py-12 text-center">
             <p className="text-gray-500 font-medium">Không tìm thấy câu hỏi nào</p>
             <p className="text-sm text-gray-400">Thử thay đổi bộ lọc</p>
           </div>
         ) : (
-          filteredQuestions.map((q) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-4">
+            {filteredQuestions.map((q) => {
             const isSelected = selectedIds.includes(q.id);
             return (
               <div
                 key={q.id}
                 onClick={() => handleSelectQuestion(q.id)}
                 className={cn(
-                  'border-2 rounded-lg p-4 cursor-pointer transition-all',
+                  'border-2 rounded-lg p-4 cursor-pointer transition-all flex flex-col h-full',
                   isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                 )}
               >
-                <div className="flex gap-3">
+                <div className="flex gap-3 h-full">
                   <input
                     type="checkbox"
                     checked={isSelected}
                     onChange={() => {}}
-                    className="w-5 h-5 mt-1 accent-blue-500 cursor-pointer"
+                    className="w-5 h-5 mt-1 flex-shrink-0 accent-blue-500 cursor-pointer"
                   />
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-0 flex flex-col h-full">
                     {/* Question Preview with Renderer */}
-                    <div className="mb-3">
+                    <div className="mb-3 flex-1 overflow-y-auto max-h-[300px] pr-2">
                       <QuestionRenderer question={{ id: q.id, testId: '', points: 1, displayOrder: 0, question: q } as any} compact={true} />
                     </div>
 
                     {/* Question Metadata */}
-                    <div className="flex flex-wrap gap-2 items-center">
+                    <div className="mt-auto pt-3 border-t border-gray-200/60">
+                      <div className="flex flex-wrap gap-2 items-center">
                       <Badge tone="blue">{q.type}</Badge>
                       {q.hskLevel && <Badge tone="gray">HSK {q.hskLevel}</Badge>}
                       {q.difficulty && (
@@ -272,21 +274,22 @@ export function QuestionBankModal({
                       )}
                     </div>
 
-                    {/* Tags */}
-                    {q.tags && q.tags.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {q.tags.map((tag) => (
-                          <span key={tag} className="inline-block px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
+                      {q.tags && q.tags.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {q.tags.map((tag) => (
+                            <span key={tag} className="inline-block px-2 py-1 bg-gray-100 text-gray-600 rounded text-[11px] font-medium">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             );
-          })
+          })}
+          </div>
         )}
       </div>
     </div>

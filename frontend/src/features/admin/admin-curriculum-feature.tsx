@@ -90,60 +90,6 @@ export function AdminCurriculumFeature() {
         )}
       </div>
 
-      {/* Right Sidebar - Upload */}
-      <div className="w-full xl:w-[320px] shrink-0">
-        <div className="bg-white rounded-3xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 p-6 sticky top-6">
-          
-          <div className="flex items-center gap-2 mb-2 text-[#11321e]">
-            <CloudUpload className="h-5 w-5" strokeWidth={2.5} />
-            <h2 className="font-bold text-[15px]">Tải Lên Nhanh</h2>
-          </div>
-          
-          <p className="text-[12px] text-gray-500 font-medium mb-6">
-            Kéo thả âm thanh, hình ảnh vào đây để lưu trữ đám mây.
-          </p>
-
-          <div className="bg-[#fcfbe8] border-2 border-dashed border-[#eaf3c5] rounded-3xl p-8 flex flex-col items-center justify-center text-center mb-8">
-            <FileUp className="h-10 w-10 text-gray-400 mb-4" strokeWidth={1.5} />
-            <p className="text-sm font-bold text-[#11321e] mb-1">Kéo thả file vào đây</p>
-            <p className="text-[10px] text-gray-400 font-medium mb-6">Hỗ trợ JPG, PNG, MP3 (Tối đa 10MB)</p>
-            
-            <button className="bg-white text-[#11321e] border border-gray-200 px-5 py-2 rounded-full text-[12px] font-bold shadow-sm hover:bg-gray-50 transition-colors">
-              Chọn File
-            </button>
-          </div>
-
-          <div>
-            <h3 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">
-              Tải Lên Gần Đây
-            </h3>
-            
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-[#e3eadd] flex items-center justify-center text-[#78993a] shrink-0">
-                  <FileImage className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-bold text-[#11321e] truncate">panda_happy.png</p>
-                  <p className="text-[10px] font-medium text-gray-400">Đã tải lên • 1.2 MB</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-[#ffdfdf] flex items-center justify-center text-[#e55353] shrink-0">
-                  <FileAudio className="h-5 w-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] font-bold text-[#11321e] truncate">ni_hao_audio.mp3</p>
-                  <p className="text-[10px] font-medium text-gray-400">Đã tải lên • 450 KB</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
     </div>
   );
 }

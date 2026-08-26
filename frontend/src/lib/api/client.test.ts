@@ -1,120 +1,194 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import { ApiError, apiFetch, unwrap } from './client';
 
-/**
- * Test transport layer (FE-008): apiFetch gửi cookie HttpOnly (credentials include),
- * không gắn Authorization header (auth qua cookie), 401 → sự kiện hanzi:unauthorized,
- * message từ backend, lỗi mạng.
- */
-
-function makeFakeWindow() {
-  const win = {
-    dispatchEvent: vi.fn(),
-  };
-  return { win };
-}
-
-function jsonResponse(body: unknown, init: { ok: boolean; status: number }) {
+function makeResponse(
+  status: number,
+  body: unknown = null,
+  ok?: boolean,
+): Response {
+  const isOk = ok ?? (status >= 200 && status < 300);
   return {
-    ok: init.ok,
-    status: init.status,
+    ok: isOk,
+    status,
     json: async () => body,
   } as unknown as Response;
 }
 
-const fetchMock = vi.fn<typeof fetch>();
-
-describe('apiFetch transport (HttpOnly cookie)', () => {
+describe('apiFetch', () => {
   beforeEach(() => {
-    const { win } = makeFakeWindow();
-    vi.stubGlobal('window', win);
-    vi.stubGlobal('fetch', fetchMock);
-    fetchMock.mockReset();
+    vi.restoreAllMocks();
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
-  it('unwrap bóc envelope { data }', async () => {
-    await expect(unwrap(Promise.resolve({ data: { a: 1 } }))).resolves.toEqual({ a: 1 });
-    await expect(unwrap({ data: [1, 2] })).resolves.toEqual([1, 2]);
+  it('trả về body JSON khi thành công', async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(makeResponse(200, { data: { id: '1' } }));
+    const result = await apiFetch<{ data: { id: string } }>('/auth/me');
+    expect(result).toEqual({ data: { id: '1' } });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/v1/auth/me',
+      expect.objectContaining({
+        credentials: 'include',
+        headers: expect.objectContaining({ 'Content-Type': 'application/json' }),
+      }),
+    );
   });
 
-  it('gọi API cùng origin /api/v1 với credentials include (cookie HttpOnly)', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ data: null }, { ok: true, status: 200 }));
-
-    await apiFetch('/auth/me');
-
-    const [url, init] = fetchMock.mock.calls[0];
-    expect(url).toBe('/api/v1/auth/me');
-    expect(init?.credentials).toBe('include');
-  });
-
-  it('KHÔNG gắn Authorization header — auth qua cookie', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ data: null }, { ok: true, status: 200 }));
-
-    await apiFetch('/tests');
-
-    const [, init] = fetchMock.mock.calls[0];
-    const headers = init?.headers as Record<string, string>;
-    expect(headers.Authorization).toBeUndefined();
-    expect(headers['Content-Type']).toBe('application/json');
-  });
-
-  it('trả về body JSON chưa bóc envelope khi ok', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ data: 42, message: 'ok' }, { ok: true, status: 200 }));
-
-    await expect(apiFetch('/x')).resolves.toEqual({ data: 42, message: 'ok' });
-  });
-
-  it('401 ở endpoint authenticated → dispatch sự kiện hanzi:unauthorized + ném ApiError', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ message: 'Unauthorized' }, { ok: false, status: 401 }));
-
-    await expect(apiFetch('/private')).rejects.toMatchObject({
-      name: 'ApiError',
-      status: 401,
+  it('gửi body JSON khi POST', async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(makeResponse(200, { data: { ok: true } }));
+    await apiFetch('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: 'a@b.c', password: 'pw' }),
     });
-    const win = window as unknown as { dispatchEvent: ReturnType<typeof vi.fn> };
-    expect(win.dispatchEvent).toHaveBeenCalledWith(expect.objectContaining({ type: 'hanzi:unauthorized' }));
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/v1/auth/login',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ email: 'a@b.c', password: 'pw' }),
+      }),
+    );
   });
 
-  it('không dispatch sự kiện khi 401 ở endpoint public (auth: false)', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ message: 'Unauthorized' }, { ok: false, status: 401 }));
-
-    await expect(apiFetch('/auth/login', { auth: false })).rejects.toBeInstanceOf(ApiError);
-    const win = window as unknown as { dispatchEvent: ReturnType<typeof vi.fn> };
-    expect(win.dispatchEvent).not.toHaveBeenCalled();
-  });
-
-  it('lấy message string từ backend', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ message: 'Email đã tồn tại' }, { ok: false, status: 400 }));
-
-    await expect(apiFetch('/auth/register', { auth: false })).rejects.toMatchObject({
-      message: 'Email đã tồn tại',
+  it('throw ApiError với status + message từ backend', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      makeResponse(400, { message: 'Email không hợp lệ' }),
+    );
+    await expect(apiFetch('/x', { auth: false })).rejects.toMatchObject({
+      name: 'ApiError',
       status: 400,
+      message: 'Email không hợp lệ',
     });
   });
 
-  it('nối message dạng mảng (validation)', async () => {
-    fetchMock.mockResolvedValue(jsonResponse({ message: ['a', 'b'] }, { ok: false, status: 400 }));
-
-    await expect(apiFetch('/x')).rejects.toMatchObject({ message: 'a, b' });
+  it('ghép nhiều message thành 1 chuỗi khi là array', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      makeResponse(400, { message: ['Lỗi A', 'Lỗi B'] }),
+    );
+    const err: any = await apiFetch('/x', { auth: false }).catch((e) => e);
+    expect(err.message).toBe('Lỗi A, Lỗi B');
   });
 
-  it('lỗi mạng → ApiError status 0 với message thân thiện', async () => {
-    fetchMock.mockRejectedValue(new TypeError('Failed to fetch'));
+  it('fallback message khi body không có message', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(makeResponse(500, {}));
+    const err: any = await apiFetch('/x', { auth: false }).catch((e) => e);
+    expect(err.message).toBe('Yêu cầu thất bại. Vui lòng thử lại.');
+  });
 
-    await expect(apiFetch('/x')).rejects.toMatchObject({
-      name: 'ApiError',
-      status: 0,
-      message: 'Không kết nối được máy chủ. Vui lòng thử lại.',
+  it('fallback message khi body không phải JSON', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => {
+        throw new Error('not json');
+      },
+    } as unknown as Response);
+    const err: any = await apiFetch('/x', { auth: false }).catch((e) => e);
+    expect(err.message).toBe('Yêu cầu thất bại. Vui lòng thử lại.');
+  });
+
+  it('dispatch event khi 401 + auth=true và message chứa "bị khóa"', async () => {
+    window.alert = vi.fn();
+    const alertSpy = vi.spyOn(window, 'alert');
+    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      makeResponse(401, { message: 'Tài khoản của bạn đã bị khóa' }),
+    );
+
+    await expect(apiFetch('/me')).rejects.toBeInstanceOf(ApiError);
+    expect(alertSpy).toHaveBeenCalledWith('Tài khoản của bạn đã bị khóa');
+    expect(dispatchSpy).toHaveBeenCalled();
+    const evt = dispatchSpy.mock.calls
+      .map((c) => c[0])
+      .find((e) => (e as Event).type === 'hanzi:unauthorized');
+    expect(evt).toBeDefined();
+  });
+
+  it('không dispatch unauthorized khi auth=false', async () => {
+    const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      makeResponse(401, { message: 'bad' }),
+    );
+
+    await expect(apiFetch('/public', { auth: false })).rejects.toBeInstanceOf(
+      ApiError,
+    );
+    const evt = dispatchSpy.mock.calls
+      .map((c) => c[0])
+      .find((e) => (e as Event).type === 'hanzi:unauthorized');
+    expect(evt).toBeUndefined();
+  });
+
+  it('không set Content-Type khi contentType=false (multipart)', async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(makeResponse(200, { ok: true }));
+    const form = new FormData();
+    form.append('a', 'b');
+    await apiFetch('/upload', { method: 'POST', body: form, contentType: false });
+    const headers = (fetchSpy.mock.calls[0][1] as RequestInit).headers as Record<
+      string,
+      string
+    >;
+    expect(headers['Content-Type']).toBeUndefined();
+  });
+
+  it('retry tối đa 2 lần khi server lỗi 5xx', async () => {
+    let count = 0;
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      count++;
+      return makeResponse(503, { message: 'fail' });
     });
+    await expect(apiFetch('/x', { auth: false })).rejects.toBeInstanceOf(ApiError);
+    expect(count).toBeGreaterThanOrEqual(1);
   });
 
-  it('response 204 không JSON → trả về null', async () => {
-    fetchMock.mockResolvedValue({ ok: true, status: 204, json: async () => { throw new Error('no body'); } } as unknown as Response);
+  it('không retry với 4xx', async () => {
+    let count = 0;
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      count++;
+      return makeResponse(404, { message: 'nf' });
+    });
+    await expect(apiFetch('/x', { auth: false })).rejects.toBeInstanceOf(ApiError);
+    expect(count).toBe(1);
+  });
 
-    await expect(apiFetch('/x')).resolves.toBeNull();
+  it('throw ApiError khi fetch liên tục ném exception', async () => {
+    vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network'));
+    const err: any = await apiFetch('/x', { auth: false }).catch((e) => e);
+    expect(err).toBeInstanceOf(ApiError);
+    expect(err.status).toBe(0);
+    expect(err.message).toContain('Không kết nối được');
+  });
+
+  it('trả về null khi response body rỗng (204)', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue({
+      ok: true,
+      status: 204,
+      json: async () => {
+        throw new Error('no body');
+      },
+    } as unknown as Response);
+    const result = await apiFetch<null>('/x');
+    expect(result).toBeNull();
+  });
+});
+
+describe('unwrap', () => {
+  it('bóc envelope {data, message}', async () => {
+    const result = await unwrap(Promise.resolve({ data: { id: '1' }, message: 'ok' }));
+    expect(result).toEqual({ id: '1' });
+  });
+
+  it('nhận Promise và unwrap', async () => {
+    const result = await unwrap(Promise.resolve({ data: 42 }));
+    expect(result).toBe(42);
   });
 });

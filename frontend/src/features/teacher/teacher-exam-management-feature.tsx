@@ -331,13 +331,6 @@ export function TeacherExamManagementFeature() {
                             </button>
                           </Link>
                           <button
-                            onClick={() => openQuestionModal(test.id)}
-                            className="p-2 text-gray-400 hover:text-[#1f5333] hover:bg-gray-100 rounded-lg transition-colors"
-                            title="Quản lý câu hỏi"
-                          >
-                            <Library className="h-4 w-4" />
-                          </button>
-                          <button
                             onClick={() => handleDeleteExam(test)}
                             className="p-2 text-gray-400 hover:text-[#e55353] hover:bg-red-50 rounded-lg transition-colors"
                             title="Xóa"

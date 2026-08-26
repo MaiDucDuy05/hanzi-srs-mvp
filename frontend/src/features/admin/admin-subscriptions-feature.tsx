@@ -17,6 +17,7 @@ import { useEffect, useState } from 'react';
 import { resourceApi } from '@/lib/api/endpoints/resource';
 import { usersApi } from '@/lib/api/endpoints/users';
 import type { VipUpgradeRequest, User } from '@/lib/api/types';
+import { useConfirm } from '@/providers/confirm-provider';
 
 // Extended type to include user details
 type EnrichedVipRequest = VipUpgradeRequest & { user?: User };
@@ -25,6 +26,7 @@ export function AdminSubscriptionsFeature() {
   const [requests, setRequests] = useState<EnrichedVipRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const confirm = useConfirm();
 
   const load = async () => {
     setLoading(true);
@@ -56,7 +58,11 @@ export function AdminSubscriptionsFeature() {
   }, []);
 
   const handleReview = async (id: string, status: 'APPROVED' | 'REJECTED') => {
-    if (!confirm(`Are you sure you want to ${status.toLowerCase()} this request?`)) return;
+    if (!(await confirm({ 
+      title: status === 'APPROVED' ? 'Duyệt yêu cầu' : 'Từ chối yêu cầu', 
+      message: `Bạn có chắc chắn muốn ${status === 'APPROVED' ? 'DUYỆT' : 'TỪ CHỐI'} yêu cầu VIP này không?`, 
+      variant: status === 'APPROVED' ? 'info' : 'danger' 
+    }))) return;
     try {
       await resourceApi.reviewVipRequest(id, { status });
       void load();

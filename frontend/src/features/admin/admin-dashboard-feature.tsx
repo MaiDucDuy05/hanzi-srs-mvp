@@ -158,7 +158,7 @@ export function AdminDashboardFeature() {
                 <Clock className="w-4 h-4 text-amber-500"/>
                 <h3 className="font-medium text-gray-800">Yêu cầu VIP & Sắp hết hạn</h3>
               </div>
-              <div className="p-4 flex-1 flex flex-col gap-4">
+              <div className="p-4 flex-1 flex flex-col gap-4 overflow-y-auto max-h-[400px]">
                 <div>
                   <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">Chờ duyệt ({pendingItems.pendingVip.length})</h4>
                   {pendingItems.pendingVip.length === 0 ? (
@@ -198,7 +198,7 @@ export function AdminDashboardFeature() {
                 <MessageSquare className="w-4 h-4 text-blue-500"/>
                 <h3 className="font-medium text-gray-800">Liên hệ mới ({pendingItems.pendingContacts.length})</h3>
               </div>
-              <div className="p-0 flex-1">
+              <div className="p-0 flex-1 overflow-y-auto max-h-[400px]">
                 {pendingItems.pendingContacts.length === 0 ? (
                   <p className="p-4 text-sm text-gray-400">Không có liên hệ mới.</p>
                 ) : (
@@ -236,7 +236,7 @@ export function AdminDashboardFeature() {
                   <span className="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full font-medium">Cảnh báo</span>
                 )}
               </div>
-              <div className="p-4 flex-1 flex flex-col gap-5">
+              <div className="p-4 flex-1 flex flex-col gap-5 overflow-y-auto max-h-[400px]">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs text-gray-500 uppercase mb-1">Dung lượng S3</p>

@@ -5,6 +5,7 @@ import { adminRewardsApi } from '@/lib/api/endpoints/admin-rewards';
 import type { Reward } from '@/lib/api/types';
 import { Plus, Edit2, Trash2, ShieldCheck, Tag, Box, Crown } from 'lucide-react';
 import { AdminRewardsModal } from './components/rewards/admin-rewards-modal';
+import { useConfirm } from '@/providers/confirm-provider';
 
 export function AdminRewardsFeature() {
   const [rewards, setRewards] = useState<Reward[]>([]);
@@ -13,6 +14,7 @@ export function AdminRewardsFeature() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedReward, setSelectedReward] = useState<Reward | null>(null);
+  const confirm = useConfirm();
 
   const loadData = async () => {
     try {
@@ -62,7 +64,7 @@ export function AdminRewardsFeature() {
   };
 
   const handleDelete = async (reward: Reward) => {
-    if (!confirm(`Bạn có chắc muốn xóa phần thưởng ${reward.title}?`)) return;
+    if (!(await confirm({ title: 'Xóa phần thưởng', message: `Bạn có chắc muốn xóa phần thưởng ${reward.title}?`, variant: 'danger' }))) return;
     try {
       await adminRewardsApi.remove(reward.id);
       await loadData();

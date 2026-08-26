@@ -11,7 +11,8 @@ import {
   Settings,
   ShieldAlert,
   GraduationCap,
-  Target
+  Target,
+  Activity
 } from 'lucide-react';
 
 import { useAuth } from '@/lib/auth/auth-context';
@@ -27,7 +28,8 @@ const NAV_ITEMS = [
   { href: '/admin/subscriptions', title: 'Subscriptions', icon: CreditCard },
   { href: '/admin/rewards', title: 'Rewards', icon: ShieldAlert },
   { href: '/admin/resources', title: 'Resources', icon: FolderOpen },
-  { href: '/admin/settings', title: 'Forest Settings', icon: Settings },
+  { href: '/admin/audit-logs', title: 'Audit Logs', icon: Activity },
+  { href: '/admin/settings', title: 'Settings', icon: Settings },
 ];
 
 export function AdminSidebar() {

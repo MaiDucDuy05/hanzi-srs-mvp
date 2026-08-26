@@ -442,10 +442,18 @@ describe('TestAttemptService', () => {
   };
 
   beforeEach(async () => {
-    const mockAttemptRepo = { findAndCount: jest.fn(), findOne: jest.fn(), count: jest.fn(), create: jest.fn(), save: jest.fn() };
+    const mockAttemptRepo: any = {
+      findAndCount: jest.fn(),
+      findOne: jest.fn(),
+      count: jest.fn(),
+      create: jest.fn(),
+      save: jest.fn(),
+      manager: { insert: jest.fn().mockResolvedValue(undefined) },
+    };
     const mockTestRepo = { findOne: jest.fn() };
     const mockAnswerRepo = { find: jest.fn() };
     const mockQuestionRepo = { find: jest.fn() };
+    const mockAssignmentRepo = { findOne: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -454,6 +462,7 @@ describe('TestAttemptService', () => {
         { provide: getRepositoryToken(TestEntity), useValue: mockTestRepo },
         { provide: getRepositoryToken(TestAnswer), useValue: mockAnswerRepo },
         { provide: getRepositoryToken(TestQuestion), useValue: mockQuestionRepo },
+        { provide: getRepositoryToken(require('./entities/test-assignment.entity').TestAssignment), useValue: mockAssignmentRepo },
       ],
     }).compile();
 
@@ -610,8 +619,8 @@ describe('TestAttemptService', () => {
         { questionId: 'q-2', pointsAwarded: 5 },
       ]);
       questionRepo.find.mockResolvedValue([
-        { id: 'q-1', points: 10 },
-        { id: 'q-2', points: 10 },
+        { questionId: 'q-1', points: 10 },
+        { questionId: 'q-2', points: 10 },
       ]);
       attemptRepo.save.mockImplementation((e) => Promise.resolve(e as TestAttempt));
 
@@ -754,12 +763,11 @@ describe('TestAnswerService', () => {
       await expect(service.submitAnswer('attempt-1', { questionId: 'q-1', answer: { answer: '4' } }, 'user-1')).rejects.toThrow(BadRequestException);
     });
 
-    it('should throw BadRequestException for question from different test', async () => {
-      const otherQuestion = { ...mockQuestion, testId: 'other-test' };
+    it('should throw BadRequestException when question not found in this test', async () => {
       attemptRepo.findOne.mockResolvedValue(mockAttempt);
-      questionRepo.findOne.mockResolvedValue(otherQuestion as TestQuestion);
+      questionRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.submitAnswer('attempt-1', { questionId: 'q-1', answer: { answer: '4' } }, 'user-1')).rejects.toThrow(BadRequestException);
+      await expect(service.submitAnswer('attempt-1', { questionId: 'missing-q', answer: { answer: '4' } }, 'user-1')).rejects.toThrow(BadRequestException);
     });
 
     it('should throw NotFoundException for non-existent attempt', async () => {

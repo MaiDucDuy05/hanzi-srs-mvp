@@ -118,7 +118,7 @@ export function QuestionSelector({
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+      <div className="bg-white rounded-3xl w-[95vw] max-w-[1400px] h-[95vh] max-h-[900px] overflow-hidden flex flex-col shadow-2xl">
         {/* Header */}
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-center justify-between mb-4">
@@ -252,7 +252,7 @@ export function QuestionSelector({
           </div>
 
           {/* Questions */}
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-4">
             {filteredQuestions.map((question) => {
               const isSelected = selectedIds.includes(question.id);
               const sourceBadge = getSourceTypeBadge(question.sourceType);
@@ -261,13 +261,13 @@ export function QuestionSelector({
                 <div
                   key={question.id}
                   onClick={() => handleToggle(question.id)}
-                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                  className={`p-4 rounded-xl border-2 cursor-pointer transition-all flex flex-col h-full ${
                     isSelected
                       ? 'border-[#1f5333] bg-[#f4f7ed]'
                       : 'border-gray-100 bg-white hover:border-[#dde8a6]'
                   }`}
                 >
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-4 h-full">
                     {/* Checkbox */}
                     <button
                       className={`mt-1 h-5 w-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${

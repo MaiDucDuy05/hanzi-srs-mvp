@@ -1,5 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { DataSource } from 'typeorm';
 import { GoogleGenAI } from '@google/genai';
 import { STUDY_PROMPTS, GEMINI_JSON_CONFIG, GEMINI_FALLBACK_MODELS } from './study.prompts';
 
@@ -7,13 +8,28 @@ import { STUDY_PROMPTS, GEMINI_JSON_CONFIG, GEMINI_FALLBACK_MODELS } from './stu
 export class StudyService {
   private ai: GoogleGenAI;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private configService: ConfigService,
+    private dataSource: DataSource
+  ) {
     const apiKey = this.configService.get<string>('GEMINI_API_KEY');
     if (!apiKey) {
       console.warn('GEMINI_API_KEY is not defined. AI generation will fail.');
     }
     // Only pass API key if we have one, otherwise let it try to find it in the environment
     this.ai = new GoogleGenAI(apiKey ? { apiKey } : {});
+  }
+
+  private async logSilentError(jobName: string, errorMessage: string) {
+    try {
+      await this.dataSource.query(
+        `INSERT INTO system_job_logs (job_name, status, last_run, error_message, created_at, updated_at) 
+         VALUES ($1, 'ERROR', NOW(), $2, NOW(), NOW())`,
+        [jobName, errorMessage]
+      );
+    } catch (e) {
+      console.error('Failed to log silent error to system_job_logs', e);
+    }
   }
 
   private async generateWithRetry(prompt: string) {
@@ -161,8 +177,10 @@ export class StudyService {
         hasError: suggestions.length > 0,
         suggestions: suggestions,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error checking spelling with Gemini:', error);
+      const msg = error.message?.substring(0, 1000) || 'Unknown Gemini error';
+      this.logSilentError('External API - Gemini checkSpelling', msg).catch(() => {});
       return { hasError: false, suggestions: [] };
     }
   }

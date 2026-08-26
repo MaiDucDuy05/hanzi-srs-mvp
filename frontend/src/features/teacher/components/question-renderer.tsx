@@ -371,14 +371,14 @@ export function QuestionRenderer({ question, index = 0, compact = false, mode = 
         return (
           <div className="space-y-3">
             <p className="font-medium text-gray-900">{content.questionText || 'Đúng hay Sai?'}</p>
-            <div className="flex gap-3">
-              <div className={cn("flex items-center gap-2 p-3 border rounded-lg min-w-[120px]", isTrueCorrect ? "border-green-500 bg-green-50" : "border-gray-200 bg-gray-50")}>
+            <div className="flex flex-wrap gap-3">
+              <div className={cn("flex flex-1 items-center gap-2 p-3 border rounded-lg min-w-[90px]", isTrueCorrect ? "border-green-500 bg-green-50" : "border-gray-200 bg-gray-50")}>
                 <div className={cn("w-5 h-5 rounded-full border flex shrink-0 items-center justify-center", isTrueCorrect ? "border-green-500 bg-green-500" : "border-gray-300 bg-white")}>
                   {isTrueCorrect && <Check className="w-3 h-3 text-white" />}
                 </div>
                 <span className="font-medium text-gray-700">Đúng</span>
               </div>
-              <div className={cn("flex items-center gap-2 p-3 border rounded-lg min-w-[120px]", isFalseCorrect ? "border-green-500 bg-green-50" : "border-gray-200 bg-gray-50")}>
+              <div className={cn("flex flex-1 items-center gap-2 p-3 border rounded-lg min-w-[90px]", isFalseCorrect ? "border-green-500 bg-green-50" : "border-gray-200 bg-gray-50")}>
                 <div className={cn("w-5 h-5 rounded-full border flex shrink-0 items-center justify-center", isFalseCorrect ? "border-green-500 bg-green-500" : "border-gray-300 bg-white")}>
                   {isFalseCorrect && <Check className="w-3 h-3 text-white" />}
                 </div>

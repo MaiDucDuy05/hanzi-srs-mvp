@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth/auth-context';
 import { AuthGuard } from '@/features/layout/components/auth-guard';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
+import { useConfirm } from '@/providers/confirm-provider';
 import { Modal } from '@/features/ui/components/modal';
 import { DocumentViewerModal } from '@/features/ui/components/document-viewer-modal';
 import { Field, Input, Select, Textarea } from '@/features/ui/components/form';
@@ -42,6 +43,8 @@ export function AdminResourcesFeature() {
   const [editForm, setEditForm] = useState<{ id: string; title: string; description: string; tier: 'FREE' | 'VIP'; status: 'DRAFT' | 'PUBLISHED' } | null>(null);
   const [editFile, setEditFile] = useState<File | null>(null);
   const [editCoverFile, setEditCoverFile] = useState<File | null>(null);
+  const [viewingItem, setViewingItem] = useState<any | null>(null);
+  const confirm = useConfirm();
 
   const [viewerState, setViewerState] = useState<{ open: boolean; url: string; title: string; fileKey: string; tier: 'FREE'|'VIP' }>({
     open: false, url: '', title: '', fileKey: '', tier: 'FREE'
@@ -214,7 +217,7 @@ export function AdminResourcesFeature() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa tài liệu này? Hành động này không thể hoàn tác.')) return;
+    if (!(await confirm({ title: 'Xóa tài liệu', message: 'Bạn có chắc chắn muốn xóa tài liệu này? Hành động này không thể hoàn tác.', variant: 'danger' }))) return;
     try {
       await resourceApi.delete(id);
       setResources(resources.filter(r => r.id !== id));

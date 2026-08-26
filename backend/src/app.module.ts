@@ -1,10 +1,11 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { ScheduleModule } from '@nestjs/schedule';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { DatabaseModule } from './database/database.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { JwtAuthGuard } from './modules/auth/guards/jwt-auth.guard';
@@ -74,6 +75,10 @@ import { AwsModule } from './modules/aws/aws.module';
   controllers: [AppController],
   providers: [
     AppService,
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
+    },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: ThrottlerGuard },

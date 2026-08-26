@@ -207,6 +207,10 @@ describe('PracticeAttemptService', () => {
     const mockLimitSvc = {
       consumeInTransaction: jest.fn().mockResolvedValue({ allowed: true, usedCount: 1, limit: 3 }),
     };
+    const mockSrsSvc = { onAnswer: jest.fn().mockResolvedValue(undefined) };
+    const mockExpSvc = { addExp: jest.fn().mockResolvedValue(undefined) };
+    const mockActivitySvc = { log: jest.fn().mockResolvedValue(undefined) };
+    const mockStreakSvc = { recordActivity: jest.fn().mockResolvedValue(undefined) };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -214,6 +218,10 @@ describe('PracticeAttemptService', () => {
         { provide: getRepositoryToken(PracticeAttempt), useValue: mockRepo },
         { provide: getDataSourceToken(), useValue: mockDataSource },
         { provide: DailyUsageService, useValue: mockLimitSvc },
+        { provide: require('../srs/srs.service').SrsService, useValue: mockSrsSvc },
+        { provide: require('../achievements/exp.service').ExpService, useValue: mockExpSvc },
+        { provide: require('../achievements/activity.service').ActivityService, useValue: mockActivitySvc },
+        { provide: require('../achievements/streak.service').StreakService, useValue: mockStreakSvc },
       ],
     }).compile();
 

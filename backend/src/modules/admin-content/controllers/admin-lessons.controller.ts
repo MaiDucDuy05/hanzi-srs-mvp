@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Param, Body, Query, UseGuards, Ip } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards, Ip } from '@nestjs/common';
 import { AdminLessonsService } from '../services/admin-lessons.service';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { Role } from '../../../common/enums/user.enums';
@@ -62,5 +62,31 @@ export class AdminLessonsController {
   ) {
     const result = await this.adminLessonsService.changeStatus(id, status, adminId, ipAddress);
     return { data: result, message: 'Lesson status updated successfully' };
+  }
+
+  @Get('lesson-contents')
+  async getLessonContents(@Query() query: any) {
+    const result = await this.adminLessonsService.getLessonContents(query);
+    return { data: result, message: 'Lesson contents retrieved successfully' };
+  }
+
+  @Post('lesson-contents')
+  async addLessonContent(
+    @Body() dto: any,
+    @CurrentUser('sub') adminId: string,
+    @Ip() ipAddress: string,
+  ) {
+    const result = await this.adminLessonsService.addLessonContent(dto, adminId, ipAddress);
+    return { data: result, message: 'Lesson content added successfully' };
+  }
+
+  @Delete('lesson-contents/:id')
+  async removeLessonContent(
+    @Param('id') id: string,
+    @CurrentUser('sub') adminId: string,
+    @Ip() ipAddress: string,
+  ) {
+    const result = await this.adminLessonsService.removeLessonContent(id, adminId, ipAddress);
+    return { data: result, message: 'Lesson content removed successfully' };
   }
 }

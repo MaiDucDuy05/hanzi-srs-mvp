@@ -14,14 +14,13 @@ export class AdminTeacherContentService {
     const { limit = 20, offset = 0, search, type, authorId, status } = params;
 
     let query = `
-      SELECT id, name as title, 'test' as type, teacher_id as author_id, hidden_by_admin as "hiddenByAdmin", hide_reason as "hideReason", hidden_at as "hiddenAt", created_at as "createdAt", deleted_at as "deletedAt"
-      FROM tests
+      SELECT t.id, t.name as title, 'test' as type, t.teacher_id as author_id, u.full_name as author_name, u.email as author_email, t.hidden_by_admin as "hiddenByAdmin", t.hide_reason as "hideReason", t.hidden_at as "hiddenAt", t.created_at as "createdAt", t.deleted_at as "deletedAt"
+      FROM tests t
+      LEFT JOIN users u ON t.teacher_id = u.id
       UNION ALL
-      SELECT id, title, 'resource' as type, uploader_id as author_id, hidden_by_admin as "hiddenByAdmin", hide_reason as "hideReason", hidden_at as "hiddenAt", created_at as "createdAt", deleted_at as "deletedAt"
-      FROM resources
-      UNION ALL
-      SELECT id, LEFT(COALESCE(content->>'question', content->>'questionText', 'Untitled Question'), 100) as title, 'question' as type, creator_id as author_id, hidden_by_admin as "hiddenByAdmin", hide_reason as "hideReason", hidden_at as "hiddenAt", created_at as "createdAt", CASE WHEN is_active = false THEN created_at ELSE NULL END as "deletedAt"
-      FROM questions
+      SELECT q.id, LEFT(COALESCE(q.content->>'question', q.content->>'questionText', 'Untitled Question'), 100) as title, 'question' as type, q.creator_id as author_id, u.full_name as author_name, u.email as author_email, q.hidden_by_admin as "hiddenByAdmin", q.hide_reason as "hideReason", q.hidden_at as "hiddenAt", q.created_at as "createdAt", CASE WHEN q.is_active = false THEN q.created_at ELSE NULL END as "deletedAt"
+      FROM questions q
+      LEFT JOIN users u ON q.creator_id = u.id
     `;
 
     // A wrapping query to filter
