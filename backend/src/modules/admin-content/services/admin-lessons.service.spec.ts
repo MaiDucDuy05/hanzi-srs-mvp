@@ -3,6 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { NotFoundException } from '@nestjs/common';
 import { AdminLessonsService } from './admin-lessons.service';
 import { Lesson } from '../../curriculum/entities/lesson.entity';
+import { LessonContent } from '../../curriculum/entities/lesson-content.entity';
 import { AuditLogService } from '../../admin/audit-log.service';
 import { ContentStatus } from '../../../common/enums/curriculum.enums';
 
@@ -34,6 +35,7 @@ describe('AdminLessonsService', () => {
       providers: [
         AdminLessonsService,
         { provide: getRepositoryToken(Lesson), useValue: lessonRepo },
+        { provide: getRepositoryToken(LessonContent), useValue: {} },
         { provide: AuditLogService, useValue: auditLog },
       ],
     }).compile();
