@@ -70,13 +70,13 @@ describe('apiFetch', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       makeResponse(400, { message: ['Lỗi A', 'Lỗi B'] }),
     );
-    const err = await apiFetch('/x', { auth: false }).catch((e) => e);
+    const err: any = await apiFetch('/x', { auth: false }).catch((e) => e);
     expect(err.message).toBe('Lỗi A, Lỗi B');
   });
 
   it('fallback message khi body không có message', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(makeResponse(500, {}));
-    const err = await apiFetch('/x', { auth: false }).catch((e) => e);
+    const err: any = await apiFetch('/x', { auth: false }).catch((e) => e);
     expect(err.message).toBe('Yêu cầu thất bại. Vui lòng thử lại.');
   });
 
@@ -88,7 +88,7 @@ describe('apiFetch', () => {
         throw new Error('not json');
       },
     } as unknown as Response);
-    const err = await apiFetch('/x', { auth: false }).catch((e) => e);
+    const err: any = await apiFetch('/x', { auth: false }).catch((e) => e);
     expect(err.message).toBe('Yêu cầu thất bại. Vui lòng thử lại.');
   });
 
@@ -162,7 +162,7 @@ describe('apiFetch', () => {
 
   it('throw ApiError khi fetch liên tục ném exception', async () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('network'));
-    const err = await apiFetch('/x', { auth: false }).catch((e) => e);
+    const err: any = await apiFetch('/x', { auth: false }).catch((e) => e);
     expect(err).toBeInstanceOf(ApiError);
     expect(err.status).toBe(0);
     expect(err.message).toContain('Không kết nối được');
