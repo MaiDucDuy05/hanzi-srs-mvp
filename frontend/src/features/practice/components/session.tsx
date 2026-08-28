@@ -81,7 +81,7 @@ export function PracticeSession({
   }
 
   return (
-    <div className="space-y-4 h-full flex flex-col">
+    <div className="space-y-4 min-h-full flex flex-col">
       {practiceType !== 'HANZI_WRITING' && practiceType !== 'WORD_MATCHING' && (
         <header className="flex flex-wrap items-center justify-between gap-2">
           <div>

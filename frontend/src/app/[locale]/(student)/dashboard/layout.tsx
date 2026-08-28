@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ForestBackground } from '@/features/background/components/forest-background';
 import { useAuth } from '@/lib/auth/auth-context';
+import { useTranslations } from 'next-intl';
+import LocaleSwitcher from '@/components/ui/locale-switcher';
 
 const PawIcon = ({ className }: { className?: string }) => (
   <img 
@@ -14,20 +16,21 @@ const PawIcon = ({ className }: { className?: string }) => (
   />
 );
 
-const NAV_ITEMS = [
-  { label: 'Dashboard', href: '/dashboard' },
-  { label: 'HSK', href: '/dashboard/courses/hsk' },
-  { label: 'Topic', href: '/dashboard/courses/topic' },
-  { label: 'Practice', href: '/dashboard/practice' },
-  { label: 'Exams', href: '/dashboard/exams' },
-  { label: 'Achievements', href: '/dashboard/achievements' },
-  { label: 'Tài liệu', href: '/dashboard/resources' },
-  { label: 'Settings', href: '/dashboard/settings' },
-];
-
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const pathname = usePathname();
+  const t = useTranslations('Sidebar');
+
+  const NAV_ITEMS = [
+    { label: t('dashboard'), href: '/dashboard' },
+    { label: t('hsk'), href: '/dashboard/courses/hsk' },
+    { label: t('topic'), href: '/dashboard/courses/topic' },
+    { label: t('practice'), href: '/dashboard/practice' },
+    { label: t('exams'), href: '/dashboard/exams' },
+    { label: t('achievements'), href: '/dashboard/achievements' },
+    { label: t('resources'), href: '/dashboard/resources' },
+    { label: t('settings'), href: '/dashboard/settings' },
+  ];
 
   return (
     <ForestBackground className="p-4 sm:p-8">
@@ -36,6 +39,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Sidebar */}
         <aside className="flex-shrink-0 w-full lg:w-64 bg-white rounded-[2rem] p-4 lg:p-6 shadow-sm flex flex-col gap-2">
           
+          <div className="mb-4 flex justify-center">
+            <LocaleSwitcher />
+          </div>
+
           <div className="flex-1 flex flex-col justify-center gap-1.5">
             {NAV_ITEMS.map((item) => {
             const isActive = item.href === '/dashboard' 
@@ -64,25 +71,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="pt-4 border-t border-gray-100">
               <div className="bg-[#fefce8] rounded-2xl p-4 border border-[#fef08a] flex flex-col gap-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-bold text-gray-700">Tài khoản</span>
+                  <span className="text-sm font-bold text-gray-700">{t('account')}</span>
                   {user.vipValidUntil && new Date(user.vipValidUntil) > new Date() ? (
                     <span className="px-2 py-0.5 rounded-full bg-[#fef08a] text-[#a16207] text-xs font-bold uppercase tracking-wider">
-                      VIP
+                      {t('vip')}
                     </span>
                   ) : (
                     <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-xs font-bold uppercase tracking-wider">
-                      Free
+                      {t('free')}
                     </span>
                   )}
                 </div>
 
                 {user.vipValidUntil && new Date(user.vipValidUntil) > new Date() ? (
                   <p className="text-xs text-gray-500 font-medium">
-                    Hạn dùng: <span className="text-[#a16207] font-bold">{new Date(user.vipValidUntil).toLocaleDateString('vi-VN')}</span>
+                    {t('validUntil')}: <span className="text-[#a16207] font-bold">{new Date(user.vipValidUntil).toLocaleDateString('vi-VN')}</span>
                   </p>
                 ) : (
                   <p className="text-xs text-gray-500 font-medium leading-relaxed">
-                    Nâng cấp VIP để mở khoá tính năng không giới hạn.
+                    {t('upgradeVipPrompt')}
                   </p>
                 )}
 
@@ -90,7 +97,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   href="/dashboard/upgrade-vip"
                   className="mt-2 text-center text-sm font-bold text-[#854d0e] bg-[#fde047] hover:bg-[#facc15] py-2 rounded-xl transition-colors shadow-sm"
                 >
-                  {user.vipValidUntil && new Date(user.vipValidUntil) > new Date() ? 'Gia hạn VIP' : 'Yêu cầu gói VIP'}
+                  {user.vipValidUntil && new Date(user.vipValidUntil) > new Date() ? t('extendVip') : t('requestVip')}
                 </Link>
               </div>
             </div>

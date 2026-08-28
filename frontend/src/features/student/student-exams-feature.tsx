@@ -11,9 +11,11 @@ import { ErrorState } from '@/features/ui/components/error-state';
 import { formatDateTime } from '@/lib/utils/format';
 import { cn } from '@/lib/utils/cn';
 import { Clock, Calendar, Target, Search, Trophy, Hourglass, Target as TargetIcon } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export function StudentExamsFeature() {
   const router = useRouter();
+  const t = useTranslations('Exams');
   const [assignments, setAssignments] = useState<TestAssignment[]>([]);
   const [attempts, setAttempts] = useState<TestAttempt[]>([]);
   const [loading, setLoading] = useState(true);
@@ -35,12 +37,12 @@ export function StudentExamsFeature() {
   }, []);
 
   const handleStart = async (assignment: TestAssignment) => {
-    if (!window.confirm(`Bắt đầu làm bài: ${assignment.test?.name}?`)) return;
+    if (!window.confirm(t('startConfirm', { name: assignment.test?.name || '' }))) return;
     try {
       const attempt = await testApi.startAttempt(assignment.testId, assignment.id);
       router.push(`/dashboard/exams/${attempt.id}`);
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Không thể bắt đầu làm bài.');
+      alert(err instanceof Error ? err.message : t('startError'));
     }
   };
 
@@ -90,7 +92,7 @@ export function StudentExamsFeature() {
     return matchesFilter && matchesSearch;
   });
 
-  if (loading) return <PageLoading label="Đang tải danh sách bài kiểm tra..." />;
+  if (loading) return <PageLoading label={t('loading')} />;
   if (error) return <ErrorState message={error} />;
 
   return (
@@ -98,8 +100,8 @@ export function StudentExamsFeature() {
       {/* Hero Section */}
       <div className="bg-[#466a50] rounded-3xl p-8 relative overflow-hidden shadow-lg text-white">
         <div className="relative z-10 max-w-xl">
-          <p className="text-brand-100 mb-2 font-medium tracking-wider text-sm uppercase">My Exams & Assessments</p>
-          <h1 className="text-4xl font-extrabold mb-4 font-display">Bài kiểm tra của tôi</h1>
+          <p className="text-brand-100 mb-2 font-medium tracking-wider text-sm uppercase">{t('subtitle')}</p>
+          <h1 className="text-4xl font-extrabold mb-4 font-display">{t('title')}</h1>
         </div>
         
         {/* Placeholder for Panda Illustration */}
@@ -123,10 +125,10 @@ export function StudentExamsFeature() {
                   : "bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50"
               )}
             >
-              {f === 'ALL' ? `Tất cả (${enrichedAssignments.length})` :
-               f === 'PENDING' ? `Đang chờ làm (${stats.pending})` :
-               f === 'SUBMITTED' ? `Đang chờ chấm (${stats.submitted})` :
-               `Đã hoàn thành (${stats.completed})`}
+              {f === 'ALL' ? t('filterAll', { count: enrichedAssignments.length }) :
+               f === 'PENDING' ? t('filterPending', { count: stats.pending }) :
+               f === 'SUBMITTED' ? t('filterSubmitted', { count: stats.submitted }) :
+               t('filterCompleted', { count: stats.completed })}
             </button>
           ))}
         </div>
@@ -135,7 +137,7 @@ export function StudentExamsFeature() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input 
             type="text" 
-            placeholder="Tìm kiếm bài thi..." 
+            placeholder={t('searchPlaceholder')} 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent transition-all shadow-sm"
@@ -156,16 +158,16 @@ export function StudentExamsFeature() {
           
           const hoursUntilEnd = (new Date(a.endTime).getTime() - new Date().getTime()) / (1000 * 60 * 60);
           if (category === 'COMPLETED') {
-            badgeText = 'Completed';
+            badgeText = t('badgeCompleted');
             badgeClass = 'bg-gray-100 text-gray-700 border-gray-200';
           } else if (category === 'SUBMITTED') {
-            badgeText = 'Submitted';
+            badgeText = t('badgeSubmitted');
             badgeClass = 'bg-yellow-50 text-yellow-700 border-yellow-200';
           } else if (hoursUntilEnd > 0 && hoursUntilEnd < 24 && !hasReachedLimit) {
-            badgeText = 'Expiring Soon';
+            badgeText = t('badgeExpiring');
             badgeClass = 'bg-red-50 text-red-600 border-red-200';
           } else if (!isStarted) {
-            badgeText = 'Upcoming';
+            badgeText = t('badgeUpcoming');
             badgeClass = 'bg-blue-50 text-blue-600 border-blue-200';
           }
 
@@ -187,44 +189,44 @@ export function StudentExamsFeature() {
 
                 {/* Content */}
                 <div className="flex-grow space-y-3 mb-6">
-                  <h3 className="font-bold text-xl text-gray-900 group-hover:text-brand-700 transition-colors">{a.test?.name || 'Bài kiểm tra không tên'}</h3>
-                  <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed">{a.test?.description || 'Không có mô tả cho bài kiểm tra này.'}</p>
+                  <h3 className="font-bold text-xl text-gray-900 group-hover:text-brand-700 transition-colors">{a.test?.name || t('unnamedExam')}</h3>
+                  <p className="text-sm text-gray-500 line-clamp-2 leading-relaxed">{a.test?.description || t('noDescription')}</p>
                 </div>
                 
                 {/* Metadata */}
                 <div className="space-y-2 mb-6">
                   <div className="flex items-center text-xs text-gray-500">
                     <Clock className="w-4 h-4 mr-2 opacity-70" />
-                    <span>{a.test?.timeLimitMinutes} Minutes</span>
+                    <span>{a.test?.timeLimitMinutes} {t('minutes')}</span>
                   </div>
                   <div className="flex items-center text-xs text-gray-500">
                     <Calendar className="w-4 h-4 mr-2 opacity-70" />
-                    <span>Due: {formatDateTime(a.endTime)}</span>
+                    <span>{t('due')} {formatDateTime(a.endTime)}</span>
                   </div>
                   <div className="flex items-center text-xs text-gray-500">
                     <Target className="w-4 h-4 mr-2 opacity-70" />
-                    <span>{submittedCount} / {limit} Attempts</span>
+                    <span>{submittedCount} / {limit} {t('attempts')}</span>
                   </div>
                 </div>
 
                 {/* CTA Button */}
                 <div className="pt-4 border-t border-gray-100 mt-auto">
                   {!isStarted ? (
-                    <Button className="w-full rounded-full font-medium" disabled variant="outline">Chưa tới giờ mở đề</Button>
+                    <Button className="w-full rounded-full font-medium" disabled variant="outline">{t('notOpenedYet')}</Button>
                   ) : inProgress ? (
                     <Button className="w-full rounded-full font-medium bg-amber-500 hover:bg-amber-600 text-white" onClick={() => router.push(`/dashboard/exams/${inProgress.id}`)}>
-                      Tiếp tục làm bài
+                      {t('continueExam')}
                     </Button>
                   ) : hasReachedLimit ? (
                     bestAttempt ? (
                       <Button className="w-full rounded-full font-medium" variant="outline" onClick={() => router.push(`/dashboard/exams/${bestAttempt.id}/result`)}>
-                        Xem kết quả
+                        {t('viewResults')}
                       </Button>
                     ) : (
-                      <Button className="w-full rounded-full font-medium" disabled variant="outline">Đã nộp</Button>
+                      <Button className="w-full rounded-full font-medium" disabled variant="outline">{t('btnSubmitted')}</Button>
                     )
                   ) : isEnded ? (
-                    <Button className="w-full rounded-full font-medium" disabled variant="outline">Đã hết hạn</Button>
+                    <Button className="w-full rounded-full font-medium" disabled variant="outline">{t('btnExpired')}</Button>
                   ) : (
                     <Button 
                       className={cn(
@@ -233,7 +235,7 @@ export function StudentExamsFeature() {
                       )} 
                       onClick={() => handleStart(a)}
                     >
-                      Bắt đầu làm bài
+                      {t('startExam')}
                     </Button>
                   )}
                 </div>
@@ -247,8 +249,8 @@ export function StudentExamsFeature() {
             <div className="w-24 h-24 mb-4 opacity-20 text-gray-400">
               <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5.5-8.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5zm11 0c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5 1.5-.67 1.5-1.5-.67-1.5-1.5-1.5z"/></svg>
             </div>
-            <h3 className="text-lg font-bold text-gray-700 mb-2">Không có bài kiểm tra nào</h3>
-            <p className="text-gray-500 max-w-sm">Bạn hiện không có bài kiểm tra nào trong danh mục này. Hãy thư giãn và luyện tập thêm nhé!</p>
+            <h3 className="text-lg font-bold text-gray-700 mb-2">{t('noExams')}</h3>
+            <p className="text-gray-500 max-w-sm">{t('noExamsDesc')}</p>
           </div>
         )}
       </div>

@@ -115,7 +115,7 @@ export function LearnWordFlow({ vocabularies, initialIndex = 0, onClose, onCompl
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto p-6 md:p-10 flex flex-col items-center">
-        <div className="w-full max-w-4xl mx-auto h-full flex flex-col">
+        <div className="w-full max-w-4xl mx-auto min-h-full flex flex-col justify-center py-4">
           {renderStep()}
         </div>
       </div>

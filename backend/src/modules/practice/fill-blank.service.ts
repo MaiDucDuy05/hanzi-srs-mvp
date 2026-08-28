@@ -117,7 +117,7 @@ export class FillBlankService {
     };
 
     attempt.questionData = { snapshot, correctAnswers } as unknown as Record<string, unknown>;
-    await this.attemptRepo.save(attempt);
+    await this.attemptRepo.update({ id: attempt.id }, { questionData: attempt.questionData });
 
     return { questions: resultQuestions, snapshot };
   }

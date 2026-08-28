@@ -514,8 +514,9 @@ export function usePracticeEngine<TState = unknown>(options: {
           answerData: { ...res.answerData, vocabResults: res.vocabResults },
         });
       }
-    } catch {
-      // Gửi lỗi không chặn kết quả hiển thị.
+    } catch (e: any) {
+      console.error('Submit error:', e);
+      alert('Lỗi submit: ' + (e.message || 'Unknown error'));
     }
     clearSession(sessionKey);
     setStatus('finished');

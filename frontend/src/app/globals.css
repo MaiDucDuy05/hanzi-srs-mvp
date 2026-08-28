@@ -147,3 +147,9 @@ h6 {
 .rotate-y-180 {
   transform: rotateY(180deg);
 }
+
+/* Fix for Pinyin font rendering */
+ruby rt, .pinyin-text {
+  font-family: var(--font-nunito), var(--font-inter), Arial, Helvetica, sans-serif !important;
+  letter-spacing: 0.025em;
+}

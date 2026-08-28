@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname } from '@/i18n/routing';
 import Link from 'next/link';
 import { ForestBackground } from '@/features/background/components/forest-background';
 

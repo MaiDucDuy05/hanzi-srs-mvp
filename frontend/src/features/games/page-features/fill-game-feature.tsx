@@ -127,7 +127,7 @@ export function FillGameFeature({ sourceId, sourceType }: FillGameFeatureProps) 
   // ── Finished ──
   if (status === 'finished' && result) {
     return (
-      <div className="relative w-full flex-1 flex flex-col">
+      <div className="relative w-full flex-1 flex flex-col overflow-hidden">
         <BambooBackground />
         <FillResults
           result={result}

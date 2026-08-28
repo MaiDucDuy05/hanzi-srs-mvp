@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { loadCharData } from '@/lib/hanzi/char-data-loader';
 
 interface HanziWriterAnimationProps {
@@ -10,9 +10,11 @@ interface HanziWriterAnimationProps {
 
 export function HanziWriterAnimation({ char, speed }: HanziWriterAnimationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+    setHasError(false);
     let writer: any = null;
     let animationTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -26,8 +28,15 @@ export function HanziWriterAnimation({ char, speed }: HanziWriterAnimationProps)
         strokeColor: '#333', drawingColor: '#333',
         charDataLoader: (c: string, onLoad: any, onError: any) => {
           loadCharData(c)
-            .then(data => { if (data) onLoad(data); else { try { onError(new Error('no data')); } catch {} } })
-            .catch(e => { try { onError(e); } catch {} });
+            .then(data => {
+              if (data) onLoad(data);
+              else {
+                if (!cancelled) setHasError(true);
+              }
+            })
+            .catch(e => {
+              if (!cancelled) setHasError(true);
+            });
         },
       });
 
@@ -52,6 +61,14 @@ export function HanziWriterAnimation({ char, speed }: HanziWriterAnimationProps)
       if (containerRef.current) containerRef.current.innerHTML = '';
     };
   }, [char, speed]);
+
+  if (hasError) {
+    return (
+      <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+        <span className="text-8xl font-serif text-[#333]/20">{char}</span>
+      </div>
+    );
+  }
 
   return <div ref={containerRef} className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none" />;
 }

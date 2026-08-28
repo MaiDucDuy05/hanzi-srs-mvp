@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { BookMarked, BookOpen, ArrowRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { curriculumApi } from '@/lib/api/endpoints';
 import type { Topic } from '@/lib/api/types';
 import { PageLoading } from '@/features/ui/components/spinner';
@@ -19,6 +20,7 @@ const TOPIC_GRADIENTS = [
 
 export function CoursesTopicFeature() {
   const router = useRouter();
+  const t = useTranslations('Courses');
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,7 +38,7 @@ export function CoursesTopicFeature() {
     return () => { cancelled = true; };
   }, []);
 
-  if (loading) return <PageLoading label="Đang tải chủ đề..." />;
+  if (loading) return <PageLoading label={t('loadingTopics')} />;
   if (error) return <ErrorState message={error} onRetry={() => location.reload()} />;
 
   return (
@@ -48,8 +50,8 @@ export function CoursesTopicFeature() {
             <BookMarked className="h-6 w-6 text-[#11321e]" strokeWidth={2.5} />
           </div>
           <div>
-            <h1 className="text-3xl font-extrabold text-[#11321e]">Khóa học theo Topic</h1>
-            <p className="text-sm text-gray-500 font-medium">Học theo chủ đề phổ biến</p>
+            <h1 className="text-3xl font-extrabold text-[#11321e]">{t('topicTitle')}</h1>
+            <p className="text-sm text-gray-500 font-medium">{t('topicSubtitle')}</p>
           </div>
         </div>
       </div>
@@ -60,7 +62,7 @@ export function CoursesTopicFeature() {
           <div className="h-20 w-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
             <BookOpen className="h-10 w-10 text-gray-300" />
           </div>
-          <p className="text-gray-500 font-bold">Chưa có chủ đề nào.</p>
+          <p className="text-gray-500 font-bold">{t('noTopics')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -80,7 +82,7 @@ export function CoursesTopicFeature() {
                     </div>
                     <div className="flex items-center gap-1 text-xs font-bold text-[#85d038] bg-white/70 px-3 py-1 rounded-full backdrop-blur-sm">
                       <BookOpen className="h-3.5 w-3.5" strokeWidth={2.5} />
-                      {topic.vocabularyCount} từ
+                      {topic.vocabularyCount} {t('words')}
                     </div>
                   </div>
                 </div>
@@ -94,7 +96,7 @@ export function CoursesTopicFeature() {
 
                   {/* Action */}
                   <div className="flex items-center gap-2 text-[#85d038] font-bold text-sm group-hover:gap-3 transition-all">
-                    <span>Học ngay</span>
+                    <span>{t('learnNow')}</span>
                     <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
                   </div>
                 </div>

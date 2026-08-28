@@ -36,7 +36,7 @@ export function HanziPracticeStep({ vocabulary, onNext }: HanziPracticeStepProps
   }, [chars.length, onNext]);
 
   return (
-    <div className="flex flex-col h-full items-center justify-center animate-in fade-in slide-in-from-bottom-8 duration-700 w-full relative">
+    <div className="flex flex-col min-h-full items-center animate-in fade-in slide-in-from-bottom-8 duration-700 w-full relative">
       
       {/* Decorative background blurs */}
       <div className="absolute top-10 left-10 w-48 h-48 bg-[#8b7e66]/10 rounded-full blur-3xl pointer-events-none -z-10"></div>

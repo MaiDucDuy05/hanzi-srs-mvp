@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Vocabulary } from '@/lib/api/types';
 
 import { ArrowRight, Languages, Lightbulb, CheckCircle2 } from 'lucide-react';
@@ -20,8 +20,13 @@ export function ReverseTranslationStep({ vocabulary, onNext }: ReverseTranslatio
   const hintVi = exampleParts[1]?.trim() || 'Không có bản dịch.';
 
   // If no example available, skip this step
+  useEffect(() => {
+    if (!vocabulary.example) {
+      onNext();
+    }
+  }, [vocabulary.example, onNext]);
+
   if (!vocabulary.example) {
-    onNext();
     return null;
   }
 
@@ -39,7 +44,7 @@ export function ReverseTranslationStep({ vocabulary, onNext }: ReverseTranslatio
   };
 
   return (
-    <div className="flex flex-col h-full w-full max-w-3xl mx-auto items-center justify-center animate-in fade-in slide-in-from-bottom-8 duration-700 relative">
+    <div className="flex flex-col min-h-full w-full max-w-3xl mx-auto items-center animate-in fade-in slide-in-from-bottom-8 duration-700 relative">
       
       {/* Decorative background blurs */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-yellow-400/5 rounded-full blur-3xl pointer-events-none -z-10"></div>
