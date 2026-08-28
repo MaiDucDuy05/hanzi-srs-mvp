@@ -110,7 +110,7 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 100, ttl: 60000 } }) // 10 attempts per minute
+  @Throttle({ default: { limit: 1000, ttl: 60000 } }) // Tăng lên 1000 để test Spike 500 users
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,

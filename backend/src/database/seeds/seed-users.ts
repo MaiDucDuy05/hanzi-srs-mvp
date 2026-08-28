@@ -7,14 +7,36 @@ import { SubscriptionPlan, SubscriptionStatus } from '../../common/enums/subscri
 
 /**
  * Seed tài khoản (idempotent — kiểm tra theo email):
- *  - 1 admin, 2 giáo viên, 5 học viên (mix FREE/VIP)
+ *  - 1 admin, 2 giáo viên, 100 học viên (FREE)
  * Password của TẤT CẢ account: "Test@1234"
+ *
+ * 100 student đủ cho stress 1000 VU share ~10 VU/user (tránh session contamination).
  */
 const DEFAULT_PWD = bcrypt.hashSync('Test@1234', 10);
+const NUM_BULK_STUDENTS = 495; // tổng 500 cùng 5 user cố định = 500 học viên
 
 type UserSeed = { email: string; fullName: string; role: Role; vipUntil?: Date };
 
-const USERS: UserSeed[] = [
+function addMonths(n: number): Date {
+  const d = new Date();
+  d.setMonth(d.getMonth() + n);
+  return d;
+}
+
+/** Tạo danh sách học viên bulk hocvien6..hocvien500 — toàn FREE (test quota). */
+function buildBulkStudents(): UserSeed[] {
+  const list: UserSeed[] = [];
+  for (let i = 6; i <= NUM_BULK_STUDENTS + 5; i++) {
+    list.push({
+      email: `hocvien${i}@hanzi.dev`,
+      fullName: `Học viên ${i}`,
+      role: Role.FREE,
+    });
+  }
+  return list;
+}
+
+const FIXED_USERS: UserSeed[] = [
   { email: 'admin@hanzi.dev',  fullName: 'Admin Hán Tự',     role: Role.ADMIN },
   { email: 'giangvien@hanzi.dev', fullName: 'Thầy Nguyễn Văn A', role: Role.TEACHER, vipUntil: addMonths(6) },
   { email: 'co_truong@hanzi.dev', fullName: 'Cô Trần Thị B',  role: Role.TEACHER, vipUntil: addMonths(12) },
@@ -25,16 +47,14 @@ const USERS: UserSeed[] = [
   { email: 'hocvien5@hanzi.dev', fullName: 'Lý Minh Tâm',    role: Role.FREE, vipUntil: addMonths(12) },
 ];
 
-function addMonths(n: number): Date {
-  const d = new Date();
-  d.setMonth(d.getMonth() + n);
-  return d;
-}
+const USERS: UserSeed[] = [...FIXED_USERS, ...buildBulkStudents()];
 
 async function run(): Promise<void> {
   await dataSource.initialize();
   const userRepo = dataSource.getRepository(User);
   const subRepo = dataSource.getRepository(Subscription);
+
+  console.log(`Seeding ${USERS.length} users (${FIXED_USERS.length} fixed + ${NUM_BULK_STUDENTS} bulk)...`);
 
   for (const u of USERS) {
     // 1) Upsert user theo email (không dùng LOWER() ở app — DB đã có index)
@@ -44,7 +64,6 @@ async function run(): Promise<void> {
       userId = existing.id;
       existing.passwordHash = DEFAULT_PWD;
       await userRepo.save(existing);
-      console.log(`User exists, updated password: ${u.email}`);
     } else {
       const saved = await userRepo.save({
         email: u.email,
@@ -54,7 +73,6 @@ async function run(): Promise<void> {
         status: UserStatus.ACTIVE,
       });
       userId = saved.id;
-      console.log(`Created user: ${u.email} (${u.role})`);
     }
 
     // 2) Subscription — mỗi user chỉ có 1 dòng FREE/VIP, chỉ tạo nếu chưa có
@@ -68,11 +86,10 @@ async function run(): Promise<void> {
         startsAt: new Date(),
         expiresAt: u.vipUntil ?? null,
       });
-      console.log(`  → Subscription: ${isVip ? 'VIP đến ' + u.vipUntil!.toISOString().slice(0,10) : 'FREE'}`);
     }
   }
 
   await dataSource.destroy();
-  console.log('✅ seed-users completed');
+  console.log(`✅ seed-users completed: ${USERS.length} users`);
 }
 run().catch(err => { console.error('❌ seed-users failed:', err); process.exit(1); });

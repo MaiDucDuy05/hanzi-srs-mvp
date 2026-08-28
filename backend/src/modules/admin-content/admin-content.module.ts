@@ -19,6 +19,7 @@ import { AdminTopicsController } from './controllers/admin-topics.controller';
 import { AdminQuestionsController } from './controllers/admin-questions.controller';
 import { AdminUploadsController } from './controllers/admin-uploads.controller';
 import { AdminTeacherContentController } from './controllers/admin-teacher-content.controller';
+import { AdminVocabulariesTestCleanupController } from './controllers/admin-vocabularies-test-cleanup.controller';
 
 import { AdminCoursesService } from './services/admin-courses.service';
 import { AdminLessonsService } from './services/admin-lessons.service';
@@ -47,6 +48,7 @@ import { AdminTeacherContentService } from './services/admin-teacher-content.ser
   controllers: [
     AdminCoursesController,
     AdminLessonsController,
+    AdminVocabulariesTestCleanupController,
     AdminVocabulariesController,
     AdminGrammarsController,
     AdminTopicsController,
