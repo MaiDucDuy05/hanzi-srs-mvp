@@ -3,6 +3,11 @@ services:
     image: postgres:16-alpine
     container_name: hanzi-postgres
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 500M
     ports:
       - "5433:5432"
     environment:
@@ -16,6 +21,26 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+
+  api:
+    build: .
+    container_name: hanzi-api
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1024M
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-hanzi}:${POSTGRES_PASSWORD:-hanzi_dev_password}@postgres:5432/${POSTGRES_DB:-hanzi_srs}
+      - PORT=8000
+    env_file:
+      - .env
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   hanzi_pgdata:

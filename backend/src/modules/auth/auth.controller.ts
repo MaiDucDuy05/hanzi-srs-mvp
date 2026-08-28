@@ -36,7 +36,7 @@ export class AuthController {
   @Public()
   @Post('register/request-otp')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ default: { limit: 100, ttl: 60000 } })
   async requestRegisterOtp(@Body() dto: RegisterDto) {
     await this.authService.requestRegisterOtp(dto);
     return {
@@ -48,7 +48,7 @@ export class AuthController {
   @Public()
   @Post('register/verify-otp')
   @HttpCode(HttpStatus.CREATED)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ default: { limit: 100, ttl: 60000 } })
   async verifyRegisterOtp(
     @Body('email') email: string,
     @Body('otp') otp: string,
@@ -65,7 +65,7 @@ export class AuthController {
   @Public()
   @Post('forgot-password/request-otp')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ default: { limit: 100, ttl: 60000 } })
   async requestForgotPasswordOtp(@Body('email') email: string) {
     await this.authService.requestForgotPasswordOtp(email);
     return {
@@ -77,7 +77,7 @@ export class AuthController {
   @Public()
   @Post('forgot-password/verify-otp')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ default: { limit: 100, ttl: 60000 } })
   async verifyForgotPasswordOtp(
     @Body('email') email: string,
     @Body('otp') otp: string,
@@ -92,7 +92,7 @@ export class AuthController {
   @Public()
   @Post('forgot-password/reset')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ default: { limit: 100, ttl: 60000 } })
   async resetPassword(
     @Body('email') email: string,
     @Body('otp') otp: string,
@@ -109,7 +109,8 @@ export class AuthController {
 
   @Public()
   @Post('login')
-  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 attempts per minute
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 100, ttl: 60000 } }) // 10 attempts per minute
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
