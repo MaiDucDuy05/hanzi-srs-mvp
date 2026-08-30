@@ -4,6 +4,7 @@ import { TestQuestion } from '../../modules/test/entities/test-question.entity';
 import { Question, QuestionDifficulty, QuestionVisibility } from '../../modules/question-bank/entities/question.entity';
 import { User } from '../../modules/auth/entities/user.entity';
 import { TestStatus, TestQuestionType } from '../../common/enums/test.enums';
+import { Role } from '../../common/enums/user.enums';
 
 /**
  * Bài kiểm tra mẫu do giáo viên tạo.
@@ -107,6 +108,28 @@ async function run(): Promise<void> {
       });
     }
     console.log(`  → ${T.questions.length} questions processed`);
+
+    // Giao bài test này cho tất cả học sinh để phục vụ Load Test!
+    const { TestAssignment } = require('../../modules/test/entities/test-assignment.entity');
+    const taRepo = dataSource.getRepository(TestAssignment);
+    const students = await userRepo.find({ where: { role: Role.FREE } }); // Lấy toàn bộ FREE user (học sinh)
+    let assignedCount = 0;
+    
+    for (const stu of students) {
+      const existingTa = await taRepo.findOne({ where: { testId: test.id, studentId: stu.id } });
+      if (!existingTa) {
+        await taRepo.save({
+          testId: test.id,
+          studentId: stu.id,
+          startTime: new Date(),
+          endTime: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // Hạn 1 năm
+          assignedBy: teacher.id,
+          statusOnSubmit: 'GRADED',
+        });
+        assignedCount++;
+      }
+    }
+    console.log(`  → Assigned test to ${assignedCount} students`);
   }
 
   await dataSource.destroy();

@@ -1,4 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../auth/entities/user.entity';
@@ -36,6 +38,7 @@ export class StudentProgressService {
     private progressRepo: Repository<UserVocabularyProgress>,
     @InjectRepository(UserLessonProgress)
     private lessonProgressRepo: Repository<UserLessonProgress>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async getLessonProgress(userId: string, lessonId: string) {
@@ -71,22 +74,31 @@ export class StudentProgressService {
   }
 
   async getProgress(userId: string): Promise<StudentProgress> {
-    const user = await this.userRepo.findOneBy({ id: userId });
+    // Check cache TRƯỚC khi query bất kỳ DB nào — tránh user lookup thừa khi cache warm.
+    const cacheKey = `student_progress:${userId}`;
+    const cached = await this.cacheManager.get<StudentProgress>(cacheKey);
+    if (cached) return cached;
+
+    // Cache miss: fetch user và aggregate song song để giảm latency.
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const [user, result] = await Promise.all([
+      this.userRepo.findOneBy({ id: userId }),
+      this.attemptRepo
+        .createQueryBuilder('pa')
+        .select('COALESCE(SUM(pa.score), 0)', 'totalXp')
+        .where('pa.user_id = :userId', { userId })
+        .andWhere('pa.status = :status', {
+          status: PracticeAttemptStatus.COMPLETED,
+        })
+        .andWhere('pa.created_at >= :today', { today })
+        .getRawOne<{ totalXp: string }>(),
+    ]);
+
     if (!user) {
       throw new Error('User not found');
     }
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const result = await this.attemptRepo
-      .createQueryBuilder('pa')
-      .select('COALESCE(SUM(pa.score), 0)', 'totalXp')
-      .where('pa.user_id = :userId', { userId })
-      .andWhere('pa.status = :status', {
-        status: PracticeAttemptStatus.COMPLETED,
-      })
-      .andWhere('pa.created_at >= :today', { today })
-      .getRawOne<{ totalXp: string }>();
 
     const dailyXp = parseInt(result?.totalXp ?? '0', 10);
     const dailyGoal = user.dailyGoal || 50;
@@ -95,9 +107,13 @@ export class StudentProgressService {
       100,
     );
 
-    const streak = await this.calculateStreak(userId);
+    // Dùng currentStreak đã lưu trên user — không gọi lại DB.
+    // recordActivity() cập nhật field này mỗi khi user hoạt động.
+    const streak = user.currentStreak ?? 0;
 
-    return { dailyXp, dailyGoal, progressPercent, currentStreak: streak };
+    const progress: StudentProgress = { dailyXp, dailyGoal, progressPercent, currentStreak: streak };
+    await this.cacheManager.set(cacheKey, progress, 120_000); // cache 2 phút — giảm stampede tần suất
+    return progress;
   }
 
   async getLevelProgress(userId: string, levelId: string) {
@@ -115,6 +131,65 @@ export class StudentProgressService {
       .getMany();
   }
 
+  private async getGlobalLessonsAndVocabs(): Promise<{
+    lessons: Lesson[];
+    vocabMap: Map<string, string[]>;
+    allVocabIds: string[];
+  }> {
+    const CACHE_KEY = 'global_lessons_vocab_map';
+    const cached = await this.cacheManager.get<{
+      lessons: Lesson[];
+      vocabMapData: [string, string[]][];
+      allVocabIds: string[];
+    }>(CACHE_KEY);
+
+    if (cached) {
+      return {
+        lessons: cached.lessons,
+        vocabMap: new Map(cached.vocabMapData),
+        allVocabIds: cached.allVocabIds,
+      };
+    }
+
+    const lessons = await this.lessonRepo.find({
+      where: { status: 'PUBLISHED' as Lesson['status'] },
+      order: { displayOrder: 'ASC' as const },
+      take: 20,
+    });
+
+    const vocabMap = new Map<string, string[]>();
+    let allVocabIds: string[] = [];
+
+    if (lessons.length > 0) {
+      const lessonIds = lessons.map((l) => l.id);
+      const contents = await this.contentRepo
+        .createQueryBuilder('lc')
+        .select('lc.lesson_id', 'lessonId')
+        .addSelect('lc.content_id', 'vocabularyId')
+        .where('lc.lesson_id IN (:...ids)', { ids: lessonIds })
+        .andWhere('lc.content_type = :type', { type: ContentType.VOCABULARY })
+        .getRawMany<{ lessonId: string; vocabularyId: string }>();
+
+      for (const c of contents) {
+        if (!vocabMap.has(c.lessonId)) vocabMap.set(c.lessonId, []);
+        vocabMap.get(c.lessonId)!.push(c.vocabularyId);
+      }
+      allVocabIds = [...new Set(contents.map((c) => c.vocabularyId))];
+    }
+
+    await this.cacheManager.set(
+      CACHE_KEY,
+      {
+        lessons,
+        vocabMapData: Array.from(vocabMap.entries()),
+        allVocabIds,
+      },
+      3600_000,
+    );
+
+    return { lessons, vocabMap, allVocabIds };
+  }
+
   /**
    * Trả về các bài học được recommend cho user, sắp xếp theo tiến độ tăng dần.
    * Tiến độ = tỷ lệ từ vựng đã đạt mastery_level >= 2 / tổng số từ vựng trong bài.
@@ -123,36 +198,16 @@ export class StudentProgressService {
     userId: string,
     limit = 3,
   ): Promise<LessonProgressItem[]> {
-    // Get all published lessons
-    const lessons = await this.lessonRepo.find({
-      where: { status: 'PUBLISHED' as Lesson['status'] },
-      order: { displayOrder: 'ASC' as const },
-      take: 20,
-    });
+    const cacheKey = `recommended_lessons:${userId}`;
+    const cached = await this.cacheManager.get<LessonProgressItem[]>(cacheKey);
+    if (cached) return cached;
+
+    // Tối ưu: Load danh sách bài học và từ vựng từ Global Cache, tránh 500 VUs query cùng 1 dữ liệu tĩnh
+    const { lessons, vocabMap, allVocabIds } = await this.getGlobalLessonsAndVocabs();
 
     if (lessons.length === 0) return [];
 
-    const lessonIds = lessons.map((l) => l.id);
-
-    // Get all lesson → vocab mappings (VOCABULARY only)
-    const contents = await this.contentRepo
-      .createQueryBuilder('lc')
-      .select('lc.lesson_id', 'lessonId')
-      .addSelect('lc.content_id', 'vocabularyId')
-      .where('lc.lesson_id IN (:...ids)', { ids: lessonIds })
-      .andWhere('lc.content_type = :type', { type: ContentType.VOCABULARY })
-      .getRawMany<{ lessonId: string; vocabularyId: string }>();
-
-    // Group vocabIds by lesson
-    const vocabMap = new Map<string, string[]>();
-    for (const c of contents) {
-      if (!vocabMap.has(c.lessonId)) vocabMap.set(c.lessonId, []);
-      vocabMap.get(c.lessonId)!.push(c.vocabularyId);
-    }
-
-    const allVocabIds = [...new Set(contents.map((c) => c.vocabularyId))];
-
-    // Get user's progress for all those vocabularies
+    // Lấy tiến độ của RIÊNG user đó (Personalized query)
     const progressMap = new Map<string, number>();
     if (allVocabIds.length > 0) {
       const progressRows = await this.progressRepo
@@ -182,67 +237,14 @@ export class StudentProgressService {
           progress: Math.round((masteredCount / vocabIds.length) * 100),
         };
       })
-      .filter((l): l is LessonProgressItem => l !== null)
-      .sort((a, b) => a.progress - b.progress) // lowest progress first = most recommended
-      .slice(0, limit);
+      .filter((l): l is LessonProgressItem => l !== null);
 
-    return lessonProgress;
+    // Sort by progress ascending, so user focuses on uncompleted lessons
+    const recommended = lessonProgress.sort((a, b) => a.progress - b.progress).slice(0, limit);
+    await this.cacheManager.set(cacheKey, recommended, 300_000); // cache 5 phút
+    return recommended;
   }
 
-  private async calculateStreak(userId: string): Promise<number> {
-    const today = new Date();
-    
-    // Check today
-    const hasActivityToday = await this.hasActivityOnDate(userId, today);
-    let streak = 0;
-    let cursor = new Date(today);
-
-    if (hasActivityToday) {
-      streak = 1;
-      cursor.setDate(cursor.getDate() - 1);
-    } else {
-      // If no activity today, check yesterday
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const hasActivityYesterday = await this.hasActivityOnDate(userId, yesterday);
-      
-      if (hasActivityYesterday) {
-        streak = 1;
-        cursor = yesterday;
-        cursor.setDate(cursor.getDate() - 1);
-      } else {
-        // Neither today nor yesterday has activity -> streak is 0
-        return 0;
-      }
-    }
-
-    // Loop backwards from cursor to count continuous streak
-    while (true) {
-      const hasActivity = await this.hasActivityOnDate(userId, cursor);
-      if (!hasActivity) break;
-      streak++;
-      cursor.setDate(cursor.getDate() - 1);
-    }
-
-    return streak;
-  }
-
-  private async hasActivityOnDate(userId: string, date: Date): Promise<boolean> {
-    const dayStart = new Date(date);
-    dayStart.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(date);
-    dayEnd.setHours(23, 59, 59, 999);
-
-    return await this.attemptRepo
-      .createQueryBuilder('pa')
-      .select('1')
-      .where('pa.user_id = :userId', { userId })
-      .andWhere('pa.status = :status', { status: PracticeAttemptStatus.COMPLETED })
-      .andWhere('pa.created_at >= :start', { start: dayStart })
-      .andWhere('pa.created_at <= :end', { end: dayEnd })
-      .limit(1)
-      .getExists();
-  }
 
   async recordActivity(userId: string): Promise<void> {
     const today = this.toDateStr(new Date());

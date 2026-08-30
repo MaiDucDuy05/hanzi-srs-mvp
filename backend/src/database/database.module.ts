@@ -18,7 +18,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         synchronize: false, // schema quản lý bằng migration
         logging: false,
         extra: {
-          max: 50, // Tăng connection pool size để chịu tải Spike 500 VUs
+          max: 30, // Giữ an toàn dưới 100 (giới hạn của infra), nhường chỗ cho zombies/admin.
         },
       }),
     }),

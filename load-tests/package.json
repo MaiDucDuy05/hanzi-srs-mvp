@@ -11,7 +11,8 @@
     "load:soak": "k6 run scenarios/soak.js",
     "load:errors": "k6 run scenarios/errors.js",
     "load:ws": "node live-quiz-socket.js",
-    "bench:api": "node api-test.js"
+    "bench:api": "node api-test.js",
+    "load:spike:read": "k6 run scenarios/spike-read-only.js"
   },
   "dependencies": {
     "autocannon": "^8.0.0",

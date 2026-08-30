@@ -9,14 +9,18 @@
  *
  * EF is bounded [1.3, 2.6]; masteryLevel is bounded [0, 4].
  */
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { UserVocabularyProgress } from './entities/user-vocabulary-progress.entity';
 import { LessonContent } from '../curriculum/entities/lesson-content.entity';
 import { Vocabulary } from '../curriculum/entities/vocabulary.entity';
 import { TopicVocabulary } from '../curriculum/entities/topic-vocabulary.entity';
 import { SubmitReviewDto, SrsRating, UserVocabProgressDto } from './dto/srs.dto';
+
+const TTL_SRS_DUE = 30_000; // 30s — due items thay đổi sau mỗi review
 
 @Injectable()
 export class SrsService {
@@ -29,6 +33,7 @@ export class SrsService {
     private vocabRepo: Repository<Vocabulary>,
     @InjectRepository(TopicVocabulary)
     private topicVocabRepo: Repository<TopicVocabulary>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   /**
@@ -59,7 +64,12 @@ export class SrsService {
     this.applySm2(progress, dto.rating);
     progress.reviewCount += 1;
     progress.lastReviewedAt = new Date();
-    return this.progressRepo.save(progress);
+    const saved = await this.progressRepo.save(progress);
+
+    // Invalidate due-items cache sau khi review
+    await this.cacheManager.del(`srs:due:${userId}`);
+
+    return saved;
   }
 
   /**
@@ -122,6 +132,10 @@ export class SrsService {
    * Lấy danh sách các từ vựng đến hạn ôn tập cho hôm nay
    */
   async getDueItems(userId: string): Promise<Vocabulary[]> {
+    const cacheKey = `srs:due:${userId}`;
+    const cached = await this.cacheManager.get<Vocabulary[]>(cacheKey);
+    if (cached) return cached;
+
     const dueProgresses = await this.progressRepo
       .createQueryBuilder('p')
       .innerJoinAndSelect('p.vocabulary', 'v')
@@ -130,7 +144,9 @@ export class SrsService {
       .orderBy('p.nextReviewAt', 'ASC')
       .getMany();
 
-    return dueProgresses.map((p) => p.vocabulary);
+    const items = dueProgresses.map((p) => p.vocabulary);
+    await this.cacheManager.set(cacheKey, items, TTL_SRS_DUE);
+    return items;
   }
 
   /** @deprecated Use getProgress() directly with lessonId */

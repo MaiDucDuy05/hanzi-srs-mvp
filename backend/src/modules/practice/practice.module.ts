@@ -23,16 +23,18 @@ import { ResourcesModule } from '../resources/resources.module';
 import { TopicVocabulary } from '../curriculum/entities/topic-vocabulary.entity';
 import { LessonContent } from '../curriculum/entities/lesson-content.entity';
 import { Vocabulary } from '../curriculum/entities/vocabulary.entity';
-
 import { SrsModule } from '../srs/srs.module';
+import { QueueModule } from '../../common/queue/queue.module';
+import { PracticeEventsProcessor } from '../../common/queue/practice-events.processor';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([PracticeQuestion, PracticeAttempt, TopicVocabulary, LessonContent, Vocabulary]),
     SubscriptionModule,
-    AchievementsModule,
+    AchievementsModule, // Vẫn cần cho PracticeEventsProcessor
     ResourcesModule,
     SrsModule,
+    QueueModule,
   ],
   controllers: [
     PracticeQuestionController,
@@ -48,6 +50,7 @@ import { SrsModule } from '../srs/srs.module';
     FillBlankService,
     GradingService,
     HanziWritingService,
+    PracticeEventsProcessor, // Processor đăng ký ở đây để NestJS quản lý lifecycle
   ],
   exports: [PracticeAttemptService, SentenceOrderingService, FillBlankService, GradingService, HanziWritingService],
 })

@@ -2,7 +2,10 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  Inject,
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -31,6 +34,7 @@ export class UserService {
     private vocabProgressRepo: Repository<UserVocabularyProgress>,
     @InjectRepository(UserActivity)
     private activityRepo: Repository<UserActivity>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   async findAll(query: UserQueryDto): Promise<PaginatedResult<User>> {
@@ -150,16 +154,38 @@ export class UserService {
   }
 
   async findById(id: string): Promise<User & { vipValidUntil?: string | Date | null }> {
-    const user = await this.userRepo.findOne({ where: { id } });
-    if (!user) throw new NotFoundException('User not found');
-    
-    // Fetch VIP subscription to populate vipValidUntil
-    const sub = await this.subRepo.findOne({
-      where: { userId: id, status: SubscriptionStatus.ACTIVE, plan: SubscriptionPlan.VIP },
-      order: { expiresAt: 'DESC' }
-    });
+    // Cache 60s — auth/me là hot path (gọi mỗi page load), user profile ít thay đổi.
+    const cacheKey = `user:${id}`;
+    const cached = await this.cacheManager.get<User & { vipValidUntil?: string | Date | null }>(cacheKey);
+    if (cached) return cached;
 
-    return Object.assign(user, { vipValidUntil: sub?.expiresAt || null });
+    const [user, sub] = await Promise.all([
+      this.userRepo.findOne({ where: { id } }),
+      // Fetch VIP subscription để populate vipValidUntil
+      this.subRepo.findOne({
+        where: { userId: id, status: SubscriptionStatus.ACTIVE, plan: SubscriptionPlan.VIP },
+        order: { expiresAt: 'DESC' },
+      }),
+    ]);
+
+    if (!user) throw new NotFoundException('User not found');
+
+    // Extract primitive fields to avoid TypeORM proxy circular issues during serialization
+    const safeUser = {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName,
+      role: user.role,
+      status: user.status,
+      currentStreak: user.currentStreak,
+      totalExp: user.totalExp,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      vipValidUntil: sub?.expiresAt || null,
+    };
+    
+    await this.cacheManager.set(cacheKey, safeUser, 300_000); // 5 phút TTL
+    return safeUser as unknown as User & { vipValidUntil?: string | Date | null };
   }
 
   async create(dto: CreateUserDto): Promise<User> {
@@ -186,6 +212,8 @@ export class UserService {
     const { password, ...rest } = dto;
     Object.assign(user, rest, passwordHash ? { passwordHash } : {});
     const saved = await this.userRepo.save(user);
+    // Invalidate cache sau khi update
+    await this.cacheManager.del(`user:${id}`);
     const { passwordHash: _, ...safeUser } = saved;
     return safeUser as User;
   }
@@ -193,6 +221,7 @@ export class UserService {
   async softDelete(id: string): Promise<void> {
     const user = await this.findById(id);
     await this.userRepo.softRemove(user);
+    await this.cacheManager.del(`user:${id}`);
   }
 
   async restore(id: string): Promise<User> {

@@ -4,7 +4,10 @@ import {
   BadRequestException,
   HttpException,
   HttpStatus,
+  Inject,
 } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import type { Cache } from 'cache-manager';
 import { InjectRepository, InjectDataSource } from '@nestjs/typeorm';
 import {
   DataSource,
@@ -32,6 +35,7 @@ import {
   paginatedResult,
   findOrNotFound,
 } from '../../common/helpers/query-helpers';
+import { RedisUsageService } from './redis-usage.service';
 
 /** Ngày tính theo UTC (MVP); khi cấu hình resetTimezone sẽ đổi theo múi giờ. */
 function today(): string {
@@ -43,6 +47,7 @@ export class SubscriptionService {
   constructor(
     @InjectRepository(Subscription) private repo: Repository<Subscription>,
     private configCache: ConfigCacheService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
   async findAll(q: SubscriptionQueryDto) {
     const { page = 1, limit = 20, userId, plan, status } = q;
@@ -83,17 +88,29 @@ export class SubscriptionService {
   }
 
   async create(dto: CreateSubscriptionDto) {
-    return this.repo.save(this.repo.create(dto as any));
+    const sub = await this.repo.save(this.repo.create(dto as any)) as any as Subscription;
+    await this.cacheManager.del(`vip_entitlement:${sub.userId}`);
+    return sub;
   }
   async update(id: string, dto: UpdateSubscriptionDto) {
     const e = await this.findById(id);
     Object.assign(e, dto);
-    return this.repo.save(e);
+    const sub = await this.repo.save(e);
+    await this.cacheManager.del(`vip_entitlement:${sub.userId}`);
+    return sub;
   }
   async delete(id: string) {
-    await this.repo.remove(await this.findById(id));
+    const e = await this.findById(id);
+    await this.repo.remove(e);
+    await this.cacheManager.del(`vip_entitlement:${e.userId}`);
   }
   async checkVipEntitlement(userId: string): Promise<boolean> {
+    const cacheKey = `vip_entitlement:${userId}`;
+    const cached = await this.cacheManager.get<boolean>(cacheKey);
+    if (cached !== undefined && cached !== null) {
+      return cached;
+    }
+
     const sub = await this.repo.findOne({
       where: {
         userId,
@@ -101,21 +118,27 @@ export class SubscriptionService {
         plan: SubscriptionPlan.VIP,
       },
     });
-    if (!sub) return false;
     
-    if (sub.expiresAt) {
-      const gracePeriodDays = await this.configCache.get('VIP_GRACE_PERIOD_DAYS', 7);
-      const expiryDate = new Date(sub.expiresAt);
-      
-      // Add grace period to expiry date
-      const effectiveExpiryDate = new Date(expiryDate);
-      effectiveExpiryDate.setDate(effectiveExpiryDate.getDate() + Number(gracePeriodDays));
-      
-      if (effectiveExpiryDate < new Date()) {
-        return false;
+    let isVip = false;
+    if (sub) {
+      if (sub.expiresAt) {
+        const gracePeriodDays = await this.configCache.get('VIP_GRACE_PERIOD_DAYS', 7);
+        const expiryDate = new Date(sub.expiresAt);
+        
+        // Add grace period to expiry date
+        const effectiveExpiryDate = new Date(expiryDate);
+        effectiveExpiryDate.setDate(effectiveExpiryDate.getDate() + Number(gracePeriodDays));
+        
+        if (effectiveExpiryDate >= new Date()) {
+          isVip = true;
+        }
+      } else {
+        isVip = true;
       }
     }
-    return true;
+
+    await this.cacheManager.set(cacheKey, isVip, 60000); // 60 seconds
+    return isVip;
   }
 }
 
@@ -129,6 +152,7 @@ export class DailyUsageService {
     private settingsRepo: Repository<PracticeLimitSettings>,
     private subscriptionSvc: SubscriptionService,
     private configCache: ConfigCacheService,
+    private redisUsage: RedisUsageService,
   ) {}
 
   async findAll(q: DailyUsageQueryDto) {
@@ -145,7 +169,7 @@ export class DailyUsageService {
     return paginatedResult(data, total, page, limit);
   }
 
-  private async getFreeLimit(em?: EntityManager): Promise<number> {
+  private async getFreeLimit(): Promise<number> {
     // Read from central SystemConfig via cache
     // The previous PracticeLimitSettings entity is kept for backward compatibility if needed,
     // but the system config takes precedence in PR-31.
@@ -176,14 +200,12 @@ export class DailyUsageService {
   }
 
   /**
-   * Tiêu thụ 1 lượt TRONG transaction tạo attempt (PR-14 §3.2, §3.3):
-   * - VIP/Teacher/Admin miễn trừ (không tăng bộ đếm).
-   * - Row-lock (pessimistic_write) bản ghi usage để chống vượt giới hạn khi
-   *   hai request chạy đồng thời; nếu hết lượt ném HTTP 429 FREE_ATTEMPT_LIMIT_REACHED.
-   * - Nếu attempt tạo lỗi → transaction rollback → không mất lượt oan.
+   * Tiêu thụ 1 lượt TRONG request tạo attempt (PR-14 §3.2, §3.3):
+   * - VIP/Teacher/Admin miễn trừ.
+   * - Dùng Redis INCR (atomic, ~0.1ms) thay SELECT...FOR UPDATE.
+   * - Throw 429 nếu vượt limit.
    */
-  async consumeInTransaction(
-    em: EntityManager,
+  async consumeLimit(
     userId: string,
     activityKey: string,
     role: string | undefined,
@@ -193,65 +215,98 @@ export class DailyUsageService {
     const isVip = await this.subscriptionSvc.checkVipEntitlement(userId);
     if (isVip) return { allowed: true, usedCount: 0, limit: 0 };
 
-    const usageDate = today();
-    const freeLimit = await this.getFreeLimit(em);
-    const usageRepo = em.getRepository(DailyPracticeUsage);
+    const freeLimit = await this.getFreeLimit();
 
-    // SELECT ... FOR UPDATE: khoá dòng usage để hai request không cùng vượt giới hạn.
-    let usage = await usageRepo
-      .createQueryBuilder('u')
-      .setLock('pessimistic_write')
-      .where(
-        'u.userId = :userId AND u.activityKey = :activityKey AND u.usageDate = :usageDate',
-        { userId, activityKey, usageDate },
-      )
-      .getOne();
+    // --- Redis path (fast, no locking on DB) ---
+    const newCount = await this.redisUsage.increment(userId, activityKey);
+    if (newCount !== null) {
+      if (newCount > freeLimit) {
+        // Over limit: undo increment để không tính oan
+        await this.redisUsage.decrement(userId, activityKey);
+        throw new HttpException(
+          'FREE_ATTEMPT_LIMIT_REACHED: Bạn đã dùng hết lượt luyện tập của bài này hôm nay.',
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
+      }
+      return { allowed: true, usedCount: newCount, limit: freeLimit };
+    }
 
-    if (!usage) {
-      usage = usageRepo.create({
-        userId,
-        activityKey,
-        usageDate,
-        usedCount: 0,
-      });
-      try {
-        usage = await usageRepo.save(usage);
-      } catch (err) {
-        // Hai request cùng chèn bản ghi mới → dính unique(user,key,date);
-        // đọc lại bản ghi đã tồn tại rồi khoá để tăng tiếp.
-        if (!(err instanceof QueryFailedError)) throw err;
-        usage = await usageRepo
-          .createQueryBuilder('u')
-          .setLock('pessimistic_write')
-          .where(
-            'u.userId = :userId AND u.activityKey = :activityKey AND u.usageDate = :usageDate',
-            { userId, activityKey, usageDate },
-          )
-          .getOne();
-        if (!usage) {
-          // Winner đã rollback toàn bộ transaction → bản ghi không tồn tại,
-          // thử chèn lại một lần nữa (không được 429 oan).
-          usage = usageRepo.create({
-            userId,
-            activityKey,
-            usageDate,
-            usedCount: 0,
-          });
+    // --- Fallback: PG pessimistic lock khi Redis không khả dụng ---
+    return this.dataSource.transaction(async (em) => {
+      const usageDate = today();
+      const usageRepo = em.getRepository(DailyPracticeUsage);
+
+      let usage = await usageRepo
+        .createQueryBuilder('u')
+        .setLock('pessimistic_write')
+        .where(
+          'u.userId = :userId AND u.activityKey = :activityKey AND u.usageDate = :usageDate',
+          { userId, activityKey, usageDate },
+        )
+        .getOne();
+
+      if (!usage) {
+        usage = usageRepo.create({ userId, activityKey, usageDate, usedCount: 0 });
+        try {
           usage = await usageRepo.save(usage);
+        } catch (err) {
+          if (!(err instanceof QueryFailedError)) throw err;
+          usage = await usageRepo
+            .createQueryBuilder('u')
+            .setLock('pessimistic_write')
+            .where(
+              'u.userId = :userId AND u.activityKey = :activityKey AND u.usageDate = :usageDate',
+              { userId, activityKey, usageDate },
+            )
+            .getOne();
+          if (!usage) {
+            usage = usageRepo.create({ userId, activityKey, usageDate, usedCount: 0 });
+            usage = await usageRepo.save(usage);
+          }
         }
       }
+
+      if (!usage || usage.usedCount >= freeLimit) {
+        throw new HttpException(
+          'FREE_ATTEMPT_LIMIT_REACHED: Bạn đã dùng hết lượt luyện tập của bài này hôm nay.',
+          HttpStatus.TOO_MANY_REQUESTS,
+        );
+      }
+
+      usage.usedCount += 1;
+      await usageRepo.save(usage);
+      return { allowed: true, usedCount: usage.usedCount, limit: freeLimit };
+    });
+  }
+
+  async revertUsage(userId: string, activityKey: string, role: string | undefined): Promise<void> {
+    if (role === Role.TEACHER || role === Role.ADMIN) return;
+    const isVip = await this.subscriptionSvc.checkVipEntitlement(userId);
+    if (isVip) return;
+
+    // Ưu tiên Redis
+    if (this.redisUsage.isAvailable()) {
+      await this.redisUsage.decrement(userId, activityKey);
+      return;
     }
 
-    if (!usage || usage.usedCount >= freeLimit) {
-      throw new HttpException(
-        'FREE_ATTEMPT_LIMIT_REACHED: Bạn đã dùng hết lượt luyện tập của bài này hôm nay.',
-        HttpStatus.TOO_MANY_REQUESTS,
-      );
-    }
-
-    usage.usedCount += 1;
-    await usageRepo.save(usage);
-    return { allowed: true, usedCount: usage.usedCount, limit: freeLimit };
+    // Fallback Postgres revert
+    await this.dataSource.transaction(async (em) => {
+      const usageRepo = em.getRepository(DailyPracticeUsage);
+      const usage = await usageRepo
+        .createQueryBuilder('u')
+        .setLock('pessimistic_write')
+        .where(
+          'u.userId = :userId AND u.activityKey = :activityKey AND u.usageDate = :usageDate',
+          { userId, activityKey, usageDate: today() },
+        )
+        .getOne();
+      
+      if (usage && usage.usedCount > 0) {
+        usage.usedCount -= 1;
+        await usageRepo.save(usage);
+      }
+    });
   }
 }
 

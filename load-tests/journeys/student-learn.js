@@ -9,21 +9,37 @@ import { practiceAttempts, practiceSubmits, srsReviews } from '../lib/metrics.js
 // Write path chính của học sinh: complete-vocab / complete-grammar (PR-12).
 // Read-heavy (phản ánh load thật). Write step guarded bởi data từ read (skip nếu empty).
 
+/** UUID v4 pattern — validate trước khi dùng làm sourceId */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+function isValidUuid(s) { return typeof s === 'string' && UUID_RE.test(s); }
+
+/** GET /courses với retry đơn giản nếu trả empty (cold cache dưới spike). */
+function getCourses() {
+  let res = get('/courses');
+  let courses = parseBody(res)?.data ?? [];
+  // Retry tối đa 2 lần nếu trả empty — cold cache thường resolve sau 200-500ms
+  for (let i = 0; i < 2 && courses.length === 0 && res.status === 200; i++) {
+    sleep(0.3);
+    res = get('/courses');
+    courses = parseBody(res)?.data ?? [];
+  }
+  return { res, courses };
+}
+
 export function studentLearnJourney(data) {
   const t = pickToken(data);
   setAuthCookie(t.token);
   let lessonId = null;
 
-  // 1) List courses
-  let res = get('/courses');
-  check(res, { 'courses 200': (r) => r.status === 200 });
-  const courses = parseBody(res)?.data ?? [];
+  // 1) List courses — retry nếu empty
+  const { res: coursesRes, courses } = getCourses();
+  check(coursesRes, { 'courses 200': (r) => r.status === 200 });
   sleep(think());
 
-  // 2) Course detail + lessons
+  // 2) Course detail + lessons — chỉ gọi khi có course thực sự
   const course = pickRandom(courses);
-  if (course?.id) {
-    res = get(`/courses/${course.id}`);
+  if (course?.id && isValidUuid(course.id)) {
+    let res = get(`/courses/${course.id}`);
     check(res, { 'course detail 200': (r) => r.status === 200 });
     sleep(think());
 
@@ -33,12 +49,15 @@ export function studentLearnJourney(data) {
     const lesson = pickRandom(lessons);
     // API trả {id: courseLessonId, lessonId: actualLessonId}. Dùng lessonId cho
     // các endpoint /student/progress/lesson/:id (FK tới lessons.id, không phải course_lessons.id).
-    if (lesson?.lessonId) lessonId = lesson.lessonId;
+    // Validate UUID trước khi dùng — tránh gửi sourceId invalid lên practice-attempts.
+    if (lesson?.lessonId && isValidUuid(lesson.lessonId)) {
+      lessonId = lesson.lessonId;
+    }
     sleep(think());
   }
 
   // 3) Recommended lessons (PR-12 — personalized)
-  res = get('/student/recommended-lessons');
+  let res = get('/student/recommended-lessons');
   check(res, { 'recommended 200': (r) => r.status === 200 });
   sleep(think());
 
@@ -48,7 +67,8 @@ export function studentLearnJourney(data) {
   sleep(think());
 
   // 5) Start + submit practice attempt (FLASHCARD + LESSON)
-  if (lessonId) {
+  // Guard: chỉ gửi khi lessonId đã validate là UUID hợp lệ
+  if (lessonId && isValidUuid(lessonId)) {
     res = post('/practice-attempts', {
       practiceType: 'FLASHCARD',
       sourceType: 'LESSON',
@@ -58,7 +78,7 @@ export function studentLearnJourney(data) {
     if (ok) practiceAttempts.add(1);
     sleep(think());
     const attempt = parseBody(res)?.data;
-    if (attempt?.id) {
+    if (attempt?.id && isValidUuid(attempt.id)) {
       res = patch(`/practice-attempts/${attempt.id}`, {
         score: 80, correctCount: 8, wrongCount: 2, moveCount: 0, durationSeconds: 60,
       });
@@ -85,7 +105,7 @@ export function studentLearnJourney(data) {
   const due = parseBody(res)?.data ?? [];
   sleep(think());
   const item = pickRandom(due);
-  if (item?.vocabularyId) {
+  if (item?.vocabularyId && isValidUuid(item.vocabularyId)) {
     // Pick rating round-robin để test cả 4 path (AGAIN/HARD/GOOD/EASY).
     const rating = ['AGAIN', 'HARD', 'GOOD', 'EASY'][Math.floor(Math.random() * 4)];
     res = post('/srs/review', { vocabularyId: item.vocabularyId, rating });

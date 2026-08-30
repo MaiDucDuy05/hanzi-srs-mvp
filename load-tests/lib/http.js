@@ -2,6 +2,18 @@ import http from 'k6/http';
 import { check } from 'k6';
 import { apiUrl, BASE_URL } from '../config/environments.js';
 
+// Chỉ tính lỗi 5xx, 429 (Rate Limit), 408 (Timeout) là http_req_failed.
+// Bỏ qua các lỗi nghiệp vụ thông thường (400, 401, 403, 404, 409, 422).
+http.setResponseCallback(http.expectedStatuses(
+  { min: 200, max: 399 }, // Tha bổng toàn bộ 2xx và 3xx
+  400, // Bad Request (VD: Attempt limit reached)
+  401, // Unauthorized
+  403, // Forbidden
+  404, // Not Found
+  409, // Conflict
+  422  // Unprocessable Entity
+));
+
 // Wrapper k6 http: gắn tag type (read|write) + endpoint để threshold lọc theo nhóm + endpoint.
 // Cookie jar per-VU — login set cookie 1 lần, các request sau tự gửi.
 

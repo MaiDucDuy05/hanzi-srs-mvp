@@ -14,6 +14,12 @@ export const practiceSubmits = new Counter('practice_submits_total');
 export const srsReviews = new Counter('srs_reviews_total');
 // Achievements dashboard có data thật (streak > 0).
 export const achievementsUnlocked = new Counter('achievements_unlocked_total');
+// Test attempts (start) — đo mỗi test attempt được bắt đầu.
+export const testAttempts = new Counter('test_attempts_total');
+// Test submits — test attempt hoàn thành.
+export const testSubmits = new Counter('test_submits_total');
+// Test answers submitted — mỗi câu hỏi trả lời.
+export const testAnswers = new Counter('test_answers_total');
 // Admin write ops — DB contention watchpoint.
 export const adminWrites = new Counter('admin_writes_total');
 // Subscription quota block — 429-style nghiệp vụ (không phải throttle IP).

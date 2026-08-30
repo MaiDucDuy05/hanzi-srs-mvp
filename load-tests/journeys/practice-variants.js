@@ -8,6 +8,22 @@ import { practiceAttempts, practiceSubmits } from '../lib/metrics.js';
 // Hanzi-writing là core MVP signature feature (PR-13). Fill-blank/sentence-ordering
 // là core grammar/vocab practice (PR-10/12). Mỗi variant = start + submit.
 
+/** UUID v4 pattern — validate trước khi dùng làm sourceId */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+function isValidUuid(s) { return typeof s === 'string' && UUID_RE.test(s); }
+
+/** GET /courses với retry đơn giản nếu trả empty (cold cache dưới spike). */
+function getCourses() {
+  let res = get('/courses');
+  let courses = parseBody(res)?.data ?? [];
+  for (let i = 0; i < 2 && courses.length === 0 && res.status === 200; i++) {
+    sleep(0.3);
+    res = get('/courses');
+    courses = parseBody(res)?.data ?? [];
+  }
+  return courses;
+}
+
 /** Helper: start attempt với body, trả {attemptId, ...}. */
 function startVariant(path, body) {
   const res = post(path, body);
@@ -21,17 +37,16 @@ export function practiceVariantsJourney(data) {
   setAuthCookie(t.token);
 
   // Browse 1 lesson để có sourceId cho các variant.
-  let res = get('/courses');
-  const courses = parseBody(res)?.data ?? [];
+  const courses = getCourses();
   sleep(think());
   const course = pickRandom(courses);
   let lessonId = null;
-  if (course?.id) {
-    res = get(`/course-lessons?courseId=${course.id}`);
+  if (course?.id && isValidUuid(course.id)) {
+    let res = get(`/course-lessons?courseId=${course.id}`);
     const lessons = parseBody(res)?.data ?? [];
     const lesson = pickRandom(lessons);
-    // API trả {id, lessonId} — dùng lessonId (FK tới lessons).
-    if (lesson?.lessonId) lessonId = lesson.lessonId;
+    // API trả {id, lessonId} — dùng lessonId (FK tới lessons). Validate UUID.
+    if (lesson?.lessonId && isValidUuid(lesson.lessonId)) lessonId = lesson.lessonId;
   }
   if (!lessonId) {
     // Không có lesson → skip toàn bộ variants (không fail journey).

@@ -33,12 +33,17 @@ export const thresholds = {
   'http_req_duration{endpoint:student/progress}': ['p(95)<300', 'p(99)<1500'],
   'http_req_duration{endpoint:vocabularies}': ['p(95)<300', 'p(99)<1500'],
   'http_req_duration{endpoint:achievements}': ['p(95)<250', 'p(99)<1000'],
+  'http_req_duration{endpoint:tests}': ['p(95)<300', 'p(99)<1500'],
+  'http_req_duration{endpoint:test-assignments}': ['p(95)<300', 'p(99)<1500'],
+  'http_req_duration{endpoint:test-questions}': ['p(95)<300', 'p(99)<1500'],
+  'http_req_duration{endpoint:test-attempts}': ['p(95)<500', 'p(99)<2000'],
 
   // Per-endpoint error rate
   'http_req_failed{endpoint:auth/me}': ['rate<0.01'],
   'http_req_failed{endpoint:courses}': ['rate<0.01'],
   'http_req_failed{endpoint:practice-attempts}': ['rate<0.01'],
   'http_req_failed{endpoint:srs/review}': ['rate<0.01'],
+  'http_req_failed{endpoint:test-attempts}': ['rate<0.01'],
 };
 
 // Stress: lỏng hơn — chấp nhận error tới 5%, p95 write tới 1500ms (gần điểm gãy).
@@ -58,15 +63,20 @@ export const stressThresholds = {
   'http_req_duration{endpoint:practice-questions}': ['p(95)<1000', 'p(99)<3000'],
   'http_req_duration{endpoint:practice-attempts}': ['p(95)<1500', 'p(99)<4000'],
   'http_req_duration{endpoint:srs/due}': ['p(95)<1000', 'p(99)<3000'],
-  'http_req_duration{endpoint:srs/review}': ['p(95)<1500', 'p(99)<4000'],
+  'http_req_duration{endpoint:srs/review}': ['p(95)<1000', 'p(99)<3000'],
   'http_req_duration{endpoint:student/progress}': ['p(95)<1000', 'p(99)<3000'],
   'http_req_duration{endpoint:vocabularies}': ['p(95)<1000', 'p(99)<3000'],
-  'http_req_duration{endpoint:achievements}': ['p(95)<1000', 'p(99)<3000'],
+  'http_req_duration{endpoint:achievements}': ['p(95)<800', 'p(99)<3000'],
+  'http_req_duration{endpoint:tests}': ['p(95)<1000', 'p(99)<3000'],
+  'http_req_duration{endpoint:test-assignments}': ['p(95)<1000', 'p(99)<3000'],
+  'http_req_duration{endpoint:test-questions}': ['p(95)<1000', 'p(99)<3000'],
+  'http_req_duration{endpoint:test-attempts}': ['p(95)<1500', 'p(99)<4000'],
 
   // Per-endpoint error rate
   'http_req_failed{endpoint:courses}': ['rate<0.05'],
   'http_req_failed{endpoint:practice-attempts}': ['rate<0.05'],
   'http_req_failed{endpoint:srs/review}': ['rate<0.05'],
+  'http_req_failed{endpoint:test-attempts}': ['rate<0.05'],
 };
 
 // Mục tiêu WebSocket (live-quiz) — dùng trong Node script, k6 không track.

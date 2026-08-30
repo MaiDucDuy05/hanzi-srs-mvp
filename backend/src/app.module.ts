@@ -28,11 +28,15 @@ import { QuestionBankModule } from './modules/question-bank/question-bank.module
 import { LiveQuizModule } from './modules/live-quiz/live-quiz.module';
 import { StudyModule } from './modules/study/study.module';
 import { AwsModule } from './modules/aws/aws.module';
+import { AppCacheModule } from './common/cache/app-cache.module';
+import { QueueModule } from './common/queue/queue.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
+    AppCacheModule,
+    QueueModule,
     ThrottlerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

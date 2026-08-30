@@ -1,6 +1,6 @@
 import { sleep, check } from 'k6';
 import http from 'k6/http';
-import { post, get, setAuthCookie, parseBody } from '../lib/http.js';
+import { post, get, patch, setAuthCookie, parseBody } from '../lib/http.js';
 import { pickToken } from './auth.js';
 import { apiUrl } from '../config/environments.js';
 import { businessErrors } from '../lib/metrics.js';
@@ -59,4 +59,39 @@ export function errorCasesJourney(data) {
   setAuthCookie(admin.token);
   res = get('/admin/courses');
   check(res, { 'admin restored 200': (r) => r.status === 200 });
+
+  // ─ Quiz-Specific Error Cases (PR-05) ────────────────────────────────
+
+  // 6) 404 — POST /test-attempts với invalid testId (fake UUID).
+  const fakeTestId = '550e8400-e29b-41d4-a716-446655440000';
+  res = post('/test-attempts', { testId: fakeTestId }, { tags: { type: 'write-expected-error' } });
+  check(res, { 'invalid testId 404/400': (r) => r.status === 404 || r.status === 400 });
+  if ([404, 400].includes(res.status)) businessErrors.add(1);
+  sleep(0.3);
+
+  // 7) 400 — POST /test-attempts với invalid body (missing testId).
+  res = post('/test-attempts', { assignmentId: 'random' }, { tags: { type: 'write-expected-error' } });
+  check(res, { 'missing testId 400/422': (r) => r.status === 400 || r.status === 422 });
+  if ([400, 422].includes(res.status)) businessErrors.add(1);
+  sleep(0.3);
+
+  // 8) 404 — GET /test-attempts/:id với invalid attemptId (fake UUID).
+  const fakeAttemptId = '550e8400-e29b-41d4-a716-446655440001';
+  res = get(`/test-attempts/${fakeAttemptId}`, { tags: { type: 'read-expected-error' } });
+  check(res, { 'invalid attemptId 404': (r) => r.status === 404 });
+  if (res.status === 404) businessErrors.add(1);
+  sleep(0.3);
+
+  // 9) 400 — PATCH /test-attempts/:id với missing durationSeconds.
+  //    Use fake ID để trigger 404 trước (không care about 400 validation order)
+  res = patch(`/test-attempts/${fakeAttemptId}`, {}, { tags: { type: 'write-expected-error' } });
+  check(res, { 'patch attempt 400/404': (r) => r.status === 400 || r.status === 404 });
+  if ([400, 404].includes(res.status)) businessErrors.add(1);
+  sleep(0.3);
+
+  // 10) 404 — GET /test-questions?testId=invalid
+  res = get('/test-questions?testId=invalid', { tags: { type: 'read-expected-error' } });
+  check(res, { 'invalid testId query 400/404': (r) => r.status === 400 || r.status === 404 });
+  if ([400, 404].includes(res.status)) businessErrors.add(1);
+  sleep(0.3);
 }
