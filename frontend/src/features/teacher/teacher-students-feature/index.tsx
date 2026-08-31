@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { resourceApi } from '@/lib/api/endpoints';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
+import { Pagination } from '@/features/ui/components/pagination';
 import type { Student, Mistake } from './types';
 import { sortByFailCount } from './utils';
 import { StudentCard } from './components/student-card';
@@ -13,6 +14,11 @@ import { MistakeCard } from './components/mistake-card';
 
 export function TeacherStudentsFeature() {
   const [students, setStudents] = useState<Student[]>([]);
+  const [meta, setMeta] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 });
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [searchInput, setSearchInput] = useState('');
+  const [search, setSearch] = useState('');
   const [previewMistakes, setPreviewMistakes] = useState<Mistake[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -20,16 +26,29 @@ export function TeacherStudentsFeature() {
   const [studentModalOpen, setStudentModalOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
+  // Debounce search
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      if (search !== searchInput) {
+        setSearch(searchInput);
+        setPage(1);
+      }
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchInput, search]);
+
   useEffect(() => {
     let cancelled = false;
     const loadData = async () => {
+      setLoading(true);
       try {
         const [studentsData, mistakesData] = await Promise.all([
-          resourceApi.listStudentStats({}),
+          resourceApi.listStudentStats({ page, limit, search }),
           resourceApi.listMistakes({ limit: 5 }),
         ]);
         if (cancelled) return;
-        setStudents(Array.isArray(studentsData) ? studentsData : []);
+        setStudents(Array.isArray(studentsData?.data) ? studentsData.data : []);
+        if (studentsData?.meta) setMeta(studentsData.meta);
         setPreviewMistakes(sortByFailCount(Array.isArray(mistakesData) ? mistakesData : []));
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Lỗi tải danh sách học viên.');
@@ -39,7 +58,7 @@ export function TeacherStudentsFeature() {
     };
     loadData();
     return () => { cancelled = true; };
-  }, []);
+  }, [page, limit, search]);
 
   if (loading) return <PageLoading label="Đang tải dữ liệu học viên..." />;
   if (error) return <ErrorState message={error} onRetry={() => window.location.reload()} />;
@@ -85,14 +104,38 @@ export function TeacherStudentsFeature() {
       <div className="flex flex-col xl:flex-row gap-8">
         {/* Left: Students */}
         <div className="flex-1">
-          <div className="flex items-center gap-2 mb-6 text-[#4a5a3a]">
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-            <h2 className="font-bold text-[16px]">Active Students</h2>
-            <span className="text-[12px] text-gray-400 font-medium">({students.length} học sinh)</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div className="flex items-center gap-2 text-[#4a5a3a]">
+              <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <h2 className="font-bold text-[16px]">Active Students</h2>
+              <span className="text-[12px] text-gray-400 font-medium whitespace-nowrap">({meta.total || students.length} học sinh)</span>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                placeholder="Tìm kiếm học viên..."
+                className="px-4 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1f5333] min-w-[200px]"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
+              <select
+                className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#1f5333]"
+                value={limit}
+                onChange={(e) => {
+                  setLimit(Number(e.target.value));
+                  setPage(1);
+                }}
+              >
+                <option value={10}>10</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             {students.length ? (
               students.map((s) => (
                 <StudentCard
@@ -105,6 +148,13 @@ export function TeacherStudentsFeature() {
               <p className="text-gray-500 text-sm italic col-span-2">Chưa có học viên nào trong danh sách.</p>
             )}
           </div>
+          {meta.totalPages > 1 && (
+            <Pagination
+              page={page}
+              totalPages={meta.totalPages}
+              onPage={setPage}
+            />
+          )}
         </div>
 
         {/* Right: Error Notebook */}

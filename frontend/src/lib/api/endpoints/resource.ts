@@ -65,8 +65,8 @@ export const resourceApi = {
   listUsers: (params: { page?: number; limit?: number } = {}) =>
     apiFetch<Paginated<User>>(`/users${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
 
-  listStudentStats: (params: { page?: number; limit?: number } = {}) =>
-    apiFetch<Paginated<any>>(`/users/students/stats${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
+  listStudentStats: (params: { page?: number; limit?: number; search?: string } = {}) =>
+    apiFetch<Paginated<any>>(`/users/students/stats${toQuery({ ...params, limit: params.limit ?? 10 })}`),
 
   listStudentActivities: (params: { limit?: number } = {}) =>
     apiFetch<Single<any[]>>(`/users/students/activities${toQuery({ limit: params.limit ?? 10 })}`).then((r) => r.data),
