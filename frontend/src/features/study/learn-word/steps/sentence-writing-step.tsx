@@ -54,7 +54,7 @@ export function SentenceWritingStep({ vocabulary, onNext }: SentenceWritingStepP
   };
 
   return (
-    <div className="flex flex-col h-full w-full max-w-3xl mx-auto items-center justify-center animate-in fade-in slide-in-from-bottom-8 duration-700 relative">
+    <div className="flex flex-col min-h-full w-full max-w-3xl mx-auto items-center animate-in fade-in slide-in-from-bottom-8 duration-700 relative">
       
       {/* Decorative background blurs */}
       <div className="absolute top-0 right-0 w-64 h-64 bg-[#1f5333]/5 rounded-full blur-3xl pointer-events-none -z-10"></div>

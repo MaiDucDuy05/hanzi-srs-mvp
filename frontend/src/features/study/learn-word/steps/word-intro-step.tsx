@@ -24,7 +24,7 @@ export function WordIntroStep({ vocabulary, onNext }: WordIntroStepProps) {
   // We can also use pinyin-pro for the Chinese part if possible.
   
   return (
-    <div className="flex flex-col h-full w-full max-w-3xl mx-auto items-center justify-center text-center animate-in fade-in slide-in-from-bottom-8 duration-700">
+    <div className="flex flex-col min-h-full w-full max-w-3xl mx-auto items-center text-center animate-in fade-in slide-in-from-bottom-8 duration-700">
       
       {/* Decorative background blurs */}
       <div className="absolute top-1/4 left-1/4 w-48 h-48 bg-green-200/40 rounded-full blur-3xl pointer-events-none -z-10"></div>

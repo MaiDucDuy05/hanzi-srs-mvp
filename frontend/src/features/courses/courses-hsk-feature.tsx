@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { GraduationCap, BookOpen, ArrowRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { curriculumApi } from '@/lib/api/endpoints';
 import type { HskLevel } from '@/lib/api/types';
 import { PageLoading } from '@/features/ui/components/spinner';
@@ -10,6 +11,7 @@ import { ErrorState } from '@/features/ui/components/error-state';
 
 export function CoursesHskFeature() {
   const router = useRouter();
+  const t = useTranslations('Courses');
   const [levels, setLevels] = useState<HskLevel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +29,7 @@ export function CoursesHskFeature() {
     return () => { cancelled = true; };
   }, []);
 
-  if (loading) return <PageLoading label="Đang tải khóa học HSK..." />;
+  if (loading) return <PageLoading label={t('loadingHsk')} />;
   if (error) return <ErrorState message={error} onRetry={() => location.reload()} />;
 
   return (
@@ -45,7 +47,7 @@ export function CoursesHskFeature() {
           <div className="h-20 w-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
             <BookOpen className="h-10 w-10 text-gray-300" />
           </div>
-          <p className="text-gray-500 font-bold">Chưa có khóa học HSK nào.</p>
+          <p className="text-gray-500 font-bold">{t('noHsk')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -62,19 +64,19 @@ export function CoursesHskFeature() {
                 </div>
                 <div className="flex items-center gap-1 text-xs font-bold text-[#85d038] bg-[#ecfce7] px-3 py-1 rounded-full">
                   <BookOpen className="h-3.5 w-3.5" strokeWidth={2.5} />
-                  {level.vocabularyCount} từ
+                  {level.vocabularyCount} {t('words')}
                 </div>
               </div>
 
               {/* Title */}
               <h3 className="text-xl font-extrabold text-[#11321e] mb-1">{level.name}</h3>
               <p className="text-sm text-gray-400 font-medium mb-4 line-clamp-2">
-                HSK cấp độ {level.code.replace('HSK', '')} — {level.vocabularyCount} từ vựng
+                {t('hskLevelFormat', { level: level.code.replace('HSK', ''), count: level.vocabularyCount })}
               </p>
 
               {/* Action */}
               <div className="flex items-center gap-2 text-[#85d038] font-bold text-sm group-hover:gap-3 transition-all">
-                <span>Học ngay</span>
+                <span>{t('learnNow')}</span>
                 <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
               </div>
             </button>

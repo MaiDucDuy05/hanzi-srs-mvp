@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { BookMarked, BookOpen, ArrowRight, Search } from 'lucide-react';
 import { curriculumApi } from '@/lib/api/endpoints';
 import type { Topic } from '@/lib/api/types';
@@ -19,6 +20,7 @@ const TOPIC_GRADIENTS = [
 
 export function CoursesTopicFeature() {
   const router = useRouter();
+  const t = useTranslations('Courses');
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +39,7 @@ export function CoursesTopicFeature() {
     return () => { cancelled = true; };
   }, []);
 
-  if (loading) return <PageLoading label="Đang tải chủ đề..." />;
+  if (loading) return <PageLoading label={t('loadingTopics')} />;
   if (error) return <ErrorState message={error} onRetry={() => location.reload()} />;
 
   const filteredTopics = topics.filter(topic => 
@@ -90,7 +92,7 @@ export function CoursesTopicFeature() {
                     </div>
                     <div className="flex items-center gap-1 text-xs font-bold text-[#85d038] bg-white/70 px-3 py-1 rounded-full backdrop-blur-sm">
                       <BookOpen className="h-3.5 w-3.5" strokeWidth={2.5} />
-                      {topic.vocabularyCount} từ
+                      {topic.vocabularyCount} {t('words')}
                     </div>
                   </div>
                 </div>
@@ -104,7 +106,7 @@ export function CoursesTopicFeature() {
 
                   {/* Action */}
                   <div className="flex items-center gap-2 text-[#85d038] font-bold text-sm group-hover:gap-3 transition-all">
-                    <span>Học ngay</span>
+                    <span>{t('learnNow')}</span>
                     <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
                   </div>
                 </div>

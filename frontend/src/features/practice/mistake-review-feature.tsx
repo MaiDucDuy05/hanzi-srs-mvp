@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { resourceApi } from '@/lib/api/endpoints';
 import { PageLoading } from '@/features/ui/components/spinner';
@@ -16,6 +17,7 @@ export function MistakeReviewFeature() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const filter = searchParams.get('filter') || 'recent';
+  const t = useTranslations('Practice');
 
   const [mistakes, setMistakes] = useState<MistakeBookEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -37,7 +39,7 @@ export function MistakeReviewFeature() {
       })
       .catch(err => {
         if (!cancelled) {
-          setError(err.message || 'Lỗi khi tải sổ lỗi sai');
+          setError(err.message || t('errorLoadingMistakes'));
           setLoading(false);
         }
       });
@@ -62,15 +64,15 @@ export function MistakeReviewFeature() {
     }
   };
 
-  if (loading) return <PageLoading label="Đang chuẩn bị ôn tập..." />;
+  if (loading) return <PageLoading label={t('preparingReview')} />;
   if (error) return <ErrorState message={error} onRetry={() => router.back()} />;
   
   if (mistakes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4">
-        <h2 className="text-2xl font-bold">Không có lỗi sai nào!</h2>
-        <p className="text-gray-500">Tuyệt vời, bạn không có câu nào cần ôn tập lúc này.</p>
-        <Button onClick={() => router.push('/dashboard/practice')}>Quay lại</Button>
+        <h2 className="text-2xl font-bold">{t('noMistakes')}</h2>
+        <p className="text-gray-500">{t('noMistakesDesc')}</p>
+        <Button onClick={() => router.push('/dashboard/practice')}>{t('goBack')}</Button>
       </div>
     );
   }
@@ -82,8 +84,8 @@ export function MistakeReviewFeature() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-4">
         <GameSummary
-          title="Tuyệt vời! 🎉"
-          subtitle={`Hoàn thành Ôn tập Lỗi sai`}
+          title={t('greatJob')}
+          subtitle={t('mistakeReviewCompleted')}
           result={{ correctCount, wrongCount: total - correctCount, moveCount: 0, score: Math.round(correctCount / total * 100), answerData: {} }}
           elapsed={elapsed}
           onReplay={() => window.location.reload()}
@@ -104,7 +106,7 @@ export function MistakeReviewFeature() {
     <div className="w-full flex flex-col h-full p-4 sm:p-8">
       <header className="flex flex-wrap items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-black text-[#3e5c46] font-heading tracking-tight">Ôn tập lỗi sai ({currentIndex + 1}/{mistakes.length})</h1>
+          <h1 className="text-3xl sm:text-4xl font-black text-[#3e5c46] font-heading tracking-tight">{t('mistakeReviewTitle')} ({currentIndex + 1}/{mistakes.length})</h1>
         </div>
       </header>
 
@@ -116,6 +118,7 @@ export function MistakeReviewFeature() {
 }
 
 function MistakeQuestionRenderer({ mistake, onComplete }: { mistake: MistakeBookEntry, onComplete: (res: any) => void }) {
+  const t = useTranslations('Practice');
   const snapshot = mistake.questionSnapshot as any;
 
   if (mistake.sourceType === 'HANZI_WRITING') {
@@ -165,13 +168,14 @@ function MistakeQuestionRenderer({ mistake, onComplete }: { mistake: MistakeBook
 
   return (
     <div className="flex flex-col items-center justify-center p-8">
-      <p className="text-red-500 font-bold mb-4">Loại câu hỏi này chưa được hỗ trợ ôn tập ({mistake.sourceType})</p>
-      <Button onClick={() => onComplete({ correctCount: 0 })}>Bỏ qua</Button>
+      <p className="text-red-500 font-bold mb-4">{t('unsupportedQuestion')} ({mistake.sourceType})</p>
+      <Button onClick={() => onComplete({ correctCount: 0 })}>{t('skip')}</Button>
     </div>
   );
 }
 
 function FillBlankReviewWrapper({ mistake, question, onComplete }: any) {
+  const t = useTranslations('Practice');
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
   
   return (
@@ -193,12 +197,12 @@ function FillBlankReviewWrapper({ mistake, question, onComplete }: any) {
       />
       {feedback === 'correct' && (
         <div className="mt-4 p-4 bg-green-100 text-green-700 rounded-xl font-bold w-full max-w-2xl text-center">
-          Chính xác!
+          {t('correct')}
         </div>
       )}
       {feedback === 'wrong' && (
         <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-xl font-bold w-full max-w-2xl text-center">
-          Sai rồi! Đáp án đúng là: {(mistake.correctAnswer as any)?.correctTokenId}
+          {t('wrongAnswer')} {(mistake.correctAnswer as any)?.correctTokenId}
         </div>
       )}
     </div>
@@ -206,6 +210,7 @@ function FillBlankReviewWrapper({ mistake, question, onComplete }: any) {
 }
 
 function SentenceReviewWrapper({ mistake, questions, onComplete }: any) {
+  const t = useTranslations('Practice');
   const [userAnswers, setUserAnswers] = useState<Record<string, string[]>>({});
   const [feedback, setFeedback] = useState<'correct' | 'wrong' | null>(null);
 
@@ -273,12 +278,12 @@ function SentenceReviewWrapper({ mistake, questions, onComplete }: any) {
       />
       {feedback === 'correct' && (
         <div className="absolute bottom-32 p-4 bg-green-100 text-green-700 rounded-xl font-bold w-full max-w-2xl text-center z-50 shadow-lg border-2 border-green-500">
-          Chính xác!
+          {t('correct')}
         </div>
       )}
       {feedback === 'wrong' && (
         <div className="absolute bottom-32 p-4 bg-red-100 text-red-700 rounded-xl font-bold w-full max-w-2xl text-center z-50 shadow-lg border-2 border-red-500">
-          Sai rồi! Đáp án đúng: {(mistake.correctAnswer as any)?.correctOrder?.map((id: string) => q.tokens.find((t: any) => t.id === id)?.text).join('')}
+          {t('wrongAnswer')} {(mistake.correctAnswer as any)?.correctOrder?.map((id: string) => q.tokens.find((t: any) => t.id === id)?.text).join('')}
         </div>
       )}
     </div>

@@ -154,7 +154,13 @@ h6 {
   width: 0px;
   background: transparent;
 }
+
 * {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
+}
+/* Fix for Pinyin font rendering */
+ruby rt, .pinyin-text {
+  font-family: var(--font-nunito), var(--font-inter), Arial, Helvetica, sans-serif !important;
+  letter-spacing: 0.025em;
 }

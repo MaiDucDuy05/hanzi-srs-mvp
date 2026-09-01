@@ -195,10 +195,12 @@ export class PracticeAttemptService {
       }
     }
 
-    Object.assign(attempt, dto, {
+    const updateData = {
+      ...dto,
       status: PracticeAttemptStatus.COMPLETED,
       completedAt: new Date(),
-    });
+    };
+    Object.assign(attempt, updateData);
 
     const savedAttempt = await this.repo.save(attempt);
 

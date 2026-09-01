@@ -86,7 +86,7 @@ export function StudyFeature() {
 
   if (mode === 'learn-word') {
     return (
-      <div className="w-full h-[80vh] pt-4 pb-12">
+      <div className="w-full h-[90vh] min-h-[600px] pt-4 pb-12">
         <LearnWordFlow
           vocabularies={vocabularies}
           initialIndex={learnIndex}

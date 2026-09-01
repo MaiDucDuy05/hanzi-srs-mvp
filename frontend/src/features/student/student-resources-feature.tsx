@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardHeader, CardBody } from '@/features/ui/components/card';
 import { Button } from '@/features/ui/components/button';
 import { Input } from '@/features/ui/components/form';
@@ -11,6 +12,7 @@ import { DocumentViewerModal } from '@/features/ui/components/document-viewer-mo
 import type { Resource } from '@/lib/api/types';
 
 export function StudentResourcesFeature() {
+  const t = useTranslations('Resources');
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -28,7 +30,7 @@ export function StudentResourcesFeature() {
       const mockBooks: Resource[] = Array.from({ length: 8 }).map((_, i) => ({
         id: `mock-book-${i}`,
         title: `Giáo trình Hán ngữ Quyển ${i + 1}`,
-        description: 'Sách giáo khoa cơ bản cho người mới bắt đầu.',
+        description: t('defaultDesc'),
         tier: i >= 4 ? 'PREMIUM' : 'FREE',
         status: 'PUBLISHED',
         fileKey: '',
@@ -58,11 +60,11 @@ export function StudentResourcesFeature() {
         setViewerUrl(res.downloadUrl);
         setViewerDoc({ id: resource.id, title: resource.title, tier: resource.tier, fileKey: resource.fileKey });
       } else {
-        alert('Không thể tải tài liệu này. Vui lòng thử lại sau.');
+        alert(t('downloadError'));
       }
     } catch (error: any) {
       console.error('Failed to get download URL:', error);
-      alert(error?.message || 'Lỗi khi tải tài liệu');
+      alert(error?.message || t('loadError'));
     } finally {
       setDownloading(null);
     }
@@ -78,13 +80,13 @@ export function StudentResourcesFeature() {
     <div className="space-y-8 mt-4">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <h1 className="font-heading text-4xl font-black text-[#215b3b] mb-6">Tài liệu tham khảo</h1>
-          <p className="text-[#1f4e31]/80 mt-1 text-sm font-medium">Xem và tải các tài liệu, giáo trình, và bài giảng</p>
+          <h1 className="font-heading text-4xl font-black text-[#215b3b] mb-6">{t('title')}</h1>
+          <p className="text-[#1f4e31]/80 mt-1 text-sm font-medium">{t('subtitle')}</p>
         </div>
         <div className="relative w-full sm:w-[340px] mt-2 sm:mt-0">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           <Input
-            placeholder="Tìm kiếm tài liệu..."
+            placeholder={t('searchPlaceholder')}
             className="pl-11 bg-white border-none focus-visible:ring-emerald-500 rounded-full h-12 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07),0_10px_20px_-2px_rgba(0,0,0,0.04)] text-base"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -101,8 +103,8 @@ export function StudentResourcesFeature() {
       ) : filteredResources.length === 0 ? (
         <div className="text-center py-20 bg-emerald-50/30 rounded-xl border border-emerald-100">
           <FileText className="h-12 w-12 text-emerald-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-emerald-800">Không tìm thấy tài liệu</h3>
-          <p className="text-emerald-600">Thử tìm kiếm với từ khóa khác hoặc quay lại sau.</p>
+          <h3 className="text-lg font-semibold text-emerald-800">{t('notFound')}</h3>
+          <p className="text-emerald-600">{t('notFoundDesc')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -136,7 +138,7 @@ export function StudentResourcesFeature() {
                     )}
                  </div>
                  <p className="text-[14px] text-gray-500 line-clamp-3 leading-relaxed mt-1">
-                    {resource.description || 'Sách giáo khoa cơ bản cho người mới bắt đầu.'}
+                    {resource.description || t('defaultDesc')}
                  </p>
               </div>
             </div>

@@ -3,7 +3,11 @@ import { Geist_Mono, Inter, Poppins, Nunito } from "next/font/google";
 import { AuthProvider } from "@/lib/auth/auth-context";
 import { AppShell } from "@/features/layout/components/app-shell";
 import { MaintenanceBanner } from "@/features/layout/components/maintenance-banner";
-import "./globals.css";
+import { NextIntlClientProvider } from 'next-intl';
+import { getMessages, setRequestLocale } from 'next-intl/server';
+import { routing } from '@/i18n/routing';
+import { notFound } from 'next/navigation';
+import "../globals.css";
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -36,19 +40,41 @@ export const metadata: Metadata = {
     "Nền tảng học tiếng Trung và luyện thi HSK: học theo cấp độ, chủ đề, luyện tập, trò chơi và bài kiểm tra.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
+export default async function RootLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  
+  if (!routing.locales.includes(locale as any)) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    require('next/navigation').notFound();
+  }
+  
+  setRequestLocale(locale);
+  const messages = await getMessages();
+
   return (
     <html
-      lang="vi"
+      lang={locale}
       className={`${poppins.variable} ${inter.variable} ${geistMono.variable} ${nunito.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
       </head>
       <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <AuthProvider>
-          <AppShell>{children}</AppShell>
-        </AuthProvider>
+        <NextIntlClientProvider messages={messages}>
+          <AuthProvider>
+            <AppShell>{children}</AppShell>
+          </AuthProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );
