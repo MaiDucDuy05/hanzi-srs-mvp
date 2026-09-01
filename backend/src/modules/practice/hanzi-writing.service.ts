@@ -105,9 +105,11 @@ export class HanziWritingService {
    * Save session chars into attempt.questionData.
    */
   async saveSessionChars(attemptId: string, chars: HanziChar[]): Promise<void> {
-    await this.attemptRepo.update({ id: attemptId } as any, {
-      questionData: { characters: chars } as any,
-    });
+    const attempt = await this.attemptRepo.findOne({ where: { id: attemptId } });
+    if (attempt) {
+      attempt.questionData = { characters: chars } as any;
+      await this.attemptRepo.save(attempt);
+    }
   }
 
   /**
@@ -159,7 +161,7 @@ export class HanziWritingService {
       }
     }
 
-    await this.attemptRepo.update({ id: attemptId } as any, {
+    Object.assign(attempt, {
       answerData: { characters: dto.characters } as any,
       score: completedChars,
       correctCount: completedChars,
@@ -168,6 +170,7 @@ export class HanziWritingService {
       status: PracticeAttemptStatus.COMPLETED,
       completedAt: new Date(),
     });
+    await this.attemptRepo.save(attempt);
 
     return { completedChars, totalMistakes };
   }

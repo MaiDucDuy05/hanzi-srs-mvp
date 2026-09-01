@@ -202,8 +202,7 @@ export class PracticeAttemptService {
     };
     Object.assign(attempt, updateData);
 
-    await this.repo.update({ id: attempt.id }, updateData as any);
-    const savedAttempt = attempt;
+    const savedAttempt = await this.repo.save(attempt);
 
     // Bắt đầu logging activity và cộng EXP
     try {

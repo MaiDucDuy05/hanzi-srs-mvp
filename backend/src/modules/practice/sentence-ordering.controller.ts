@@ -95,11 +95,8 @@ export class SentenceOrderingController {
 
     // Cập nhật attempt với snapshot (xáo trộn)
     await this.dataSource.transaction(async (em) => {
-      const repo = em.getRepository(attempt.constructor as any);
-      await repo.update(
-        { id: attempt.id } as any,
-        { questionData: snapshot as any }
-      );
+      attempt.questionData = snapshot as any;
+      await em.getRepository(attempt.constructor as any).save(attempt);
     });
 
     return ok(
@@ -143,7 +140,7 @@ export class SentenceOrderingController {
     let expAwarded = 0;
     await this.dataSource.transaction(async (em) => {
       const repo = em.getRepository(attempt.constructor as any);
-      await repo.update({ id: attemptId } as any, {
+      Object.assign(attempt, {
         answerData: { answers: dto.answers } as any,
         score: gradingResult.score,
         correctCount: gradingResult.totalCorrect,
@@ -152,6 +149,7 @@ export class SentenceOrderingController {
         status: PracticeAttemptStatus.COMPLETED,
         completedAt: new Date(),
       });
+      await repo.save(attempt);
 
       // PR-33: Award EXP + log activity + update streak.
       expAwarded = await this.expService.awardFromAttempt(
