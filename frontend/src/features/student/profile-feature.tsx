@@ -56,7 +56,7 @@ export function ProfileFeature() {
             {user?.fullName.charAt(0).toUpperCase()}
           </div>
           <div>
-            <h1 className="text-2xl font-bold">{user?.fullName}</h1>
+            <h1 className="font-heading text-4xl font-black text-[#215b3b] mb-6">{user?.fullName}</h1>
             <p className="text-sm text-gray-500">{user?.email} · {user ? ROLE_LABELS[user.role] : ''}</p>
           </div>
         </div>

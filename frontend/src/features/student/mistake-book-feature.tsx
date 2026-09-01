@@ -82,7 +82,7 @@ export function MistakeBookFeature() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="text-2xl font-bold">Sổ tay lỗi sai</h1>
+        <h1 className="font-heading text-4xl font-black text-[#215b3b] mb-6">Sổ tay lỗi sai</h1>
         <p className="mt-1 text-sm text-gray-500">Ghi lại những từ hay nhầm để ôn tập lại sau này.</p>
       </header>
 

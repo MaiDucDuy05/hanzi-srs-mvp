@@ -78,7 +78,7 @@ export function StudentResourcesFeature() {
     <div className="space-y-8 mt-4">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <h1 className="text-[32px] font-bold text-[#11321e]">Tài liệu tham khảo</h1>
+          <h1 className="font-heading text-4xl font-black text-[#215b3b] mb-6">Tài liệu tham khảo</h1>
           <p className="text-[#1f4e31]/80 mt-1 text-sm font-medium">Xem và tải các tài liệu, giáo trình, và bài giảng</p>
         </div>
         <div className="relative w-full sm:w-[340px] mt-2 sm:mt-0">

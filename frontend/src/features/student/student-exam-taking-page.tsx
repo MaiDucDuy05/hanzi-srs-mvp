@@ -183,7 +183,7 @@ export function StudentExamTakingPage() {
         await document.exitFullscreen().catch(console.error);
       }
       
-      router.push(`/dashboard/student/tests/${test?.id}/results/${attemptId}`);
+      router.push(`/dashboard/exams/${attemptId}/result`);
     } catch (error) {
       setError('Lỗi nộp bài. Vui lòng thử lại.');
       setSubmitting(false);

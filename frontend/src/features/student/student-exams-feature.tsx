@@ -95,18 +95,12 @@ export function StudentExamsFeature() {
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12">
-      {/* Hero Section */}
-      <div className="bg-[#466a50] rounded-3xl p-8 relative overflow-hidden shadow-lg text-white">
-        <div className="relative z-10 max-w-xl">
-          <p className="text-brand-100 mb-2 font-medium tracking-wider text-sm uppercase">My Exams & Assessments</p>
-          <h1 className="text-4xl font-extrabold mb-4 font-display">Bài kiểm tra của tôi</h1>
-        </div>
-        
-        {/* Placeholder for Panda Illustration */}
-        <div className="absolute right-0 bottom-0 top-0 w-1/3 hidden md:block opacity-80 mix-blend-luminosity">
-          <div className="w-full h-full bg-gradient-to-l from-white/20 to-transparent" />
-        </div>
-      </div>
+      {/* Header */}
+      <header className="flex justify-between items-center mb-8 relative">
+        <h1 className="font-heading text-4xl font-black text-[#215b3b]">
+          Bài kiểm tra của tôi
+        </h1>
+      </header>
 
 
       {/* Controls: Tabs & Search */}

@@ -15,13 +15,17 @@ import { SkillRadar } from '../components/skill-radar';
 import { StreakHeatmap } from '../components/streak-heatmap';
 import { RedeemModal } from '../components/redeem-modal';
 import { ErrorNotebookModal } from '@/features/teacher/teacher-students-feature/components/error-notebook-modal';
+import {
+  BarChart2, Store, Backpack, Flame, BookX, Inbox, BookText, Target,
+  Sparkles, Wrench, Gamepad2, ShoppingBag, Crown, Ticket, Gift, Zap, Diamond, Loader2
+} from 'lucide-react';
 
 type Tab = 'overview' | 'shop' | 'inventory';
 
-const TABS: { key: Tab; label: string; icon: string }[] = [
-  { key: 'overview', label: 'Tổng quan', icon: '📊' },
-  { key: 'shop', label: 'Cửa hàng', icon: '🎁' },
-  { key: 'inventory', label: 'Kho đồ', icon: '🎒' },
+const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
+  { key: 'overview', label: 'Tổng quan', icon: <BarChart2 className="w-4 h-4 mb-0.5 inline-block mr-1.5" /> },
+  { key: 'shop', label: 'Cửa hàng', icon: <Store className="w-4 h-4 mb-0.5 inline-block mr-1.5" /> },
+  { key: 'inventory', label: 'Kho đồ', icon: <Backpack className="w-4 h-4 mb-0.5 inline-block mr-1.5" /> },
 ];
 
 export function AchievementsFeature() {
@@ -81,13 +85,13 @@ export function AchievementsFeature() {
     }
   };
 
-  if (loading) return <div className="p-8 text-center text-[#4a5a3a]">Đang tải... 🐼</div>;
+  if (loading) return <div className="flex justify-center items-center p-12 text-[#4a5a3a]"><Loader2 className="w-6 h-6 animate-spin mr-2" /> Đang tải...</div>;
   if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
 
   return (
     <div className="flex h-full w-full flex-col">
       <div className="w-full px-2 py-4 sm:px-6 sm:py-6 lg:px-8">
-        <h1 className="mb-6 text-3xl font-black text-[#215b3b]">🏆 Thành tựu & Phần thưởng</h1>
+        <h1 className="font-heading text-4xl font-black text-[#215b3b] mb-8">Thành tựu & Phần thưởng</h1>
 
         {/* Tab bar */}
         <div className="mb-6 flex gap-2 rounded-2xl bg-white p-2 shadow-sm">
@@ -101,7 +105,7 @@ export function AchievementsFeature() {
                   : 'text-[#4a5a3a] hover:bg-[#f3f9f5]'
               }`}
             >
-              {t.icon} {t.label}
+              <div className="flex justify-center items-center">{t.icon} {t.label}</div>
             </button>
           ))}
         </div>
@@ -176,7 +180,7 @@ function OverviewTab({
 
           <div className="mt-6 rounded-2xl bg-white/60 p-4 backdrop-blur-sm">
             <p className="text-sm font-bold text-[#4a6b38]">EXP khả dụng (Tiêu xài)</p>
-            <p className="text-3xl font-black text-[#5e7f26]">{balance.current} 💎</p>
+            <p className="flex items-center gap-2 text-3xl font-black text-[#5e7f26]">{balance.current} <Diamond className="w-6 h-6 text-[#5e7f26] fill-[#5e7f26]" /></p>
           </div>
         </div>
 
@@ -194,7 +198,7 @@ function OverviewTab({
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-lg font-bold text-[#215b3b]">Mức độ chuyên cần</h3>
             <div className="flex items-center gap-2 rounded-xl bg-[#fff4e5] px-3 py-1">
-              <span>🔥</span>
+              <Flame className="w-4 h-4 text-[#d97706] fill-[#d97706]" />
               <span className="font-bold text-[#d97706]">{streak} ngày liên tục</span>
             </div>
           </div>
@@ -209,7 +213,7 @@ function OverviewTab({
         <div className="rounded-[2rem] bg-[#fff0f0] p-6 shadow-sm border border-[#ffcdcd]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-3xl">📓</span>
+              <BookX className="w-8 h-8 text-[#c53030]" />
               <div>
                 <h3 className="text-lg font-bold text-[#c53030]">Sổ Lỗi Sai</h3>
                 <p className="text-sm text-[#9b2c2c]">Bạn có một số từ vựng cần ôn tập lại để nhận EXP!</p>
@@ -243,7 +247,7 @@ function OverviewTab({
           
           {!timeline || timeline.data.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <span className="mb-2 text-4xl">📭</span>
+              <Inbox className="mb-2 w-10 h-10 text-gray-300" />
               <p className="text-[#4a5a3a] font-medium">Chưa có hoạt động nào gần đây.</p>
               <p className="text-sm text-gray-400">Hãy hoàn thành một bài học để nhận EXP nhé!</p>
             </div>
@@ -269,11 +273,11 @@ function OverviewTab({
 
                 return (
                 <div key={item.id} className="flex items-start gap-4 rounded-xl border border-gray-100 p-4 transition-colors hover:bg-gray-50">
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#f3f9f5] text-lg">
-                    {item.activityType === 'LESSON_COMPLETED' ? '📚' : 
-                     item.activityType === 'PRACTICE_COMPLETED' ? '🎯' : 
-                     item.activityType.includes('BONUS') ? '✨' : 
-                     item.activityType === 'MISTAKE_REVIEWED' ? '🔧' : '🕹️'}
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#f3f9f5] text-[#215b3b]">
+                    {item.activityType === 'LESSON_COMPLETED' ? <BookText className="w-5 h-5" /> : 
+                     item.activityType === 'PRACTICE_COMPLETED' ? <Target className="w-5 h-5" /> : 
+                     item.activityType.includes('BONUS') ? <Sparkles className="w-5 h-5 text-amber-500" /> : 
+                     item.activityType === 'MISTAKE_REVIEWED' ? <Wrench className="w-5 h-5" /> : <Gamepad2 className="w-5 h-5" />}
                   </div>
                   <div className="flex-1">
                     <p className="font-bold text-[#215b3b]">{label}</p>
@@ -308,7 +312,7 @@ function ShopTab({ catalog, onRedeem }: { catalog: RewardItem[]; onRedeem: (rewa
   if (catalog.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-[2rem] shadow-sm">
-        <span className="mb-2 text-4xl">🛍️</span>
+        <ShoppingBag className="mb-2 w-10 h-10 text-gray-300" />
         <p className="text-[#4a5a3a] font-medium">Cửa hàng hiện đang trống.</p>
       </div>
     );
@@ -317,7 +321,7 @@ function ShopTab({ catalog, onRedeem }: { catalog: RewardItem[]; onRedeem: (rewa
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {catalog.map((r) => {
-        const icon = r.type === 'TEMPORARY_VIP' ? '👑' : r.type === 'DISCOUNT_VOUCHER' ? '🎟️' : '🎁';
+        const icon = r.type === 'TEMPORARY_VIP' ? <Crown className="w-6 h-6 text-amber-500" /> : r.type === 'DISCOUNT_VOUCHER' ? <Ticket className="w-6 h-6 text-indigo-500" /> : <Gift className="w-6 h-6 text-rose-500" />;
         const progress = Math.min(100, (r.expNeeded ? ((r.costExp - r.expNeeded) / r.costExp) * 100 : 100));
 
         return (
@@ -328,14 +332,14 @@ function ShopTab({ catalog, onRedeem }: { catalog: RewardItem[]; onRedeem: (rewa
             </div>
 
             <div className="mb-4 mt-2">
-              <span className="mb-3 inline-block rounded-full bg-[#f3f9f5] p-3 text-2xl">{icon}</span>
+              <span className="mb-3 inline-flex items-center justify-center rounded-full bg-[#f3f9f5] p-3">{icon}</span>
               <h3 className="text-lg font-black text-[#215b3b] line-clamp-2 leading-tight">{r.title}</h3>
             </div>
             
             <div className="mt-auto">
               <div className="mb-3 flex items-center justify-between">
                 <span className="flex items-center gap-1 font-black text-[#5e7f26] text-xl">
-                  {r.costExp} 💎
+                  {r.costExp} <Diamond className="w-5 h-5 fill-[#5e7f26]" />
                 </span>
               </div>
               
@@ -375,7 +379,7 @@ function InventoryTab({ inventory }: { inventory: UserRewardItem[] }) {
   if (inventory.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-[2rem] shadow-sm">
-        <span className="mb-2 text-4xl">🎒</span>
+        <Backpack className="mb-2 w-10 h-10 text-gray-300" />
         <p className="text-[#4a5a3a] font-medium">Kho đồ của bạn đang trống.</p>
         <p className="text-sm text-gray-400">Hãy vào Cửa hàng để đổi thưởng nhé!</p>
       </div>
@@ -386,14 +390,14 @@ function InventoryTab({ inventory }: { inventory: UserRewardItem[] }) {
     <div className="grid gap-6 md:grid-cols-2">
       {inventory.map((r) => {
         const isExpired = r.expiresAt ? new Date(r.expiresAt).getTime() < Date.now() : false;
-        const icon = r.type === 'TEMPORARY_VIP' ? '👑' : r.type === 'DISCOUNT_VOUCHER' ? '🎟️' : '🎁';
+        const icon = r.type === 'TEMPORARY_VIP' ? <Crown className="w-6 h-6 text-amber-500" /> : r.type === 'DISCOUNT_VOUCHER' ? <Ticket className="w-6 h-6 text-indigo-500" /> : <Gift className="w-6 h-6 text-rose-500" />;
         const voucherCode = r.metadata?.voucherCode as string | undefined;
 
         return (
           <div key={r.id} className={`flex flex-col rounded-[2rem] p-6 shadow-sm border ${r.isUsed ? 'bg-gray-50 border-gray-100 opacity-70' : 'bg-white border-[#eaf3c5]'}`}>
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f3f9f5] text-2xl">{icon}</span>
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f3f9f5]">{icon}</span>
                 <div>
                   <h3 className="font-black text-[#215b3b] text-lg">{r.type.replace(/_/g, ' ')}</h3>
                   <p className="text-sm text-gray-500">
@@ -431,7 +435,7 @@ function InventoryTab({ inventory }: { inventory: UserRewardItem[] }) {
               
               {r.type === 'TEMPORARY_VIP' && !r.isUsed && (
                 <div className="flex items-center gap-2 text-sm text-[#d97706] font-medium bg-[#fff4e5] p-3 rounded-xl">
-                  <span>⚡</span> Tính năng sẽ tự kích hoạt ngay khi bạn làm bài.
+                  <Zap className="w-4 h-4 fill-[#d97706]" /> Tính năng sẽ tự kích hoạt ngay khi bạn làm bài.
                 </div>
               )}
 

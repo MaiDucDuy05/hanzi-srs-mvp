@@ -47,7 +47,7 @@ export function GamesHubFeature() {
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="text-2xl font-bold">Trò chơi</h1>
+        <h1 className="font-heading text-4xl font-black text-[#215b3b] mb-6">Trò chơi</h1>
         <p className="mt-1 text-sm text-gray-500">Vừa chơi vừa học — chọn trò chơi và nguồn từ vựng.</p>
       </header>
 

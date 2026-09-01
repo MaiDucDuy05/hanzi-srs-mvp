@@ -147,3 +147,14 @@ h6 {
 .rotate-y-180 {
   transform: rotateY(180deg);
 }
+
+/* Hide scrollbar globally for a cleaner, app-like UI */
+::-webkit-scrollbar {
+  display: none;
+  width: 0px;
+  background: transparent;
+}
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}

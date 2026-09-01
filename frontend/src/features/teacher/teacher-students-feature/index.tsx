@@ -20,6 +20,7 @@ export function TeacherStudentsFeature() {
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [previewMistakes, setPreviewMistakes] = useState<Mistake[]>([]);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -53,14 +54,17 @@ export function TeacherStudentsFeature() {
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Lỗi tải danh sách học viên.');
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+          setIsInitialLoad(false);
+        }
       }
     };
     loadData();
     return () => { cancelled = true; };
   }, [page, limit, search]);
 
-  if (loading) return <PageLoading label="Đang tải dữ liệu học viên..." />;
+  if (isInitialLoad) return <PageLoading label="Đang tải dữ liệu học viên..." />;
   if (error) return <ErrorState message={error} onRetry={() => window.location.reload()} />;
 
   return (

@@ -44,7 +44,7 @@ export function SpeakingHubFeature() {
       {/* ── Header ── */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Luyện nói HSKK</h1>
+          <h1 className="font-heading text-4xl font-black text-[#215b3b] mb-6">Luyện nói HSKK</h1>
           <p className="mt-1 text-sm text-gray-500">
             Ghi âm trả lời câu hỏi HSKK và nhận phản hồi từ giáo viên.
           </p>

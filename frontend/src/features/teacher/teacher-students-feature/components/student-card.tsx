@@ -21,7 +21,6 @@ export function StudentCard({ student, onClick }: { student: Student; onClick: (
           <div>
             <h3 className="font-extrabold text-[#1f5333] text-lg mb-1">{name}</h3>
             <div className="flex items-center gap-2">
-              <span className="bg-[#c7cf35] text-[#1f5333] px-2 py-0.5 rounded text-[10px] font-extrabold tracking-wide uppercase">HSK 1</span>
               <span className="text-[12px] text-gray-500 font-medium">Completion: {completion}%</span>
             </div>
           </div>

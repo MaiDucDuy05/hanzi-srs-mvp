@@ -127,7 +127,7 @@ export function FillGameFeature({ sourceId, sourceType }: FillGameFeatureProps) 
   // ── Finished ──
   if (status === 'finished' && result) {
     return (
-      <div className="relative w-full flex-1 flex flex-col">
+      <div className="relative w-full flex-1 flex flex-col min-h-0 overflow-hidden">
         <BambooBackground />
         <FillResults
           result={result}
@@ -148,7 +148,7 @@ export function FillGameFeature({ sourceId, sourceType }: FillGameFeatureProps) 
   const progressPct = total > 0 ? (currentIndex / total) * 100 : 0;
 
   return (
-    <div className="relative w-full flex-1 flex flex-col">
+    <div className="relative w-full flex-1 flex flex-col min-h-0 overflow-hidden">
       <BambooBackground />
 
       {/* Header: title + timer + question counter */}

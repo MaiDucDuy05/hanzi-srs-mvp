@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { BookMarked, BookOpen, ArrowRight } from 'lucide-react';
+import { BookMarked, BookOpen, ArrowRight, Search } from 'lucide-react';
 import { curriculumApi } from '@/lib/api/endpoints';
 import type { Topic } from '@/lib/api/types';
 import { PageLoading } from '@/features/ui/components/spinner';
@@ -22,6 +22,7 @@ export function CoursesTopicFeature() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -39,32 +40,41 @@ export function CoursesTopicFeature() {
   if (loading) return <PageLoading label="Đang tải chủ đề..." />;
   if (error) return <ErrorState message={error} onRetry={() => location.reload()} />;
 
+  const filteredTopics = topics.filter(topic => 
+    topic.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (topic.description && topic.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
+
   return (
     <div className="pb-10 max-w-[1200px]">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="h-12 w-12 rounded-2xl bg-[#c7cf35] flex items-center justify-center shadow-sm">
-            <BookMarked className="h-6 w-6 text-[#11321e]" strokeWidth={2.5} />
-          </div>
-          <div>
-            <h1 className="text-3xl font-extrabold text-[#11321e]">Khóa học theo Topic</h1>
-            <p className="text-sm text-gray-500 font-medium">Học theo chủ đề phổ biến</p>
-          </div>
+      <header className="flex flex-col md:flex-row md:justify-between md:items-center mb-8 relative gap-4">
+        <h1 className="font-heading text-4xl font-black text-[#215b3b]">
+          Khóa học theo Topic
+        </h1>
+        <div className="relative w-full md:w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input 
+            type="text" 
+            placeholder="Tìm kiếm chủ đề..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#215b3b] focus:border-transparent transition-all shadow-sm"
+          />
         </div>
-      </div>
+      </header>
 
       {/* Topics Grid */}
-      {topics.length === 0 ? (
+      {filteredTopics.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 text-center">
           <div className="h-20 w-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
             <BookOpen className="h-10 w-10 text-gray-300" />
           </div>
-          <p className="text-gray-500 font-bold">Chưa có chủ đề nào.</p>
+          <p className="text-gray-500 font-bold">Không tìm thấy chủ đề nào.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {topics.map((topic, idx) => {
+          {filteredTopics.map((topic, idx) => {
             const gradient = TOPIC_GRADIENTS[idx % TOPIC_GRADIENTS.length];
             return (
               <button

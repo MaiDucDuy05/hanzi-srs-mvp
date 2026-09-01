@@ -33,17 +33,11 @@ export function CoursesHskFeature() {
   return (
     <div className="pb-10 max-w-[1200px]">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="h-12 w-12 rounded-2xl bg-[#c7cf35] flex items-center justify-center shadow-sm">
-            <GraduationCap className="h-6 w-6 text-[#11321e]" strokeWidth={2.5} />
-          </div>
-          <div>
-            <h1 className="text-3xl font-extrabold text-[#11321e]">Khóa học HSK</h1>
-            <p className="text-sm text-gray-500 font-medium">Học theo chuẩn HSK 1-6</p>
-          </div>
-        </div>
-      </div>
+      <header className="flex justify-between items-center mb-8 relative">
+        <h1 className="font-heading text-4xl font-black text-[#215b3b]">
+          Khóa học HSK
+        </h1>
+      </header>
 
       {/* HSK Level Grid */}
       {levels.length === 0 ? (

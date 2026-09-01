@@ -71,11 +71,11 @@ export function PracticeHubFeature() {
 
   return (
     <div className="space-y-8">
-      <header>
-        <h1 className="text-2xl font-bold">Luyện tập</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Chọn nguồn từ vựng và chế độ luyện tập để bắt đầu.
-        </p>
+      {/* Header */}
+      <header className="flex justify-between items-center mb-8 relative">
+        <h1 className="font-heading text-4xl font-black text-[#215b3b]">
+          Luyện tập
+        </h1>
       </header>
 
       <section>
