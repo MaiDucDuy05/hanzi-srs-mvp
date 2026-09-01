@@ -17,6 +17,9 @@ import { UserVocabularyProgress } from '../srs/entities/user-vocabulary-progress
 import { UserActivity } from '../achievements/entities/user-activity.entity';
 import { TestAttemptStatus } from '../../common/enums/test.enums';
 import { Role } from '../../common/enums/user.enums';
+import { UserLessonProgress } from '../student/entities/user-lesson-progress.entity';
+import { Lesson } from '../curriculum/entities/lesson.entity';
+import { ContentStatus } from '../../common/enums/curriculum.enums';
 
 @Injectable()
 export class UserService {
@@ -31,6 +34,10 @@ export class UserService {
     private vocabProgressRepo: Repository<UserVocabularyProgress>,
     @InjectRepository(UserActivity)
     private activityRepo: Repository<UserActivity>,
+    @InjectRepository(UserLessonProgress)
+    private lessonProgressRepo: Repository<UserLessonProgress>,
+    @InjectRepository(Lesson)
+    private lessonRepo: Repository<Lesson>,
   ) {}
 
   async findAll(query: UserQueryDto): Promise<PaginatedResult<User>> {
@@ -59,9 +66,16 @@ export class UserService {
   }
 
   async getStudentsStats(query: UserQueryDto): Promise<any> {
-    const { page = 1, limit = 20 } = query;
+    const { page = 1, limit = 20, search } = query;
+    const where: Record<string, unknown> = { role: Role.FREE };
+    
     const [students, total] = await this.userRepo.findAndCount({
-      where: { role: Role.FREE },
+      where: search
+        ? [
+            { ...where, email: ILike(`%${search}%`) },
+            { ...where, fullName: ILike(`%${search}%`) },
+          ]
+        : where,
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: 'DESC' },
@@ -106,9 +120,27 @@ export class UserService {
       vocabMap.set(v.userId, total > 0 ? Math.round((mastered / total) * 100) : 0);
     });
 
+    // Compute Course Progress
+    const totalLessons = await this.lessonRepo.count({
+      where: { status: ContentStatus.PUBLISHED, isActive: true }
+    });
+
+    const lessonProgress = await this.lessonProgressRepo.createQueryBuilder('lp')
+      .select('lp.userId', 'userId')
+      .addSelect('COUNT(lp.id)', 'completedLessons')
+      .where('lp.userId IN (:...userIds)', { userIds })
+      .andWhere('lp.isCompleted = :isCompleted', { isCompleted: true })
+      .groupBy('lp.userId')
+      .getRawMany();
+
+    const lessonProgressMap = new Map<string, number>();
+    lessonProgress.forEach((lp) => {
+      const completed = parseInt(lp.completedLessons, 10) || 0;
+      lessonProgressMap.set(lp.userId, totalLessons > 0 ? Math.min(100, Math.round((completed / totalLessons) * 100)) : 0);
+    });
+
     const data = students.map((s) => {
-      // Mock course progress based on totalExp (1000 exp = 100%)
-      const courseProgress = Math.min(100, Math.round(((s.totalExp || 0) / 1000) * 100));
+      const courseProgress = lessonProgressMap.get(s.id) || 0;
       return {
         id: s.id,
         email: s.email,
