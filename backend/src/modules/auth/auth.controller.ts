@@ -110,7 +110,7 @@ export class AuthController {
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @Throttle({ default: { limit: 100, ttl: 60000 } }) // 10 attempts per minute
+  @Throttle({ default: { limit: 1000000, ttl: 60000 } }) // High limit for load testing
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
