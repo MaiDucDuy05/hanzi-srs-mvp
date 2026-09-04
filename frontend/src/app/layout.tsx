@@ -1,81 +1,16 @@
-import type { Metadata } from "next";
-import { Geist_Mono, Inter, Poppins, Nunito } from "next/font/google";
-import { AuthProvider } from "@/lib/auth/auth-context";
-import { AppShell } from "@/features/layout/components/app-shell";
-import { MaintenanceBanner } from "@/features/layout/components/maintenance-banner";
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages, setRequestLocale } from 'next-intl/server';
-import { routing } from '@/i18n/routing';
-import { notFound } from 'next/navigation';
-import "../globals.css";
-
-const poppins = Poppins({
-  variable: "--font-poppins",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-  display: "swap",
-});
-
-const nunito = Nunito({
-  variable: "--font-nunito",
-  subsets: ["latin"],
-  weight: ["600", "700", "800", "900"],
-  display: "swap",
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-export const metadata: Metadata = {
-  title: "Hán Tự HSK — Học tiếng Trung, luyện thi HSK",
-  description:
-    "Nền tảng học tiếng Trung và luyện thi HSK: học theo cấp độ, chủ đề, luyện tập, trò chơi và bài kiểm tra.",
-};
-
-export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }));
-}
-
-export default async function RootLayout({
+/**
+ * Thin root layout required by Next.js.
+ *
+ * All localized routes live under `[locale]/layout.tsx`, which provides the
+ * `<html>` and `<body>` tags. This file exists only because Next.js mandates
+ * a root layout — it just forwards children to the localized layout below.
+ *
+ * See: https://next-intl.dev/docs/getting-started/app-router/with-i18n-routing
+ */
+export default function RootLayout({
   children,
-  params,
 }: {
   children: React.ReactNode;
-  params: Promise<{ locale: string }>;
 }) {
-  const { locale } = await params;
-  
-  if (!routing.locales.includes(locale as any)) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require('next/navigation').notFound();
-  }
-  
-  setRequestLocale(locale);
-  const messages = await getMessages();
-
-  return (
-    <html
-      lang={locale}
-      className={`${poppins.variable} ${inter.variable} ${geistMono.variable} ${nunito.variable} h-full antialiased`}
-      suppressHydrationWarning
-    >
-      <head>
-      </head>
-      <body className="min-h-full flex flex-col" suppressHydrationWarning>
-        <NextIntlClientProvider messages={messages}>
-          <AuthProvider>
-            <AppShell>{children}</AppShell>
-          </AuthProvider>
-        </NextIntlClientProvider>
-      </body>
-    </html>
-  );
+  return children;
 }
