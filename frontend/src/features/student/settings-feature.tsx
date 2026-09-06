@@ -5,16 +5,20 @@ import { User, GraduationCap, Lock, Save, LogOut } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { authApi } from '@/lib/api/endpoints';
 import { useRouter } from 'next/navigation';
+import LocaleSwitcher from '@/components/ui/locale-switcher';
+import { useTranslations } from 'next-intl';
 
-const TABS = [
-  { id: 'profile', label: 'Hồ sơ', icon: User, description: 'Tên hiển thị, thông tin cá nhân.' },
-  { id: 'learning', label: 'Học tập', icon: GraduationCap, description: 'Mục tiêu hàng ngày, cấu hình ôn tập.' },
-  { id: 'account', label: 'Tài khoản', icon: Lock, description: 'Đổi mật khẩu, bảo mật.' },
-];
+
 
 export function SettingsFeature() {
+  const t = useTranslations('Settings');
   const { user, refresh, logout } = useAuth();
   const router = useRouter();
+    const TABS = [
+    { id: 'profile', label: t('profile'), icon: User, description: t('profileDesc') },
+    { id: 'learning', label: t('learning'), icon: GraduationCap, description: t('learningDesc') },
+    { id: 'account', label: t('account'), icon: Lock, description: t('accountDesc') },
+  ];
   const [activeTab, setActiveTab] = useState('profile');
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -38,16 +42,16 @@ export function SettingsFeature() {
 
   const handleSaveProfile = async () => {
     if (!fullName.trim()) {
-      showMessage('error', 'Tên không được để trống.');
+      showMessage('error', t('nameRequired'));
       return;
     }
     setIsSaving(true);
     try {
       await authApi.updateMe({ fullName: fullName.trim() });
       await refresh();
-      showMessage('success', 'Hồ sơ đã được lưu.');
+      showMessage('success', t('profileSaved'));
     } catch {
-      showMessage('error', 'Lưu thất bại. Vui lòng thử lại.');
+      showMessage('error', t('saveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -55,16 +59,16 @@ export function SettingsFeature() {
 
   const handleSaveLearning = async () => {
     if (dailyGoal < 1 || dailyGoal > 10000) {
-      showMessage('error', 'Mục tiêu phải từ 1 đến 10000 XP.');
+      showMessage('error', t('goalInvalid'));
       return;
     }
     setIsSaving(true);
     try {
       await authApi.updateMe({ dailyGoal });
       await refresh();
-      showMessage('success', 'Cấu hình học tập đã được lưu.');
+      showMessage('success', t('learningSaved'));
     } catch {
-      showMessage('error', 'Lưu thất bại. Vui lòng thử lại.');
+      showMessage('error', t('saveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -73,15 +77,15 @@ export function SettingsFeature() {
   const handleSavePassword = async () => {
     setPasswordError('');
     if (!currentPassword) {
-      setPasswordError('Vui lòng nhập mật khẩu hiện tại.');
+      setPasswordError(t('currPwdRequired'));
       return;
     }
     if (newPassword.length < 8) {
-      setPasswordError('Mật khẩu mới phải có ít nhất 8 ký tự.');
+      setPasswordError(t('newPwdLength'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setPasswordError('Mật khẩu xác nhận không khớp.');
+      setPasswordError(t('pwdNotMatch'));
       return;
     }
     setIsSaving(true);
@@ -93,9 +97,9 @@ export function SettingsFeature() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      showMessage('success', 'Mật khẩu đã được thay đổi.');
+      showMessage('success', t('pwdChanged'));
     } catch (e) {
-      setPasswordError(e instanceof Error ? e.message : 'Có lỗi xảy ra, vui lòng thử lại.');
+      setPasswordError(e instanceof Error ? e.message : t('errorOccurred'));
     } finally {
       setIsSaving(false);
     }
@@ -114,12 +118,12 @@ export function SettingsFeature() {
     <div className="flex h-full w-full flex-col">
       <div className="w-full px-2 py-4 sm:px-6 sm:py-6 lg:px-8 max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <h1 className="font-heading text-4xl font-black text-[#215b3b]">Cài đặt</h1>
+          <h1 className="font-heading text-4xl font-black text-[#215b3b]">{t('settingsTitle')}</h1>
           <button 
             onClick={handleLogout} 
             className="flex items-center gap-2 rounded-xl bg-white px-4 py-2 font-bold text-red-600 transition-colors border border-red-100 hover:bg-red-50 shadow-sm"
           >
-            <LogOut className="h-4 w-4" strokeWidth={2.5} /> <span className="hidden sm:inline">Đăng xuất</span>
+            <LogOut className="h-4 w-4" strokeWidth={2.5} /> <span className="hidden sm:inline">{t('logout')}</span>
           </button>
         </div>
 
@@ -159,8 +163,8 @@ export function SettingsFeature() {
         {activeTab === 'profile' && (
           <div className="rounded-[2rem] bg-white p-6 sm:p-8 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="mb-8 border-b border-gray-100 pb-4">
-              <h2 className="text-xl font-black text-[#215b3b]">Hồ sơ cá nhân</h2>
-              <p className="text-sm text-gray-500 mt-1 font-medium">Cập nhật tên hiển thị và thông tin tài khoản.</p>
+              <h2 className="text-xl font-black text-[#215b3b]">{t('profileTitle')}</h2>
+              <p className="text-sm text-gray-500 mt-1 font-medium">{t('profileSubtitle')}</p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-8 mb-8">
@@ -170,14 +174,14 @@ export function SettingsFeature() {
                   {fullName.charAt(0).toUpperCase() || 'U'}
                 </div>
                 <div className="text-center">
-                  <p className="text-sm text-gray-500 font-bold">Ảnh đại diện</p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">Tạo tự động từ tên.</p>
+                  <p className="text-sm text-gray-500 font-bold">{t('avatar')}</p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">{t('avatarDesc')}</p>
                 </div>
               </div>
 
               <div className="flex-1 space-y-6">
                 <div>
-                  <label className="block text-sm font-bold text-[#4a5a3a] mb-2">Họ tên</label>
+                  <label className="block text-sm font-bold text-[#4a5a3a] mb-2">{t('fullName')}</label>
                   <input
                     type="text"
                     value={fullName}
@@ -187,14 +191,18 @@ export function SettingsFeature() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-[#4a5a3a] mb-2">Email</label>
+                  <label className="block text-sm font-bold text-[#4a5a3a] mb-2">{t('email')}</label>
                   <input
                     type="email"
                     value={user?.email ?? ''}
                     disabled
                     className="w-full bg-gray-50 border border-gray-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-gray-400 cursor-not-allowed"
                   />
-                  <p className="text-[11px] text-gray-400 mt-2 font-medium">Email định danh tài khoản, không thể thay đổi.</p>
+                  <p className="text-[11px] text-gray-400 mt-2 font-medium">{t('emailFixed')}</p>
+                </div>
+
+                <div className="pt-2">
+                  <LocaleSwitcher />
                 </div>
               </div>
             </div>
@@ -210,7 +218,7 @@ export function SettingsFeature() {
                 ) : (
                   <Save className="h-5 w-5" strokeWidth={2.5} />
                 )}
-                {isSaving ? 'Đang lưu...' : 'Lưu Thay đổi'}
+                {isSaving ? t('saving') : t('saveChanges')}
               </button>
             </div>
           </div>
@@ -220,13 +228,13 @@ export function SettingsFeature() {
         {activeTab === 'learning' && (
           <div className="rounded-[2rem] bg-white p-6 sm:p-8 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="mb-8 border-b border-gray-100 pb-4">
-              <h2 className="text-xl font-black text-[#215b3b]">Cấu hình Học tập</h2>
-              <p className="text-sm text-gray-500 mt-1 font-medium">Điều chỉnh mục tiêu hàng ngày phù hợp với tiến độ của bạn.</p>
+              <h2 className="text-xl font-black text-[#215b3b]">{t('learningTitle')}</h2>
+              <p className="text-sm text-gray-500 mt-1 font-medium">{t('learningSubtitle')}</p>
             </div>
 
             {/* Daily Goal */}
             <div className="bg-[#fbfbf8] rounded-2xl p-6 border border-gray-100 mb-8">
-              <h3 className="font-bold text-[#215b3b] text-[15px] mb-4">Mục tiêu XP hàng ngày</h3>
+              <h3 className="font-bold text-[#215b3b] text-[15px] mb-4">{t('dailyGoal')}</h3>
               <div className="flex items-center gap-4">
                 <input
                   type="number"
@@ -236,11 +244,8 @@ export function SettingsFeature() {
                   onChange={e => setDailyGoal(Number(e.target.value))}
                   className="w-32 bg-white border border-gray-200 rounded-xl py-3 px-4 text-sm font-bold text-[#11321e] focus:outline-none focus:ring-2 focus:ring-[#8BC34A]"
                 />
-                <span className="text-sm font-bold text-[#4a5a3a]">XP / ngày</span>
+                <span className="text-sm font-bold text-[#4a5a3a]">{t('xpPerDay')}</span>
               </div>
-              <p className="text-[12px] text-gray-500 mt-3 font-medium">
-                Gợi ý: Người mới nên bắt đầu 20–50 XP. Khi quen dần, có thể tăng lên 80–100 XP để duy trì động lực.
-              </p>
             </div>
 
             <div className="flex justify-end">
@@ -254,7 +259,7 @@ export function SettingsFeature() {
                 ) : (
                   <Save className="h-5 w-5" strokeWidth={2.5} />
                 )}
-                {isSaving ? 'Đang lưu...' : 'Lưu Thay đổi'}
+                {isSaving ? t('saving') : t('saveChanges')}
               </button>
             </div>
           </div>
@@ -264,14 +269,14 @@ export function SettingsFeature() {
         {activeTab === 'account' && (
           <div className="rounded-[2rem] bg-white p-6 sm:p-8 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300">
             <div className="mb-8 border-b border-gray-100 pb-4">
-              <h2 className="text-xl font-black text-[#215b3b]">Bảo mật tài khoản</h2>
-              <p className="text-sm text-gray-500 mt-1 font-medium">Thay đổi mật khẩu để đảm bảo an toàn cho tài khoản.</p>
+              <h2 className="text-xl font-black text-[#215b3b]">{t('securityTitle')}</h2>
+              <p className="text-sm text-gray-500 mt-1 font-medium">{t('securitySubtitle')}</p>
             </div>
 
             <div className="space-y-6 max-w-md mb-8">
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <label className="block text-sm font-bold text-[#4a5a3a]">Mật khẩu hiện tại</label>
+                  <label className="block text-sm font-bold text-[#4a5a3a]">{t('currPwd')}</label>
                   <button 
                     type="button"
                     onClick={async () => {
@@ -280,35 +285,35 @@ export function SettingsFeature() {
                     }}
                     className="text-[12px] font-bold text-[#8BC34A] hover:text-[#7CB342] transition-colors"
                   >
-                    Quên mật khẩu?
+                    {t('forgotPwd')}
                   </button>
                 </div>
                 <input
                   type="password"
                   value={currentPassword}
                   onChange={e => setCurrentPassword(e.target.value)}
-                  placeholder="Nhập mật khẩu hiện tại"
+                  placeholder={t('enterCurrPwd')}
                   className="w-full bg-[#fbfbf8] border border-gray-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-[#11321e] focus:outline-none focus:ring-2 focus:ring-[#8BC34A] transition-shadow"
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold text-[#4a5a3a] mb-2">Mật khẩu mới</label>
+                <label className="block text-sm font-bold text-[#4a5a3a] mb-2">{t('newPwd')}</label>
                 <input
                   type="password"
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
-                  placeholder="Ít nhất 8 ký tự"
+                  placeholder={t('atLeast8')}
                   className="w-full bg-[#fbfbf8] border border-gray-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-[#11321e] focus:outline-none focus:ring-2 focus:ring-[#8BC34A] transition-shadow"
                 />
-                <p className="text-[11px] text-gray-400 mt-2 font-medium">Khuyên dùng mật khẩu bao gồm chữ hoa, chữ thường và số.</p>
+                <p className="text-[11px] text-gray-400 mt-2 font-medium">{t('pwdHint')}</p>
               </div>
               <div>
-                <label className="block text-sm font-bold text-[#4a5a3a] mb-2">Xác nhận mật khẩu mới</label>
+                <label className="block text-sm font-bold text-[#4a5a3a] mb-2">{t('confirmPwd')}</label>
                 <input
                   type="password"
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
-                  placeholder="Nhập lại mật khẩu mới"
+                  placeholder={t('reEnterNewPwd')}
                   className="w-full bg-[#fbfbf8] border border-gray-200 rounded-2xl py-3.5 px-5 text-sm font-bold text-[#11321e] focus:outline-none focus:ring-2 focus:ring-[#8BC34A] transition-shadow"
                 />
               </div>
@@ -331,7 +336,7 @@ export function SettingsFeature() {
                 ) : (
                   <Save className="h-5 w-5" strokeWidth={2.5} />
                 )}
-                {isSaving ? 'Đang lưu...' : 'Thay đổi mật khẩu'}
+                {isSaving ? t('saving') : t('changePwd')}
               </button>
             </div>
           </div>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
 import { Users, PlayCircle, Trophy, ArrowRight, Loader2, Settings, Clock } from 'lucide-react';
@@ -18,6 +19,7 @@ interface Player {
 }
 
 export function LiveHostFeature({ testId }: LiveHostFeatureProps) {
+  const t = useTranslations('LiveQuiz');
   const { user } = useAuth();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [pin, setPin] = useState<string>('');
@@ -130,11 +132,11 @@ export function LiveHostFeature({ testId }: LiveHostFeatureProps) {
     <div className="min-h-[80vh] flex flex-col items-center bg-gray-50 rounded-[32px] overflow-hidden shadow-xl p-8">
       {gameState === 'LOBBY' && (
         <div className="flex flex-col items-center text-center max-w-2xl w-full">
-          <h1 className="text-4xl font-extrabold text-[#1f5333] mb-4">Live Game Lobby</h1>
-          <p className="text-gray-500 mb-8">Sinh viên cần nhập mã PIN bên dưới để tham gia</p>
-          
+          <h1 className="text-4xl font-extrabold text-[#1f5333] mb-4">{t('hostHeading')}</h1>
+          <p className="text-gray-500 mb-8">{t('hostSubheading')}</p>
+
           <div className="bg-white px-12 py-8 rounded-3xl shadow-lg border-2 border-[#dde8a6] mb-12">
-            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">Game PIN</h2>
+            <h2 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-2">{t('gamePinLabel')}</h2>
             <div className="text-7xl font-black text-[#1f5333] tracking-[0.2em] font-mono">
               {pin || '------'}
             </div>
@@ -142,15 +144,15 @@ export function LiveHostFeature({ testId }: LiveHostFeatureProps) {
 
           {questions.length === 0 && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
-              <strong className="font-bold">Lưu ý! </strong>
-              <span className="block sm:inline">Bài kiểm tra này chưa có câu hỏi nào. Bạn cần thêm câu hỏi trước khi tổ chức thi.</span>
+              <strong className="font-bold">{t('noQuestionsTitle')}</strong>
+              <span className="block sm:inline">{t('noQuestionsMessage')}</span>
             </div>
           )}
 
           <div className="flex items-center justify-between w-full mb-6">
             <div className="flex items-center gap-2 text-lg font-bold text-gray-700">
               <Users className="w-6 h-6 text-[#1f5333]" />
-              {players.length} Học sinh
+              {t('playersCount', { count: players.length })}
             </div>
             <button
               onClick={handleStartGame}
@@ -158,7 +160,7 @@ export function LiveHostFeature({ testId }: LiveHostFeatureProps) {
               className="flex items-center gap-2 px-8 py-4 bg-[#1f5333] text-white font-bold rounded-2xl hover:bg-[#163f25] disabled:opacity-50 disabled:cursor-not-allowed transition-all text-lg shadow-lg hover:shadow-xl"
             >
               <PlayCircle className="w-6 h-6" />
-              Bắt đầu ngay
+              {t('startButton')}
             </button>
           </div>
 
@@ -176,26 +178,26 @@ export function LiveHostFeature({ testId }: LiveHostFeatureProps) {
         <div className="flex flex-col w-full max-w-4xl h-full">
           <div className="flex justify-between items-center mb-8">
             <span className="bg-white px-4 py-2 rounded-xl font-bold text-gray-500 shadow-sm">
-              Câu hỏi {currentQuestionIndex + 1} / {questions.length}
+              {t('questionCounter', { current: currentQuestionIndex + 1, total: questions.length })}
             </span>
             {timeLeft !== null && (
               <span className="bg-[#1f5333] px-4 py-2 rounded-xl font-black text-white shadow-sm flex items-center gap-2">
-                <Clock className="w-5 h-5" /> {timeLeft}s
+                <Clock className="w-5 h-5" /> {t('timeLeftSuffix', { seconds: timeLeft })}
               </span>
             )}
             {gameMode === 'MANUAL' && (
-              <button 
+              <button
                 onClick={handleShowLeaderboard}
                 className="bg-[#1f5333] text-white px-6 py-2 rounded-xl font-bold shadow-md hover:bg-[#163f25] flex items-center gap-2"
               >
-                Dừng & Xem Bảng xếp hạng <ArrowRight className="w-4 h-4" />
+                {t('stopShowLeaderboard')} <ArrowRight className="w-4 h-4" />
               </button>
             )}
           </div>
-          
+
           <div className="bg-white p-12 rounded-3xl shadow-lg border border-gray-100 flex-1 flex items-center justify-center text-center">
             <h2 className="text-3xl md:text-5xl font-bold text-gray-800 leading-tight">
-              {questions[currentQuestionIndex]?.question?.content?.questionText || 'Câu hỏi'}
+              {questions[currentQuestionIndex]?.question?.content?.questionText || t('fallbackQuestion')}
             </h2>
           </div>
         </div>
@@ -204,9 +206,9 @@ export function LiveHostFeature({ testId }: LiveHostFeatureProps) {
       {gameState === 'LEADERBOARD' && (
         <div className="flex flex-col w-full max-w-3xl items-center">
           <h2 className="text-3xl font-extrabold text-[#1f5333] mb-8 flex items-center gap-3">
-            <Trophy className="w-8 h-8 text-yellow-500" /> Bảng xếp hạng tạm thời
+            <Trophy className="w-8 h-8 text-yellow-500" /> {t('leaderboardHeading')}
           </h2>
-          
+
           <div className="w-full space-y-3 mb-10">
             {players.map((p, idx) => (
               <div key={p.studentId} className="bg-white p-5 rounded-2xl shadow-sm flex justify-between items-center border border-gray-100">
@@ -222,18 +224,18 @@ export function LiveHostFeature({ testId }: LiveHostFeatureProps) {
           </div>
 
           {gameMode === 'MANUAL' ? (
-            <button 
+            <button
               onClick={handleNextQuestion}
               className="bg-[#1f5333] text-white px-10 py-4 rounded-2xl font-bold shadow-xl hover:bg-[#163f25] flex items-center gap-2 text-xl"
             >
-              Câu tiếp theo <ArrowRight className="w-6 h-6" />
+              {t('nextQuestionButton')} <ArrowRight className="w-6 h-6" />
             </button>
           ) : (
             <div className="text-gray-500 font-bold flex flex-col items-center">
-              <span className="animate-pulse mb-2">Đang chuẩn bị câu hỏi tiếp theo...</span>
+              <span className="animate-pulse mb-2">{t('preparingNextQuestion')}</span>
               {timeLeft !== null && (
                 <span className="bg-gray-200 px-4 py-2 rounded-full text-gray-700 text-sm">
-                  {timeLeft} giây
+                  {t('secondsSuffix', { seconds: timeLeft })}
                 </span>
               )}
             </div>
@@ -244,7 +246,7 @@ export function LiveHostFeature({ testId }: LiveHostFeatureProps) {
       {gameState === 'FINISHED' && (
         <div className="flex flex-col items-center">
           <Trophy className="w-24 h-24 text-yellow-500 mb-6" />
-          <h1 className="text-5xl font-black text-[#1f5333] mb-12">Kết quả chung cuộc</h1>
+          <h1 className="text-5xl font-black text-[#1f5333] mb-12">{t('finalResultsHeading')}</h1>
           
           <div className="flex items-end justify-center gap-6 mb-12 h-64">
              {/* Podium UI could be added here, for now just simple list */}

@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { usePathname } from '@/i18n/routing';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { ForestBackground } from '@/features/background/components/forest-background';
 
 /**
@@ -11,6 +12,7 @@ import { ForestBackground } from '@/features/background/components/forest-backgr
  */
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const t = useTranslations('Layout');
   const isHome = pathname === '/';
   const isDashboard = pathname?.startsWith('/dashboard');
   const isStudy = pathname?.startsWith('/study');
@@ -44,10 +46,10 @@ export function AppShell({ children }: { children: ReactNode }) {
           <img src="/assets/illustrations/panda/panda-at-beach.svg" alt="Panda" className="h-14 w-auto sm:h-16 lg:h-20" />
         </Link>
         <div className="flex items-center gap-4 sm:gap-6 lg:gap-8 pr-2">
-          <Link href="/dashboard/courses" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Courses</Link>
-          <Link href="/dashboard" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Dashboard</Link>
-          <Link href="/dashboard/achievements" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Leaderboard</Link>
-          <Link href="/contact" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Contact Us</Link>
+          <Link href="/dashboard/courses" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">{t('navCourses')}</Link>
+          <Link href="/dashboard" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">{t('navDashboard')}</Link>
+          <Link href="/dashboard/achievements" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">{t('navLeaderboard')}</Link>
+          <Link href="/contact" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">{t('navContact')}</Link>
         </div>
       </div>
       <main className="mx-auto flex-1 w-full max-w-6xl px-4 py-6 pt-32 relative z-10 flex flex-col">

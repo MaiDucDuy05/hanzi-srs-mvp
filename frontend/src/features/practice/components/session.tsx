@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { usePracticeEngine } from './practice-engine';
 import { MatchingMode, type MatchingState } from './matching-mode';
 import { FlashcardMode, type FlashcardState } from './flashcard-mode';
@@ -10,7 +11,7 @@ import { GameSummary } from '@/features/games/components/game-summary';
 import { WritingMode, type WritingState } from '@/features/games/components/writing-mode';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
-import { PRACTICE_TYPE_LABELS, SOURCE_TYPE_LABELS } from '@/lib/utils/constants';
+import { labelForPracticeType, labelForSourceType } from '@/lib/utils/constants';
 import { formatDuration } from '@/lib/utils/format';
 import type { PracticeType, SourceType, HanziChar } from '@/lib/api/types';
 import type { QuestionItem } from './practice-models';
@@ -37,6 +38,8 @@ export function PracticeSession({
   attemptId,
   hanziChars,
 }: SessionProps) {
+  const t = useTranslations('Constants');
+  const tPractice = useTranslations('Practice');
   const baseSessionKey = `practice:${practiceType}:${sourceType}:${sourceId}`;
   const engine = usePracticeEngine<PracticeModeState>({
     practiceType,
@@ -48,7 +51,7 @@ export function PracticeSession({
   });
 
   if (engine.status === 'loading') {
-    return <PageLoading label="Đang chuẩn bị phiên luyện tập..." />;
+    return <PageLoading label={tPractice('preparingReview')} />;
   }
 
   if (engine.status === 'limit' && engine.limit) {
@@ -62,15 +65,15 @@ export function PracticeSession({
   }
 
   if (engine.status === 'error') {
-    return <ErrorState message={engine.error ?? 'Có lỗi xảy ra.'} onRetry={onExit} />;
+    return <ErrorState message={engine.error ?? tPractice('initError')} onRetry={onExit} />;
   }
 
   if (engine.status === 'finished' && engine.result) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-4">
         <GameSummary
-          title="Tuyệt vời! 🎉"
-          subtitle={`Hoàn thành ${PRACTICE_TYPE_LABELS[practiceType]}`}
+          title={tPractice('greatJob')}
+          subtitle={`${tPractice('completedPrefix')} ${labelForPracticeType(t, practiceType)}`}
           result={engine.result}
           elapsed={engine.elapsed}
           onReplay={() => window.location.reload()}
@@ -86,11 +89,11 @@ export function PracticeSession({
         <header className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <button onClick={onExit} className="text-sm text-brand hover:underline">
-              ← Thoát
+              ← {tPractice('exit', { defaultValue: 'Thoát' })}
             </button>
-            <h1 className="text-xl font-bold">{PRACTICE_TYPE_LABELS[practiceType]}</h1>
+            <h1 className="text-xl font-bold">{labelForPracticeType(t, practiceType)}</h1>
             <p className="text-sm text-gray-500">
-              {SOURCE_TYPE_LABELS[sourceType]}: {sourceLabel}
+              {labelForSourceType(t, sourceType)}: {sourceLabel}
             </p>
           </div>
           <span className="rounded-full bg-gray-100 px-3 py-1 font-mono text-sm text-gray-600  ">

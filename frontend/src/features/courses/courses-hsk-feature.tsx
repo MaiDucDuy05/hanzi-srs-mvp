@@ -37,7 +37,7 @@ export function CoursesHskFeature() {
       {/* Header */}
       <header className="flex justify-between items-center mb-8 relative">
         <h1 className="font-heading text-4xl font-black text-[#215b3b]">
-          Khóa học HSK
+          {t('hskTitle')}
         </h1>
       </header>
 

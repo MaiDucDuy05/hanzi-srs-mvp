@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import { resourceApi } from '@/lib/api/endpoints/resource';
 import { Button } from '@/features/ui/components/button';
 import { User, Mail, Phone, MessageSquare, CheckCircle2 } from 'lucide-react';
 
 export function ContactForm() {
+  const t = useTranslations('Contact');
   const [form, setForm] = useState({ name: '', email: '', phone: '', message: '' });
   const [status, setStatus] = useState<'idle' | 'sending' | 'done' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +22,7 @@ export function ContactForm() {
       setForm({ name: '', email: '', phone: '', message: '' });
     } catch (err) {
       setStatus('error');
-      setError(err instanceof Error ? err.message : 'Gửi liên hệ thất bại.');
+      setError(err instanceof Error ? err.message : t('submitError'));
     }
   };
 
@@ -28,16 +30,16 @@ export function ContactForm() {
     return (
       <div className="flex flex-col items-center justify-center space-y-4 py-8 bg-[#f5f5e9]/50 rounded-3xl h-full border border-[#e5e5d9]">
         <CheckCircle2 className="w-16 h-16 text-[#2e5e3d]" />
-        <p className="font-medium text-lg text-[#1a472a]">Đã gửi liên hệ thành công!</p>
+        <p className="font-medium text-lg text-[#1a472a]">{t('successTitle')}</p>
         <p className="text-sm text-gray-500 max-w-[250px] text-center mb-4">
-          Chúng tôi sẽ phản hồi lại bạn qua email trong thời gian sớm nhất.
+          {t('successDesc')}
         </p>
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => setStatus('idle')}
           className="rounded-full px-8 text-[#1a472a] border-[#2e5e3d]/30 hover:bg-[#eaf4eb]"
         >
-          Gửi yêu cầu khác
+          {t('sendAnother')}
         </Button>
       </div>
     );
@@ -54,7 +56,7 @@ export function ContactForm() {
           type="text"
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
-          placeholder="Họ và Tên"
+          placeholder={t('nameLabel')}
           className={inputClass}
         />
       </div>
@@ -66,7 +68,7 @@ export function ContactForm() {
           type="email"
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
-          placeholder="Địa chỉ Email"
+          placeholder={t('emailLabel')}
           className={inputClass}
         />
       </div>
@@ -76,7 +78,7 @@ export function ContactForm() {
         <input
           value={form.phone}
           onChange={(e) => setForm({ ...form, phone: e.target.value })}
-          placeholder="Số điện thoại"
+          placeholder={t('phoneLabel')}
           className={inputClass}
         />
       </div>
@@ -88,7 +90,7 @@ export function ContactForm() {
           rows={4}
           value={form.message}
           onChange={(e) => setForm({ ...form, message: e.target.value })}
-          placeholder="Nội dung tin nhắn..."
+          placeholder={t('messageLabel')}
           className="w-full bg-[#e5e7dc]/50 border-0 rounded-3xl px-5 py-4 pl-12 text-sm text-[#1a472a] placeholder-gray-400 focus:ring-2 focus:ring-[#2e5e3d]/50 focus:bg-[#eaf4eb] transition-all outline-none resize-none"
         />
       </div>
@@ -99,12 +101,12 @@ export function ContactForm() {
         </p>
       )}
 
-      <Button 
-        type="submit" 
+      <Button
+        type="submit"
         className="w-full rounded-full bg-[#163f22] hover:bg-[#0f2e18] text-white py-6 text-sm font-medium shadow-md transition-all hover:shadow-lg flex items-center justify-center gap-2 group"
         loading={status === 'sending'}
       >
-        Gửi tin nhắn 
+        {t('submitButton')}
         <span className="group-hover:translate-x-1 transition-transform">→</span>
       </Button>
     </form>

@@ -7,6 +7,7 @@ import { PracticeSession } from '@/features/practice/components/session';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
 import type { PracticeType, SourceType } from '@/lib/api/types';
+import { useTranslations } from 'next-intl';
 
 interface PageProps {
   params: Promise<{ attemptId: string }>;
@@ -36,6 +37,9 @@ function PracticeSessionLoader({
   attemptId: string;
   onExit: () => void;
 }) {
+  const tCommon = useTranslations('Common');
+  const tPractice = useTranslations('Practice');
+  const tConstants = useTranslations('Constants');
   const [attempt, setAttempt] = useState<{
     id: string;
     practiceType: string;
@@ -57,21 +61,21 @@ function PracticeSessionLoader({
         }
       } catch {
         if (!cancelled) {
-          setError('Không tìm thấy phiên luyện tập.');
+          setError(tPractice('initError'));
           setLoading(false);
         }
       }
     })();
     return () => { cancelled = true; };
-  }, [attemptId]);
+  }, [attemptId, tPractice]);
 
-  if (loading) return <PageLoading label="Đang tải phiên luyện tập..." />;
-  if (error || !attempt) return <ErrorState message={error ?? 'Có lỗi xảy ra.'} onRetry={onExit} />;
+  if (loading) return <PageLoading label={tCommon('loading')} />;
+  if (error || !attempt) return <ErrorState message={error ?? tCommon('errorLoading')} onRetry={onExit} />;
 
   const sourceLabel =
-    attempt.sourceType === 'LESSON' ? 'Bài học'
-    : attempt.sourceType === 'TOPIC' ? 'Chủ đề'
-    : 'Cấp độ';
+    attempt.sourceType === 'LESSON' ? tConstants('sourceTypeLesson')
+    : attempt.sourceType === 'TOPIC' ? tConstants('sourceTypeTopic')
+    : tConstants('sourceTypeLevel');
 
   return (
     <PracticeSession

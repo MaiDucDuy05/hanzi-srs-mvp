@@ -1,25 +1,27 @@
 'use client';
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { DecorativeLeaves } from './game-icons';
 import { BookType, AlignLeft } from 'lucide-react';
 
-export const VOCAB_GAMES = [
-  { id: 'flashcard', title: 'Flashcard', icon: <img src="/assets/game/flashcard.png" alt="Flashcard" className="w-full h-full object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} /> },
-  { id: 'balloon', title: 'Balloon', icon: <img src="/assets/game/ballon.png" alt="Balloon" className="w-full h-full object-contain" /> },
-  { id: 'match', title: 'Nối từ', icon: <img src="/assets/game/match.png" alt="Match" className="w-full h-full object-contain" /> },
-  { id: 'memory', title: 'Memory', icon: <img src="/assets/game/memory.png" alt="Memory" className="w-full h-full object-contain" /> },
-  { id: 'stroke', title: 'Viết Hán', icon: <img src="/assets/game/stroke.png" alt="Stroke" className="w-full h-full object-contain" /> },
-  { id: 'listening', title: 'Nghe', icon: <img src="/assets/game/listen.png" alt="Listening" className="w-full h-full object-contain" /> },
+export type GameId =
+  | 'flashcard' | 'balloon' | 'match' | 'memory' | 'stroke' | 'listening'
+  | 'sentence' | 'write-sentence' | 'fill';
+
+const VOCAB_DEFS: { id: GameId; icon: React.ReactNode }[] = [
+  { id: 'flashcard', icon: <img src="/assets/game/flashcard.png" alt="Flashcard" className="w-full h-full object-contain" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display='none'; }} /> },
+  { id: 'balloon', icon: <img src="/assets/game/ballon.png" alt="Balloon" className="w-full h-full object-contain" /> },
+  { id: 'match', icon: <img src="/assets/game/match.png" alt="Match" className="w-full h-full object-contain" /> },
+  { id: 'memory', icon: <img src="/assets/game/memory.png" alt="Memory" className="w-full h-full object-contain" /> },
+  { id: 'stroke', icon: <img src="/assets/game/stroke.png" alt="Stroke" className="w-full h-full object-contain" /> },
+  { id: 'listening', icon: <img src="/assets/game/listen.png" alt="Listening" className="w-full h-full object-contain" /> },
 ];
 
-export const SENTENCE_GAMES = [
-  { id: 'sentence', title: 'Sắp xếp câu', icon: <img src="/assets/game/sentence.png" alt="Sentence" className="w-full h-full object-contain" /> },
-  { id: 'write-sentence', title: 'Viết câu', icon: <div className="w-16 h-16 rounded-full bg-[#eef7e9] flex items-center justify-center text-4xl">✍️</div> },
-  { id: 'fill', title: 'Điền chỗ trống', icon: <div className="w-16 h-16 rounded-full bg-[#eef7e9] flex items-center justify-center text-4xl">📝</div> },
+const SENTENCE_DEFS: { id: GameId; icon: React.ReactNode }[] = [
+  { id: 'sentence', icon: <img src="/assets/game/sentence.png" alt="Sentence" className="w-full h-full object-contain" /> },
+  { id: 'write-sentence', icon: <div className="w-16 h-16 rounded-full bg-[#eef7e9] flex items-center justify-center text-4xl">✍️</div> },
+  { id: 'fill', icon: <div className="w-16 h-16 rounded-full bg-[#eef7e9] flex items-center justify-center text-4xl">📝</div> },
 ];
-
-/** @deprecated Use VOCAB_GAMES or SENTENCE_GAMES */
-export const GAMES = [...VOCAB_GAMES, ...SENTENCE_GAMES];
 
 interface GameSelectionModalProps {
   selectedLesson: { id: string; title: string };
@@ -28,8 +30,9 @@ interface GameSelectionModalProps {
 }
 
 export function GameSelectionModal({ selectedLesson, onClose, onGameSelect }: GameSelectionModalProps) {
+  const t = useTranslations('GameSelection');
   const [tab, setTab] = useState<'vocab' | 'sentence'>('vocab');
-  const games = tab === 'sentence' ? SENTENCE_GAMES : VOCAB_GAMES;
+  const defs = tab === 'sentence' ? SENTENCE_DEFS : VOCAB_DEFS;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -40,7 +43,7 @@ export function GameSelectionModal({ selectedLesson, onClose, onGameSelect }: Ga
         </button>
 
         <div className="text-center mb-6">
-          <h2 className="text-3xl font-black text-[#215b3b] font-heading">Practice <span className="text-[#8bc34a]">&quot;{selectedLesson.title}&quot;</span></h2>
+          <h2 className="text-3xl font-black text-[#215b3b] font-heading">{t('practiceHeading')} <span className="text-[#8bc34a]">&quot;{selectedLesson.title}&quot;</span></h2>
         </div>
 
         {/* Category tabs inside modal */}
@@ -52,7 +55,7 @@ export function GameSelectionModal({ selectedLesson, onClose, onGameSelect }: Ga
             }`}
           >
             <BookType className="w-4 h-4" />
-            Luyện từ vựng
+            {t('tabVocab')}
           </button>
           <button
             onClick={() => setTab('sentence')}
@@ -61,16 +64,16 @@ export function GameSelectionModal({ selectedLesson, onClose, onGameSelect }: Ga
             }`}
           >
             <AlignLeft className="w-4 h-4" />
-            Luyện câu
+            {t('tabSentence')}
           </button>
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {games.map((game) => (
+          {defs.map((game) => (
             <button key={game.id} onClick={() => onGameSelect(game.id)} className="rounded-[2rem] p-6 shadow-sm border-4 border-transparent hover:border-[#aadd4a] bg-[#f9fdf5] hover:bg-white transition-all hover:shadow-md flex flex-col items-center justify-center text-center relative group">
               <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300"><DecorativeLeaves /></div>
               <div className="h-20 flex items-center justify-center transform group-hover:scale-110 transition-transform duration-300">{game.icon}</div>
-              <h3 className="text-lg font-bold text-[#111] mt-2 group-hover:text-[#4a6b38] transition-colors">{game.title}</h3>
+              <h3 className="text-lg font-bold text-[#111] mt-2 group-hover:text-[#4a6b38] transition-colors">{t(game.id)}</h3>
             </button>
           ))}
         </div>

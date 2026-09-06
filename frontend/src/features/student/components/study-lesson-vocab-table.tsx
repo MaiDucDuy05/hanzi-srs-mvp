@@ -1,8 +1,11 @@
+'use client';
+
 import React from 'react';
-import { Eye, Headset, Volume2 } from 'lucide-react';
+import { Volume2 } from 'lucide-react';
 import type { Vocabulary, UserVocabProgress } from '@/lib/api/types';
 import { ClickableHanzi } from '@/features/ui/components/clickable-hanzi';
 import { speakText } from '@/lib/utils/tts';
+import { useTranslations } from 'next-intl';
 
 interface StudyLessonVocabTableProps {
   filteredVocab: Vocabulary[];
@@ -11,17 +14,18 @@ interface StudyLessonVocabTableProps {
 }
 
 export function StudyLessonVocabTable({ filteredVocab, progressMap, onLearn }: StudyLessonVocabTableProps) {
+  const t = useTranslations('Study.vocabTable');
   return (
     <div className="w-full overflow-x-auto">
       <table className="w-full text-left border-collapse">
         <thead>
           <tr className="bg-[#f9fdf5] text-xs font-bold text-[#4a6b38] uppercase tracking-wider border-b-2 border-white">
-            <th className="p-4 rounded-tl-xl whitespace-nowrap">Hanzi <span className="inline-block ml-1 opacity-50">↕</span></th>
-            <th className="p-4 whitespace-nowrap">Pinyin <span className="inline-block ml-1 opacity-50">↕</span></th>
-            <th className="p-4 whitespace-nowrap">Meaning <span className="inline-block ml-1 opacity-50">↕</span></th>
-            <th className="p-4 whitespace-nowrap">Part of Speech <span className="inline-block ml-1 opacity-50">↕</span></th>
-            <th className="p-4 whitespace-nowrap">Mastery Level <span className="inline-block ml-1 opacity-50">↕</span></th>
-            <th className="p-4 rounded-tr-xl text-center whitespace-nowrap">Actions</th>
+            <th className="p-4 rounded-tl-xl whitespace-nowrap">{t('hanzi')} <span className="inline-block ml-1 opacity-50">↕</span></th>
+            <th className="p-4 whitespace-nowrap">{t('pinyin')} <span className="inline-block ml-1 opacity-50">↕</span></th>
+            <th className="p-4 whitespace-nowrap">{t('meaning')} <span className="inline-block ml-1 opacity-50">↕</span></th>
+            <th className="p-4 whitespace-nowrap">{t('partOfSpeech')} <span className="inline-block ml-1 opacity-50">↕</span></th>
+            <th className="p-4 whitespace-nowrap">{t('masteryLevel')} <span className="inline-block ml-1 opacity-50">↕</span></th>
+            <th className="p-4 rounded-tr-xl text-center whitespace-nowrap">{t('actions')}</th>
           </tr>
         </thead>
         <tbody>
@@ -59,7 +63,7 @@ export function StudyLessonVocabTable({ filteredVocab, progressMap, onLearn }: S
                       onClick={() => onLearn?.(item.id)}
                       className="px-3 h-10 rounded-xl bg-[#e8f5e9] text-[#2e7d32] hover:bg-[#c8e6c9] font-bold text-sm flex items-center transition-colors"
                     >
-                      Học từ này
+                      {t('learnThisWord')}
                     </button>
                     {(item.audioKey || item.hanzi) && (
                       <button
@@ -71,7 +75,7 @@ export function StudyLessonVocabTable({ filteredVocab, progressMap, onLearn }: S
                           }
                         }}
                         className="w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-[#215b3b] transition-colors"
-                        title="Nghe phát âm"
+                        title={t('playAudioTitle')}
                       >
                         <Volume2 className="w-5 h-5" />
                       </button>
@@ -86,3 +90,4 @@ export function StudyLessonVocabTable({ filteredVocab, progressMap, onLearn }: S
     </div>
   );
 }
+

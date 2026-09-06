@@ -2,12 +2,14 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { curriculumApi } from '@/lib/api/endpoints';
 import type { HskLevel } from '@/lib/api/types';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
 
 export function CoursesFeature() {
+  const t = useTranslations('Courses');
   const [levels, setLevels] = useState<HskLevel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -15,16 +17,16 @@ export function CoursesFeature() {
   useEffect(() => {
     curriculumApi.listLevels()
       .then((list) => setLevels(list.slice().sort((a, b) => a.displayOrder - b.displayOrder)))
-      .catch((e) => setError(e instanceof Error ? e.message : 'Lỗi tải danh sách cấp.'))
+      .catch((e) => setError(e instanceof Error ? e.message : t('loadLevelsError')))
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
-  if (loading) return <PageLoading label="Đang tải cấp độ..." />;
+  if (loading) return <PageLoading label={t('loadingLevels')} />;
   if (error) return <ErrorState message={error} onRetry={() => location.reload()} />;
 
   return (
     <div className="w-full">
-      <h1 className="text-4xl font-black text-[#215b3b] mb-8 font-heading">Khóa học HSK</h1>
+      <h1 className="text-4xl font-black text-[#215b3b] mb-8 font-heading">{t('hskListTitle')}</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
         {levels.map((level, i) => (
           <Link href={`/dashboard/courses/${level.id}`} key={level.id}>
@@ -35,17 +37,17 @@ export function CoursesFeature() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h2 className="text-xl font-black text-[#215b3b] mb-2">{level.code} — {level.name}</h2>
-                  <p className="text-xs font-semibold text-gray-500">Cấp độ HSK {level.code.replace('HSK ', '')}</p>
+                  <p className="text-xs font-semibold text-gray-500">{t('hskLevelLabel', { level: level.code.replace('HSK ', '') })}</p>
                 </div>
               </div>
               <button className="w-full py-3 px-4 bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold rounded-full transition-colors text-sm shadow-sm pointer-events-none">
-                Học ngay
+                {t('learnNow')}
               </button>
             </div>
           </Link>
         ))}
         {levels.length === 0 && (
-          <p className="text-sm text-gray-500 col-span-full">Chưa có cấp độ nào.</p>
+          <p className="text-sm text-gray-500 col-span-full">{t('noLevels')}</p>
         )}
       </div>
     </div>

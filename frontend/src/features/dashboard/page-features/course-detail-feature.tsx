@@ -2,6 +2,7 @@
 
 import React, { use, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { curriculumApi } from '@/lib/api/endpoints';
 import { studentApi } from '@/lib/api/endpoints/student';
 import type { HskLevel, Lesson } from '@/lib/api/types';
@@ -10,6 +11,7 @@ import { ErrorState } from '@/features/ui/components/error-state';
 
 export function CourseDetailFeature({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const t = useTranslations('Courses.detail');
   const [level, setLevel] = useState<HskLevel | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [progressMap, setProgressMap] = useState<Record<string, number>>({});
@@ -31,7 +33,7 @@ export function CourseDetailFeature({ params }: { params: Promise<{ id: string }
         if (cancelled) return;
         setLevel(levelData);
         setLessons(lessonsData.slice().sort((a, b) => a.displayOrder - b.displayOrder));
-        
+
         const pMap: Record<string, number> = {};
         for (const p of progressData) {
           let score = 0;
@@ -41,13 +43,13 @@ export function CourseDetailFeature({ params }: { params: Promise<{ id: string }
         }
         setProgressMap(pMap);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : 'Lỗi tải bài học.');
+        if (!cancelled) setError(e instanceof Error ? e.message : t('loadError'));
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [resolvedParams.id]);
+  }, [resolvedParams.id, t]);
 
   const filteredLessons = useMemo(() => {
     if (!searchQuery.trim()) return lessons;
@@ -64,8 +66,18 @@ export function CourseDetailFeature({ params }: { params: Promise<{ id: string }
     return filteredLessons.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredLessons, currentPage]);
 
-  if (loading) return <PageLoading label="Đang tải bài học..." />;
+  if (loading) return <PageLoading label={t('loading')} />;
   if (error) return <ErrorState message={error} onRetry={() => location.reload()} />;
+
+  const lessonBtnLabel = (id: string) => {
+    const p = progressMap[id];
+    if (p === 1) return t('btnReview');
+    if (p > 0) return t('btnResume');
+    return t('btnStart');
+  };
+
+  const pageStart = (currentPage - 1) * itemsPerPage + 1;
+  const pageEnd = Math.min(currentPage * itemsPerPage, filteredLessons.length);
 
   return (
     <div className="w-full flex flex-col min-h-full">
@@ -77,9 +89,9 @@ export function CourseDetailFeature({ params }: { params: Promise<{ id: string }
           </div>
           <div>
             <h1 className="text-3xl sm:text-4xl font-black text-[#215b3b] font-heading">
-              {level ? `${level.code} — ${level.name}` : `Cấp độ HSK`}
+              {level ? `${level.code} — ${level.name}` : t('fallbackTitle')}
             </h1>
-            <p className="text-sm text-gray-500 mt-1">{lessons.length} bài học</p>
+            <p className="text-sm text-gray-500 mt-1">{t('lessonCount', { count: lessons.length })}</p>
           </div>
         </div>
         <div className="relative w-full md:w-80 flex-shrink-0">
@@ -90,7 +102,7 @@ export function CourseDetailFeature({ params }: { params: Promise<{ id: string }
           </div>
           <input
             type="text"
-            placeholder="Tìm bài học..."
+            placeholder={t('searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
             className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white border-2 border-transparent focus:border-[#8BC34A] focus:outline-none shadow-sm transition-all text-[#215b3b] font-medium placeholder:font-normal"
@@ -118,7 +130,7 @@ export function CourseDetailFeature({ params }: { params: Promise<{ id: string }
             <div className="mt-auto w-full pt-2">
               <Link href={`/study/${lesson.id}`} className="w-full block">
                 <button className="w-full py-2.5 px-4 bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold rounded-full transition-colors shadow-sm">
-                  {progressMap[lesson.id] === 1 ? 'Ôn tập' : (progressMap[lesson.id] > 0 ? 'Tiếp tục học' : 'Học')}
+                  {lessonBtnLabel(lesson.id)}
                 </button>
               </Link>
             </div>
@@ -126,7 +138,7 @@ export function CourseDetailFeature({ params }: { params: Promise<{ id: string }
         ))}
         {currentLessons.length === 0 && (
           <div className="col-span-full py-12 text-center text-[#4a6b38]">
-            {searchQuery ? `Không tìm thấy bài học cho "${searchQuery}"` : 'Chưa có bài học nào.'}
+            {searchQuery ? t('noLessonsSearch', { query: searchQuery }) : t('noLessons')}
           </div>
         )}
       </div>
@@ -134,10 +146,10 @@ export function CourseDetailFeature({ params }: { params: Promise<{ id: string }
       {totalPages > 1 && (
         <div className="mt-10 mb-4 flex items-center justify-center md:justify-end gap-2 text-sm font-medium text-[#4a6b38]">
           <span className="mr-4 hidden sm:inline">
-            Hiển thị {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredLessons.length)} / {filteredLessons.length} bài
+            {t('paginationLabel', { start: pageStart, end: pageEnd, total: filteredLessons.length })}
           </span>
           <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            className="px-3 py-1 rounded-lg hover:bg-white disabled:opacity-50 transition-colors">Trước</button>
+            className="px-3 py-1 rounded-lg hover:bg-white disabled:opacity-50 transition-colors">{t('prev')}</button>
           <div className="flex items-center gap-1">
             {Array.from({ length: totalPages }, (_, i) => i + 1)
               .filter(page => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1)
@@ -152,7 +164,7 @@ export function CourseDetailFeature({ params }: { params: Promise<{ id: string }
               ))}
           </div>
           <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-            className="px-3 py-1 rounded-lg hover:bg-white disabled:opacity-50 transition-colors">Sau</button>
+            className="px-3 py-1 rounded-lg hover:bg-white disabled:opacity-50 transition-colors">{t('next')}</button>
         </div>
       )}
     </div>

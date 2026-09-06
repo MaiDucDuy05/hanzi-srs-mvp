@@ -1,14 +1,12 @@
 import { Suspense } from 'react';
 import { StudyFeature } from '@/features/study/study-feature';
 import { PageLoading } from '@/features/ui/components/spinner';
+import { getTranslations } from 'next-intl/server';
 
-/**
- * Route: /study?levelId=xxx  → học theo cấp HSK
- * Route: /study?topicId=xxx  → học theo chủ đề
- */
-export default function StudyPage() {
+export default async function StudyPage() {
+  const t = await getTranslations('Common');
   return (
-    <Suspense fallback={<PageLoading label="Đang tải..." />}>
+    <Suspense fallback={<PageLoading label={t('loading')} />}>
       <StudyFeature />
     </Suspense>
   );

@@ -29,7 +29,7 @@ export function StudentResourcesFeature() {
       // MOCK DATA: Add 8 mock books to test UI as requested
       const mockBooks: Resource[] = Array.from({ length: 8 }).map((_, i) => ({
         id: `mock-book-${i}`,
-        title: `Giáo trình Hán ngữ Quyển ${i + 1}`,
+        title: t('mockBookTitle', { number: i + 1 }),
         description: t('defaultDesc'),
         tier: i >= 4 ? 'PREMIUM' : 'FREE',
         status: 'PUBLISHED',

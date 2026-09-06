@@ -5,12 +5,13 @@ import { useRouter } from 'next/navigation';
 import { practiceApi, subscriptionApi, testApi } from '@/lib/api/endpoints';
 import type { PracticeAttempt, Subscription, TestAttempt } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/auth-context';
+import { useTranslations } from 'next-intl';
 import { Card, CardBody, CardHeader } from '@/features/ui/components/card';
 import { Button } from '@/features/ui/components/button';
 import { Badge } from '@/features/ui/components/badge';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
-import { PRACTICE_TYPE_LABELS, ROLE_LABELS } from '@/lib/utils/constants';
+import { labelForPracticeType, labelForRole } from '@/lib/utils/constants';
 import { formatDate, formatDateTime } from '@/lib/utils/format';
 
 export function ProfileFeature() {
@@ -37,7 +38,7 @@ export function ProfileFeature() {
         setTestAttempts(tats.slice().reverse());
         setSubscriptions(me ? [me] : []);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : 'Lỗi tải hồ sơ.');
+        if (!cancelled) setError(e instanceof Error ? e.message : tProfile('loadError'));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -47,6 +48,8 @@ export function ProfileFeature() {
 
   const activeSub = subscriptions.find((s) => s.status === 'ACTIVE');
   const isVip = activeSub?.plan === 'VIP' && (!activeSub.expiresAt || new Date(activeSub.expiresAt) > new Date());
+  const t = useTranslations('Constants');
+  const tProfile = useTranslations('Profile');
 
   return (
     <div className="space-y-6">
@@ -57,13 +60,13 @@ export function ProfileFeature() {
           </div>
           <div>
             <h1 className="font-heading text-4xl font-black text-[#215b3b] mb-6">{user?.fullName}</h1>
-            <p className="text-sm text-gray-500">{user?.email} · {user ? ROLE_LABELS[user.role] : ''}</p>
+            <p className="text-sm text-gray-500">{user?.email} · {user ? labelForRole(t, user.role) : ''}</p>
           </div>
         </div>
-        <Button variant="outline" onClick={() => { logout(); router.push('/'); }}>Đăng xuất</Button>
+        <Button variant="outline" onClick={() => { logout(); router.push('/'); }}>{tProfile('logout')}</Button>
       </header>
 
-      {loading && <PageLoading label="Đang tải hồ sơ..." />}
+      {loading && <PageLoading label={tProfile('loading')} />}
       {error && <ErrorState message={error} onRetry={() => location.reload()} />}
 
       {!loading && !error && (
@@ -72,22 +75,22 @@ export function ProfileFeature() {
             <Card>
               <CardBody className="text-center">
                 <p className="text-3xl">{isVip ? '👑' : '🆓'}</p>
-                <p className="mt-1 font-bold">{isVip ? 'Gói VIP' : 'Gói miễn phí'}</p>
-                {activeSub?.expiresAt && <p className="text-xs text-gray-500">Đến {formatDate(activeSub.expiresAt)}</p>}
-                {!isVip && <a href="/upgrade-vip" className="text-xs text-brand underline">Nâng cấp VIP</a>}
+                <p className="mt-1 font-bold">{isVip ? tProfile('vipPlan') : tProfile('freePlan')}</p>
+                {activeSub?.expiresAt && <p className="text-xs text-gray-500">{tProfile('expiresOn', { date: formatDate(activeSub.expiresAt) })}</p>}
+                {!isVip && <a href="/upgrade-vip" className="text-xs text-brand underline">{tProfile('upgradeVipCta')}</a>}
               </CardBody>
             </Card>
-            <Card><CardBody className="text-center"><p className="text-3xl">📝</p><p className="mt-1 font-bold">{attempts.length}</p><p className="text-xs text-gray-500">Lần luyện tập</p></CardBody></Card>
-            <Card><CardBody className="text-center"><p className="text-3xl">🎯</p><p className="mt-1 font-bold">{testAttempts.length}</p><p className="text-xs text-gray-500">Bài kiểm tra đã làm</p></CardBody></Card>
+            <Card><CardBody className="text-center"><p className="text-3xl">📝</p><p className="mt-1 font-bold">{attempts.length}</p><p className="text-xs text-gray-500">{tProfile('practiceAttempts')}</p></CardBody></Card>
+            <Card><CardBody className="text-center"><p className="text-3xl">🎯</p><p className="mt-1 font-bold">{testAttempts.length}</p><p className="text-xs text-gray-500">{tProfile('testsTaken')}</p></CardBody></Card>
           </section>
 
           <section>
-            <Card><CardHeader title="Luyện tập gần đây" /><CardBody>
-              {attempts.length === 0 ? <p className="text-sm text-gray-500">Chưa luyện tập lần nào.</p> : (
+            <Card><CardHeader title={tProfile('recentPractice')} /><CardBody>
+              {attempts.length === 0 ? <p className="text-sm text-gray-500">{tProfile('noPracticeYet')}</p> : (
                 <ul className="divide-y divide-gray-100">
                   {attempts.slice(0, 8).map((a) => (
                     <li key={a.id} className="flex items-center justify-between gap-2 py-2.5 text-sm">
-                      <div className="flex items-center gap-2"><Badge tone={a.status === 'COMPLETED' ? 'green' : 'amber'}>{PRACTICE_TYPE_LABELS[a.practiceType]}</Badge><span className="text-gray-500">{formatDateTime(a.startedAt)}</span></div>
+                      <div className="flex items-center gap-2"><Badge tone={a.status === 'COMPLETED' ? 'green' : 'amber'}>{labelForPracticeType(t, a.practiceType)}</Badge><span className="text-gray-500">{formatDateTime(a.startedAt)}</span></div>
                       <span className="font-mono text-gray-600">{a.score}%</span>
                     </li>
                   ))}
@@ -97,8 +100,8 @@ export function ProfileFeature() {
           </section>
 
           <section>
-            <Card><CardHeader title="Bài kiểm tra gần đây" /><CardBody>
-              {testAttempts.length === 0 ? <p className="text-sm text-gray-500">Chưa làm bài kiểm tra nào.</p> : (
+            <Card><CardHeader title={tProfile('recentTests')} /><CardBody>
+              {testAttempts.length === 0 ? <p className="text-sm text-gray-500">{tProfile('noTestsYet')}</p> : (
                 <ul className="divide-y divide-gray-100">
                   {testAttempts.slice(0, 8).map((a) => (
                     <li key={a.id} className="flex items-center justify-between gap-2 py-2.5 text-sm">

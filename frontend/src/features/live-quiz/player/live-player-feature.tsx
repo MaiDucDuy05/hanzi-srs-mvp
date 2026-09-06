@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { io, Socket } from 'socket.io-client';
 import { useAuth } from '@/lib/auth/auth-context';
@@ -13,6 +14,7 @@ interface Player {
 }
 
 export function LivePlayerFeature() {
+  const t = useTranslations('LiveQuiz');
   const { user } = useAuth();
   const searchParams = useSearchParams();
   const pin = searchParams.get('pin') || '';
@@ -47,7 +49,7 @@ export function LivePlayerFeature() {
     newSocket.on('joined', (data: { success: boolean; message?: string }) => {
       if (!data.success) {
         setGameState('ERROR');
-        setErrorMessage(data.message || 'Không thể tham gia phòng');
+        setErrorMessage(data.message || t('joinErrorFallback'));
         newSocket.disconnect();
       }
     });
@@ -108,13 +110,13 @@ export function LivePlayerFeature() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center">
         <XCircle className="w-16 h-16 text-red-500 mb-4" />
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">Lỗi</h1>
+        <h1 className="text-2xl font-bold text-gray-800 mb-2">{t('playerErrorHeading')}</h1>
         <p className="text-gray-500">{errorMessage}</p>
-        <button 
+        <button
           onClick={() => window.location.href = '/'}
           className="mt-6 px-6 py-2 bg-gray-200 rounded-xl font-bold hover:bg-gray-300"
         >
-          Quay lại
+          {t('backButton')}
         </button>
       </div>
     );
@@ -123,9 +125,9 @@ export function LivePlayerFeature() {
   if (gameState === 'WAITING') {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center bg-[#8BC34A] rounded-[32px] shadow-xl text-white">
-        <h1 className="text-3xl font-black mb-8">Bạn đã vào phòng!</h1>
+        <h1 className="text-3xl font-black mb-8">{t('joinedHeading')}</h1>
         <Loader2 className="w-16 h-16 animate-spin mb-4" />
-        <p className="text-xl font-bold opacity-80">Đang chờ giáo viên bắt đầu...</p>
+        <p className="text-xl font-bold opacity-80">{t('waitingForHost')}</p>
       </div>
     );
   }
@@ -142,16 +144,16 @@ export function LivePlayerFeature() {
         <div className="flex justify-between items-center mb-8">
            <div className="flex gap-4">
              <div className="bg-white px-4 py-2 rounded-xl font-bold text-gray-700 shadow-sm border-2 border-gray-100">
-                Điểm: <span className="text-[#8BC34A]">{myScore}</span>
+                {t('scoreLabel', { score: myScore })}
              </div>
              <div className="bg-white px-4 py-2 rounded-xl font-bold text-gray-700 shadow-sm border-2 border-gray-100">
-                Câu {currentQuestionIndex + 1}
+                {t('questionNumber', { number: currentQuestionIndex + 1 })}
              </div>
            </div>
-           
+
            {timeLeft !== null && (
              <div className="bg-[#1f5333] px-4 py-2 rounded-xl font-black text-white shadow-sm border-2 border-[#163f25] flex items-center gap-2">
-                <Clock className="w-5 h-5" /> {timeLeft}s
+                <Clock className="w-5 h-5" /> {t('timeLeftSuffix', { seconds: timeLeft })}
              </div>
            )}
         </div>
@@ -198,27 +200,27 @@ export function LivePlayerFeature() {
                     const actualAnswer = typeof ca === 'object' && ca !== null ? ca.answer : ca;
                     return (
                       <>
-                        <button 
-                          onClick={() => handleSubmitAnswer(actualAnswer === true)} 
+                        <button
+                          onClick={() => handleSubmitAnswer(actualAnswer === true)}
                           className="bg-blue-500 text-white text-xl font-bold p-8 rounded-2xl shadow-md hover:brightness-110 hover:-translate-y-1 transition-all text-center flex items-center justify-center gap-4"
                         >
-                          ĐÚNG
+                          {t('trueButton')}
                         </button>
-                        <button 
-                          onClick={() => handleSubmitAnswer(actualAnswer === false)} 
+                        <button
+                          onClick={() => handleSubmitAnswer(actualAnswer === false)}
                           className="bg-red-500 text-white text-xl font-bold p-8 rounded-2xl shadow-md hover:brightness-110 hover:-translate-y-1 transition-all text-center flex items-center justify-center gap-4"
                         >
-                          SAI
+                          {t('falseButton')}
                         </button>
                       </>
                     )
                   })()}
                 </>
              )}
-             
+
              {!isSupported && (
                 <div className="col-span-1 sm:col-span-2 text-center text-gray-500 font-bold bg-white p-8 rounded-2xl border-2 border-dashed border-gray-200">
-                  Câu hỏi này không hỗ trợ Live Quiz (hiện tại chỉ hỗ trợ Trắc nghiệm và Đúng/Sai).
+                  {t('unsupportedQuestion')}
                 </div>
              )}
           </div>
@@ -233,21 +235,21 @@ export function LivePlayerFeature() {
         {lastAnswerCorrect ? (
           <>
             <CheckCircle className="w-24 h-24 mb-6" />
-            <h1 className="text-4xl font-black mb-2">Chính xác!</h1>
-            <p className="text-2xl font-bold opacity-90">+{pointsEarned} điểm</p>
+            <h1 className="text-4xl font-black mb-2">{t('correctTitle')}</h1>
+            <p className="text-2xl font-bold opacity-90">{t('pointsLabel', { points: pointsEarned })}</p>
           </>
         ) : (
           <>
             <XCircle className="w-24 h-24 mb-6" />
-            <h1 className="text-4xl font-black mb-2">Sai rồi!</h1>
-            <p className="text-2xl font-bold opacity-90">0 điểm</p>
+            <h1 className="text-4xl font-black mb-2">{t('wrongTitle')}</h1>
+            <p className="text-2xl font-bold opacity-90">{t('zeroPoints')}</p>
           </>
         )}
         <div className="mt-12 bg-black/10 px-8 py-4 rounded-2xl flex items-center gap-3">
-           <p className="font-bold text-lg">Chờ bảng xếp hạng...</p>
+           <p className="font-bold text-lg">{t('waitingLeaderboard')}</p>
            {timeLeft !== null && (
               <span className="bg-white/20 px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
-                 <Clock className="w-4 h-4" /> {timeLeft}s
+                 <Clock className="w-4 h-4" /> {t('timeLeftSuffix', { seconds: timeLeft })}
               </span>
            )}
         </div>
@@ -260,26 +262,26 @@ export function LivePlayerFeature() {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center bg-gray-50 rounded-[32px] shadow-xl p-8">
         <Trophy className="w-16 h-16 text-yellow-500 mb-6" />
-        <h2 className="text-3xl font-extrabold text-[#1f5333] mb-8">Bảng xếp hạng</h2>
-        
+        <h2 className="text-3xl font-extrabold text-[#1f5333] mb-8">{t('leaderboardTitle')}</h2>
+
         <div className="w-full max-w-2xl bg-white border border-gray-100 rounded-3xl shadow-sm p-6 mb-8">
           <div className="text-center mb-6">
-            <span className="text-gray-500 font-bold">Thứ hạng của bạn: </span>
+            <span className="text-gray-500 font-bold">{t('yourRank')}</span>
             <span className="text-2xl font-black text-[#8BC34A]">#{myRank || '-'}</span>
           </div>
-          
+
           {timeLeft !== null && (
             <div className="flex justify-center mb-6">
               <span className="bg-[#1f5333]/10 text-[#1f5333] px-4 py-2 rounded-full text-sm font-bold flex items-center gap-2">
-                 <Clock className="w-4 h-4" /> Câu tiếp theo sau {timeLeft}s
+                 <Clock className="w-4 h-4" /> {t('nextQuestionIn', { seconds: timeLeft })}
               </span>
             </div>
           )}
-          
+
           <div className="space-y-3">
             {leaderboard.slice(0, 5).map((p, idx) => (
-              <div 
-                key={p.studentId} 
+              <div
+                key={p.studentId}
                 className={`p-4 rounded-xl flex justify-between items-center ${
                   p.studentId === user?.id ? 'bg-[#8BC34A]/10 border border-[#8BC34A]/30' : 'bg-gray-50'
                 }`}
@@ -289,7 +291,7 @@ export function LivePlayerFeature() {
                     {idx + 1}
                   </div>
                   <span className={`font-bold ${p.studentId === user?.id ? 'text-[#1f5333]' : 'text-gray-700'}`}>
-                    {p.studentName} {p.studentId === user?.id && '(Bạn)'}
+                    {p.studentName} {p.studentId === user?.id && t('youSuffix')}
                   </span>
                 </div>
                 <span className="font-black text-[#8BC34A]">{p.score} pt</span>
@@ -303,23 +305,23 @@ export function LivePlayerFeature() {
 
   if (gameState === 'FINISHED') {
     const myRank = leaderboard.findIndex(p => p.studentId === user?.id) + 1;
-    
+
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center bg-gray-50 rounded-[32px] shadow-xl p-8">
         <Trophy className="w-24 h-24 text-yellow-500 mb-6" />
-        <h1 className="text-4xl font-black text-[#1f5333] mb-2">Kết thúc!</h1>
-        
+        <h1 className="text-4xl font-black text-[#1f5333] mb-2">{t('finishedTitle')}</h1>
+
         <div className="bg-white border-2 border-[#dde8a6] px-12 py-8 rounded-3xl shadow-lg mt-8 text-center">
-          <p className="text-gray-500 font-bold mb-2">Bạn đạt hạng</p>
+          <p className="text-gray-500 font-bold mb-2">{t('yourFinalRank')}</p>
           <div className="text-6xl font-black text-[#8BC34A]">{myRank || '-'}</div>
-          <p className="text-gray-400 font-bold mt-4">với {myScore} điểm</p>
+          <p className="text-gray-400 font-bold mt-4">{t('finalScoreSuffix', { score: myScore })}</p>
         </div>
 
-        <button 
+        <button
           onClick={() => window.location.href = '/dashboard'}
           className="mt-12 px-8 py-3 bg-[#1f5333] text-white rounded-xl font-bold hover:bg-[#163f25] shadow-lg"
         >
-          Quay lại Dashboard
+          {t('backToDashboard')}
         </button>
       </div>
     );

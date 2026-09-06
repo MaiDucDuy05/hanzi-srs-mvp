@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import { Geist_Mono, Inter, Poppins, Nunito } from "next/font/google";
 import { AuthProvider } from "@/lib/auth/auth-context";
 import { AppShell } from "@/features/layout/components/app-shell";
-import { MaintenanceBanner } from "@/features/layout/components/maintenance-banner";
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages, setRequestLocale } from 'next-intl/server';
+import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server';
 import { routing } from '@/i18n/routing';
 import "../globals.css";
 
@@ -33,11 +32,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Hán Tự HSK — Học tiếng Trung, luyện thi HSK",
-  description:
-    "Nền tảng học tiếng Trung và luyện thi HSK: học theo cấp độ, chủ đề, luyện tập, trò chơi và bài kiểm tra.",
-};
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Home' });
+  return {
+    title: t('metaTitle'),
+    description: t('metaDescription'),
+  };
+}
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));

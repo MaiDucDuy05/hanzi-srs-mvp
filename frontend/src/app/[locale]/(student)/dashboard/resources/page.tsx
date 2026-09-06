@@ -1,10 +1,14 @@
+import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { StudentResourcesFeature } from '@/features/student/student-resources-feature';
-import { Metadata } from 'next';
 
-export const metadata: Metadata = {
-  title: 'Tài liệu tham khảo | Hanzi SRS',
-  description: 'Thư viện tài liệu tham khảo dành cho học viên',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('Dashboard');
+  return {
+    title: t('resourcesTitle'),
+    description: t('resourcesDescription'),
+  };
+}
 
 export default function StudentResourcesPage() {
   return (

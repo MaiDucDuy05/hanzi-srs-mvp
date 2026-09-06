@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, type FormEvent } from 'react';
+import { useTranslations } from 'next-intl';
 import { curriculumApi, resourceApi } from '@/lib/api/endpoints';
 import type { MistakeBookEntry, Vocabulary } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/auth-context';
@@ -13,6 +14,7 @@ import { ErrorState } from '@/features/ui/components/error-state';
 import { formatDateTime } from '@/lib/utils/format';
 
 export function MistakeBookFeature() {
+  const t = useTranslations('MistakeBook');
   const { user } = useAuth();
   const [entries, setEntries] = useState<MistakeBookEntry[]>([]);
   const [vocab, setVocab] = useState<Vocabulary[]>([]);
@@ -27,7 +29,7 @@ export function MistakeBookFeature() {
     setLoading(true);
     resourceApi.listMistakes({ userId: user.id })
       .then(setEntries)
-      .catch((e) => setError(e instanceof Error ? e.message : 'Lỗi tải sổ tay lỗi sai.'))
+      .catch((e) => setError(e instanceof Error ? e.message : t('loadError')))
       .finally(() => setLoading(false));
   };
 
@@ -57,19 +59,19 @@ export function MistakeBookFeature() {
       setNote('');
       load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Thêm lỗi sai thất bại.');
+      setError(err instanceof Error ? err.message : t('addError'));
     } finally {
       setSaving(false);
     }
   };
 
   const remove = async (id: string) => {
-    if (!window.confirm('Xóa mục này?')) return;
+    if (!window.confirm(t('deleteConfirm'))) return;
     try {
       await resourceApi.deleteMistake(id);
       load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Xóa thất bại.');
+      setError(err instanceof Error ? err.message : t('deleteError'));
     }
   };
 
@@ -82,18 +84,18 @@ export function MistakeBookFeature() {
   return (
     <div className="space-y-6">
       <header>
-        <h1 className="font-heading text-4xl font-black text-[#215b3b] mb-6">Sổ tay lỗi sai</h1>
-        <p className="mt-1 text-sm text-gray-500">Ghi lại những từ hay nhầm để ôn tập lại sau này.</p>
+        <h1 className="font-heading text-4xl font-black text-[#215b3b] mb-6">{t('featureHeading')}</h1>
+        <p className="mt-1 text-sm text-gray-500">{t('featureSubheading')}</p>
       </header>
 
       <Card>
-        <CardHeader title="Thêm lỗi sai" subtitle="Chọn từ vựng bạn hay nhầm." />
+        <CardHeader title={t('addCardTitle')} subtitle={t('addCardSubtitle')} />
         <CardBody>
           <form onSubmit={add} className="flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="flex-1">
-              <Field label="Từ vựng">
+              <Field label={t('vocabFieldLabel')}>
                 <Select value={selectedId} onChange={(e) => setSelectedId(e.target.value)}>
-                  <option value="">— Chọn từ —</option>
+                  <option value="">{t('vocabFieldPlaceholder')}</option>
                   {vocab.map((v) => (
                     <option key={v.id} value={v.id}>{v.hanzi} — {v.pinyin} — {v.meaningVi}</option>
                   ))}
@@ -101,16 +103,16 @@ export function MistakeBookFeature() {
               </Field>
             </div>
             <div className="flex-1">
-              <Field label="Ghi chú">
-                <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Tại sao hay nhầm?" />
+              <Field label={t('noteFieldLabel')}>
+                <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('noteFieldPlaceholder')} />
               </Field>
             </div>
-            <Button type="submit" disabled={!selectedId} loading={saving}>Thêm</Button>
+            <Button type="submit" disabled={!selectedId} loading={saving}>{t('addButton')}</Button>
           </form>
         </CardBody>
       </Card>
 
-      {loading && <PageLoading label="Đang tải sổ tay..." />}
+      {loading && <PageLoading label={t('loadingLabel')} />}
       {error && <ErrorState message={error} onRetry={load} />}
 
       {!loading && !error && (
@@ -127,12 +129,12 @@ export function MistakeBookFeature() {
                       {e.explanation && <span className="text-gray-600">{e.explanation}</span>}
                     </div>
                   </div>
-                  <Button variant="ghost" size="sm" onClick={() => remove(e.id)}>Xóa</Button>
+                  <Button variant="ghost" size="sm" onClick={() => remove(e.id)}>{t('deleteButton')}</Button>
                 </div>
               </CardBody>
             </Card>
           ))}
-          {entries.length === 0 && <p className="text-sm text-gray-500">Sổ tay còn trống — thêm từ đầu tiên nhé!</p>}
+          {entries.length === 0 && <p className="text-sm text-gray-500">{t('emptyList')}</p>}
         </div>
       )}
     </div>

@@ -1,5 +1,8 @@
+'use client';
+
 import { Button } from '@/features/ui/components/button';
 import { ServerCrash, RotateCcw } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export function ErrorState({
   message,
@@ -8,6 +11,7 @@ export function ErrorState({
   message?: string;
   onRetry?: () => void;
 }) {
+  const t = useTranslations('Ui');
   return (
     <div className="group relative mx-auto max-w-lg overflow-hidden rounded-[2.5rem] border border-rose-100/50 bg-white/70 p-10 text-center shadow-[0_20px_60px_-15px_rgba(225,29,72,0.1)] backdrop-blur-2xl transition-all duration-500 hover:shadow-[0_20px_60px_-15px_rgba(225,29,72,0.2)] dark:border-rose-900/30 dark:bg-zinc-950/70 dark:shadow-[0_20px_60px_-15px_rgba(225,29,72,0.2)]">
       {/* Subtle background glow */}
@@ -24,10 +28,10 @@ export function ErrorState({
 
       <div className="relative z-10 space-y-3">
         <h3 className="bg-gradient-to-br from-zinc-800 to-zinc-500 bg-clip-text text-2xl font-semibold tracking-tight text-transparent dark:from-zinc-100 dark:to-zinc-400">
-          Kết nối bị gián đoạn
+          {t('errorTitle')}
         </h3>
         <p className="mx-auto max-w-[280px] text-[15px] leading-relaxed text-zinc-500 dark:text-zinc-400">
-          {message ?? 'Hệ thống đang gặp sự cố nhỏ khi lấy dữ liệu. Bạn vui lòng thử lại nhé.'}
+          {message ?? t('errorMessage')}
         </p>
       </div>
 
@@ -41,7 +45,7 @@ export function ErrorState({
             <div className="absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-300 group-hover/btn:opacity-100" />
             <span className="relative flex items-center justify-center gap-2 text-[15px] font-medium tracking-wide">
               <RotateCcw className="h-4 w-4 transition-transform duration-500 group-hover/btn:-rotate-180" />
-              Thử lại ngay
+              {t('retryButton')}
             </span>
           </Button>
         </div>
@@ -49,4 +53,3 @@ export function ErrorState({
     </div>
   );
 }
-

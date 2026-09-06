@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getTranslations } from 'next-intl/server';
 import { APP_NAME } from '@/lib/utils/constants';
 
 /** Decoration: vài cọng lá tre nhỏ ở góc footer (SVG inline, flat 2D). */
@@ -38,7 +39,8 @@ function BambooSprig({ className }: { className?: string }) {
  * Panda Forest footer — nền off-white, bo trên 32px, trang trí lá tre.
  * Light-only.
  */
-export function Footer() {
+export async function Footer() {
+ const t = await getTranslations('Layout');
  return (
  <footer className="relative mt-10 overflow-hidden rounded-t-[32px] bg-[#f3fef6]">
  <BambooSprig className="absolute -left-1 bottom-2 w-20 opacity-80" />
@@ -46,18 +48,17 @@ export function Footer() {
  <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm text-gray-500 sm:flex-row">
  <p className="flex items-center gap-1.5">
  <img src="/assets/illustrations/panda/panda-at-beach.svg" alt="Panda" className="inline-block h-10 w-auto" />
- © {new Date().getFullYear()} {APP_NAME} — Nền tảng học tiếng Trung &amp;
- luyện thi HSK
+ © {new Date().getFullYear()} {APP_NAME} — {t('footerTagline')}
  </p>
  <div className="flex gap-5">
  <Link href="/contact" className="transition-colors hover:text-forest">
- Liên hệ
+ {t('footerContact')}
  </Link>
  <Link href="/resources" className="transition-colors hover:text-forest">
- Tài liệu
+ {t('footerResources')}
  </Link>
  <Link href="/upgrade-vip" className="transition-colors hover:text-forest">
- Nâng cấp VIP
+ {t('footerUpgradeVip')}
  </Link>
  </div>
  </div>

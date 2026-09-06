@@ -1,6 +1,7 @@
 'use client';
 
 import { ErrorState } from '@/features/ui/components/error-state';
+import { useTranslations } from 'next-intl';
 
 export default function Error({
   error,
@@ -9,7 +10,8 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const t = useTranslations('Layout');
   return (
-    <ErrorState message={error.message || 'Không thể hiển thị trang này.'} onRetry={reset} />
+    <ErrorState message={error.message || t('genericError')} onRetry={reset} />
   );
 }

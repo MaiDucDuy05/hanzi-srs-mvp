@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Card, CardBody, CardHeader } from '@/features/ui/components/card';
 import { Button } from '@/features/ui/components/button';
-import { PRACTICE_TYPE_LABELS } from '@/lib/utils/constants';
+import { labelForPracticeType } from '@/lib/utils/constants';
 import { formatDuration } from '@/lib/utils/format';
 import type { PracticeType } from '@/lib/api/types';
 import type { ModeResult } from './practice-models';
@@ -18,30 +19,34 @@ export function LimitScreen({
   practiceType,
   usedCount,
   onExit,
-  kind = 'luyện tập',
+  kind = 'practice',
 }: {
   practiceType: PracticeType;
   usedCount: number;
   onExit: () => void;
-  kind?: 'luyện tập' | 'chơi';
+  kind?: 'practice' | 'game';
 }) {
+  const t = useTranslations('Constants');
+  const tLimit = useTranslations('PracticeLimit');
   return (
     <Card className="mx-auto max-w-md">
       <CardHeader
-        title={kind === 'chơi' ? 'Hết lượt chơi hôm nay' : 'Hết lượt luyện tập hôm nay'}
-        subtitle={PRACTICE_TYPE_LABELS[practiceType]}
+        title={kind === 'game' ? tLimit('limitTitleGame') : tLimit('limitTitlePractice')}
+        subtitle={labelForPracticeType(t, practiceType)}
       />
       <CardBody className="space-y-3">
         <p className="text-sm text-gray-600">
-          Bạn đã dùng hết lượt miễn phí hôm nay cho chế độ này (đã dùng {usedCount} lượt).
-          Lượt mới có vào ngày mai, hoặc nâng cấp VIP để {kind} không giới hạn.
+          {tLimit('limitDescription', {
+            usedCount,
+            kind: kind === 'game' ? tLimit('kindGame') : tLimit('kindPractice'),
+          })}
         </p>
         <div className="flex gap-2">
           <Link href="/upgrade-vip">
-            <Button size="sm">Nâng cấp VIP</Button>
+            <Button size="sm">{tLimit('upgradeVip')}</Button>
           </Link>
           <Button variant="outline" size="sm" onClick={onExit}>
-            Quay lại
+            {tLimit('back')}
           </Button>
         </div>
       </CardBody>
@@ -62,6 +67,7 @@ export function SummaryCard({
   elapsed: number;
   onExit: () => void;
 }) {
+  const tPractice = useTranslations('Practice');
   return (
     <Card className="mx-auto max-w-md">
       <CardHeader title={title} subtitle={subtitle} />
@@ -70,19 +76,19 @@ export function SummaryCard({
         <div className="grid grid-cols-3 gap-2 text-sm">
           <div className="rounded-lg bg-gray-50 p-3 ">
             <p className="font-semibold text-green-600">{result.correctCount}</p>
-            <p className="text-xs text-gray-500">Đúng</p>
+            <p className="text-xs text-gray-500">{tPractice('correct')}</p>
           </div>
           <div className="rounded-lg bg-gray-50 p-3 ">
             <p className="font-semibold text-red-600">{result.wrongCount}</p>
-            <p className="text-xs text-gray-500">Sai</p>
+            <p className="text-xs text-gray-500">{tPractice('wrong')}</p>
           </div>
           <div className="rounded-lg bg-gray-50 p-3 ">
             <p className="font-semibold">{formatDuration(elapsed)}</p>
-            <p className="text-xs text-gray-500">Thời gian</p>
+            <p className="text-xs text-gray-500">{tPractice('duration')}</p>
           </div>
         </div>
         <div className="flex justify-center gap-2">
-          <Button onClick={onExit}>Quay lại</Button>
+          <Button onClick={onExit}>{tPractice('back')}</Button>
         </div>
       </CardBody>
     </Card>

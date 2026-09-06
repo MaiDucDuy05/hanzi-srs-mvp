@@ -1,5 +1,6 @@
-﻿import type { SourceType } from '@/lib/api/types';
+import type { SourceType } from '@/lib/api/types';
 import { FillGameFeature } from '@/features/games/page-features/fill-game-feature';
+import { getTranslations } from 'next-intl/server';
 
 export default async function FillGamePage({
   searchParams,
@@ -15,9 +16,10 @@ export default async function FillGamePage({
   else if (mode === 'topic') type = 'TOPIC';
 
   if (!id) {
+    const t = await getTranslations('Games');
     return (
       <div className='flex-1 flex flex-col items-center justify-center h-full min-h-screen'>
-        <p className='text-gray-500 font-medium'>Chọn một bài học để bắt đầu.</p>
+        <p className='text-gray-500 font-medium'>{t('selectLessonPrompt')}</p>
       </div>
     );
   }

@@ -1,27 +1,61 @@
 import type { PracticeType, Role, SourceType } from '@/lib/api/types';
 
-/** Nhãn tiếng Việt cho các loại luyện tập. */
-export const PRACTICE_TYPE_LABELS: Record<PracticeType, string> = {
-  WORD_MATCHING: 'Nối từ',
-  FLASHCARD: 'Flashcard',
-  FILL_BLANK: 'Điền chỗ trống',
-  SENTENCE_ORDERING: 'Sắp xếp câu',
-  PINYIN_BALLOON_GAME: 'Bắn bóng Pinyin',
-  MEMORY_GAME: 'Memory',
-  HANZI_WRITING: 'Luyện viết chữ Hán',
-};
+export type Translator = (key: string) => string;
 
-export const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
-  LEVEL: 'Cấp HSK',
-  LESSON: 'Bài học',
-  TOPIC: 'Chủ đề',
-};
+/**
+ * Locale-aware label helpers. Pass a `next-intl` translator bound to the
+ * `Constants` namespace so we don't need a hardcoded Vietnamese map here.
+ *
+ * Example:
+ *   const t = useTranslations('Constants');
+ *   const label = labelForPracticeType(t, 'HANZI_WRITING'); // → "Luyện viết chữ Hán" | "Hanzi Writing"
+ */
+export function labelForPracticeType(t: Translator, key: PracticeType): string {
+  switch (key) {
+    case 'WORD_MATCHING':
+      return t('practiceTypeWordMatching');
+    case 'FLASHCARD':
+      return t('practiceTypeFlashcard');
+    case 'FILL_BLANK':
+      return t('practiceTypeFillBlank');
+    case 'SENTENCE_ORDERING':
+      return t('practiceTypeSentenceOrdering');
+    case 'PINYIN_BALLOON_GAME':
+      return t('practiceTypePinyinBalloonGame');
+    case 'MEMORY_GAME':
+      return t('practiceTypeMemoryGame');
+    case 'HANZI_WRITING':
+      return t('practiceTypeHanziWriting');
+    default:
+      return key;
+  }
+}
 
-export const ROLE_LABELS: Record<Role, string> = {
-  FREE: 'Học viên Free',
-  TEACHER: 'Giáo viên',
-  ADMIN: 'Quản trị viên',
-};
+export function labelForSourceType(t: Translator, key: SourceType): string {
+  switch (key) {
+    case 'LEVEL':
+      return t('sourceTypeLevel');
+    case 'LESSON':
+      return t('sourceTypeLesson');
+    case 'TOPIC':
+      return t('sourceTypeTopic');
+    default:
+      return key;
+  }
+}
+
+export function labelForRole(t: Translator, key: Role): string {
+  switch (key) {
+    case 'FREE':
+      return t('roleFree');
+    case 'TEACHER':
+      return t('roleTeacher');
+    case 'ADMIN':
+      return t('roleAdmin');
+    default:
+      return key;
+  }
+}
 
 /** Tạo activityKey cho PR-14: practiceType:sourceType:sourceId. */
 export function activityKey(

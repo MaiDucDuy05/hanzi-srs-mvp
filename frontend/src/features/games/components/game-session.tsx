@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { usePracticeEngine } from '../../practice/components/practice-engine';
 import { BalloonMode } from './balloon-mode';
 import type { ShooterCtx } from '../sec/shooter-sec';
@@ -10,7 +11,7 @@ import type { WritingState } from './writing-mode';
 import { LimitScreen, SummaryCard } from '../../practice/components/session-frame';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
-import { PRACTICE_TYPE_LABELS, SOURCE_TYPE_LABELS } from '@/lib/utils/constants';
+import { labelForPracticeType, labelForSourceType } from '@/lib/utils/constants';
 import { formatDuration } from '@/lib/utils/format';
 import type { SourceType } from '@/lib/api/types';
 
@@ -33,6 +34,8 @@ export function GameSession({
   sourceLabel,
   onExit,
 }: GameSessionProps) {
+  const t = useTranslations('Constants');
+  const tPractice = useTranslations('Practice');
   const sessionKey = `game:${practiceType}:${sourceType}:${sourceId}`;
   const engine = usePracticeEngine<GameModeState>({
     practiceType,
@@ -42,7 +45,7 @@ export function GameSession({
   });
 
   if (engine.status === 'loading') {
-    return <PageLoading label="Đang chuẩn bị trò chơi..." />;
+    return <PageLoading label={tPractice('gameLoading')} />;
   }
 
   if (engine.status === 'limit' && engine.limit) {
@@ -51,20 +54,20 @@ export function GameSession({
         practiceType={practiceType}
         usedCount={engine.limit.usedCount}
         onExit={onExit}
-        kind="chơi"
+        kind="game"
       />
     );
   }
 
   if (engine.status === 'error') {
-    return <ErrorState message={engine.error ?? 'Có lỗi xảy ra.'} onRetry={onExit} />;
+    return <ErrorState message={engine.error ?? tPractice('initError')} onRetry={onExit} />;
   }
 
   if (engine.status === 'finished' && engine.result) {
     return (
       <SummaryCard
-        title="Hoàn thành! 🎉"
-        subtitle={PRACTICE_TYPE_LABELS[practiceType]}
+        title={tPractice('finishedTitle')}
+        subtitle={labelForPracticeType(t, practiceType)}
         result={engine.result}
         elapsed={engine.elapsed}
         onExit={onExit}
@@ -77,11 +80,11 @@ export function GameSession({
       <header className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <button onClick={onExit} className="text-sm text-brand hover:underline">
-            ← Thoát
+            ← {tPractice('exit')}
           </button>
-          <h1 className="text-xl font-bold">{PRACTICE_TYPE_LABELS[practiceType]}</h1>
+          <h1 className="text-xl font-bold">{labelForPracticeType(t, practiceType)}</h1>
           <p className="text-sm text-gray-500">
-            {SOURCE_TYPE_LABELS[sourceType]}: {sourceLabel}
+            {labelForSourceType(t, sourceType)}: {sourceLabel}
           </p>
         </div>
         <span className="rounded-full bg-gray-100 px-3 py-1 font-mono text-sm text-gray-600  ">

@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react';
 import { FlashcardGameFeature } from '@/features/games/page-features/flashcard-game-feature';
 import { curriculumApi } from '@/lib/api/endpoints/curriculum';
+import { useTranslations } from 'next-intl';
 
 export default function FlashcardGame() {
+  const t = useTranslations('Games');
   const [vocabularies, setVocabularies] = useState<
     { id: string; hanzi: string; pinyin: string; meaningVi: string; example: string | null; audioKey: string | null }[]
   >([]);
@@ -29,7 +31,7 @@ export default function FlashcardGame() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
-        <p className="text-gray-400">Đang tải từ vựng...</p>
+        <p className="text-gray-400">{t('loadingVocab')}</p>
       </div>
     );
   }

@@ -100,7 +100,7 @@ export function StudentExamsFeature() {
       {/* Header */}
       <header className="flex justify-between items-center mb-8 relative">
         <h1 className="font-heading text-4xl font-black text-[#215b3b]">
-          Bài kiểm tra của tôi
+          {t('title')}
         </h1>
       </header>
 
@@ -147,8 +147,9 @@ export function StudentExamsFeature() {
           const bestAttempt = testAttempts.filter(t => t.status === 'GRADED').sort((a, b) => (b.score || 0) - (a.score || 0))[0];
           
           // Determine badge styling based on state
-          let badgeText = 'Pending';
+          let badgeText = t('badgePending');
           let badgeClass = 'bg-brand-50 text-brand-700 border-brand-200';
+          const isExpiring = (new Date(a.endTime).getTime() - new Date().getTime()) / (1000 * 60 * 60) > 0 && (new Date(a.endTime).getTime() - new Date().getTime()) / (1000 * 60 * 60) < 24 && !hasReachedLimit;
           
           const hoursUntilEnd = (new Date(a.endTime).getTime() - new Date().getTime()) / (1000 * 60 * 60);
           if (category === 'COMPLETED') {
@@ -225,7 +226,7 @@ export function StudentExamsFeature() {
                     <Button 
                       className={cn(
                         "w-full rounded-full font-semibold transition-all duration-300 shadow-md",
-                        badgeText === 'Expiring Soon' ? "bg-red-600 hover:bg-red-700 text-white" : "bg-[#466a50] hover:bg-[#344f3b] text-white hover:shadow-lg"
+                        isExpiring ? "bg-red-600 hover:bg-red-700 text-white" : "bg-[#466a50] hover:bg-[#344f3b] text-white hover:shadow-lg"
                       )} 
                       onClick={() => handleStart(a)}
                     >

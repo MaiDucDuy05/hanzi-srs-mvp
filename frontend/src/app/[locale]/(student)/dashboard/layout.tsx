@@ -1,13 +1,10 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { Link, usePathname } from '@/i18n/routing';
 import { ForestBackground } from '@/features/background/components/forest-background';
 import { useAuth } from '@/lib/auth/auth-context';
 import { useTranslations } from 'next-intl';
-import LocaleSwitcher from '@/components/ui/locale-switcher';
-
 const PawIcon = ({ className }: { className?: string }) => (
   <img 
     src="/assets/illustrations/animals/pawicon.png" 
@@ -38,10 +35,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         
         {/* Sidebar */}
         <aside className="flex-shrink-0 w-full lg:w-64 bg-white rounded-[2rem] p-4 lg:p-6 shadow-sm flex flex-col gap-2">
-          
-          <div className="mb-4 flex justify-center">
-            <LocaleSwitcher />
-          </div>
 
           <div className="flex-1 flex flex-col justify-center gap-1.5">
             {NAV_ITEMS.map((item) => {

@@ -2,16 +2,18 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { BookOpenCheck, Library, TrendingUp, BookX } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { achievementsApi, type AchievementsDashboard } from '@/lib/api/endpoints/achievements';
 
 const MODES = [
-  { id: 'assignment', icon: BookOpenCheck, title: "Teacher's Assignments", desc: "Exercises assigned by teacher" },
-  { id: 'topic', icon: Library, title: "By Topic", desc: "Choose a specific vocabulary topic" },
-  { id: 'hsk', icon: TrendingUp, title: "By HSK Level", desc: "Practice words by difficulty" },
-  { id: 'mistakes', icon: BookX, title: "Mistake Book", desc: "Review words you got wrong" },
+  { id: 'assignment', icon: BookOpenCheck, titleKey: 'modeAssignmentTitle', descKey: 'modeAssignmentDesc' },
+  { id: 'topic', icon: Library, titleKey: 'modeTopicTitle', descKey: 'modeTopicDesc' },
+  { id: 'hsk', icon: TrendingUp, titleKey: 'modeHskTitle', descKey: 'modeHskDesc' },
+  { id: 'mistakes', icon: BookX, titleKey: 'modeMistakesTitle', descKey: 'modeMistakesDesc' },
 ];
 
 export function PracticeHubFeature() {
+  const t = useTranslations('PracticeHub');
   const [progress, setProgress] = useState<AchievementsDashboard | null>(null);
 
   useEffect(() => {
@@ -29,13 +31,13 @@ export function PracticeHubFeature() {
           <div className="absolute inset-0 bg-[#e5f5eb] rounded-full transform -rotate-12 scale-110 z-0 opacity-70" />
           <img src="/assets/illustrations/bamboo/bamboo.png" alt="Bamboo" className="w-auto h-20 object-contain relative z-10" />
         </div>
-        <h1 className="text-4xl font-black text-[#3e5c46] font-heading tracking-tight">Practice Hub</h1>
+        <h1 className="text-4xl font-black text-[#3e5c46] font-heading tracking-tight">{t('title')}</h1>
       </div>
 
       <div className="relative w-full h-12 bg-white rounded-full p-1.5 shadow-sm mb-10 overflow-hidden flex items-center border border-white">
         <div className="absolute left-1.5 top-1.5 bottom-1.5 rounded-full bg-[#aadd4a] transition-all duration-1000 ease-out" style={{ width: `${progressPercent}%` }} />
         <div className="relative z-10 font-bold text-[#215b3b] pl-4 tracking-wide">
-          Daily Practice Goal: {currentXp}/{goalXp} XP
+          {t('dailyGoal', { current: currentXp, goal: goalXp })}
         </div>
       </div>
 
@@ -46,8 +48,8 @@ export function PracticeHubFeature() {
               <mode.icon className="w-12 h-12" strokeWidth={2.5} />
             </div>
             <div className="flex flex-col justify-center h-full sm:pt-2">
-              <span className="font-bold text-[#215b3b] text-2xl mb-2">{mode.title}</span>
-              <span className="text-gray-500 font-medium text-lg">{mode.desc}</span>
+              <span className="font-bold text-[#215b3b] text-2xl mb-2">{t(mode.titleKey)}</span>
+              <span className="text-gray-500 font-medium text-lg">{t(mode.descKey)}</span>
             </div>
           </Link>
         ))}

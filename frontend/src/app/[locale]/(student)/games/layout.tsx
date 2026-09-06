@@ -1,30 +1,33 @@
 'use client';
 
 import React from 'react';
+import { useTranslations } from 'next-intl';
 import { StudyBackground } from '@/features/background/components/study-background';
 import { useRouter } from 'next/navigation';
 
 export default function GamesLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const t = useTranslations('GamesLayout');
 
   return (
     <StudyBackground className="h-[100dvh] w-screen flex flex-col p-4 sm:p-6 overflow-hidden">
       {/* Top Header */}
       <header className="fixed top-4 sm:top-6 left-0 right-0 w-full max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between z-50 pointer-events-none">
-        
+
         <div className="flex items-center gap-4 pointer-events-auto">
           {/* Exit Button */}
-          <button 
+          <button
             onClick={() => router.push('/dashboard/practice')}
             className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full bg-white/80 backdrop-blur shadow-sm hover:bg-white text-[#215b3b] transition-colors"
-            title="Exit to Practice Hub"
+            title={t('exitAria')}
+            aria-label={t('exitAria')}
           >
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
         </div>
-        
+
         {/* Right controls placeholder (if any game needs it) */}
         <div className="pointer-events-auto">
         </div>

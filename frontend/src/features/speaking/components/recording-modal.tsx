@@ -5,6 +5,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useTranslations } from 'next-intl';
 import { speakingApi } from '@/lib/api/endpoints';
 import { Button } from '@/features/ui/components/button';
 import { Modal } from '@/features/ui/components/modal';
@@ -18,9 +19,10 @@ interface Props {
   onSubmitted: () => void;
 }
 
-const MAX_DURATION_S = 120; // 2 phút
+const MAX_DURATION_S = 120; // 2 minutes
 
 export function RecordingModal({ open, onClose, onSubmitted }: Props) {
+  const t = useTranslations('Speaking');
   const [phase, setPhase] = useState<Phase>('idle');
   const [duration, setDuration] = useState(0);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -90,9 +92,9 @@ export function RecordingModal({ open, onClose, onSubmitted }: Props) {
       setDuration(0);
       setPhase('recording');
     } catch {
-      setError('Không thể truy cập micro. Vui lòng cấp quyền.');
+      setError(t('microphoneError'));
     }
-  }, []);
+  }, [t]);
 
   const stopRecording = useCallback(() => {
     if (mediaRecorderRef.current?.state === 'recording') {
@@ -124,10 +126,10 @@ export function RecordingModal({ open, onClose, onSubmitted }: Props) {
       onSubmitted();
       setTimeout(onClose, 1200);
     } catch (err) {
-      setError((err as Error).message ?? 'Upload thất bại. Thử lại.');
+      setError((err as Error).message ?? t('uploadError'));
       setPhase('recorded');
     }
-  }, [audioUrl, onClose, onSubmitted]);
+  }, [audioUrl, onClose, onSubmitted, t]);
 
   const handleDiscard = useCallback(() => {
     if (audioElRef.current) { audioElRef.current.pause(); audioElRef.current = null; }
@@ -144,14 +146,14 @@ export function RecordingModal({ open, onClose, onSubmitted }: Props) {
     <Modal
       open={open}
       onClose={phase !== 'recording' && phase !== 'uploading' ? onClose : () => {}}
-      title="Luyện nói HSKK"
+      title={t('modalTitle')}
     >
       <div className="flex flex-col items-center gap-6 p-2">
 
-        {/* ── Waveform / Idle visual ── */}
+        {/* Waveform / Idle visual */}
         <div className="relative flex h-24 w-full items-center justify-center rounded-xl bg-pale-green/50">
           {phase === 'idle' && (
-            <span className="text-gray-400 text-sm">Nhấn nút ghi âm để bắt đầu</span>
+            <span className="text-gray-400 text-sm">{t('idleHint')}</span>
           )}
           {phase === 'recording' && (
             <div className="flex items-center gap-1">
@@ -167,50 +169,50 @@ export function RecordingModal({ open, onClose, onSubmitted }: Props) {
           {phase === 'recorded' && (
             <div className="flex flex-col items-center gap-2">
               <span className="text-2xl">🎤</span>
-              <span className="text-sm text-gray-500">Đã ghi âm — {fmt(duration)}</span>
+              <span className="text-sm text-gray-500">{t('recordedHint', { time: fmt(duration) })}</span>
             </div>
           )}
           {phase === 'uploading' && (
             <div className="flex flex-col items-center gap-2">
               <Spinner className="h-8 w-8" />
-              <span className="text-sm text-gray-500">Đang tải lên…</span>
+              <span className="text-sm text-gray-500">{t('uploadingHint')}</span>
             </div>
           )}
           {phase === 'done' && (
             <div className="flex flex-col items-center gap-2">
               <span className="text-2xl">✅</span>
-              <span className="text-sm text-gray-500">Đã nộp bài!</span>
+              <span className="text-sm text-gray-500">{t('submittedHint')}</span>
             </div>
           )}
         </div>
 
-        {/* ── Timer ── */}
+        {/* Timer */}
         {(phase === 'recording' || phase === 'recorded') && (
           <div className="text-xl font-mono font-bold text-brand">
-            {fmt(phase === 'recording' ? duration : duration)}
-            <span className="text-xs font-normal text-gray-400 ml-1">/ {fmt(MAX_DURATION_S)}</span>
+            {fmt(duration)}
+            <span className="text-xs font-normal text-gray-400 ml-1">{t('maxDurationSuffix', { time: fmt(MAX_DURATION_S) })}</span>
           </div>
         )}
 
-        {/* ── Error ── */}
+        {/* Error */}
         {error && (
           <p className="w-full rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</p>
         )}
 
-        {/* ── Controls ── */}
+        {/* Controls */}
         <div className="flex w-full items-center justify-center gap-4">
 
           {/* Idle → Start */}
           {phase === 'idle' && (
             <Button variant="primary" size="lg" pill onClick={startRecording}>
-              🎤 Bắt đầu ghi âm
+              {t('startRecordingButton')}
             </Button>
           )}
 
           {/* Recording → Stop */}
           {phase === 'recording' && (
             <Button variant="danger" size="lg" pill onClick={stopRecording}>
-              ⏹ Dừng ghi âm
+              {t('stopRecordingButton')}
             </Button>
           )}
 
@@ -221,15 +223,15 @@ export function RecordingModal({ open, onClose, onSubmitted }: Props) {
                 variant="secondary"
                 size="md"
                 onClick={handlePlayPause}
-                aria-label={playing ? 'Tạm dừng' : 'Phát lại'}
+                aria-label={playing ? t('pauseAria') : t('playAria')}
               >
-                {playing ? '⏸ Tạm dừng' : '▶ Phát lại'}
+                {playing ? t('pauseButton') : t('resumeButton')}
               </Button>
               <Button variant="ghost" size="md" onClick={handleDiscard}>
-                🔄 Ghi lại
+                {t('reRecordButton')}
               </Button>
               <Button variant="primary" size="md" onClick={handleSubmit}>
-                ✅ Nộp bài
+                {t('submitButton')}
               </Button>
             </>
           )}
@@ -237,13 +239,13 @@ export function RecordingModal({ open, onClose, onSubmitted }: Props) {
           {/* Uploading → disabled */}
           {phase === 'uploading' && (
             <Button variant="primary" size="lg" disabled loading>
-              Đang tải lên…
+              {t('uploadingHint')}
             </Button>
           )}
 
           {/* Done → auto-closes */}
           {phase === 'done' && (
-            <span className="text-sm text-gray-400">Đang chuyển…</span>
+            <span className="text-sm text-gray-400">{t('doneLabel')}</span>
           )}
         </div>
       </div>

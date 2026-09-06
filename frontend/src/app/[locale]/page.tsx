@@ -1,13 +1,16 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { getServerUser } from '@/lib/auth/server-auth';
 import { HeroSection } from '@/features/home/components/hero-section';
 
 // SEO (P1-1): trang chủ là Server Component — metadata + HTML render sẵn từ server.
-export const metadata: Metadata = {
-  title: 'Hán Tự HSK — Học tiếng Trung trong khu rừng tre',
-  description:
-    'Học từ vựng, trò chơi và bài kiểm tra HSK — vui như chơi, nhớ lâu như tre. Hệ thống học tiếng Trung và luyện thi HSK hoàn toàn miễn phí.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('Home');
+  return {
+    title: t('metaTitle'),
+    description: t('metaDescription'),
+  };
+}
 
 /**
  * RSC (FE-006): user đọc server-side từ cookie HttpOnly qua getServerUser().

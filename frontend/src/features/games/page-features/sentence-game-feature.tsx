@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { usePracticeEngine } from '@/features/practice/components/practice-engine';
 import { GameSummary } from '@/features/games/components/game-summary';
@@ -10,6 +11,7 @@ import type { SourceType } from '@/lib/api/types';
 
 export function SentenceGameFeature({ sourceType, sourceId }: { sourceType: SourceType; sourceId: string }) {
   const router = useRouter();
+  const t = useTranslations('Games');
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const engine = usePracticeEngine({
@@ -33,7 +35,7 @@ export function SentenceGameFeature({ sourceType, sourceId }: { sourceType: Sour
     return (
       <div className="flex-1 flex flex-col items-center justify-center h-full min-h-[500px]">
         <Loader2 className="w-10 h-10 animate-spin text-[#8BC34A] mb-4" />
-        <p className="text-lg font-medium text-[#4a6b38]">Đang tải câu hỏi...</p>
+        <p className="text-lg font-medium text-[#4a6b38]">{t('sentenceLoading')}</p>
       </div>
     );
   }
