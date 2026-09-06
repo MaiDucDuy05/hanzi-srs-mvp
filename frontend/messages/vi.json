@@ -191,7 +191,7 @@
     "loadError": "Không tải được dữ liệu",
     "redeemError": "Đổi thưởng thất bại",
     "loading": "Đang tải... 🐼",
-    "title": "🏆 Thành tựu & Phần thưởng",
+    "title": "Thành tựu & Phần thưởng",
     "currentLevel": "Cấp độ hiện tại",
     "expToNext": "Còn {exp} EXP lên Lv {nextLv}",
     "availableExp": "EXP khả dụng (Tiêu xài)",
@@ -542,6 +542,9 @@
   },
   "MistakeBook": {
     "metaTitle": "Sổ tay lỗi sai - Hanzi SRS",
+    "loadingMistakes": "Đang tải danh sách...",
+    "loadingDetail": "Đang tải chi tiết...",
+    "noNotes": "Không có ghi chú.",
     "heading": "Sổ tay lỗi sai",
     "subheading": "Các từ/ngữ pháp hay nhầm",
     "lastMistake": "Lần cuối sai: {date}",

@@ -1,32 +1,32 @@
-import { getTranslations } from 'next-intl/server';
+'use client';
+
+import { useEffect, useState, use } from 'react';
+import { useTranslations } from 'next-intl';
 import { Button } from '@/features/ui/components/button';
+import { resourceApi } from '@/lib/api/endpoints';
+import type { MistakeBookEntry } from '@/lib/api/types';
+import { PageLoading } from '@/features/ui/components/spinner';
 
-type DetailKind = 'BANK' | 'BUY' | 'SELL' | 'LIBRARY';
-type DetailType = 'VOCAB' | 'GRAMMAR';
+export default function MistakeDetail({ params }: { params: Promise<{ id: string }> }) {
+  const t = useTranslations('MistakeBook');
+  const resolvedParams = use(params);
+  const id = resolvedParams.id;
+  const [detail, setDetail] = useState<MistakeBookEntry | null>(null);
+  const [loading, setLoading] = useState(true);
 
-const MOCK_DB: Record<string, { id: string; word: string; pinyin: string; kind: DetailKind; type: DetailType; wrongCount: number; lastWrong: string; noteKey: 'detailNoteBank' | 'detailNoteBuy' | 'detailNoteSell' | 'detailNoteLibrary' }> = {
-  '1': { id: '1', word: '银行', pinyin: 'yínháng', kind: 'BANK', type: 'VOCAB', wrongCount: 3, lastWrong: '2023-10-01', noteKey: 'detailNoteBank' },
-  '2': { id: '2', word: '买', pinyin: 'mǎi', kind: 'BUY', type: 'VOCAB', wrongCount: 5, lastWrong: '2023-10-05', noteKey: 'detailNoteBuy' },
-  '3': { id: '3', word: '卖', pinyin: 'mài', kind: 'SELL', type: 'GRAMMAR', wrongCount: 2, lastWrong: '2023-10-05', noteKey: 'detailNoteSell' },
-  '4': { id: '4', word: '图书馆', pinyin: 'túshūguǎn', kind: 'LIBRARY', type: 'VOCAB', wrongCount: 1, lastWrong: '2023-10-10', noteKey: 'detailNoteLibrary' },
-};
+  useEffect(() => {
+    if (!id) return;
+    resourceApi.getMistake(id).then((data) => {
+      setDetail(data);
+    }).catch((e) => {
+      console.error(e);
+      setDetail(null);
+    }).finally(() => setLoading(false));
+  }, [id]);
 
-function meaningKey(kind: DetailKind): 'meaningBank' | 'meaningBuy' | 'meaningSell' | 'meaningLibrary' {
-  switch (kind) {
-    case 'BANK': return 'meaningBank';
-    case 'BUY': return 'meaningBuy';
-    case 'SELL': return 'meaningSell';
-    case 'LIBRARY': return 'meaningLibrary';
+  if (loading) {
+    return <PageLoading label={t('loadingDetail', { fallback: 'Đang tải...' })} />;
   }
-}
-
-function typeKey(type: DetailType): 'typeVocabulary' | 'typeGrammar' {
-  return type === 'VOCAB' ? 'typeVocabulary' : 'typeGrammar';
-}
-
-export default async function MistakeDetail({ params }: { params: { id: string } }) {
-  const detail = MOCK_DB[params.id];
-  const t = await getTranslations('MistakeBook');
 
   if (!detail) {
     return (
@@ -36,6 +36,13 @@ export default async function MistakeDetail({ params }: { params: { id: string }
     );
   }
 
+  const qs = detail.questionSnapshot || {};
+  const word = qs.prompt || qs.word || qs.char || detail.sourceId;
+  const pinyin = qs.pinyin || '';
+  const meaning = qs.translation || qs.meaning || '';
+  const typeKeyStr = detail.questionType === 'VOCAB' ? 'typeVocabulary' : 'typeGrammar';
+  const lastWrong = detail.lastFailedAt ? new Date(detail.lastFailedAt).toLocaleDateString() : '';
+
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 h-full flex flex-col overflow-hidden">
       {/* Detail header */}
@@ -44,17 +51,17 @@ export default async function MistakeDetail({ params }: { params: { id: string }
           <div>
             <div className="flex items-center gap-3 mb-4">
               <span className="px-3 py-1 bg-white text-green-700 text-sm font-bold rounded-full border border-green-200">
-                {t(typeKey(detail.type))}
+                {t(typeKeyStr)}
               </span>
-              <span className="text-sm text-gray-500">{t('detailAddedOn', { date: detail.lastWrong })}</span>
+              <span className="text-sm text-gray-500">{t('detailAddedOn', { date: lastWrong })}</span>
             </div>
-            <h1 className="text-5xl font-black text-gray-900 mb-2 font-heading">{detail.word}</h1>
-            <p className="text-2xl text-gray-600 mb-1">{detail.pinyin}</p>
-            <p className="text-xl text-gray-700 font-medium">{t(meaningKey(detail.kind))}</p>
+            <h1 className="text-5xl font-black text-gray-900 mb-2 font-heading">{word}</h1>
+            <p className="text-2xl text-gray-600 mb-1">{pinyin}</p>
+            <p className="text-xl text-gray-700 font-medium">{meaning}</p>
           </div>
           <div className="text-right">
             <div className="inline-flex flex-col items-center justify-center bg-red-50 text-red-700 rounded-2xl p-4 min-w-[100px]">
-              <span className="text-3xl font-black">{detail.wrongCount}</span>
+              <span className="text-3xl font-black">{detail.failCount || 0}</span>
               <span className="text-sm font-medium mt-1">{t('detailTimesWrong')}</span>
             </div>
           </div>
@@ -71,7 +78,7 @@ export default async function MistakeDetail({ params }: { params: { id: string }
             {t('detailNotesHeading')}
           </h3>
           <div className="bg-yellow-50/50 border border-yellow-100 rounded-xl p-5 text-gray-700 leading-relaxed">
-            {t(detail.noteKey)}
+            {detail.explanation || t('noNotes', { fallback: 'Không có ghi chú.' })}
           </div>
         </div>
 
@@ -79,7 +86,11 @@ export default async function MistakeDetail({ params }: { params: { id: string }
           <Button size="lg" className="flex-1 bg-green-600 hover:bg-green-700">
             {t('detailReviewNow')}
           </Button>
-          <Button size="lg" variant="outline" className="flex-1 text-red-600 border-red-200 hover:bg-red-50">
+          <Button size="lg" variant="outline" onClick={() => {
+            resourceApi.submitMistakeReview(detail.id, true).then(() => {
+              window.location.reload();
+            }).catch(console.error);
+          }} className="flex-1 text-red-600 border-red-200 hover:bg-red-50">
             {t('detailMarkMastered')}
           </Button>
         </div>

@@ -15,7 +15,7 @@ import { SkillRadar } from '../components/skill-radar';
 import { StreakHeatmap } from '../components/streak-heatmap';
 import { RedeemModal } from '../components/redeem-modal';
 import { useTranslations } from 'next-intl';
-import { ErrorNotebookModal } from '@/features/teacher/teacher-students-feature/components/error-notebook-modal';
+
 import {
   BarChart2, Store, Backpack, Flame, BookX, Inbox, BookText, Target,
   Sparkles, Wrench, Gamepad2, ShoppingBag, Crown, Ticket, Gift, Zap, Diamond, Loader2
@@ -153,8 +153,6 @@ function OverviewTab({
   radar: RadarEntry[];
   timeline: TimelineResult | null;
 }) {
-  const [mistakeModalOpen, setMistakeModalOpen] = useState(false);
-
   if (!dashboard) return null;
   const { balance, level, streak } = dashboard;
   return (
@@ -226,12 +224,12 @@ function OverviewTab({
               </div>
             </div>
             <div className="flex gap-2">
-              <button 
-                onClick={() => setMistakeModalOpen(true)}
+              <Link 
+                href="/study/mistake-book"
                 className="rounded-xl bg-white px-4 py-2 font-bold text-[#c53030] transition-colors border border-[#ffcdcd] hover:bg-[#fff5f5]"
               >
                 {t('details')}
-              </button>
+              </Link>
               <Link 
                 href="/dashboard/practice" 
                 className="rounded-xl bg-[#c53030] px-4 py-2 font-bold text-white transition-colors hover:bg-[#9b2c2c]"
@@ -241,8 +239,6 @@ function OverviewTab({
             </div>
           </div>
         </div>
-
-        <ErrorNotebookModal open={mistakeModalOpen} onClose={() => setMistakeModalOpen(false)} />
 
         {/* Timeline */}
         <div className="rounded-[2rem] bg-white p-6 shadow-sm">

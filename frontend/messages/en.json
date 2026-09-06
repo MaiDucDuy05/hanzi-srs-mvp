@@ -191,7 +191,7 @@
     "loadError": "Failed to load data",
     "redeemError": "Failed to redeem",
     "loading": "Loading... 🐼",
-    "title": "🏆 Achievements & Rewards",
+    "title": "Achievements & Rewards",
     "currentLevel": "Current Level",
     "expToNext": "Need {exp} EXP for Lv {nextLv}",
     "availableExp": "Available EXP (Spendable)",
@@ -542,6 +542,9 @@
   },
   "MistakeBook": {
     "metaTitle": "Mistake book - Hanzi SRS",
+    "loadingMistakes": "Loading mistakes...",
+    "loadingDetail": "Loading detail...",
+    "noNotes": "No notes.",
     "heading": "Mistake Book",
     "subheading": "Words and grammar you often get wrong",
     "lastMistake": "Last mistake: {date}",

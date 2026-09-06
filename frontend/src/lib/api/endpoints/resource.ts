@@ -35,6 +35,9 @@ export const resourceApi = {
   listMistakes: (params: { userId?: string; since?: string; page?: number; limit?: number } = {}) =>
     apiFetch<Paginated<MistakeBookEntry>>(`/mistake-book${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
 
+  getMistake: (id: string) =>
+    unwrap(apiFetch<Single<MistakeBookEntry>>(`/mistake-book/${id}`)),
+
   createMistake: (data: Partial<MistakeBookEntry>) =>
     unwrap(apiFetch<Single<MistakeBookEntry>>('/mistake-book', { method: 'POST', body: JSON.stringify(data) })),
 

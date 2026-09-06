@@ -409,13 +409,19 @@ export interface Resource {
 export interface MistakeBookEntry {
   id: string;
   userId: string;
+  questionId: string | null;
+  vocabularyId: string | null;
   sourceType: string;
   sourceId: string;
   questionType: string;
-  questionSnapshot: Record<string, unknown>;
-  userAnswer: Record<string, unknown> | null;
-  correctAnswer: Record<string, unknown> | null;
+  questionSnapshot: Record<string, any>;
+  userAnswer: Record<string, any> | null;
+  correctAnswer: Record<string, any> | null;
   explanation: string | null;
+  failCount: number;
+  correctStreak: number;
+  lastFailedAt: string;
+  lastReviewedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
