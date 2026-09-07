@@ -78,7 +78,62 @@ Return ONLY a valid JSON object matching this schema exactly, with no markdown f
     }
   ]
 }
-If there are no errors, return {"hasError": false, "suggestions": []}.`
+If there are no errors, return {"hasError": false, "suggestions": []}.`,
+
+  generateExamQuestions: (level: string, wordsInfo: string, count: number, allowedTypes: string[]) => `You are an expert Chinese language teacher and exam test designer.
+Create exactly ${count} diverse and pedagogically sound test/quiz questions for students learning Chinese at proficiency level: "${level}".
+The questions MUST be focused on testing comprehension, usage, or grammar structure of the following vocabulary items:
+${wordsInfo}
+
+Allowed question types to generate: ${allowedTypes.join(', ')}.
+
+Each generated question MUST strictly match one of the following schemas based on its type:
+
+1. SINGLE_CHOICE (Multiple Choice with 4 choices):
+{
+  "type": "SINGLE_CHOICE",
+  "difficulty": "EASY" | "MEDIUM" | "HARD",
+  "targetVocab": "the target Chinese word",
+  "explanation": "Explanation in Vietnamese why this answer is correct",
+  "content": {
+    "questionText": "Question prompt in Vietnamese or Chinese (e.g. 'Chọn nghĩa đúng của từ:', or 'Chọn từ thích hợp điền vào chỗ trống: 他每天___去图书馆。')",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correctAnswer": "Exact text of the correct option (must be one of the items in options)"
+  }
+}
+
+2. FILL_IN (Fill in the blank):
+{
+  "type": "FILL_IN",
+  "difficulty": "EASY" | "MEDIUM" | "HARD",
+  "targetVocab": "the target Chinese word",
+  "explanation": "Explanation in Vietnamese",
+  "content": {
+    "questionText": "Sentence with blank '___' (e.g. '我很___学中文。(Wǒ hěn ___ xué Zhōngwén.)')",
+    "acceptedAnswers": ["the correct target word in Hanzi"],
+    "options": ["word1", "word2", "word3", "word4"] // optional word bank suggestions
+  }
+}
+
+3. ORDERING (Rearrange shuffled words to form a correct Chinese sentence):
+{
+  "type": "ORDERING",
+  "difficulty": "EASY" | "MEDIUM" | "HARD",
+  "targetVocab": "the target Chinese word",
+  "explanation": "Explanation in Vietnamese of grammatical sentence structure",
+  "content": {
+    "question": "Sắp xếp các từ sau thành câu hoàn chỉnh:",
+    "words": ["word1", "word2", "word3", "word4"], // array of tokens/words in shuffled order
+    "correctOrder": ["word1", "word2", "word3", "word4"] // exact array of words in correct sequence
+  }
+}
+
+Return ONLY a valid JSON array of question objects matching the schema above, with NO markdown formatting, NO extra text.
+Format:
+[
+  { ...question1 },
+  { ...question2 }
+]`
 };
 
 export const GEMINI_JSON_CONFIG = {

@@ -233,10 +233,11 @@ export function StudentExamTakingPage() {
               <Maximize className="w-10 h-10" />
             </div>
             <h2 className="text-3xl font-extrabold text-[#11321e] mb-4">{t('examModeTitle')}</h2>
-            <p
-              className="text-gray-600 font-medium mb-8"
-              dangerouslySetInnerHTML={{ __html: t('examModeDesc') }}
-            />
+            <p className="text-gray-600 font-medium mb-8">
+              {t.rich('examModeDesc', {
+                strong: (chunks) => <strong className="font-bold text-gray-800">{chunks}</strong>,
+              })}
+            </p>
             <Button
               onClick={requestFullscreen}
               className="w-full bg-[#11321e] hover:bg-[#1a4a2c] text-white rounded-full py-6 text-lg font-bold shadow-lg transition-transform active:scale-95"
