@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { GameSelectionModal } from '../components/game-selection-modal';
 import { curriculumApi } from '@/lib/api/endpoints/curriculum';
 import { resourceApi } from '@/lib/api/endpoints/resource';
@@ -12,17 +13,18 @@ type LessonItem = { id: string; title: string; count: number; desc: string };
 export function LessonSelectionFeature() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const t = useTranslations('LessonSelection');
   const [selectedLesson, setSelectedLesson] = useState<{ id: string; title: string } | null>(null);
   const [lessons, setLessons] = useState<LessonItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const mode = searchParams.get('mode') || 'topic';
   const title =
-    mode === 'hsk' ? 'Select HSK Level'
-    : mode === 'topic' ? 'Select a Topic'
-    : mode === 'assignment' ? "Teacher's Assignments"
-    : mode === 'mistakes' ? 'Mistake Book'
-    : 'Select Lesson';
+    mode === 'hsk' ? t('titleHsk')
+    : mode === 'topic' ? t('titleTopic')
+    : mode === 'assignment' ? t('titleAssignment')
+    : mode === 'mistakes' ? t('titleMistakes')
+    : t('titleDefault');
 
   // Fetch data based on mode
   useEffect(() => {
@@ -37,7 +39,7 @@ export function LessonSelectionFeature() {
             id: l.id,
             title: l.name,
             count: l.vocabularyCount,
-            desc: `HSK Level — ${l.vocabularyCount} words`,
+            desc: t('descHsk', { count: l.vocabularyCount }),
           })));
         } else if (mode === 'topic') {
           const { topics } = await curriculumApi.getLessonSelectionOverview();
@@ -63,8 +65,8 @@ export function LessonSelectionFeature() {
             resourceApi.listMistakes({ limit: 100 }),
           ]);
           setLessons([
-            { id: 'recent', title: 'Recent Mistakes', count: recent.length, desc: 'Words you got wrong this week' },
-            { id: 'all', title: 'All Mistakes', count: all.length, desc: 'Complete list of all mistakes' },
+            { id: 'recent', title: t('recentMistakes'), count: recent.length, desc: t('descRecentMistakes') },
+            { id: 'all', title: t('allMistakes'), count: all.length, desc: t('descAllMistakes') },
           ]);
         }
       } catch (err) {
@@ -107,7 +109,7 @@ export function LessonSelectionFeature() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 mb-8">
         {loading ? (
-          <div className="col-span-1 md:col-span-2 text-center py-20 text-gray-400 font-medium text-xl">Loading...</div>
+          <div className="col-span-1 md:col-span-2 text-center py-20 text-gray-400 font-medium text-xl">{t('loading')}</div>
         ) : lessons.length > 0 ? lessons.map((lesson) => (
           <button key={lesson.id} onClick={() => handleLessonClick(lesson.id, lesson.title)} className="text-left bg-white rounded-[2rem] p-6 sm:p-8 shadow-sm border-4 border-transparent hover:border-[#aadd4a] hover:shadow-md transition-all group flex items-center justify-between">
             <div>
@@ -115,14 +117,14 @@ export function LessonSelectionFeature() {
               <p className="text-gray-500 font-medium">{lesson.desc}</p>
             </div>
             <div className="flex items-center gap-4 flex-shrink-0">
-              <span className="hidden sm:inline-block px-4 py-1.5 bg-[#e5f5eb] text-[#215b3b] font-bold rounded-full text-sm whitespace-nowrap">{lesson.count} words</span>
+              <span className="hidden sm:inline-block px-4 py-1.5 bg-[#e5f5eb] text-[#215b3b] font-bold rounded-full text-sm whitespace-nowrap">{t('words', { count: lesson.count })}</span>
               <div className="w-12 h-12 rounded-full bg-[#aadd4a] flex items-center justify-center text-white transform group-hover:scale-110 transition-transform shadow-sm">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
               </div>
             </div>
           </button>
         )) : (
-          <div className="col-span-1 md:col-span-2 text-center py-20 text-gray-500 font-medium text-xl">No lessons available for this mode yet.</div>
+          <div className="col-span-1 md:col-span-2 text-center py-20 text-gray-500 font-medium text-xl">{t('noLessons')}</div>
         )}
       </div>
 

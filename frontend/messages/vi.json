@@ -104,7 +104,23 @@
     "listening": "Nghe",
     "sentence": "Sắp xếp câu",
     "writeSentence": "Viết câu",
+    "write-sentence": "Viết câu",
     "fill": "Điền chỗ trống"
+  },
+  "LessonSelection": {
+    "titleHsk": "Chọn cấp độ HSK",
+    "titleTopic": "Chọn chủ đề",
+    "titleAssignment": "Bài tập từ giáo viên",
+    "titleMistakes": "Sổ tay lỗi sai",
+    "titleDefault": "Chọn bài học",
+    "descHsk": "Cấp độ HSK — {count} từ",
+    "descRecentMistakes": "Những từ bạn đã sai tuần này",
+    "descAllMistakes": "Toàn bộ danh sách lỗi sai",
+    "recentMistakes": "Lỗi sai gần đây",
+    "allMistakes": "Tất cả lỗi sai",
+    "words": "{count} từ",
+    "loading": "Đang tải...",
+    "noLessons": "Chưa có bài học nào cho chế độ này."
   },
   "PracticeHub": {
     "title": "Trung tâm Luyện tập",
@@ -581,7 +597,12 @@
     "detailNoteBank": "Hay viết nhầm nét bên phải chữ 银 thành 很.",
     "detailNoteBuy": "Thiếu mất bộ Thập ở trên, dễ nhầm với chữ 卖 (Bán).",
     "detailNoteSell": "Hay bị nhầm phát âm thanh 4 với thanh 3.",
-    "detailNoteLibrary": "Quên cách viết chữ 館."
+    "detailNoteLibrary": "Quên cách viết chữ 館.",
+    "detailMyNoteHeading": "Ghi chú của tôi",
+    "detailMyNotePlaceholder": "Thêm ghi chú của bạn để dễ nhớ hơn...",
+    "btnEditNote": "Sửa",
+    "btnSaveNote": "Lưu",
+    "btnCancelNote": "Hủy"
   },
   "Vip": {
     "metaTitle": "Nâng cấp VIP",

@@ -418,6 +418,7 @@ export interface MistakeBookEntry {
   userAnswer: Record<string, any> | null;
   correctAnswer: Record<string, any> | null;
   explanation: string | null;
+  userNote: string | null;
   failCount: number;
   correctStreak: number;
   lastFailedAt: string;

@@ -41,6 +41,9 @@ export const resourceApi = {
   createMistake: (data: Partial<MistakeBookEntry>) =>
     unwrap(apiFetch<Single<MistakeBookEntry>>('/mistake-book', { method: 'POST', body: JSON.stringify(data) })),
 
+  updateMistake: (id: string, data: { userNote?: string | null }) =>
+    unwrap(apiFetch<Single<MistakeBookEntry>>(`/mistake-book/${id}`, { method: 'PATCH', body: JSON.stringify(data) })),
+
   deleteMistake: (id: string) => apiFetch(`/mistake-book/${id}`, { method: 'DELETE' }),
 
   startMistakeReview: (filter?: string) =>

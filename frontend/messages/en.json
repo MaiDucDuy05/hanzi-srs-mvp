@@ -104,7 +104,23 @@
     "listening": "Listening",
     "sentence": "Sentence Order",
     "writeSentence": "Write Sentence",
+    "write-sentence": "Write Sentence",
     "fill": "Fill in the Blank"
+  },
+  "LessonSelection": {
+    "titleHsk": "Select HSK Level",
+    "titleTopic": "Select a Topic",
+    "titleAssignment": "Teacher's Assignments",
+    "titleMistakes": "Mistake Book",
+    "titleDefault": "Select Lesson",
+    "descHsk": "HSK Level — {count} words",
+    "descRecentMistakes": "Words you got wrong this week",
+    "descAllMistakes": "Complete list of all mistakes",
+    "recentMistakes": "Recent Mistakes",
+    "allMistakes": "All Mistakes",
+    "words": "{count} words",
+    "loading": "Loading...",
+    "noLessons": "No lessons available for this mode yet."
   },
   "PracticeHub": {
     "title": "Practice Hub",
@@ -581,7 +597,12 @@
     "detailNoteBank": "Often write the right side of 银 incorrectly as 很.",
     "detailNoteBuy": "Missing the 丿 stroke on top — easy to confuse with 卖 (sell).",
     "detailNoteSell": "Often mix up tone 4 with tone 3.",
-    "detailNoteLibrary": "Forget how to write the character 館."
+    "detailNoteLibrary": "Forget how to write the character 館.",
+    "detailMyNoteHeading": "My Note",
+    "detailMyNotePlaceholder": "Add your note to remember better...",
+    "btnEditNote": "Edit",
+    "btnSaveNote": "Save",
+    "btnCancelNote": "Cancel"
   },
   "Vip": {
     "metaTitle": "Upgrade VIP",
