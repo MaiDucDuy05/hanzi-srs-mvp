@@ -4,18 +4,18 @@ export class AddUserNoteToMistakeBook1788712794566 implements MigrationInterface
     name = 'AddUserNoteToMistakeBook1788712794566'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
-        await queryRunner.query(`DROP INDEX "public"."idx_tests_status"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_test_attempts_test"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_test_attempts_user"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_test_questions_question"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_test_questions_test"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_lessons_status"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_prac_q_lesson"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_prac_q_topic"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_prac_q_type_status"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_courses_status"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_course_lessons_lesson"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_user_activities_user_type"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_tests_status"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_test_attempts_test"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_test_attempts_user"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_test_questions_question"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_test_questions_test"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_lessons_status"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_prac_q_lesson"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_prac_q_topic"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_prac_q_type_status"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_courses_status"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_course_lessons_lesson"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_user_activities_user_type"`);
         await queryRunner.query(`ALTER TABLE "mistake_book" ADD "user_note" text`);
         await queryRunner.query(`ALTER TABLE "user_vocabulary_progress" ALTER COLUMN "easiness_factor" SET DEFAULT '2.5'`);
     }

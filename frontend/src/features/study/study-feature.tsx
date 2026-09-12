@@ -65,17 +65,7 @@ export function StudyFeature() {
     srsApi.getProgress(studyKey, type).then(setProgressMap).catch(console.error);
   }, [studyKey, studyMode]);
 
-  // Filtered vocabularies
-  const filteredVocab = useMemo(() => {
-    if (!search.trim()) return vocabularies;
-    const q = search.toLowerCase();
-    return vocabularies.filter(
-      (v) =>
-        v.hanzi.toLowerCase().includes(q) ||
-        v.pinyin.toLowerCase().includes(q) ||
-        v.meaningVi.toLowerCase().includes(q),
-    );
-  }, [vocabularies, search]);
+;
 
   const handleComplete = () => {
     setMode('list');
@@ -161,7 +151,7 @@ export function StudyFeature() {
             <div className="flex justify-center py-12">
               <PageLoading label={t('loading')} />
             </div>
-          ) : filteredVocab.length === 0 ? (
+          ) : vocabularies.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <p className="text-gray-500 font-bold">
                 {search ? t('noResults') : t('emptyVocab')}
@@ -169,7 +159,7 @@ export function StudyFeature() {
             </div>
           ) : (
             <StudyLessonVocabTable
-              filteredVocab={filteredVocab}
+              vocabularies={vocabularies}
               progressMap={progressMap}
               onLearn={(id) => {
                 const idx = vocabularies.findIndex(v => v.id === id);

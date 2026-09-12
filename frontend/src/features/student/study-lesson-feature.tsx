@@ -30,7 +30,6 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
   const [grammarPoints, setGrammarPoints] = useState<GrammarPoint[]>([]);
   const [progressMap, setProgressMap] = useState<Record<string, UserVocabProgress>>({});
   const [lessonProgress, setLessonProgress] = useState<UserLessonProgress | null>(null);
-  const [search, setSearch] = useState('');
 
   // Fetch lesson contents
   useEffect(() => {
@@ -48,17 +47,7 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
     studentApi.getLessonProgress(lessonId).then(setLessonProgress).catch(console.error);
   }, [lessonId]);
 
-  // Filtered vocabularies by search
-  const filteredVocab = useMemo(() => {
-    if (!search.trim()) return vocabularies;
-    const q = search.toLowerCase();
-    return vocabularies.filter(
-      (v) =>
-        v.hanzi.toLowerCase().includes(q) ||
-        v.pinyin.toLowerCase().includes(q) ||
-        v.meaningVi.toLowerCase().includes(q),
-    );
-  }, [vocabularies, search]);
+
 
   const handleComplete = (type?: 'vocab' | 'grammar') => {
     setMode('list');
@@ -101,11 +90,11 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
 
   if (mode === 'list') {
     return (
-      <div className="w-full flex flex-col pt-0 pb-32 px-4 relative">
-        <div className="w-full max-w-5xl mx-auto bg-white rounded-3xl shadow-sm p-6 sm:p-10 min-h-[600px] relative z-10">
+      <div className="w-full h-[calc(100vh-140px)] flex flex-col relative mt-12">
+        <div className="w-full h-full max-w-5xl mx-auto bg-white rounded-3xl shadow-sm p-6 sm:p-8 flex flex-col relative z-10">
 
           {/* Tab Switcher */}
-          <div className="flex gap-4 mb-8 justify-center">
+          <div className="flex gap-4 mb-6 justify-center shrink-0">
             <button
               onClick={() => setListTab('vocab')}
               className={`px-8 py-3 flex items-center gap-2 rounded-full font-bold transition-all border-2 ${listTab === 'vocab' ? 'bg-white border-gray-100 shadow-sm text-[#215b3b]' : 'bg-[#f9f9f9] border-transparent text-gray-500 hover:bg-gray-100'}`}
@@ -122,34 +111,22 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
             </button>
           </div>
 
-          {/* Filters (only for Vocab) */}
-          {listTab === 'vocab' && (
-            <StudyLessonFilterBar search={search} onSearchChange={setSearch} />
-          )}
-
-          {/* Title */}
-          <div className="mb-8">
-            <h1 className="text-2xl font-black text-[#111] mb-2 font-heading">
-              {listTab === 'vocab' ? t('vocabListTitle') : t('grammarListTitle')}
-            </h1>
-            <p className="text-gray-500 text-sm">
-              {listTab === 'vocab' ? t('vocabListSubheading') : t('grammarListSubheading')}
-            </p>
+          {/* Scrollable Content Area */}
+          <div className="flex-1 overflow-y-auto min-h-0 pb-24 pr-2">
+            {listTab === 'vocab' ? (
+              <StudyLessonVocabTable 
+                vocabularies={vocabularies} 
+                progressMap={progressMap} 
+                onLearn={(id) => {
+                  const idx = vocabularies.findIndex(v => v.id === id);
+                  setLearnIndex(idx !== -1 ? idx : 0);
+                  setMode('learn-word');
+                }}
+              />
+            ) : (
+              <StudyLessonGrammarList grammarPoints={grammarPoints} />
+            )}
           </div>
-
-          {listTab === 'vocab' ? (
-            <StudyLessonVocabTable 
-              filteredVocab={filteredVocab} 
-              progressMap={progressMap} 
-              onLearn={(id) => {
-                const idx = vocabularies.findIndex(v => v.id === id);
-                setLearnIndex(idx !== -1 ? idx : 0);
-                setMode('learn-word');
-              }}
-            />
-          ) : (
-            <StudyLessonGrammarList grammarPoints={grammarPoints} />
-          )}
         </div>
 
         {/* Floating Action Button */}

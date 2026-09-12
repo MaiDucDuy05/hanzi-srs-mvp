@@ -2,6 +2,7 @@
 
 import React, { use, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { curriculumApi } from '@/lib/api/endpoints';
 import { studentApi } from '@/lib/api/endpoints/student';
@@ -11,6 +12,7 @@ import { ErrorState } from '@/features/ui/components/error-state';
 
 export function CourseDetailFeature({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
+  const router = useRouter();
   const t = useTranslations('Courses.detail');
   const [level, setLevel] = useState<HskLevel | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -82,14 +84,16 @@ export function CourseDetailFeature({ params }: { params: Promise<{ id: string }
   return (
     <div className="w-full flex flex-col min-h-full">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2">
+          <button onClick={() => router.back()} className="w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-full bg-white shadow-sm hover:bg-gray-50 text-[#215b3b] transition-colors border-2 border-transparent hover:border-[#aadd4a]">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
+          </button>
           <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 flex items-center justify-center">
-            <div className="absolute inset-0 bg-[#eef7e9] rounded-full transform -rotate-12 scale-110 z-0" />
-            <img src="/assets/illustrations/bamboo/bamboo.png" alt="Bamboo" className="w-auto h-24 sm:h-32 object-contain relative z-10" />
+            <img src="/assets/illustrations/panda/panda-speech-heart.svg" alt="Panda" className="w-auto h-24 sm:h-32 object-contain relative z-10 -scale-x-100 transform" />
           </div>
           <div>
-            <h1 className="text-3xl sm:text-4xl font-black text-[#215b3b] font-heading">
-              {level ? `${level.code} — ${level.name}` : t('fallbackTitle')}
+            <h1 className="text-3xl sm:text-4xl font-black text-[#215b3b] font-heading relative right-2">
+              {level ? `${level.name}` : t('fallbackTitle')}
             </h1>
             <p className="text-sm text-gray-500 mt-1">{t('lessonCount', { count: lessons.length })}</p>
           </div>
