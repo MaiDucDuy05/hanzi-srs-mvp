@@ -13,6 +13,8 @@ import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
 import { Badge } from '@/features/ui/components/badge';
 import { formatDate } from '@/lib/utils/format';
+import { Clock, HelpCircle, Key, Calendar } from 'lucide-react';
+
 
 export function TeacherTestsFeature() {
   const { user } = useAuth();
@@ -109,12 +111,13 @@ export function TeacherTestsFeature() {
               />
               <CardBody>
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex flex-wrap gap-2 text-sm text-gray-500">
-                    <span>⏱ {t.timeLimitMinutes} phút</span>
-                    <span>❓ {t.attemptLimit} lần</span>
-                    {t.accessCode && <span>🔑 {t.accessCode}</span>}
-                    <span>Tạo {formatDate(t.createdAt)}</span>
+                  <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+                    <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {t.timeLimitMinutes} phút</span>
+                    <span className="flex items-center gap-1.5"><HelpCircle className="w-3.5 h-3.5" /> {t.attemptLimit} lần</span>
+                    {t.accessCode && <span className="flex items-center gap-1.5"><Key className="w-3.5 h-3.5" /> {t.accessCode}</span>}
+                    <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> Tạo {formatDate(t.createdAt)}</span>
                   </div>
+
                   <div className="flex gap-2">
                     <Link href={`/teacher/tests/${t.id}`}>
                       <Button variant="outline" size="sm">Quản lý</Button>

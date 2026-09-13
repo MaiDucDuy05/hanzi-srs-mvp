@@ -407,7 +407,7 @@ export function QuestionRenderer({ question, index = 0, compact = false, mode = 
             />
             {content.acceptedAnswers && (
               <div className="p-3 bg-green-100 border border-green-300 rounded text-xs text-green-700 mt-2">
-                <strong>✓ Các đáp án được chấp nhận:</strong> {(content.acceptedAnswers as string[]).join(', ')}
+                <strong className="inline-flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Các đáp án được chấp nhận:</strong> {(content.acceptedAnswers as string[]).join(', ')}
               </div>
             )}
           </div>
@@ -423,7 +423,7 @@ export function QuestionRenderer({ question, index = 0, compact = false, mode = 
             />
             {content.acceptedAnswers && (
               <div className="p-3 bg-green-100 border border-green-300 rounded text-xs text-green-700 mt-2">
-                <strong>✓ Các đáp án được chấp nhận:</strong>
+                <strong className="inline-flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Các đáp án được chấp nhận:</strong>
                 <ul className="list-disc ml-5 mt-1">
                   {(content.acceptedAnswers as string[]).map((ans, i) => (
                     <li key={i}>{ans}</li>
@@ -446,7 +446,7 @@ export function QuestionRenderer({ question, index = 0, compact = false, mode = 
             </div>
             {content.correctOrder && (
               <div className="p-3 bg-green-100 border border-green-300 rounded text-xs text-green-700 mt-2">
-                <strong>✓ Thứ tự đúng:</strong> {(content.correctOrder as string[]).join(' → ')}
+                <strong className="inline-flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Thứ tự đúng:</strong> {(content.correctOrder as string[]).join(' → ')}
               </div>
             )}
           </div>

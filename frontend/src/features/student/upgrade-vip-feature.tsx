@@ -13,6 +13,7 @@ import { Badge } from '@/features/ui/components/badge';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
 import { formatDateTime } from '@/lib/utils/format';
+import { Infinity as InfinityIcon, FileText, GraduationCap, Send } from 'lucide-react';
 
 type BenefitKey = 'unlimited' | 'documents' | 'support';
 
@@ -83,8 +84,16 @@ export function UpgradeVipFeature() {
         <div className="grid gap-4 sm:grid-cols-3">
           {BENEFIT_KEYS.map((key) => (
             <Card key={key}>
-              <CardBody className="text-center">
-                <p className="text-3xl">{key === 'unlimited' ? '∞' : key === 'documents' ? '📄' : '🧑‍🏫'}</p>
+              <CardBody className="text-center flex flex-col items-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+                  {key === 'unlimited' ? (
+                    <InfinityIcon className="h-6 w-6" />
+                  ) : key === 'documents' ? (
+                    <FileText className="h-6 w-6" />
+                  ) : (
+                    <GraduationCap className="h-6 w-6" />
+                  )}
+                </div>
                 <h3 className="mt-2 font-bold">{t(`benefit${key.charAt(0).toUpperCase()}${key.slice(1)}Title`)}</h3>
                 <p className="mt-1 text-sm text-gray-500">{t(`benefit${key.charAt(0).toUpperCase()}${key.slice(1)}Desc`)}</p>
               </CardBody>
@@ -97,8 +106,10 @@ export function UpgradeVipFeature() {
             <CardHeader title={t('submitCardTitle')} subtitle={t('submitCardSubtitle')} />
             <CardBody>
               {sent ? (
-                <div className="space-y-3 text-center">
-                  <p className="text-3xl">📨</p>
+                <div className="space-y-3 text-center flex flex-col items-center">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+                    <Send className="h-6 w-6" />
+                  </div>
                   <p className="font-medium">{t('submittedTitle')} {t('submittedDesc')}</p>
                   <Button variant="outline" size="sm" onClick={() => setSent(false)}>
                     {t('submittedAnother')}

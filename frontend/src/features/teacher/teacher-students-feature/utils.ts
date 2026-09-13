@@ -16,17 +16,18 @@ export const CARD_COLORS = [
   { bg: 'bg-[#f0f2f5]', border: 'border-gray-200', text: 'text-gray-500' },
 ];
 
-export const ACTIVITY_ICONS: Record<string, string> = {
-  LESSON_COMPLETED: '📚',
-  PRACTICE_COMPLETED: '🎯',
-  PERFECT_BONUS: '⭐',
-  COMBO_BONUS: '🔥',
-  STREAK_MILESTONE: '🏆',
-  MISTAKE_REVIEWED: '📝',
-  REDEEMED_REWARD: '🎁',
-  REWARD_GRANTED: '🎁',
-  LEVEL_UP: '🚀',
+export const ACTIVITY_ICON_NAMES: Record<string, string> = {
+  LESSON_COMPLETED: 'BookOpen',
+  PRACTICE_COMPLETED: 'Target',
+  PERFECT_BONUS: 'Star',
+  COMBO_BONUS: 'Flame',
+  STREAK_MILESTONE: 'Trophy',
+  MISTAKE_REVIEWED: 'FileEdit',
+  REDEEMED_REWARD: 'Gift',
+  REWARD_GRANTED: 'Gift',
+  LEVEL_UP: 'Rocket',
 };
+
 
 export const ACTIVITY_LABELS: Record<string, string> = {
   LESSON_COMPLETED: 'Hoàn thành bài học',

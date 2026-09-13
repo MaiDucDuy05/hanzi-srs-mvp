@@ -10,6 +10,7 @@ import { speakingApi } from '@/lib/api/endpoints';
 import { Button } from '@/features/ui/components/button';
 import { Modal } from '@/features/ui/components/modal';
 import { Spinner } from '@/features/ui/components/spinner';
+import { Mic, CheckCircle2 } from 'lucide-react';
 
 type Phase = 'idle' | 'recording' | 'recorded' | 'uploading' | 'done';
 
@@ -168,7 +169,7 @@ export function RecordingModal({ open, onClose, onSubmitted }: Props) {
           )}
           {phase === 'recorded' && (
             <div className="flex flex-col items-center gap-2">
-              <span className="text-2xl">🎤</span>
+              <Mic className="h-8 w-8 text-brand" />
               <span className="text-sm text-gray-500">{t('recordedHint', { time: fmt(duration) })}</span>
             </div>
           )}
@@ -180,7 +181,7 @@ export function RecordingModal({ open, onClose, onSubmitted }: Props) {
           )}
           {phase === 'done' && (
             <div className="flex flex-col items-center gap-2">
-              <span className="text-2xl">✅</span>
+              <CheckCircle2 className="h-8 w-8 text-green-600" />
               <span className="text-sm text-gray-500">{t('submittedHint')}</span>
             </div>
           )}

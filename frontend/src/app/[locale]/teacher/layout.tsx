@@ -12,8 +12,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
         
         <div className="flex flex-1 flex-col overflow-hidden relative bg-white">
           <TeacherHeader />
-          
-          <main className="flex-1 overflow-y-auto p-10 relative">
+          <main className="flex-1 overflow-y-auto p-10 relative bg-[#fcfdfa]/40">
             {children}
           </main>
         </div>

@@ -2,6 +2,8 @@ import { Modal } from '@/features/ui/components/modal';
 import { Button } from '@/features/ui/components/button';
 import { Badge } from '@/features/ui/components/badge';
 import type { QuestionBankItem } from '@/lib/api/endpoints/question-bank';
+import { Lightbulb, Check } from 'lucide-react';
+
 
 interface QuestionPreviewModalProps {
   open: boolean;
@@ -78,7 +80,8 @@ export function QuestionPreviewModal({ open, onClose, question }: QuestionPrevie
                       } flex items-center justify-between`}
                     >
                       <span><strong className="mr-2">{optId}.</strong> {optText}</span>
-                      {isCorrect && <span className="text-green-600 font-bold text-xl">✓</span>}
+                      {isCorrect && <Check className="w-5 h-5 text-emerald-600 font-bold stroke-[3]" />}
+
                     </div>
                   );
                 })}
@@ -164,11 +167,12 @@ export function QuestionPreviewModal({ open, onClose, question }: QuestionPrevie
         {question.explanation && (
           <div className="mt-6 p-4 bg-amber-50 rounded-lg border border-amber-100">
             <div className="flex items-center gap-2 text-amber-800 font-medium mb-1">
-              <span className="text-xl">💡</span> Giải thích
+              <Lightbulb className="w-4 h-4 text-amber-600" /> Giải thích
             </div>
             <p className="text-amber-900 whitespace-pre-wrap text-sm">{question.explanation}</p>
           </div>
         )}
+
       </div>
     </Modal>
   );

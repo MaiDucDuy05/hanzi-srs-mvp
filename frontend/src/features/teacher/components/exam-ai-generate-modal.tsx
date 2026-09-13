@@ -7,7 +7,7 @@ import { Badge } from '@/features/ui/components/badge';
 import { curriculumApi } from '@/lib/api/endpoints/curriculum';
 import { studyApi, type GeneratedQuestionItem } from '@/lib/api/endpoints/study';
 import type { HskLevel, Lesson } from '@/lib/api/types';
-import { Wand2, Sparkles, CheckCircle, RefreshCw, Trash2, ArrowRight, BookOpen, AlertCircle } from 'lucide-react';
+import { Wand2, Sparkles, CheckCircle, RefreshCw, Trash2, ArrowRight, BookOpen, AlertCircle, Check, Lightbulb } from 'lucide-react';
 import { cn } from '@/lib/utils/cn';
 import { useAuth } from '@/lib/auth/auth-context';
 
@@ -370,7 +370,7 @@ export function ExamAIGenerateModal({ open, onClose, onSuccess }: ExamAIGenerate
                           isChecked ? 'bg-[#466a50]' : 'bg-gray-200'
                         )}
                       >
-                        ✓
+                        {isChecked && <Check className="w-3.5 h-3.5 stroke-[2.5]" />}
                       </div>
                     </div>
                   );
@@ -501,7 +501,11 @@ export function ExamAIGenerateModal({ open, onClose, onSuccess }: ExamAIGenerate
                           )}
                         >
                           <span>{opt}</span>
-                          {opt === q.content.correctAnswer && <span className="text-[10px] text-emerald-600">✓ Đúng</span>}
+                          {opt === q.content.correctAnswer && (
+                            <span className="text-[10px] text-emerald-600 flex items-center gap-0.5">
+                              <Check className="w-3 h-3" /> Đúng
+                            </span>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -522,8 +526,9 @@ export function ExamAIGenerateModal({ open, onClose, onSuccess }: ExamAIGenerate
                   )}
 
                   {q.explanation && (
-                    <p className="text-xs text-gray-500 italic mt-2.5 pt-2 border-t border-gray-100">
-                      💡 {q.explanation}
+                    <p className="text-xs text-gray-500 italic mt-2.5 pt-2 border-t border-gray-100 flex items-center gap-1">
+                      <Lightbulb className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                      <span>{q.explanation}</span>
                     </p>
                   )}
                 </div>

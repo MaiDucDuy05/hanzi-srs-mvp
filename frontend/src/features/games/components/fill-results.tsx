@@ -29,7 +29,7 @@ export function FillResults({ result, fillBlankQuestions, elapsed, onExit, onRep
   // Fill-blank score is a raw count — convert to a percentage for GameSummary.
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
 
-  const title = pct >= 80 ? 'Tuyệt vời! 🎉' : pct >= 50 ? 'Khá tốt! 👍' : 'Cố gắng nhé! 💪';
+  const title = pct >= 80 ? 'Tuyệt vời!' : pct >= 50 ? 'Khá tốt!' : 'Cố gắng nhé!';
 
   return (
     <div className="flex-1 flex flex-col items-center w-full max-w-2xl mx-auto px-4 py-4 relative z-10 overflow-y-auto">

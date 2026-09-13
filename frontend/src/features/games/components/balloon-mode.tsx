@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils/cn';
 import { FloatingLeaves, PANDA_LEFT, PANDA_BALANCE, PANDA_EATING } from './game-decorations';
 import { GameHUD, ProgressBar } from './balloon-hud';
 import { Balloon, BulletsLayer, ParticlesLayer } from './balloon-game-elements';
+import { Trophy, Sparkles, Target, RotateCcw } from 'lucide-react';
 
 // ── Result screen ─────────────────────────────────────────────
 
@@ -15,13 +16,20 @@ function GameOverScreen({ score, correctKeystrokes, maxCombo }: { score: number;
   const isGreat = score >= 80, isGood = score >= 50;
   const pandaSrc = isGreat ? PANDA_BALANCE : isGood ? PANDA_LEFT : PANDA_EATING;
   const resultLabel = isGreat ? 'Xuất sắc!' : isGood ? 'Tốt lắm!' : 'Cố gắng thêm nhé!';
-  const resultEmoji = isGreat ? '🏆' : isGood ? '✨' : '💪';
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[580px] text-center w-full px-4">
       <div className="relative bg-gradient-to-b from-emerald-50 via-white to-emerald-50 rounded-3xl p-8 w-full max-w-sm border-2 border-emerald-200 shadow-xl overflow-hidden">
         <img src={pandaSrc} alt="Panda" className="w-28 h-28 mx-auto mb-4 drop-shadow-md" />
-        <div className="text-5xl mb-2">{resultEmoji}</div>
+        <div className="flex justify-center mb-2">
+          {isGreat ? (
+            <Trophy className="w-12 h-12 text-amber-500" />
+          ) : isGood ? (
+            <Sparkles className="w-12 h-12 text-emerald-500" />
+          ) : (
+            <Target className="w-12 h-12 text-blue-500" />
+          )}
+        </div>
         <h2 className="text-3xl font-black text-emerald-700 mb-1">{resultLabel}</h2>
         <p className="text-gray-500 text-sm mb-6">Bạn đã hoàn thành trò chơi!</p>
         <div className="grid grid-cols-3 gap-3 mb-6">
@@ -38,8 +46,9 @@ function GameOverScreen({ score, correctKeystrokes, maxCombo }: { score: number;
             <div className="text-xs text-gray-400 font-medium">Combo</div>
           </div>
         </div>
-        <Button onClick={() => window.location.reload()} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg">
-          🎮 Chơi lại
+        <Button onClick={() => window.location.reload()} className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg inline-flex items-center justify-center gap-2">
+          <RotateCcw className="w-4 h-4" />
+          <span>Chơi lại</span>
         </Button>
       </div>
     </div>

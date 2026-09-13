@@ -7,6 +7,7 @@ import { Input } from '@/features/ui/components/form';
 import { AudioButton } from '@/features/ui/components/audio-button';
 import { ClickableHanzi } from '@/features/ui/components/clickable-hanzi';
 import { cn } from '@/lib/utils/cn';
+import { Check } from 'lucide-react';
 
 export interface FillBlankState {
   index: number;
@@ -105,7 +106,10 @@ export function FillBlankMode({
           </Button>
         </div>
         {state.feedback === 'correct' && (
-          <p className="mt-3 font-medium text-green-600">Chính xác! ✓</p>
+          <p className="mt-3 font-medium text-green-600 inline-flex items-center gap-1">
+            <span>Chính xác!</span>
+            <Check className="w-4 h-4 stroke-[2.5]" />
+          </p>
         )}
         {state.feedback === 'wrong' && (
           <p className="mt-3 font-medium text-red-600">

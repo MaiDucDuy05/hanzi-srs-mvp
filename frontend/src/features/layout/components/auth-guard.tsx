@@ -13,9 +13,19 @@ export function AuthGuard({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && !user) router.replace('/login');
+    if (!loading) {
+      if (!user) {
+        router.replace('/login');
+      } else if (user.role === 'ADMIN') {
+        router.replace('/admin');
+      } else if (user.role === 'TEACHER') {
+        router.replace('/teacher');
+      }
+    }
   }, [loading, user, router]);
 
-  if (loading || !user) return <PageLoading label="Đang kiểm tra đăng nhập..." />;
+  if (loading || !user || user.role === 'ADMIN' || user.role === 'TEACHER') {
+    return <PageLoading label="Đang chuyển hướng..." />;
+  }
   return <>{children}</>;
 }

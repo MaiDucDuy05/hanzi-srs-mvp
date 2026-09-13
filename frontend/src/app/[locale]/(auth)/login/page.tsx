@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { LoginForm } from '@/features/auth/components/login-form';
 import Image from 'next/image';
+import { Trees } from 'lucide-react';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('Auth.login');
@@ -33,7 +34,7 @@ export default async function LoginPage({
         />
         <div className="relative z-10">
           <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
-            <span className="text-3xl">🌲</span> {t('brandTitle')}
+            <Trees className="w-8 h-8 text-[#a7d08c]" /> {t('brandTitle')}
           </h2>
           <p className="text-sm text-gray-100 font-medium">
             {t('brandTagline')}

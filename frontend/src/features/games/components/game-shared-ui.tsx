@@ -7,6 +7,7 @@
 import { cn } from '@/lib/utils/cn';
 import { Button } from '@/features/ui/components/button';
 import { BambooCorner, PandaMascot, PANDA_BALANCE, PANDA_EATING, PANDA_LEFT } from './game-decorations';
+import { Trophy, Sparkles, Target, RotateCcw, ArrowLeft } from 'lucide-react';
 
 interface GameResultCardProps {
   score: number;
@@ -26,7 +27,7 @@ export function GameResultCard({
   wrongCount,
   elapsed,
   maxCombo,
-  title = 'Hoàn thành! 🎉',
+  title = 'Hoàn thành!',
   subtitle,
   onReplay,
   onExit,
@@ -35,7 +36,6 @@ export function GameResultCard({
   const isGood = score >= 50;
   const pandaSrc = isGreat ? PANDA_BALANCE : isGood ? PANDA_LEFT : PANDA_EATING;
   const resultLabel = isGreat ? 'Xuất sắc!' : isGood ? 'Tốt lắm!' : 'Cố gắng thêm nhé!';
-  const resultEmoji = isGreat ? '🏆' : isGood ? '✨' : '💪';
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[580px] text-center w-full px-4">
@@ -45,7 +45,15 @@ export function GameResultCard({
 
         <PandaMascot src={pandaSrc} />
 
-        <div className="text-5xl mb-2">{resultEmoji}</div>
+        <div className="flex justify-center mb-2">
+          {isGreat ? (
+            <Trophy className="w-12 h-12 text-amber-500" />
+          ) : isGood ? (
+            <Sparkles className="w-12 h-12 text-emerald-500" />
+          ) : (
+            <Target className="w-12 h-12 text-blue-500" />
+          )}
+        </div>
         <h2 className="text-3xl font-black text-emerald-700 mb-1">{resultLabel}</h2>
         {subtitle && <p className="text-gray-500 text-sm mb-6">{subtitle}</p>}
 
@@ -61,13 +69,15 @@ export function GameResultCard({
 
         <div className="flex gap-3">
           {onReplay && (
-            <Button onClick={onReplay} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg">
-              🔄 Chơi lại
+            <Button onClick={onReplay} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg inline-flex items-center justify-center gap-2">
+              <RotateCcw className="w-4 h-4" />
+              <span>Chơi lại</span>
             </Button>
           )}
           {onExit && (
-            <Button onClick={onExit} variant="outline" className="flex-1 py-3 rounded-xl">
-              ← Thoát
+            <Button onClick={onExit} variant="outline" className="flex-1 py-3 rounded-xl inline-flex items-center justify-center gap-2">
+              <ArrowLeft className="w-4 h-4" />
+              <span>Thoát</span>
             </Button>
           )}
         </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Pause, Play, Maximize2, Minimize2 } from 'lucide-react';
+import { Pause, Play, Maximize2, Minimize2, Flame } from 'lucide-react';
 import { PawHP } from './game-decorations';
 
 
@@ -35,8 +35,9 @@ export const GameHUD = React.memo(function GameHUD({ hp, maxHp, score, combo, sh
           </div>
           {showCombo && combo > 1 && (
             <div className="absolute right-0 top-16 pointer-events-none whitespace-nowrap animate-in zoom-in fade-in slide-in-from-top-4 duration-300 fill-mode-forwards">
-              <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-white font-black text-xl px-4 py-1.5 rounded-full shadow-lg">
-                {combo}x Combo! 🔥
+              <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-white font-black text-xl px-4 py-1.5 rounded-full shadow-lg inline-flex items-center gap-1.5">
+                <span>{combo}x Combo!</span>
+                <Flame className="w-5 h-5 fill-white text-white" />
               </span>
             </div>
           )}

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { DecorativeLeaves } from './game-icons';
-import { BookType, AlignLeft } from 'lucide-react';
+import { BookType, AlignLeft, PenTool, FileText } from 'lucide-react';
 
 export type GameId =
   | 'flashcard' | 'balloon' | 'match' | 'memory' | 'stroke' | 'listening'
@@ -19,8 +19,8 @@ const VOCAB_DEFS: { id: GameId; icon: React.ReactNode }[] = [
 
 const SENTENCE_DEFS: { id: GameId; icon: React.ReactNode }[] = [
   { id: 'sentence', icon: <img src="/assets/game/sentence.png" alt="Sentence" className="w-full h-full object-contain" /> },
-  { id: 'write-sentence', icon: <div className="w-16 h-16 rounded-full bg-[#eef7e9] flex items-center justify-center text-4xl">✍️</div> },
-  { id: 'fill', icon: <div className="w-16 h-16 rounded-full bg-[#eef7e9] flex items-center justify-center text-4xl">📝</div> },
+  { id: 'write-sentence', icon: <div className="w-16 h-16 rounded-full bg-[#eef7e9] flex items-center justify-center text-[#466a50]"><PenTool className="w-8 h-8" /></div> },
+  { id: 'fill', icon: <div className="w-16 h-16 rounded-full bg-[#eef7e9] flex items-center justify-center text-[#466a50]"><FileText className="w-8 h-8" /></div> },
 ];
 
 interface GameSelectionModalProps {

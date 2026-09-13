@@ -15,7 +15,7 @@ import { BambooBackground } from '../components/game-decorations';
 import { BambooProgressBar } from '@/features/ui/components/bamboo-progress-bar';
 import { FillGameBoard } from '../components/fill-game-board';
 import { FillResults } from '../components/fill-results';
-import { Loader2, XCircle, Clock } from 'lucide-react';
+import { Loader2, XCircle, Clock, PenTool } from 'lucide-react';
 
 interface FillGameFeatureProps {
   sourceId: string;
@@ -156,7 +156,7 @@ export function FillGameFeature({ sourceId, sourceType }: FillGameFeatureProps) 
       {/* Header: title + timer + question counter */}
       <div className="relative z-10 flex items-center justify-between gap-3 px-2 sm:px-4 mb-1 shrink-0">
         <h1 className="text-xl sm:text-2xl font-black text-[#215b3b] font-heading drop-shadow-sm flex items-center gap-2">
-          <span className="text-2xl">✍️</span> {t('fillHeading')}
+          <PenTool className="w-6 h-6 text-[#466a50]" /> {t('fillHeading')}
         </h1>
         <div className="flex items-center gap-2">
           <div className="bg-white/80 backdrop-blur text-[#215b3b] font-bold text-sm px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm border border-[#eaf3c5]">

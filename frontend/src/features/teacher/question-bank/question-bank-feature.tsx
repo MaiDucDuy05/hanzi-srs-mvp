@@ -9,6 +9,7 @@ import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
 import { Badge } from '@/features/ui/components/badge';
 import { useAuth } from '@/lib/auth/auth-context';
+import { AlertTriangle } from 'lucide-react';
 
 import { QuestionPreviewModal } from '../components/question-preview-modal';
 
@@ -124,7 +125,7 @@ export function QuestionBankFeature() {
       {/* Hiển thị lỗi */}
       {error && (
         <div className="p-10 text-center bg-red-50 text-red-600 rounded-xl border border-red-200">
-          <p className="text-4xl mb-2">⚠️</p>
+          <AlertTriangle className="w-10 h-10 mx-auto mb-2 text-red-500" />
           <p className="font-medium">Có lỗi xảy ra</p>
           <p className="text-sm mt-1">{error}</p>
           <Button variant="outline" className="mt-4" onClick={fetchQuestions}>Thử lại</Button>

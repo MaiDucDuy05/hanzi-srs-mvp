@@ -15,10 +15,18 @@ export function HeroSection({ user }: { user: User | null }) {
           <img src="/assets/illustrations/panda/panda-at-beach.svg" alt="Panda" className="h-14 w-auto sm:h-16 lg:h-20" />
         </Link>
         <div className="flex items-center gap-4 sm:gap-6 lg:gap-8 pr-2">
-          <Link href="/dashboard/courses" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Courses</Link>
-          <Link href="/dashboard" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Dashboard</Link>
-          <Link href="/leaderboard" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Leaderboard</Link>
-          <Link href="/contact" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Contact Us</Link>
+          {user?.role === 'ADMIN' ? (
+            <Link href="/admin" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Bảng điều khiển Admin</Link>
+          ) : user?.role === 'TEACHER' ? (
+            <Link href="/teacher" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Cổng Giáo Viên</Link>
+          ) : (
+            <>
+              <Link href="/dashboard/courses" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Courses</Link>
+              <Link href="/dashboard" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Dashboard</Link>
+              <Link href="/leaderboard" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Leaderboard</Link>
+              <Link href="/contact" className="transition-colors hover:text-[#5E7F26] whitespace-nowrap">Contact Us</Link>
+            </>
+          )}
         </div>
       </div>
 
@@ -42,12 +50,19 @@ export function HeroSection({ user }: { user: User | null }) {
           </h1>
           
           <div className="mt-10">
-            {user ? (
+            {user?.role === 'ADMIN' ? (
               <Link
-                href="/dashboard"
-                className="font-(family-name:--font-nunito) inline-block rounded-full bg-[#8BC34A] px-8 py-4 text-lg font-black text-white shadow-md transition-all hover:scale-105 hover:bg-[#7CB342]"
+                href="/admin"
+                className="font-[family-name:var(--font-nunito)] inline-block rounded-full bg-[#8BC34A] px-8 py-4 text-lg font-black text-white shadow-md transition-all hover:scale-105 hover:bg-[#7CB342]"
               >
-                 Start Your Journey
+                Vào Bảng Quản Trị
+              </Link>
+            ) : user?.role === 'TEACHER' ? (
+              <Link
+                href="/teacher"
+                className="font-[family-name:var(--font-nunito)] inline-block rounded-full bg-[#8BC34A] px-8 py-4 text-lg font-black text-white shadow-md transition-all hover:scale-105 hover:bg-[#7CB342]"
+              >
+                Vào Cổng Giáo Viên
               </Link>
             ) : (
               <Link

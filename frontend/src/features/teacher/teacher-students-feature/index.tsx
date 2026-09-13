@@ -81,29 +81,6 @@ export function TeacherStudentsFeature() {
         <p className="text-[15px] text-gray-500 font-medium">Class: Little Shoots (Beginner)</p>
       </div>
 
-      {/* AI Suggestion Banner */}
-      <div className="bg-[#fcfce8] border border-[#eaf3c5] rounded-[24px] p-8 mb-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative overflow-hidden">
-        <div className="flex items-start gap-5 relative z-10">
-          <div className="h-14 w-14 bg-[#1f5333] rounded-full flex items-center justify-center text-white shrink-0 shadow-md">
-            <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-            </svg>
-          </div>
-          <div>
-            <h2 className="text-xl font-extrabold text-[#1f5333] mb-2">AI Path Suggestion</h2>
-            <p className="text-[14px] text-gray-600 font-medium leading-relaxed max-w-2xl">
-              <span className="font-bold text-[#1f5333]">Student A ({students[0]?.fullName || 'Xiao Ming'})</span> has maintained a 95% vocabulary retention rate and passed the internal assessment. They are ready for HSK 2. Suggest moving them to the next level module.
-            </p>
-          </div>
-        </div>
-        <button
-          type="button"
-          className="bg-white border border-[#c7cf35] text-[#1f5333] px-6 py-2.5 rounded-full text-[13px] font-bold shadow-sm hover:bg-[#f3f4e1] transition-colors whitespace-nowrap shrink-0 relative z-10"
-        >
-          Apply Path Update
-        </button>
-      </div>
-
       {/* Main Content */}
       <div className="flex flex-col xl:flex-row gap-8">
         {/* Left: Students */}

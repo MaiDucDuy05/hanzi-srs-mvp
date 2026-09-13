@@ -30,11 +30,11 @@ export function GameSummary({
   const stars = getStars(result.score);
 
   const getTitle = () => {
-    if (stars === 3) return "Tuyệt vời! 🎉";
-    if (stars === 2) return "Khá tốt! 👍";
-    return "Cố gắng lên nhé! 💪";
+    if (stars === 3) return "Tuyệt vời!";
+    if (stars === 2) return "Khá tốt!";
+    return "Cố gắng lên nhé!";
   };
-  const title = getTitle();
+  const title = propTitle || getTitle();
 
   return (
     <div className="mx-auto max-w-md w-full bg-white/95 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-white/60 text-center animate-in zoom-in duration-300">

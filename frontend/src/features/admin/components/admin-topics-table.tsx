@@ -2,7 +2,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { adminContentApi } from '@/lib/api/endpoints/admin-content';
-import { Edit2, Search, Plus, X, Image as ImageIcon, Eye, EyeOff, BookOpen } from 'lucide-react';
+import { Edit2, Search, Plus, X, Eye, EyeOff, BookOpen } from 'lucide-react';
 import { AdminTopicVocabulariesModal } from './admin-topic-vocabularies-modal';
 import { useConfirm } from '@/providers/confirm-provider';
 
@@ -122,14 +122,6 @@ export const AdminTopicsTable = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {filteredTopics.map((topic: any) => (
             <div key={topic.id} className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex flex-col group hover:shadow-md transition-shadow">
-              <div className="h-32 bg-gray-100 rounded-2xl mb-4 flex items-center justify-center overflow-hidden">
-                {topic.thumbnailKey ? (
-                  <img src={topic.thumbnailKey} alt={topic.name} className="w-full h-full object-cover" />
-                ) : (
-                  <ImageIcon className="w-8 h-8 text-gray-300" />
-                )}
-              </div>
-              
               <div className="flex justify-between items-start mb-2">
                 <span className={`px-2 py-1 text-[10px] font-bold uppercase rounded-full ${topic.status === 'PUBLISHED' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
                   {topic.status === 'PUBLISHED' ? 'Đã xuất bản' : 'Bản nháp'}
