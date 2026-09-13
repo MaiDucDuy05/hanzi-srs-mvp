@@ -77,8 +77,8 @@ export function TeacherStudentsFeature() {
       />
 
       <div className="mb-8">
-        <h1 className="text-[34px] font-extrabold text-[#1f5333] tracking-tight mb-2">Student Progress</h1>
-        <p className="text-[15px] text-gray-500 font-medium">Class: Little Shoots (Beginner)</p>
+        <h1 className="text-[34px] font-extrabold text-[#1f5333] tracking-tight mb-2">Tiến độ học sinh</h1>
+        <p className="text-[15px] text-gray-500 font-medium">Tất cả học sinh trong hệ thống</p>
       </div>
 
       {/* Main Content */}
@@ -90,7 +90,7 @@ export function TeacherStudentsFeature() {
               <svg className="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-              <h2 className="font-bold text-[16px]">Active Students</h2>
+              <h2 className="font-bold text-[16px]">Danh sách học sinh</h2>
               <span className="text-[12px] text-gray-400 font-medium whitespace-nowrap">({meta.total || students.length} học sinh)</span>
             </div>
             
