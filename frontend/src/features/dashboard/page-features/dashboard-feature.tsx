@@ -165,7 +165,7 @@ export function DashboardFeature() {
               {t('reviewToday')}
             </h2>
             <button 
-              onClick={() => window.location.href = '/review'}
+              onClick={() => window.location.href = '/study/review'}
               className="bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold py-2 px-6 rounded-full shadow-md transition-transform hover:scale-105"
             >
               {t('reviewNow')}

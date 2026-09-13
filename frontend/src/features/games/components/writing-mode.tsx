@@ -62,7 +62,7 @@ export function WritingMode({ items, initialState, onStateChange, onComplete }: 
   const clearCanvas = () => setKey(k => k + 1);
 
   return (
-    <div className="w-full min-h-[calc(100vh-4rem)] bg-[#f9f8f4] text-[#333] font-sans flex flex-col items-center py-10 px-4 relative overflow-hidden rounded-xl border border-[#e8e2d2]">
+    <div className="w-full flex-1 bg-[#f9f8f4] text-[#333] font-sans flex flex-col items-center py-10 px-4 relative overflow-hidden rounded-xl border border-[#e8e2d2]">
       {/* Paper texture */}
       <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-multiply" style={{ backgroundImage: 'url("https://www.transparenttextures.com/patterns/rice-paper.png")' }} />
 

@@ -3,6 +3,7 @@
 import { formatDuration } from '@/lib/utils/format';
 import type { ModeResult } from '@/features/practice/components/practice-models';
 import { Star, Trophy, RotateCcw, Home } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export interface GameSummaryProps {
   title?: string;
@@ -21,6 +22,8 @@ export function GameSummary({
   onReplay,
   onExit,
 }: GameSummaryProps) {
+  const t = useTranslations('Games');
+
   const getStars = (score: number) => {
     if (score >= 90) return 3;
     if (score >= 60) return 2;
@@ -30,11 +33,11 @@ export function GameSummary({
   const stars = getStars(result.score);
 
   const getTitle = () => {
-    if (stars === 3) return "Tuyệt vời! 🎉";
-    if (stars === 2) return "Khá tốt! 👍";
-    return "Cố gắng lên nhé! 💪";
+    if (stars === 3) return t('summaryExcellent');
+    if (stars === 2) return t('summaryGood');
+    return t('summaryTryHarder');
   };
-  const title = getTitle();
+  const title = propTitle || getTitle();
 
   return (
     <div className="mx-auto max-w-md w-full bg-white/95 backdrop-blur-sm rounded-3xl p-6 sm:p-8 shadow-2xl border-4 border-white/60 text-center animate-in zoom-in duration-300">
@@ -71,15 +74,15 @@ export function GameSummary({
       <div className="grid grid-cols-3 gap-3 mb-8">
         <div className="rounded-2xl bg-green-50 p-3 sm:p-4 border border-green-100 shadow-sm">
           <p className="text-2xl font-black text-green-600">{result.correctCount}</p>
-          <p className="text-xs sm:text-sm font-bold text-green-700/60 uppercase tracking-wider mt-1">Đúng</p>
+          <p className="text-xs sm:text-sm font-bold text-green-700/60 uppercase tracking-wider mt-1">{t('summaryCorrect')}</p>
         </div>
         <div className="rounded-2xl bg-red-50 p-3 sm:p-4 border border-red-100 shadow-sm">
           <p className="text-2xl font-black text-red-600">{result.wrongCount}</p>
-          <p className="text-xs sm:text-sm font-bold text-red-700/60 uppercase tracking-wider mt-1">Sai</p>
+          <p className="text-xs sm:text-sm font-bold text-red-700/60 uppercase tracking-wider mt-1">{t('summaryWrong')}</p>
         </div>
         <div className="rounded-2xl bg-blue-50 p-3 sm:p-4 border border-blue-100 shadow-sm flex flex-col justify-center items-center">
           <p className="text-xl font-black text-blue-600 mt-0.5">{formatDuration(elapsed)}</p>
-          <p className="text-xs sm:text-sm font-bold text-blue-700/60 uppercase tracking-wider mt-1">Thời gian</p>
+          <p className="text-xs sm:text-sm font-bold text-blue-700/60 uppercase tracking-wider mt-1">{t('summaryTime')}</p>
         </div>
       </div>
 
@@ -91,7 +94,7 @@ export function GameSummary({
             className="flex-1 bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold py-3 px-6 rounded-full shadow-lg hover:shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2"
           >
             <RotateCcw className="w-5 h-5" />
-            Chơi lại
+            {t('summaryPlayAgain')}
           </button>
         )}
         <button 
@@ -99,7 +102,7 @@ export function GameSummary({
           className="flex-1 bg-white hover:bg-gray-50 text-gray-700 font-bold py-3 px-6 rounded-full shadow-md border-2 border-gray-100 hover:border-gray-200 transition-all active:scale-95 flex items-center justify-center gap-2"
         >
           <Home className="w-5 h-5" />
-          Về menu
+          {t('summaryMenu')}
         </button>
       </div>
     </div>

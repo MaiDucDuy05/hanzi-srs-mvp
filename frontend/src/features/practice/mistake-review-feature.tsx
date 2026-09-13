@@ -110,7 +110,7 @@ export function MistakeReviewFeature() {
         </div>
       </header>
 
-      <div className="flex-1 rounded-[2.5rem] bg-white border border-gray-100 shadow-sm overflow-hidden relative p-4 sm:p-8">
+      <div className="flex-1 rounded-[2.5rem] bg-white border border-gray-100 shadow-sm overflow-y-auto overflow-x-hidden relative p-4 sm:p-8">
         <MistakeQuestionRenderer key={current.id} mistake={current} onComplete={handleModeComplete} />
       </div>
     </div>

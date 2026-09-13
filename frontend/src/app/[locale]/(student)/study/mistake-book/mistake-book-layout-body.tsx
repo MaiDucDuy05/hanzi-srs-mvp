@@ -19,11 +19,21 @@ export function MistakeBookLayoutBody({ children }: { children: React.ReactNode 
   const [mistakes, setMistakes] = useState<MistakeBookEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [filter, setFilter] = useState<'ALL' | 'GRAMMAR' | 'VOCAB' | 'HSK1_2'>('ALL');
+
   useEffect(() => {
     resourceApi.listMistakes({ limit: 100 }).then((data) => {
       setMistakes(data);
     }).catch(console.error).finally(() => setLoading(false));
   }, []);
+
+  const filteredMistakes = mistakes.filter((m) => {
+    if (filter === 'ALL') return true;
+    if (filter === 'GRAMMAR') return m.questionType !== 'VOCAB';
+    if (filter === 'VOCAB') return m.questionType === 'VOCAB';
+    if (filter === 'HSK1_2') return m.sourceId?.toLowerCase().includes('hsk');
+    return true;
+  });
 
   return (
     <div className="flex flex-col bg-white rounded-[2rem] shadow-2xl w-full h-[calc(100vh-2rem)] md:h-[calc(100vh-4rem)] mt-2 md:mt-4 overflow-hidden border border-gray-100">
@@ -31,7 +41,7 @@ export function MistakeBookLayoutBody({ children }: { children: React.ReactNode 
       <div className="h-20 border-b border-gray-100 flex items-center justify-between px-6 bg-white shrink-0">
         <div className="flex items-center gap-4">
            <button 
-             onClick={() => router.back()} 
+             onClick={() => router.push(`/${params.locale}/dashboard/achievements`)} 
              className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-colors"
            >
              <X className="w-5 h-5" />
@@ -40,21 +50,39 @@ export function MistakeBookLayoutBody({ children }: { children: React.ReactNode 
              <h2 className="text-xl font-bold flex items-center gap-3 text-gray-800">
                {t('heading', { fallback: 'Sổ tay lỗi sai' })}
                <span className="text-xs font-bold px-2.5 py-1 bg-[#e8f5e9] text-[#2e7d32] rounded-full">
-                 {mistakes.length} mục cần ôn
+                 {t('itemsToReview', { count: filteredMistakes.length })}
                </span>
              </h2>
-             <p className="text-xs text-gray-500 mt-0.5">Các từ vựng & cấu trúc ngữ pháp hay nhầm lẫn</p>
+             <p className="text-xs text-gray-500 mt-0.5">{t('subheadingDesc')}</p>
            </div>
         </div>
         
         {/* Filters */}
         <div className="hidden md:flex items-center bg-gray-50 rounded-full p-1 gap-1 border border-gray-100">
-          <button className="px-4 py-1.5 text-sm font-medium rounded-full bg-white shadow-sm text-gray-900 border border-gray-100">
-            Tất cả ({mistakes.length})
+          <button 
+            onClick={() => setFilter('ALL')}
+            className={cn("px-4 py-1.5 text-sm font-medium rounded-full transition-colors", filter === 'ALL' ? "bg-white shadow-sm text-gray-900 border border-gray-100" : "text-gray-500 hover:text-gray-900")}
+          >
+            {t('filterAll', { count: mistakes.length })}
           </button>
-          <button className="px-4 py-1.5 text-sm font-medium rounded-full text-gray-500 hover:text-gray-900 transition-colors">Ngữ pháp</button>
-          <button className="px-4 py-1.5 text-sm font-medium rounded-full text-gray-500 hover:text-gray-900 transition-colors">Từ vựng</button>
-          <button className="px-4 py-1.5 text-sm font-medium rounded-full text-gray-500 hover:text-gray-900 transition-colors">HSK 1-2</button>
+          <button 
+            onClick={() => setFilter('GRAMMAR')}
+            className={cn("px-4 py-1.5 text-sm font-medium rounded-full transition-colors", filter === 'GRAMMAR' ? "bg-white shadow-sm text-gray-900 border border-gray-100" : "text-gray-500 hover:text-gray-900")}
+          >
+            {t('filterGrammar')}
+          </button>
+          <button 
+            onClick={() => setFilter('VOCAB')}
+            className={cn("px-4 py-1.5 text-sm font-medium rounded-full transition-colors", filter === 'VOCAB' ? "bg-white shadow-sm text-gray-900 border border-gray-100" : "text-gray-500 hover:text-gray-900")}
+          >
+            {t('filterVocab')}
+          </button>
+          <button 
+            onClick={() => setFilter('HSK1_2')}
+            className={cn("px-4 py-1.5 text-sm font-medium rounded-full transition-colors", filter === 'HSK1_2' ? "bg-white shadow-sm text-gray-900 border border-gray-100" : "text-gray-500 hover:text-gray-900")}
+          >
+            {t('filterHSK')}
+          </button>
         </div>
 
         {/* Action Icons */}
@@ -72,18 +100,18 @@ export function MistakeBookLayoutBody({ children }: { children: React.ReactNode 
         {/* LEFT COLUMN: Master List */}
         <aside className="w-[340px] shrink-0 border-r border-gray-100 bg-white flex flex-col h-full relative z-10">
           <div className="px-5 py-5 flex items-center justify-between shrink-0">
-             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Danh sách câu hỏi & từ vựng</h3>
+             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider">{t('listHeading')}</h3>
              <span className="text-[10px] font-bold px-2 py-1 bg-[#e8f5e9] text-[#2e7d32] rounded uppercase">
-               {mistakes.length} câu đã ghi nhận
+               {t('recordedItems', { count: filteredMistakes.length })}
              </span>
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-3 custom-scrollbar">
             {loading ? (
               <div className="py-8"><PageLoading label={t('loadingMistakes', { fallback: 'Đang tải...' })} /></div>
-            ) : mistakes.length === 0 ? (
+            ) : filteredMistakes.length === 0 ? (
               <div className="py-8 text-center text-gray-500">{t('emptyHeading', { fallback: 'Chưa có lỗi sai nào' })}</div>
-            ) : mistakes.map((mistake) => {
+            ) : filteredMistakes.map((mistake) => {
               const qs = mistake.questionSnapshot || {};
               const word = qs.prompt || qs.word || qs.char || mistake.sourceId;
               const pinyin = qs.pinyin || '';
@@ -107,7 +135,7 @@ export function MistakeBookLayoutBody({ children }: { children: React.ReactNode 
                       "text-xs font-semibold px-2.5 py-1 rounded-full",
                       isVocab ? "bg-blue-50 text-blue-600" : "bg-red-50 text-red-500"
                     )}>
-                      {isVocab ? 'Từ vựng' : 'Ngữ pháp'}
+                      {isVocab ? t('filterVocab') : t('filterGrammar')}
                     </span>
                   </div>
                   <p className="text-sm font-medium text-gray-600 mb-3 truncate">
@@ -116,10 +144,10 @@ export function MistakeBookLayoutBody({ children }: { children: React.ReactNode 
                   <div className="flex justify-between items-center mt-auto pt-2 border-t border-gray-50">
                     <div className="flex items-center text-xs text-gray-400 gap-1.5">
                       <Clock className="w-3.5 h-3.5" />
-                      Lần cuối sai: {lastWrong}
+                      {lastWrong ? t('lastMistake', { date: lastWrong }) : ''}
                     </div>
                     <span className="text-xs font-medium text-gray-400">
-                      Sai {mistake.failCount} lần
+                      {t('failCount', { count: mistake.failCount })}
                     </span>
                   </div>
                 </Link>
@@ -128,9 +156,12 @@ export function MistakeBookLayoutBody({ children }: { children: React.ReactNode 
           </div>
           
           <div className="p-4 border-t border-gray-100 bg-white shrink-0">
-            <button className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-[#2e7d32] text-[#2e7d32] font-semibold hover:bg-[#e8f5e9] transition-colors">
+            <button 
+              onClick={() => router.push(`/${params.locale}/games/mistakes/review?filter=${filter.toLowerCase()}`)}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-[#2e7d32] text-[#2e7d32] font-semibold hover:bg-[#e8f5e9] transition-colors"
+            >
               <RefreshCw className="w-4 h-4" />
-              Ôn tập toàn bộ {mistakes.length} lỗi sai
+              {t('reviewAll', { count: filteredMistakes.length })}
             </button>
           </div>
         </aside>
