@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { MatchTile } from './match-game-tile';
 import { BambooProgressBar } from '@/features/ui/components/bamboo-progress-bar';
 import { computeScore, shuffle, type ModeResult, type QuestionItem } from '@/features/practice/components/practice-models';
+import { Trophy } from 'lucide-react';
 
 export interface MatchingState {
   tiles: Tile[];
@@ -160,8 +161,9 @@ export function MatchBoard({ items, initialState, onStateChange, onComplete, ela
       {/* Footer */}
       <div className="mt-2 sm:mt-6 h-12 flex items-center justify-center shrink-0">
         {!state.isGameActive ? (
-          <div className="text-base sm:text-2xl font-black text-[#8BC34A] bg-white px-6 py-2 sm:py-3 rounded-full shadow-lg border-4 border-[#eef7e9] flex items-center gap-3">
-            <span>🎉 Hoàn thành! Đang nộp bài...</span>
+          <div className="text-base sm:text-2xl font-black text-[#8BC34A] bg-white px-6 py-2 sm:py-3 rounded-full shadow-lg border-4 border-[#eef7e9] flex items-center gap-2">
+            <Trophy className="w-6 h-6 text-amber-500" />
+            <span>Hoàn thành! Đang nộp bài...</span>
           </div>
         ) : (
           <div className="bg-white/80 backdrop-blur-sm px-4 sm:px-6 py-1.5 sm:py-2 rounded-full text-[#4a6b38] font-bold shadow-sm border border-[#eef7e9] text-xs sm:text-base text-center">

@@ -9,15 +9,21 @@ import { SourcePicker, type PickedSource } from '@/features/practice/components/
 import { Button } from '@/features/ui/components/button';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { cn } from '@/lib/utils/cn';
+import { Wind, Layers, PenTool, type LucideIcon } from 'lucide-react';
 
 type GameType = 'PINYIN_BALLOON_GAME' | 'MEMORY_GAME' | 'HANZI_WRITING';
 
-type GameDef = { type: GameType; emoji: string; titleKey: 'balloonTitle' | 'memoryTitle' | 'hanziWritingTitle'; descKey: 'balloonDesc' | 'memoryDesc' | 'hanziWritingDesc' };
+type GameDef = {
+  type: GameType;
+  icon: LucideIcon;
+  titleKey: 'balloonTitle' | 'memoryTitle' | 'hanziWritingTitle';
+  descKey: 'balloonDesc' | 'memoryDesc' | 'hanziWritingDesc';
+};
 
 const GAMES: GameDef[] = [
-  { type: 'PINYIN_BALLOON_GAME', emoji: '🎈', titleKey: 'balloonTitle', descKey: 'balloonDesc' },
-  { type: 'MEMORY_GAME', emoji: '🃏', titleKey: 'memoryTitle', descKey: 'memoryDesc' },
-  { type: 'HANZI_WRITING', emoji: '✍️', titleKey: 'hanziWritingTitle', descKey: 'hanziWritingDesc' },
+  { type: 'PINYIN_BALLOON_GAME', icon: Wind, titleKey: 'balloonTitle', descKey: 'balloonDesc' },
+  { type: 'MEMORY_GAME', icon: Layers, titleKey: 'memoryTitle', descKey: 'memoryDesc' },
+  { type: 'HANZI_WRITING', icon: PenTool, titleKey: 'hanziWritingTitle', descKey: 'hanziWritingDesc' },
 ];
 
 function sourceLabelKey(sourceType: SourceType | null): 'sourceLesson' | 'sourceTopic' | 'sourceLevel' {
@@ -64,13 +70,18 @@ export function GamesHubFeature() {
       <section>
         <h2 className="mb-3 text-lg font-bold">{t('step1Heading')}</h2>
         <div className="grid gap-3 sm:grid-cols-3">
-          {GAMES.map((g) => (
-            <button key={g.type} onClick={() => setGameType(g.type)} className={cn('rounded-xl border p-5 text-left transition-colors', gameType === g.type ? 'border-brand bg-brand-light ' : 'border-gray-200 bg-white hover:border-brand ')}>
-              <p className="text-3xl">{g.emoji}</p>
-              <p className="mt-2 font-bold">{t(g.titleKey)}</p>
-              <p className="mt-1 text-sm text-gray-500">{t(g.descKey)}</p>
-            </button>
-          ))}
+          {GAMES.map((g) => {
+            const Icon = g.icon;
+            return (
+              <button key={g.type} onClick={() => setGameType(g.type)} className={cn('rounded-xl border p-5 text-left transition-colors', gameType === g.type ? 'border-brand bg-brand-light ' : 'border-gray-200 bg-white hover:border-brand ')}>
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand/10 text-brand">
+                  <Icon className="h-6 w-6" />
+                </div>
+                <p className="mt-3 font-bold">{t(g.titleKey)}</p>
+                <p className="mt-1 text-sm text-gray-500">{t(g.descKey)}</p>
+              </button>
+            );
+          })}
         </div>
       </section>
 

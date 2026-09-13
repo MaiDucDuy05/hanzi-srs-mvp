@@ -254,8 +254,7 @@ export function AdminResourcesFeature() {
   if (error) return <ErrorState message={error} onRetry={() => location.reload()} />;
 
   return (
-    <AuthGuard>
-      <div className="space-y-10 pb-10 max-w-[1000px]">
+    <div className="space-y-10 pb-10 max-w-[1000px]">
         
         {/* Top Header */}
         <div className="mb-10">
@@ -564,6 +563,5 @@ export function AdminResourcesFeature() {
       />
 
     </div>
-    </AuthGuard>
   );
 }

@@ -5,6 +5,7 @@ import { Button } from '@/features/ui/components/button';
 import { formatDuration } from '@/lib/utils/format';
 import type { Test } from '@/lib/api/types';
 import type { TakeTestResult } from './use-take-test';
+import { Trophy } from 'lucide-react';
 
 /**
  * Màn kết quả sau khi nộp bài (P2-6). showScoreImmediately=false chỉ hiện
@@ -21,7 +22,15 @@ export function TestResultCard({
 }) {
   return (
     <Card className="mx-auto max-w-lg">
-      <CardHeader title="Đã nộp bài! 🎉" subtitle={test.name} />
+      <CardHeader
+        title={
+          <span className="flex items-center gap-2">
+            <span>Đã nộp bài!</span>
+            <Trophy className="w-5 h-5 text-amber-500" />
+          </span>
+        }
+        subtitle={test.name}
+      />
       <CardBody className="space-y-4 text-center">
         {test.showScoreImmediately ? (
           <>

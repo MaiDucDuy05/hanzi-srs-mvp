@@ -10,6 +10,7 @@ import { Card, CardBody } from '@/features/ui/components/card';
 import { Button } from '@/features/ui/components/button';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { cn } from '@/lib/utils/cn';
+import { Gamepad2 } from 'lucide-react';
 
 const getPracticeTypes = (t: any): { type: PracticeType; title: string; desc: string }[] => [
   { type: 'WORD_MATCHING', title: t('matchTitle'), desc: t('matchDesc') },
@@ -35,8 +36,10 @@ export function PracticeHubFeature() {
     if (GAME_TYPES.includes(type)) {
       return (
         <Card className="mx-auto max-w-md">
-          <CardBody className="space-y-3 text-center">
-            <p className="text-3xl">🎮</p>
+          <CardBody className="space-y-3 text-center flex flex-col items-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand/10 text-brand">
+              <Gamepad2 className="h-6 w-6" />
+            </div>
             <p>
               {t('gamesWarning')}{' '}
               <button

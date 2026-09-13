@@ -76,7 +76,7 @@ export function AdminDashboardFeature() {
       {!loading && !error && summary && charts && pendingItems && health && (
         <>
           {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
               <div className="flex items-center gap-3 mb-2">
                 <div className="p-2 bg-blue-50 text-blue-600 rounded-lg"><Users className="w-5 h-5"/></div>
@@ -101,17 +101,6 @@ export function AdminDashboardFeature() {
               <div className="flex items-baseline gap-2">
                 <p className="text-2xl font-bold text-gray-800">{summary.todayAttempts.value.toLocaleString()}</p>
                 <span className="text-xs text-gray-500">vs {summary.todayAttempts.yesterday} hôm qua</span>
-              </div>
-            </div>
-
-            <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-purple-50 text-purple-600 rounded-lg"><DollarSign className="w-5 h-5"/></div>
-                <h3 className="font-medium text-gray-600">Doanh Thu Tháng Này</h3>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <p className="text-2xl font-bold text-gray-800">{formatCurrency(summary.monthlyRevenue.value)}</p>
-                <span className="text-xs text-gray-500">vs {formatCurrency(summary.monthlyRevenue.lastMonth)} tháng trước</span>
               </div>
             </div>
           </div>

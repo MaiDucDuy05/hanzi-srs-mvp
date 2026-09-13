@@ -15,3 +15,4 @@ export * from './endpoints/admin-users';
 export { type StartPracticeInput, type SubmitPracticeInput } from './endpoints/practice';
 export * from './endpoints/test-assignments';
 export * from './endpoints/question-bank';
+export * from './endpoints/study';

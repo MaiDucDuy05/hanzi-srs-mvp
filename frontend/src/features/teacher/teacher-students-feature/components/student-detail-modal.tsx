@@ -8,6 +8,8 @@ import { clampPct, getInitials, sortByFailCount } from '../utils';
 import { MistakeCard } from './mistake-card';
 import { ActivityItem } from './activity-item';
 import { TestScoreItem } from './test-score-item';
+import { Star, BarChart2, AlertCircle, FileText, CheckCircle2, BookOpen } from 'lucide-react';
+
 
 export function StudentDetailModal({
   student,
@@ -81,11 +83,11 @@ export function StudentDetailModal({
 
   if (!open || !student) return null;
 
-  const tabs: { key: typeof activeTab; label: string; icon: string; badge?: number }[] = [
-    { key: 'overview', label: 'Tổng quan', icon: '⭐' },
-    { key: 'activities', label: 'Hoạt động', icon: '📊' },
-    { key: 'mistakes', label: 'Lỗi sai', icon: '❌', badge: mistakes.length || undefined },
-    { key: 'tests', label: 'Bài kiểm tra', icon: '📝', badge: testAttempts.length || undefined },
+  const tabs = [
+    { key: 'overview' as const, label: 'Tổng quan', icon: Star },
+    { key: 'activities' as const, label: 'Hoạt động', icon: BarChart2 },
+    { key: 'mistakes' as const, label: 'Lỗi sai', icon: AlertCircle, badge: mistakes.length || undefined },
+    { key: 'tests' as const, label: 'Bài kiểm tra', icon: FileText, badge: testAttempts.length || undefined },
   ];
 
   return (
@@ -138,30 +140,39 @@ export function StudentDetailModal({
               </svg>
             </div>
           </div>
-        </div>
 
-        {/* Tabs */}
-        <div className="flex gap-1 px-6 pt-4 border-b border-gray-100 shrink-0">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-t-xl text-[13px] font-bold transition-colors relative ${
-                activeTab === tab.key
-                  ? 'bg-[#f3f4e1] text-[#1f5333]'
-                  : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              <span>{tab.icon}</span>
-              {tab.label}
-              {tab.badge ? (
-                <span className="absolute -top-1 -right-1 h-4 min-w-[16px] bg-[#e55353] text-white text-[10px] font-extrabold rounded-full flex items-center justify-center px-1">
-                  {tab.badge}
-                </span>
-              ) : null}
-            </button>
-          ))}
+          {/* Navigation Tabs */}
+          <div className="flex gap-2">
+            {tabs.map((tab) => {
+              const TabIcon = tab.icon;
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`px-4 py-2 rounded-xl text-[13px] font-bold flex items-center gap-2 transition-colors ${
+                    activeTab === tab.key
+                      ? 'bg-[#1f5333] text-white shadow-sm'
+                      : 'text-gray-500 hover:bg-gray-100'
+                  }`}
+                >
+                  <TabIcon className="w-4 h-4" />
+                  {tab.label}
+                  {tab.badge !== undefined && (
+                    <span
+                      className={`px-1.5 py-0.5 rounded-full text-[11px] font-bold ${
+                        activeTab === tab.key
+                          ? 'bg-white/20 text-white'
+                          : 'bg-gray-200 text-gray-600'
+                      }`}
+                    >
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Content */}
@@ -201,7 +212,7 @@ export function StudentDetailModal({
 
                   <div>
                     <h3 className="text-[14px] font-bold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
-                      <span>📊</span> Hoạt động gần đây
+                      <BarChart2 className="w-4 h-4 text-emerald-600" /> Hoạt động gần đây
                     </h3>
                     <div className="bg-gray-50 rounded-xl divide-y divide-gray-100">
                       {activities.length > 0 ? (
@@ -215,7 +226,7 @@ export function StudentDetailModal({
                   {mistakes.length > 0 && (
                     <div>
                       <h3 className="text-[14px] font-bold text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-2">
-                        <span>❌</span> Lỗi sai gần đây
+                        <AlertCircle className="w-4 h-4 text-rose-500" /> Lỗi sai gần đây
                       </h3>
                       <div className="space-y-2">
                         {mistakes.slice(0, 3).map((m, i) => <MistakeCard key={m.id} mistake={m} index={i} />)}
@@ -231,9 +242,9 @@ export function StudentDetailModal({
                   {activities.length > 0 ? (
                     activities.map((a) => <ActivityItem key={a.id} activity={a} />)
                   ) : (
-                    <div className="text-center py-12">
-                      <span className="text-5xl">📊</span>
-                      <p className="text-gray-400 font-medium mt-3">Chưa có hoạt động nào</p>
+                    <div className="text-center py-12 flex flex-col items-center">
+                      <BarChart2 className="w-12 h-12 text-gray-300 mb-2" />
+                      <p className="text-gray-400 font-medium">Chưa có hoạt động nào</p>
                     </div>
                   )}
                 </div>
@@ -245,9 +256,9 @@ export function StudentDetailModal({
                   {mistakes.length > 0 ? (
                     mistakes.map((m, i) => <MistakeCard key={m.id} mistake={m} index={i} />)
                   ) : (
-                    <div className="text-center py-12">
-                      <span className="text-5xl">✅</span>
-                      <p className="text-gray-400 font-medium mt-3">Chưa có lỗi sai nào được ghi nhận!</p>
+                    <div className="text-center py-12 flex flex-col items-center">
+                      <CheckCircle2 className="w-12 h-12 text-emerald-500 mb-2" />
+                      <p className="text-gray-400 font-medium">Chưa có lỗi sai nào được ghi nhận!</p>
                     </div>
                   )}
                 </div>
@@ -259,9 +270,9 @@ export function StudentDetailModal({
                   {testAttempts.length > 0 ? (
                     testAttempts.map((t) => <TestScoreItem key={t.id} attempt={t} />)
                   ) : (
-                    <div className="text-center py-12">
-                      <span className="text-5xl">📚</span>
-                      <p className="text-gray-400 font-medium mt-3">Chưa có bài kiểm tra nào</p>
+                    <div className="text-center py-12 flex flex-col items-center">
+                      <BookOpen className="w-12 h-12 text-gray-300 mb-2" />
+                      <p className="text-gray-400 font-medium">Chưa có bài kiểm tra nào</p>
                     </div>
                   )}
                 </div>

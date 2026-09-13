@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Filter, Check, X, BookOpen, FileText, Layers } from 'lucide-react';
+import { Search, Filter, Check, X, BookOpen, FileText, Layers, Lightbulb } from 'lucide-react';
 import { Question } from '../types';
 import {
   SOURCE_TYPE_OPTIONS,
@@ -334,8 +334,9 @@ export function QuestionSelector({
 
                       {/* Explanation */}
                       {question.explanation && (
-                        <p className="text-[12px] text-gray-500 italic">
-                          💡 {question.explanation}
+                        <p className="text-[12px] text-gray-500 italic flex items-center gap-1">
+                          <Lightbulb className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
+                          <span>{question.explanation}</span>
                         </p>
                       )}
                     </div>

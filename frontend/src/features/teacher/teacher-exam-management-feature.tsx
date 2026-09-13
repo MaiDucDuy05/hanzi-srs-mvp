@@ -12,8 +12,11 @@ import {
   PlayCircle, 
   Lock,
   Send,
-  Gamepad2
+  Gamepad2,
+  Sparkles,
+  Key
 } from 'lucide-react';
+
 import { testApi } from '@/lib/api/endpoints/test';
 import type { Test, TestStatus } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/auth-context';
@@ -28,6 +31,7 @@ import { ExamCreateModal } from './components/exam-create-modal';
 import { ExamQuestionModal } from './components/exam-question-modal';
 import { ExamAssignModal } from './components/exam-assign-modal';
 import { LiveQuizConfigModal } from './components/live-quiz-config-modal';
+import { ExamAIGenerateModal } from './components/exam-ai-generate-modal';
 
 type ExamFilter = 'All' | 'Drafts' | 'Active' | 'Completed';
 
@@ -41,6 +45,7 @@ export function TeacherExamManagementFeature() {
   
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showAIGenerateModal, setShowAIGenerateModal] = useState(false);
   const [editingTestId, setEditingTestId] = useState<string | null>(null);
   
   const [showQuestionModal, setShowQuestionModal] = useState(false);
@@ -253,7 +258,12 @@ export function TeacherExamManagementFeature() {
                           <span className="flex items-center gap-1.5">
                             <Calendar className="h-3.5 w-3.5" /> HSK {test.hskLevel || '-'}
                           </span>
-                          {test.accessCode && <span>🔑 {test.accessCode}</span>}
+                          {test.accessCode && (
+                            <span className="flex items-center gap-1">
+                              <Key className="h-3.5 w-3.5 text-gray-400" /> {test.accessCode}
+                            </span>
+                          )}
+
                           <span>Tạo {formatDate(test.createdAt)}</span>
                         </div>
                         <AdminViolationBadge 
@@ -327,8 +337,15 @@ export function TeacherExamManagementFeature() {
         )}
       </div>
 
-      {/* Floating Action Button */}
-      <div className="fixed bottom-8 right-8">
+      {/* Floating Action Buttons */}
+      <div className="fixed bottom-8 right-8 flex items-center gap-3">
+        <button
+          onClick={() => setShowAIGenerateModal(true)}
+          className="flex items-center gap-2 px-5 py-3 rounded-full bg-gradient-to-r from-[#c7cf35] to-[#78993a] text-white font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
+        >
+          <Sparkles className="h-5 w-5" /> Sinh đề bằng AI
+        </button>
+
         <button
           onClick={openCreateModal}
           className="flex items-center gap-2 px-6 py-3 rounded-full bg-[#1f5333] text-white font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
@@ -338,6 +355,12 @@ export function TeacherExamManagementFeature() {
       </div>
 
       {/* Modals extracted to components */}
+      <ExamAIGenerateModal
+        open={showAIGenerateModal}
+        onClose={() => setShowAIGenerateModal(false)}
+        onSuccess={loadTests}
+      />
+
       <ExamCreateModal
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
@@ -372,3 +395,4 @@ export function TeacherExamManagementFeature() {
     </div>
   );
 }
+

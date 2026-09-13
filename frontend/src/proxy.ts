@@ -24,6 +24,25 @@ const ADMIN_ONLY = ['/admin'] as const;
 const TEACHER_OR_ADMIN = ['/teacher'] as const;
 const AUTH_PAGES = ['/login', '/register', '/forgot-password'] as const;
 
+// Các route dành riêng cho học sinh/người dùng học tập
+const STUDENT_ROUTES = [
+  '/dashboard',
+  '/practice',
+  '/games',
+  '/tests',
+  '/study',
+  '/courses',
+  '/profile',
+  '/mistake-book',
+  '/topics',
+  '/resources',
+  '/upgrade-vip',
+  '/live-quiz',
+  '/review',
+  '/speaking',
+  '/leaderboard',
+] as const;
+
 interface JwtPayload {
   sub?: string;
   role?: string;
@@ -80,12 +99,29 @@ export function proxy(req: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // 2) Trang login/register mà đã có phiên → về trang chủ.
+  // 2) Trang login/register mà đã có phiên → về trang tương ứng theo Role.
   if (AUTH_PAGES.some((p) => pathname === p) && authed) {
+    if (role === 'ADMIN') return NextResponse.redirect(new URL('/admin', req.url));
+    if (role === 'TEACHER') return NextResponse.redirect(new URL('/teacher', req.url));
     return NextResponse.redirect(new URL(`/${locale}`, req.url));
   }
 
-  // 3) Phân quyền admin/teacher (đã xác thực) → về trang chủ nếu không đủ quyền.
+  // 3) Phân quyền theo Role:
+  // a) Nếu là ADMIN: chỉ được ở khu vực /admin (không vào khu vực học sinh hoặc teacher)
+  if (role === 'ADMIN') {
+    if (STUDENT_ROUTES.some((p) => matches(pathname, p)) || matches(pathname, '/teacher')) {
+      return NextResponse.redirect(new URL('/admin', req.url));
+    }
+  }
+
+  // b) Nếu là TEACHER: chỉ được ở khu vực /teacher (không vào khu vực học sinh hoặc admin)
+  if (role === 'TEACHER') {
+    if (STUDENT_ROUTES.some((p) => matches(pathname, p)) || matches(pathname, '/admin')) {
+      return NextResponse.redirect(new URL('/teacher', req.url));
+    }
+  }
+
+  // c) Nếu KHÔNG PHẢI ADMIN/TEACHER (học sinh, khách): không được vào /admin hoặc /teacher
   if (ADMIN_ONLY.some((p) => matches(pathname, p)) && role !== 'ADMIN') {
     return NextResponse.redirect(new URL(`/${locale}`, req.url));
   }
@@ -97,7 +133,30 @@ export function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL(`/${locale}`, req.url));
   }
 
-  // 4) Chạy i18n proxy cho phép next-intl xử lý routing và cookies
+  // 4) Đối với tài khoản Teacher và Admin, hoặc khi truy cập khu vực /teacher và /admin:
+  // Luôn bắt buộc ngôn ngữ là tiếng Việt ('vi').
+  const isTeacherOrAdminRoute = matches(pathname, '/teacher') || matches(pathname, '/admin');
+  const isTeacherOrAdminRole = role === 'TEACHER' || role === 'ADMIN';
+
+  if (isTeacherOrAdminRoute || isTeacherOrAdminRole) {
+    // Nếu URL đang mang locale không phải 'vi' (ví dụ /en/teacher, /en/admin, hoặc truy cập khi locale là 'en')
+    if (locale !== 'vi') {
+      const redirectUrl = new URL(pathname, req.url);
+      redirectUrl.search = req.nextUrl.search;
+      const res = NextResponse.redirect(redirectUrl);
+      res.cookies.set('NEXT_LOCALE', 'vi', { path: '/' });
+      return res;
+    }
+
+    // Đảm bảo cookie NEXT_LOCALE luôn là 'vi' khi truy cập
+    const res = intlMiddleware(req);
+    if (req.cookies.get('NEXT_LOCALE')?.value !== 'vi') {
+      res.cookies.set('NEXT_LOCALE', 'vi', { path: '/' });
+    }
+    return res;
+  }
+
+  // 5) Chạy i18n proxy cho phép next-intl xử lý routing và cookies (cho Student và Public)
   return intlMiddleware(req);
 }
 

@@ -15,7 +15,7 @@ import { BambooBackground } from '../components/game-decorations';
 import { BambooProgressBar } from '@/features/ui/components/bamboo-progress-bar';
 import { FillGameBoard } from '../components/fill-game-board';
 import { FillResults } from '../components/fill-results';
-import { Loader2, XCircle, Clock } from 'lucide-react';
+import { Loader2, XCircle, Clock, PenTool } from 'lucide-react';
 
 interface FillGameFeatureProps {
   sourceId: string;

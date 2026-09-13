@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Crown, Ticket, Gift } from 'lucide-react';
 import type { RewardItem } from '@/lib/api/endpoints/achievements';
 
 interface RedeemModalProps {
@@ -17,8 +18,14 @@ export function RedeemModal({ reward, isOpen, onClose, onConfirm }: RedeemModalP
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm transition-all duration-300">
       <div className="w-full max-w-sm scale-100 animate-in zoom-in-95 rounded-3xl bg-white p-6 shadow-2xl">
         <div className="mb-4 flex items-center justify-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#f3f8d7] text-3xl shadow-inner">
-            {reward.type === 'TEMPORARY_VIP' ? '👑' : reward.type === 'DISCOUNT_VOUCHER' ? '🎟️' : '🎁'}
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#f3f8d7] text-[#5e7f26] shadow-inner">
+            {reward.type === 'TEMPORARY_VIP' ? (
+              <Crown className="h-8 w-8 text-amber-500" />
+            ) : reward.type === 'DISCOUNT_VOUCHER' ? (
+              <Ticket className="h-8 w-8 text-blue-500" />
+            ) : (
+              <Gift className="h-8 w-8 text-rose-500" />
+            )}
           </div>
         </div>
         

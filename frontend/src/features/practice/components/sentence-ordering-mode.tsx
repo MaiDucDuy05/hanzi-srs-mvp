@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { SentenceQuestion } from '@/lib/api/types';
 import type { ModeResult } from './practice-models';
 import { Button } from '@/features/ui/components/button';
+import { Check } from 'lucide-react';
 
 export interface OrderingState {
   index: number;
@@ -267,7 +268,10 @@ export function SentenceOrderingMode({
 
         {/* Feedback */}
         {state.feedback === 'correct' && (
-          <p className="mt-4 font-medium text-green-600">Chính xác! ✓</p>
+          <p className="mt-4 font-medium text-green-600 inline-flex items-center gap-1">
+            <span>Chính xác!</span>
+            <Check className="w-4 h-4 stroke-[2.5]" />
+          </p>
         )}
         {state.feedback === 'wrong' && (
           <p className="mt-4 font-medium text-red-600">

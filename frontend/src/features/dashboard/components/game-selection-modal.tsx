@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { DecorativeLeaves } from './game-icons';
-import { BookType, AlignLeft } from 'lucide-react';
+import { BookType, AlignLeft, PenTool, FileText } from 'lucide-react';
 
 export type GameId =
   | 'flashcard' | 'balloon' | 'match' | 'memory' | 'stroke' | 'listening'

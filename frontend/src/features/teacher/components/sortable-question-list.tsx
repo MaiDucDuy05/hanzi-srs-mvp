@@ -19,7 +19,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Card, CardBody } from '@/features/ui/components/card';
 import { Badge } from '@/features/ui/components/badge';
 import { Button } from '@/features/ui/components/button';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, Check } from 'lucide-react';
 import type { TestQuestion } from '@/lib/api/types';
 
 interface SortableQuestionItemProps {
@@ -73,7 +73,10 @@ function SortableQuestionItem({ question, index, onDelete }: SortableQuestionIte
                   <span>{options.join(' | ')}</span>
                 )}
                 {correctAnswer && (
-                  <span className="text-green-600">✓ {JSON.stringify(correctAnswer)}</span>
+                  <span className="text-green-600 inline-flex items-center gap-0.5">
+                    <Check className="w-3 h-3" />
+                    <span>{JSON.stringify(correctAnswer)}</span>
+                  </span>
                 )}
               </div>
             </div>

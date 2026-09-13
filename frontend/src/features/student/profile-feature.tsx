@@ -13,6 +13,8 @@ import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
 import { labelForPracticeType, labelForRole } from '@/lib/utils/constants';
 import { formatDate, formatDateTime } from '@/lib/utils/format';
+import { Crown, User, FileText, Target } from 'lucide-react';
+
 
 export function ProfileFeature() {
   const { user, logout } = useAuth();
@@ -74,15 +76,34 @@ export function ProfileFeature() {
           <section className="grid gap-4 sm:grid-cols-3">
             <Card>
               <CardBody className="text-center">
-                <p className="text-3xl">{isVip ? '👑' : '🆓'}</p>
+                <div className="w-12 h-12 mx-auto rounded-full bg-amber-50 flex items-center justify-center text-amber-600 mb-2">
+                  {isVip ? <Crown className="w-6 h-6" /> : <User className="w-6 h-6 text-gray-500" />}
+                </div>
                 <p className="mt-1 font-bold">{isVip ? tProfile('vipPlan') : tProfile('freePlan')}</p>
                 {activeSub?.expiresAt && <p className="text-xs text-gray-500">{tProfile('expiresOn', { date: formatDate(activeSub.expiresAt) })}</p>}
                 {!isVip && <a href="/upgrade-vip" className="text-xs text-brand underline">{tProfile('upgradeVipCta')}</a>}
               </CardBody>
             </Card>
-            <Card><CardBody className="text-center"><p className="text-3xl">📝</p><p className="mt-1 font-bold">{attempts.length}</p><p className="text-xs text-gray-500">{tProfile('practiceAttempts')}</p></CardBody></Card>
-            <Card><CardBody className="text-center"><p className="text-3xl">🎯</p><p className="mt-1 font-bold">{testAttempts.length}</p><p className="text-xs text-gray-500">{tProfile('testsTaken')}</p></CardBody></Card>
+            <Card>
+              <CardBody className="text-center">
+                <div className="w-12 h-12 mx-auto rounded-full bg-blue-50 flex items-center justify-center text-blue-600 mb-2">
+                  <FileText className="w-6 h-6" />
+                </div>
+                <p className="mt-1 font-bold">{attempts.length}</p>
+                <p className="text-xs text-gray-500">{tProfile('practiceAttempts')}</p>
+              </CardBody>
+            </Card>
+            <Card>
+              <CardBody className="text-center">
+                <div className="w-12 h-12 mx-auto rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600 mb-2">
+                  <Target className="w-6 h-6" />
+                </div>
+                <p className="mt-1 font-bold">{testAttempts.length}</p>
+                <p className="text-xs text-gray-500">{tProfile('testsTaken')}</p>
+              </CardBody>
+            </Card>
           </section>
+
 
           <section>
             <Card><CardHeader title={tProfile('recentPractice')} /><CardBody>

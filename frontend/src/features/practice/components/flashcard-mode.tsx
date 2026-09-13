@@ -9,6 +9,7 @@ import {
 import { Button } from '@/features/ui/components/button';
 import { AudioButton } from '@/features/ui/components/audio-button';
 import { ClickableHanzi } from '@/features/ui/components/clickable-hanzi';
+import { Check } from 'lucide-react';
 
 export interface FlashcardState {
   index: number;
@@ -102,7 +103,10 @@ export function FlashcardMode({
           <Button variant="danger" onClick={() => answer(false)}>
             Chưa biết
           </Button>
-          <Button onClick={() => answer(true)}>Đã biết ✓</Button>
+          <Button onClick={() => answer(true)} className="inline-flex items-center justify-center gap-1.5">
+            <span>Đã biết</span>
+            <Check className="w-4 h-4 stroke-[2.5]" />
+          </Button>
         </div>
       ) : (
         <p className="text-center text-sm text-gray-400">

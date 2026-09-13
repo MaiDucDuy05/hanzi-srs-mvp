@@ -7,6 +7,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { speakingApi } from '@/lib/api/endpoints';
 import type { SpeakingAttempt } from '@/lib/api/types';
+import { Mic } from 'lucide-react';
 import { Button } from '@/features/ui/components/button';
 import { Card } from '@/features/ui/components/card';
 import { PageLoading } from '@/features/ui/components/spinner';
@@ -71,7 +72,9 @@ export function SpeakingGradingFeature() {
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">🎤</span>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand/10 text-brand">
+                    <Mic className="h-5 w-5" />
+                  </div>
                   <div>
                     <p className="text-sm font-medium">
                       {new Date(a.submittedAt).toLocaleDateString('vi-VN')}

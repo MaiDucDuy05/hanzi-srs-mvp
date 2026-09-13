@@ -19,17 +19,17 @@ import { useAuth } from '@/lib/auth/auth-context';
 import { LogOut } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { href: '/admin', title: 'Dashboard', icon: LayoutDashboard, exact: true },
-  { href: '/admin/curriculum', title: 'Content', icon: BookOpen },
-  { href: '/admin/questions', title: 'Questions', icon: Target },
-  { href: '/admin/teacher-content', title: 'Teacher', icon: GraduationCap },
-  { href: '/admin/users', title: 'Students', icon: Users },
-  { href: '/admin/messages', title: 'Messages', icon: FolderOpen }, // Replaced Resources with Messages to match mockup
-  { href: '/admin/subscriptions', title: 'Subscriptions', icon: CreditCard },
-  { href: '/admin/rewards', title: 'Rewards', icon: ShieldAlert },
-  { href: '/admin/resources', title: 'Resources', icon: FolderOpen },
-  { href: '/admin/audit-logs', title: 'Audit Logs', icon: Activity },
-  { href: '/admin/settings', title: 'Settings', icon: Settings },
+  { href: '/admin', title: 'Bảng điều khiển', icon: LayoutDashboard, exact: true },
+  { href: '/admin/curriculum', title: 'Nội dung học', icon: BookOpen },
+  { href: '/admin/questions', title: 'Câu hỏi luyện tập', icon: Target },
+  { href: '/admin/teacher-content', title: 'Quản lý giáo viên', icon: GraduationCap },
+  { href: '/admin/users', title: 'Người dùng & Học sinh', icon: Users },
+  { href: '/admin/messages', title: 'Tin nhắn & Liên hệ', icon: FolderOpen },
+  { href: '/admin/subscriptions', title: 'Gói đăng ký VIP', icon: CreditCard },
+  { href: '/admin/rewards', title: 'Phần thưởng & EXP', icon: ShieldAlert },
+  { href: '/admin/resources', title: 'Tài nguyên', icon: FolderOpen },
+  { href: '/admin/audit-logs', title: 'Nhật ký hệ thống', icon: Activity },
+  { href: '/admin/settings', title: 'Cài đặt hệ thống', icon: Settings },
 ];
 
 export function AdminSidebar() {
@@ -41,7 +41,7 @@ export function AdminSidebar() {
     <aside className="flex h-full w-[280px] flex-col bg-pale-green rounded-tr-3xl rounded-br-3xl p-6 shadow-sm relative">
       <div className="mb-8">
         <h1 className="text-xl font-bold text-forest">Cute Panda Forest</h1>
-        <p className="text-xs text-gray-500 mt-1">Wise Guardian Portal</p>
+        <p className="text-xs text-gray-500 mt-1">Cổng Quản Trị Hệ Thống</p>
       </div>
 
       <nav className="flex-1 space-y-2">
