@@ -20,7 +20,7 @@ export function StudentExamsFeature() {
   const [attempts, setAttempts] = useState<TestAttempt[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'SUBMITTED' | 'COMPLETED'>('ALL');
+  const [filter, setFilter] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
@@ -78,16 +78,17 @@ export function StudentExamsFeature() {
     return acc;
   }, [] as typeof assignments);
 
-  const enrichedAssignments = uniqueAssignments.map(a => ({ ...a, state: getAssignmentState(a) }));
+  const enrichedAssignments = uniqueAssignments
+    .filter(a => !!a.test?.templateId && a.test?.category !== 'CUSTOM')
+    .map(a => ({ ...a, state: getAssignmentState(a) }));
   
-  const stats = {
-    pending: enrichedAssignments.filter(a => a.state.category === 'PENDING').length,
-    submitted: enrichedAssignments.filter(a => a.state.category === 'SUBMITTED').length,
-    completed: enrichedAssignments.filter(a => a.state.category === 'COMPLETED').length,
+  const getCount = (cat: string) => {
+    if (cat === 'All') return enrichedAssignments.length;
+    return enrichedAssignments.filter(a => a.test?.category === cat).length;
   };
 
   const filteredAssignments = enrichedAssignments.filter(a => {
-    const matchesFilter = filter === 'ALL' || a.state.category === filter;
+    const matchesFilter = filter === 'All' || a.test?.category === filter;
     const matchesSearch = (a.test?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
     return matchesFilter && matchesSearch;
   });
@@ -108,7 +109,7 @@ export function StudentExamsFeature() {
       {/* Controls: Tabs & Search */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between px-2">
         <div className="flex gap-2 bg-white p-1.5 rounded-full shadow-sm border border-gray-100 overflow-x-auto max-w-full">
-          {(['ALL', 'PENDING', 'SUBMITTED', 'COMPLETED'] as const).map(f => (
+          {(['All', 'QUIZ_15M', 'TEST_1H', 'MID_TERM', 'FINAL_EXAM'] as const).map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -119,10 +120,11 @@ export function StudentExamsFeature() {
                   : "bg-transparent text-gray-500 hover:text-gray-900 hover:bg-gray-50"
               )}
             >
-              {f === 'ALL' ? t('filterAll', { count: enrichedAssignments.length }) :
-               f === 'PENDING' ? t('filterPending', { count: stats.pending }) :
-               f === 'SUBMITTED' ? t('filterSubmitted', { count: stats.submitted }) :
-               t('filterCompleted', { count: stats.completed })}
+              {f === 'All' ? `Tất cả (${getCount(f)})` :
+               f === 'QUIZ_15M' ? `15 Phút (${getCount(f)})` :
+               f === 'TEST_1H' ? `1 Tiết (${getCount(f)})` :
+               f === 'MID_TERM' ? `Giữa kỳ (${getCount(f)})` :
+               `Cuối kỳ (${getCount(f)})`}
             </button>
           ))}
         </div>

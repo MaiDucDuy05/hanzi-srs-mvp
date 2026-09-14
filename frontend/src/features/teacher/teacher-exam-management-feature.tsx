@@ -29,7 +29,6 @@ import { useRouter } from 'next/navigation';
 
 // Modals
 import { ExamCreateModal } from './components/exam-create-modal';
-import { ExamQuestionModal } from './components/exam-question-modal';
 import { ExamAssignModal } from './components/exam-assign-modal';
 import { LiveQuizConfigModal } from './components/live-quiz-config-modal';
 import { ExamAIGenerateModal } from './components/exam-ai-generate-modal';
@@ -44,15 +43,14 @@ export function TeacherExamManagementFeature() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<ExamFilter>('All');
+  const [hskFilter, setHskFilter] = useState<string>('All');
+  const [categoryFilter, setCategoryFilter] = useState<string>('All');
   
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAIGenerateModal, setShowAIGenerateModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [editingTestId, setEditingTestId] = useState<string | null>(null);
-  
-  const [showQuestionModal, setShowQuestionModal] = useState(false);
-  const [managingTestId, setManagingTestId] = useState<string | null>(null);
 
   const [assigningTestId, setAssigningTestId] = useState<string | null>(null);
   const [hostingTestId, setHostingTestId] = useState<string | null>(null);
@@ -74,16 +72,6 @@ export function TeacherExamManagementFeature() {
   const openCreateModal = () => {
     setEditingTestId(null);
     setShowCreateModal(true);
-  };
-
-  const openEditModal = (test: Test) => {
-    setEditingTestId(test.id);
-    setShowCreateModal(true);
-  };
-
-  const openQuestionModal = (testId: string) => {
-    setManagingTestId(testId);
-    setShowQuestionModal(true);
   };
 
   const handleDeleteExam = async (test: Test) => {
@@ -113,16 +101,22 @@ export function TeacherExamManagementFeature() {
   };
 
   const filteredTests = tests.filter((t) => {
-    switch (filter) {
-      case 'Drafts':
-        return t.status === 'DRAFT';
-      case 'Active':
-        return t.status === 'PUBLISHED';
-      case 'Completed':
-        return t.status === 'CLOSED';
-      default:
-        return true;
+    // Status filter
+    if (filter === 'Drafts' && t.status !== 'DRAFT') return false;
+    if (filter === 'Active' && t.status !== 'PUBLISHED') return false;
+    if (filter === 'Completed' && t.status !== 'CLOSED') return false;
+    
+    // HSK filter
+    if (hskFilter !== 'All') {
+      if (t.hskLevel?.toString() !== hskFilter) return false;
     }
+    
+    // Category filter
+    if (categoryFilter !== 'All') {
+      if (t.category !== categoryFilter) return false;
+    }
+    
+    return true;
   });
 
   const getStatusColor = (status: TestStatus) => {
@@ -169,25 +163,55 @@ export function TeacherExamManagementFeature() {
     
       {/* Exam Repository Section */}
       <div>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-          <h2 className="font-bold text-[#1f5333] text-[18px] flex items-center gap-2">
-            <FileText className="h-5 w-5 text-[#558866]" /> Exam Repository
+        <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 mb-6">
+          <h2 className="font-bold text-[#1f5333] text-[18px] flex items-center gap-2 shrink-0">
+            <FileText className="h-5 w-5 text-[#558866]" /> Kho Đề Thi
           </h2>
-          <div className="flex bg-white p-1 rounded-xl border border-gray-200 shadow-sm">
-            {(['All', 'Drafts', 'Active', 'Completed'] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f)}
-                className={cn(
-                  'px-5 py-2 rounded-lg text-[13px] font-bold transition-all',
-                  filter === f
-                    ? 'bg-[#1f5333] text-white shadow-sm'
-                    : 'text-gray-500 hover:text-[#1f5333] hover:bg-gray-50'
-                )}
-              >
-                {f === 'All' ? 'Tất cả' : f === 'Drafts' ? 'Nháp' : f === 'Active' ? 'Hoạt động' : 'Đóng'}
-              </button>
-            ))}
+          <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto xl:justify-end">
+            <select
+              value={hskFilter}
+              onChange={(e) => setHskFilter(e.target.value)}
+              className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-[13px] font-medium text-gray-700 focus:outline-none focus:border-[#1f5333] focus:ring-1 focus:ring-[#1f5333]"
+            >
+              <option value="All">Tất cả HSK</option>
+              <option value="1">HSK 1</option>
+              <option value="2">HSK 2</option>
+              <option value="3">HSK 3</option>
+              <option value="4">HSK 4</option>
+              <option value="5">HSK 5</option>
+              <option value="6">HSK 6</option>
+              <option value="79">HSK 7-9</option>
+            </select>
+
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="px-3 py-2 bg-white border border-gray-200 rounded-lg text-[13px] font-medium text-gray-700 focus:outline-none focus:border-[#1f5333] focus:ring-1 focus:ring-[#1f5333]"
+            >
+              <option value="All">Tất cả loại bài</option>
+              <option value="QUIZ_15M">15 Phút</option>
+              <option value="TEST_1H">1 Tiết</option>
+              <option value="MID_TERM">Giữa kỳ</option>
+              <option value="FINAL_EXAM">Cuối kỳ</option>
+              <option value="CUSTOM">Tùy chỉnh</option>
+            </select>
+
+            <div className="flex bg-white p-1 rounded-xl border border-gray-200 shadow-sm overflow-x-auto">
+              {(['All', 'Drafts', 'Active', 'Completed'] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFilter(f)}
+                  className={cn(
+                    'px-4 py-1.5 rounded-lg text-[13px] font-bold transition-all whitespace-nowrap',
+                    filter === f
+                      ? 'bg-[#1f5333] text-white shadow-sm'
+                      : 'text-gray-500 hover:text-[#1f5333] hover:bg-gray-50'
+                  )}
+                >
+                  {f === 'All' ? 'Tất cả' : f === 'Drafts' ? 'Nháp' : f === 'Active' ? 'Hoạt động' : 'Đóng'}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -382,16 +406,6 @@ export function TeacherExamManagementFeature() {
         onSuccess={loadTests}
         editingTestId={editingTestId}
         tests={tests}
-      />
-
-      <ExamQuestionModal
-        open={showQuestionModal}
-        onClose={() => {
-          setShowQuestionModal(false);
-          setManagingTestId(null);
-        }}
-        onSuccess={loadTests}
-        testId={managingTestId}
       />
 
       <ExamAssignModal 
