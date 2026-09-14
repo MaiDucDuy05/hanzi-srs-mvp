@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Like, ArrayContains } from 'typeorm';
 import { Question, QuestionVisibility } from './entities/question.entity';
@@ -39,6 +39,9 @@ export class QuestionBankService {
           throw new BadRequestException('MATCHING must have at least 2 pairs');
         }
         break;
+      case 'GROUP':
+        // GROUP is a parent question, no specific answer structure required.
+        break;
     }
   }
 
@@ -55,12 +58,14 @@ export class QuestionBankService {
   }
 
   async findAll(q: QueryQuestionDto, userId: string, role: string) {
-    const { page = 1, limit = 50, type, visibility, hskLevel, difficulty, tags, search } = q;
+    const { page = 1, limit = 50, type, visibility, hskLevel, difficulty, tags, search, skill } = q;
     
     // Build query builder
     const qb = this.repo.createQueryBuilder('q')
       .leftJoin('q.creator', 'creator')
-      .addSelect(['creator.id', 'creator.email', 'creator.fullName']);
+      .addSelect(['creator.id', 'creator.email', 'creator.fullName'])
+      .leftJoinAndSelect('q.children', 'children')
+      .where('q.parentId IS NULL');
     
     // Visibility/Ownership rules
     if (role === Role.ADMIN) {
@@ -80,6 +85,7 @@ export class QuestionBankService {
     if (type) qb.andWhere('q.type = :type', { type });
     if (hskLevel) qb.andWhere('q.hskLevel = :hskLevel', { hskLevel });
     if (difficulty) qb.andWhere('q.difficulty = :difficulty', { difficulty });
+    if (skill) qb.andWhere('q.skill = :skill', { skill });
     
     if (tags) {
       // Tags might be comma-separated
@@ -100,7 +106,13 @@ export class QuestionBankService {
   }
 
   async findById(id: string, userId: string, role: string) {
-    const q = await findOrNotFound(this.repo, id, 'Question');
+    const qb = this.repo.createQueryBuilder('q')
+      .leftJoinAndSelect('q.creator', 'creator')
+      .leftJoinAndSelect('q.children', 'children')
+      .where('q.id = :id', { id });
+    const q = await qb.getOne();
+    if (!q) throw new NotFoundException('Question not found');
+
     if (role !== Role.ADMIN) {
       if (q.visibility === QuestionVisibility.PRIVATE && q.creatorId !== userId) {
         throw new ForbiddenException('Cannot access this question');

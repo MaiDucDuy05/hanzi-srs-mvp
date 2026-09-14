@@ -14,7 +14,8 @@ import {
   Send,
   Gamepad2,
   Sparkles,
-  Key
+  Key,
+  LayoutTemplate
 } from 'lucide-react';
 
 import { testApi } from '@/lib/api/endpoints/test';
@@ -32,6 +33,7 @@ import { ExamQuestionModal } from './components/exam-question-modal';
 import { ExamAssignModal } from './components/exam-assign-modal';
 import { LiveQuizConfigModal } from './components/live-quiz-config-modal';
 import { ExamAIGenerateModal } from './components/exam-ai-generate-modal';
+import { CreateTestFromTemplateModal } from './components/create-test-from-template-modal';
 
 type ExamFilter = 'All' | 'Drafts' | 'Active' | 'Completed';
 
@@ -46,6 +48,7 @@ export function TeacherExamManagementFeature() {
   // Modal states
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showAIGenerateModal, setShowAIGenerateModal] = useState(false);
+  const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [editingTestId, setEditingTestId] = useState<string | null>(null);
   
   const [showQuestionModal, setShowQuestionModal] = useState(false);
@@ -338,7 +341,14 @@ export function TeacherExamManagementFeature() {
       </div>
 
       {/* Floating Action Buttons */}
-      <div className="fixed bottom-8 right-8 flex items-center gap-3">
+      <div className="fixed bottom-8 right-8 flex items-center gap-3 z-40">
+        <button
+          onClick={() => setShowTemplateModal(true)}
+          className="flex items-center gap-2 px-5 py-3 rounded-full bg-white text-[#1f5333] border-2 border-[#1f5333] font-bold shadow-lg hover:shadow-xl hover:bg-gray-50 hover:scale-105 transition-all"
+        >
+          <LayoutTemplate className="h-5 w-5" /> Tạo từ Template
+        </button>
+
         <button
           onClick={() => setShowAIGenerateModal(true)}
           className="flex items-center gap-2 px-5 py-3 rounded-full bg-gradient-to-r from-[#c7cf35] to-[#78993a] text-white font-bold shadow-lg hover:shadow-xl hover:scale-105 transition-all"
@@ -355,6 +365,11 @@ export function TeacherExamManagementFeature() {
       </div>
 
       {/* Modals extracted to components */}
+      <CreateTestFromTemplateModal
+        open={showTemplateModal}
+        onClose={() => { setShowTemplateModal(false); loadTests(); }}
+      />
+
       <ExamAIGenerateModal
         open={showAIGenerateModal}
         onClose={() => setShowAIGenerateModal(false)}

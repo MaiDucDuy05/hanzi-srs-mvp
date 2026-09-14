@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Test } from './entities/test.entity';
 import { TestQuestion } from './entities/test-question.entity';
+import { Question } from '../question-bank/entities/question.entity';
 import { TestAttempt } from './entities/test-attempt.entity';
 import { TestAssignment } from './entities/test-assignment.entity';
 import { TestAnswer } from './entities/test-answer.entity';
@@ -192,14 +193,23 @@ export class TestService {
     const existing = await testQuestionRepo.find({ where: { testId: id } as any, order: { displayOrder: 'DESC' }, take: 1 });
     let maxOrder = existing.length > 0 ? existing[0].displayOrder : 0;
 
+    // Get all questions with children to calculate default points
+    const questionEntities = await this.repo.manager.getRepository(Question).find({
+      where: { id: In(questionIds) } as any,
+      relations: ['children'],
+    });
+    const questionMap = new Map(questionEntities.map(q => [q.id, q]));
+
     // Create new questions
     const toSave: Partial<TestQuestion>[] = questionIds.map((questionId) => {
       maxOrder += 1;
+      const q = questionMap.get(questionId);
+      const points = (q?.type === 'GROUP' && q?.children?.length) ? q.children.length : 1;
       return {
         testId: id,
         questionId,
         displayOrder: maxOrder,
-        points: 1, // Default points
+        points: points,
       };
     });
 
@@ -230,13 +240,24 @@ export class TestService {
     const testQuestionRepo = this.repo.manager.getRepository(TestQuestion);
     await testQuestionRepo.delete({ testId: id } as any);
 
+    // Get all questions with children to calculate default points
+    const questionEntities = await this.repo.manager.getRepository(Question).find({
+      where: { id: In(questionIds) } as any,
+      relations: ['children'],
+    });
+    const questionMap = new Map(questionEntities.map(q => [q.id, q]));
+
     // Create new questions
-    const toSave: Partial<TestQuestion>[] = questionIds.map((questionId, index) => ({
-      testId: id,
-      questionId,
-      displayOrder: index,
-      points: 1, // Default points
-    }));
+    const toSave: Partial<TestQuestion>[] = questionIds.map((questionId, index) => {
+      const q = questionMap.get(questionId);
+      const points = (q?.type === 'GROUP' && q?.children?.length) ? q.children.length : 1;
+      return {
+        testId: id,
+        questionId,
+        displayOrder: index,
+        points: points,
+      };
+    });
     await testQuestionRepo.save(toSave);
 
     return { replacedCount: toSave.length };
@@ -269,7 +290,7 @@ export class TestQuestionService {
     if (testId) where.testId = testId;
     const [data, total] = await this.repo.findAndCount({
       where,
-      relations: ['question'],
+      relations: ['question', 'question.children'],
       skip: (page - 1) * limit,
       take: limit,
       order: { displayOrder: 'ASC' },
@@ -282,7 +303,7 @@ export class TestQuestionService {
     );
   }
   async findById(id: string, includeAnswer = false) {
-    const q = await this.repo.findOne({ where: { id } as any, relations: ['question'] });
+    const q = await this.repo.findOne({ where: { id } as any, relations: ['question', 'question.children'] });
     if (!q) throw new BadRequestException('Test question not found');
     return includeAnswer ? q : this.stripAnswers(q);
   }
@@ -297,7 +318,7 @@ export class TestQuestionService {
   async delete(id: string) {
     const q = await this.findById(id);
     const attempts = await this.attemptRepo.count({
-      where: { testId: q.testId, status: In([TestAttemptStatus.SUBMITTED, TestAttemptStatus.GRADED]) }
+      where: { testId: q.testId as string, status: In([TestAttemptStatus.SUBMITTED, TestAttemptStatus.GRADED]) }
     });
     // For MVP/Development, we allow removing questions even if there are submissions
     // if (attempts > 0) {

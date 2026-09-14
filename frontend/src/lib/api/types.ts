@@ -32,7 +32,7 @@ export type PracticeQuestionType = 'FILL_BLANK' | 'SENTENCE_ORDERING';
 export type PracticeAnswerType = 'HANZI' | 'PINYIN' | 'TEXT';
 export type PracticeAttemptStatus = 'IN_PROGRESS' | 'COMPLETED';
 export type TestStatus = 'DRAFT' | 'PUBLISHED' | 'CLOSED';
-export type TestQuestionType = 'SINGLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'FILL_IN' | 'ORDERING' | 'MATCHING' | 'SPEAKING' | 'WRITING';
+export type TestQuestionType = 'SINGLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'FILL_IN' | 'ORDERING' | 'MATCHING' | 'SPEAKING' | 'WRITING' | 'GROUP';
 export type TestAttemptStatus = 'IN_PROGRESS' | 'SUBMITTED' | 'GRADED';
 export type SubscriptionPlan = 'FREE' | 'VIP';
 export type SubscriptionStatus = 'PENDING_PAYMENT' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
@@ -302,6 +302,10 @@ export interface Test {
   deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** ID cua Template neu duoc tao tu Template HSK. null = de thi thu cong. */
+  templateId?: string | null;
+  /** Phan loai de thi (QUIZ_15M, TEST_1H, MID_TERM, FINAL_EXAM, CUSTOM). */
+  category?: string | null;
 }
 
 export interface QuestionContent {

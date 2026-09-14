@@ -15,9 +15,10 @@ interface QuestionRendererProps {
   mode?: 'view' | 'take';
   value?: any;
   onChange?: (val: any) => void;
+  hidePoints?: boolean;
 }
 
-export function QuestionRenderer({ question, index = 0, compact = false, mode = 'view', value, onChange }: QuestionRendererProps) {
+export function QuestionRenderer({ question, index = 0, compact = false, mode = 'view', value, onChange, hidePoints = false }: QuestionRendererProps) {
   const q = question.question;
   const content = (q?.content || {}) as Record<string, any>;
   const type = q?.type || 'UNKNOWN';
@@ -282,6 +283,7 @@ export function QuestionRenderer({ question, index = 0, compact = false, mode = 
       case 'MATCHING': return 'bg-indigo-50 border-indigo-200';
       case 'SPEAKING': return 'bg-teal-50 border-teal-200';
       case 'WRITING': return 'bg-red-50 border-red-200';
+      case 'GROUP': return 'bg-yellow-50 border-yellow-200';
       default: return 'bg-gray-50 border-gray-200';
     }
   };
@@ -296,6 +298,7 @@ export function QuestionRenderer({ question, index = 0, compact = false, mode = 
       case 'MATCHING': return 'Nối tương ứng';
       case 'SPEAKING': return 'Luyện nói';
       case 'WRITING': return 'Viết chữ';
+      case 'GROUP': return 'Câu hỏi nhóm';
       default: return t;
     }
   };
@@ -451,6 +454,37 @@ export function QuestionRenderer({ question, index = 0, compact = false, mode = 
             )}
           </div>
         );
+      case 'GROUP':
+        const children = (q as any).children || [];
+        return (
+          <div className="space-y-4">
+            <p className="font-medium text-gray-900 whitespace-pre-wrap">{content.questionText || 'Nhóm câu hỏi'}</p>
+            {children.length > 0 ? (
+              compact ? (
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded text-sm text-gray-600">
+                  Nhóm này có <strong>{children.length}</strong> câu hỏi con.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-4">
+                  {children.map((child: any, childIdx: number) => (
+                    <QuestionRenderer 
+                      key={child.id || childIdx}
+                      question={{ id: child.id, testId: question.testId, points: question.points, displayOrder: childIdx, question: child } as any} 
+                      index={childIdx} 
+                      compact={compact}
+                      mode={mode}
+                      hidePoints={true}
+                    />
+                  ))}
+                </div>
+              )
+            ) : (
+              <div className="p-3 bg-gray-50 border border-gray-200 rounded text-sm text-gray-600">
+                Nhóm này chưa có câu hỏi con.
+              </div>
+            )}
+          </div>
+        );
       default:
         return (
           <div className="space-y-2">
@@ -474,7 +508,9 @@ export function QuestionRenderer({ question, index = 0, compact = false, mode = 
                 {index + 1}
               </span>
               <Badge tone="blue">{getTypeLabel(type)}</Badge>
-              <Badge tone="gray">{question.points} điểm</Badge>
+              {!compact && !hidePoints && (
+                <Badge tone="gray">{question.points} điểm</Badge>
+              )}
             </div>
           </div>
         </div>
