@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { Modal } from '@/features/ui/components/modal';
 import { Button } from '@/features/ui/components/button';
 import { Field, Input, Select, Textarea } from '@/features/ui/components/form';
@@ -10,9 +10,10 @@ interface ChildQuestionModalProps {
   onClose: () => void;
   onSuccess: () => void;
   parentId: string;
+  editChild?: any;
 }
 
-export function ChildQuestionModal({ open, onClose, onSuccess, parentId }: ChildQuestionModalProps) {
+export function ChildQuestionModal({ open, onClose, onSuccess, parentId, editChild }: ChildQuestionModalProps) {
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -41,6 +42,48 @@ export function ChildQuestionModal({ open, onClose, onSuccess, parentId }: Child
   // Short Answer state
   const [shortAnswerText, setShortAnswerText] = useState('');
   const [shortAnswerAccepted, setShortAnswerAccepted] = useState('');
+
+  useEffect(() => {
+    if (open) {
+      if (editChild) {
+        setType(editChild.type || 'SINGLE_CHOICE');
+        setDifficulty(editChild.difficulty || 'MEDIUM');
+        setExplanation(editChild.explanation || '');
+        const content = editChild.content || {};
+        
+        if (editChild.type === 'SINGLE_CHOICE') {
+          setMcqText(content.questionText || '');
+          if (Array.isArray(content.options) && typeof content.options[0] === 'string') {
+             setMcqOptions([
+               { id: 'A', text: content.options[0] || '' },
+               { id: 'B', text: content.options[1] || '' },
+               { id: 'C', text: content.options[2] || '' },
+               { id: 'D', text: content.options[3] || '' },
+             ]);
+          } else {
+             setMcqOptions(content.options?.length > 0 ? content.options : [{id:'A', text:''}, {id:'B', text:''}, {id:'C', text:''}, {id:'D', text:''}]);
+          }
+          setMcqCorrect(content.correctAnswer || 'A');
+        } else if (editChild.type === 'FILL_IN') {
+          setFillInSentence(content.sentence || content.questionText || '');
+          setFillInAccepted((content.acceptedAnswers || []).join(', '));
+        } else if (editChild.type === 'ORDERING') {
+          setOrderingWords((content.correctOrder || []).map((w: any) => typeof w === 'string' ? w : w.text).join(', '));
+        } else if (editChild.type === 'MATCHING') {
+          setMatchingPairs(content.pairs?.length > 0 ? content.pairs : [{left:'', right:''}, {left:'', right:''}]);
+        } else if (editChild.type === 'TRUE_FALSE') {
+          setMcqText(content.questionText || '');
+          setTrueFalseAnswer(String(content.correctAnswer));
+        } else if (editChild.type === 'SHORT_ANSWER') {
+          setShortAnswerText(content.questionText || '');
+          setShortAnswerAccepted(Array.isArray(content.acceptedAnswers) ? content.acceptedAnswers.join(', ') : (content.correctAnswer || ''));
+        }
+      } else {
+        resetForm();
+      }
+      setError(null);
+    }
+  }, [open, editChild]);
 
   const resetForm = () => {
     setType('SINGLE_CHOICE');
@@ -105,7 +148,11 @@ export function ChildQuestionModal({ open, onClose, onSuccess, parentId }: Child
         explanation: explanation || null,
       };
 
-      await questionBankApi.create(qData);
+      if (editChild) {
+        await questionBankApi.update(editChild.id, qData);
+      } else {
+        await questionBankApi.create(qData);
+      }
 
       resetForm();
       onSuccess();
@@ -121,12 +168,12 @@ export function ChildQuestionModal({ open, onClose, onSuccess, parentId }: Child
     <Modal
       open={open}
       onClose={onClose}
-      title="Tạo câu hỏi phụ"
+      title={editChild ? "Sửa câu hỏi phụ" : "Tạo câu hỏi phụ"}
       wide
       footer={
         <>
           <Button variant="ghost" onClick={onClose} type="button">Hủy</Button>
-          <Button form="create-child-form" type="submit" loading={creating}>Tạo câu hỏi</Button>
+          <Button form="create-child-form" type="submit" loading={creating}>{editChild ? "Lưu thay đổi" : "Tạo câu hỏi"}</Button>
         </>
       }
     >
