@@ -107,7 +107,12 @@ interface SectionPanelProps {
 
 function SectionPanel({ section, questions, onAutoGenerate, onAddFromBank, onDeleteQuestion, onUpdatePoints, generating }: SectionPanelProps) {
   const required = section.requiredQuestionCount ?? 0;
-  const actual = questions.length;
+  const actual = questions.reduce((acc, q) => {
+    if (q.question?.type === 'GROUP') {
+      return acc + (q.question?.children?.length || 0);
+    }
+    return acc + 1;
+  }, 0);
   const isValid = required === 0 || actual >= required;
   const skill = section.targetSkill ?? "GRAMMAR";
 

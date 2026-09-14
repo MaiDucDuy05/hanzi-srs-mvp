@@ -7,6 +7,7 @@
  *   5) courses → course_lessons
  *   6) practice-questions (tham chiếu level/lesson)
  *   7) tests → test_questions (tham chiếu teacherId)
+ *   8) test-templates → test-template-sections (system defaults)
  */
 import { spawnSync } from 'node:child_process';
 import * as path from 'node:path';
@@ -19,6 +20,7 @@ const SCRIPTS = [
   ['seed-courses.ts',            '(courses + course_lessons)'],
   ['seed-practice-questions.ts', '(practice_questions)'],
   ['seed-tests.ts',              '(tests + test_questions)'],
+  ['seed-test-templates.ts',     '(HSK test templates + sections)'],
 ];
 
 const TS_NODE_EXEC = process.execPath; // chạy ts-node/esm-register qua tsx hoặc node --loader
