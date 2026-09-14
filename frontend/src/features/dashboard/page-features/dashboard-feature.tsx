@@ -76,18 +76,27 @@ export function DashboardFeature() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Today&apos;s Goal */}
-        <div className="bg-[#d4ed8f] rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center">
-          <h2 className="font-bold text-[#215b3b] mb-2 font-[family-name:var(--font-nunito)] text-2xl">
+        <div className="relative bg-[#d4ed8f] rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center overflow-hidden">
+          <h2 className="font-bold text-[#215b3b] mb-2 font-[family-name:var(--font-nunito)] text-2xl relative z-10">
             {t('todaysGoal')}
           </h2>
           {loading ? (
-            <div className="w-32 h-32 flex items-center justify-center">
+            <div className="w-32 h-32 flex items-center justify-center relative z-10">
               <span className="text-gray-400 text-sm">{tCommon('loading')}</span>
             </div>
           ) : (
             <>
-              <CircularProgress value={progress?.progressPercent ?? 0} label={remainingText} />
-              <p className="mt-2 text-[#4a6b38] text-sm font-medium">
+              <div className="relative z-10 flex flex-row items-center justify-center mt-2 w-full pr-6">
+                <img 
+                  src="/assets/illustrations/panda/panda-in-grove.svg" 
+                  alt="Panda" 
+                  className="w-36 h-36 object-contain pointer-events-none z-10 -mr-6"
+                />
+                <div className="relative z-0">
+                  <CircularProgress value={progress?.progressPercent ?? 0} label={remainingText} />
+                </div>
+              </div>
+              <p className="mt-6 text-[#4a6b38] text-[15px] font-medium relative z-10">
                 {progress?.dailyXp ?? 0} / {progress?.dailyGoal ?? 50} XP — {remainingText}
               </p>
             </>
@@ -116,28 +125,37 @@ export function DashboardFeature() {
         {/* Third Column: Live Quiz & Review */}
         <div className="flex flex-col gap-6 h-full">
           {/* Live Quiz */}
-          <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center text-center flex-1">
-            <h2 className="font-black text-[#215b3b] font-[family-name:var(--font-nunito)] text-xl mb-4">
-              {t('joinLiveQuiz')}
-            </h2>
-            <div className="flex w-full gap-2 px-2">
-               <input 
-                  id="live-pin-input"
-                  type="text" 
-                  placeholder={t('enterPin')}
-                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-2 font-bold text-center text-xs tracking-widest focus:border-[#8BC34A] focus:outline-none"
-               />
-               <button 
-                 onClick={() => {
-                   const pin = (document.getElementById('live-pin-input') as HTMLInputElement)?.value;
-                   if (pin && pin.length >= 4) {
-                     window.location.href = `/live-quiz?pin=${pin}`;
-                   }
-                 }}
-                 className="bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold py-2 px-4 rounded-xl shadow-md transition-transform hover:scale-105 whitespace-nowrap"
-               >
-                 {t('join')}
-               </button>
+          <div className="relative flex-1 flex flex-col">
+            <img 
+              src="/assets/illustrations/panda/panda-holding-ball.svg" 
+              alt="Panda" 
+              className="absolute -top-20 right-3 w-36 h-36 z-0 pointer-events-none"
+            />
+            <div className="relative z-10 bg-white rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center text-center flex-1">
+              <div className="w-full flex flex-col items-center">
+                <h2 className="font-black text-[#215b3b] font-[family-name:var(--font-nunito)] text-xl mb-4">
+                  {t('joinLiveQuiz')}
+                </h2>
+                <div className="flex w-full gap-2 px-2">
+                   <input 
+                      id="live-pin-input"
+                      type="text" 
+                      placeholder={t('enterPin')}
+                      className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-2 font-bold text-center text-xs tracking-widest focus:border-[#8BC34A] focus:outline-none"
+                   />
+                   <button 
+                     onClick={() => {
+                       const pin = (document.getElementById('live-pin-input') as HTMLInputElement)?.value;
+                       if (pin && pin.length >= 4) {
+                         window.location.href = `/live-quiz?pin=${pin}`;
+                       }
+                     }}
+                     className="bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold py-2 px-4 rounded-xl shadow-md transition-transform hover:scale-105 whitespace-nowrap"
+                   >
+                     {t('join')}
+                   </button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -147,7 +165,7 @@ export function DashboardFeature() {
               {t('reviewToday')}
             </h2>
             <button 
-              onClick={() => window.location.href = '/review'}
+              onClick={() => window.location.href = '/study/review'}
               className="bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold py-2 px-6 rounded-full shadow-md transition-transform hover:scale-105"
             >
               {t('reviewNow')}

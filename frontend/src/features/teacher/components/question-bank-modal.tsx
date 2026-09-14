@@ -78,6 +78,8 @@ export function QuestionBankModal({
         return 'Sắp xếp';
       case 'MATCHING':
         return 'Nối tương ứng';
+      case 'GROUP':
+        return 'Nhóm câu hỏi (Đọc/Nghe)';
       default:
         return type;
     }

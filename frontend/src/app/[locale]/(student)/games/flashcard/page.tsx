@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { FlashcardGameFeature } from '@/features/games/page-features/flashcard-game-feature';
 import { curriculumApi } from '@/lib/api/endpoints/curriculum';
 import { useTranslations } from 'next-intl';
+import { useSearchParams } from 'next/navigation';
 
 export default function FlashcardGame() {
   const t = useTranslations('Games');
@@ -12,8 +13,18 @@ export default function FlashcardGame() {
   >([]);
   const [loading, setLoading] = useState(true);
 
+  const searchParams = useSearchParams();
+  const mode = searchParams.get('mode');
+  const lesson = searchParams.get('lesson');
+
   useEffect(() => {
-    curriculumApi.listVocabularies({ limit: 100 })
+    const params: any = { limit: 100 };
+    if (lesson) {
+      if (mode === 'hsk') params.levelId = lesson;
+      if (mode === 'topic') params.topicId = lesson;
+    }
+    
+    curriculumApi.listVocabularies(params)
       .then((data) => {
         setVocabularies(data.map((v) => ({
           id: v.id,
@@ -26,7 +37,7 @@ export default function FlashcardGame() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [mode, lesson]);
 
   if (loading) {
     return (

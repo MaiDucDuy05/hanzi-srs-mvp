@@ -8,12 +8,12 @@ import { speakText } from '@/lib/utils/tts';
 import { useTranslations } from 'next-intl';
 
 interface StudyLessonVocabTableProps {
-  filteredVocab: Vocabulary[];
+  vocabularies: Vocabulary[];
   progressMap: Record<string, UserVocabProgress>;
   onLearn?: (id: string) => void;
 }
 
-export function StudyLessonVocabTable({ filteredVocab, progressMap, onLearn }: StudyLessonVocabTableProps) {
+export function StudyLessonVocabTable({ vocabularies, progressMap, onLearn }: StudyLessonVocabTableProps) {
   const t = useTranslations('Study.vocabTable');
   return (
     <div className="w-full overflow-x-auto">
@@ -29,7 +29,7 @@ export function StudyLessonVocabTable({ filteredVocab, progressMap, onLearn }: S
           </tr>
         </thead>
         <tbody>
-          {filteredVocab.map((item, index) => {
+          {vocabularies.map((item, index) => {
             const progress = progressMap[item.id];
             const mastery = progress?.masteryLevel ?? 0;
             return (

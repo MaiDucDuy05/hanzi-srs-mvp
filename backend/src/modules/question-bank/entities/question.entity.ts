@@ -1,11 +1,11 @@
-import { Column, Entity, ManyToOne, JoinColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany, JoinColumn, DeleteDateColumn } from 'typeorm';
 import { BaseEntity } from '../../../common/base.entity';
 import { TestQuestionType } from '../../../common/enums/test.enums';
-import { QuestionVisibility, QuestionDifficulty, QuestionSourceType } from './question.enums';
+import { QuestionVisibility, QuestionDifficulty, QuestionSourceType, QuestionSkill } from './question.enums';
 import { User } from '../../auth/entities/user.entity';
 
 // Re-export enums for convenience
-export { QuestionVisibility, QuestionDifficulty, QuestionSourceType } from './question.enums';
+export { QuestionVisibility, QuestionDifficulty, QuestionSourceType, QuestionSkill } from './question.enums';
 
 @Entity('questions')
 export class Question extends BaseEntity {
@@ -18,7 +18,7 @@ export class Question extends BaseEntity {
   creator: User;
 
   // ── Question Type & Source ──────────────────────────────────────────────
-  /** Question type: SINGLE_CHOICE, FILL_IN, ORDERING, etc. */
+  /** Question type: SINGLE_CHOICE, FILL_IN, ORDERING, GROUP, etc. */
   @Column({ type: 'varchar', length: 30 })
   type: TestQuestionType;
 
@@ -33,6 +33,28 @@ export class Question extends BaseEntity {
   @Column({ name: 'source_type', type: 'varchar', length: 20, default: QuestionSourceType.EXAM })
   sourceType: QuestionSourceType;
 
+  /**
+   * Parent question ID for grouped questions (Passage / Audio).
+   * null = standalone question.
+   * non-null = this is a child question under a GROUP parent.
+   */
+  @Column({ name: 'parent_id', type: 'uuid', nullable: true })
+  parentId: string | null;
+
+  @ManyToOne(() => Question, q => q.children, { nullable: true, onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'parent_id' })
+  parent: Question | null;
+
+  @OneToMany(() => Question, q => q.parent)
+  children: Question[];
+
+  /**
+   * Language skill this question tests (LISTENING, READING, WRITING, GRAMMAR).
+   * Used by the auto-generate engine to pick the right questions for each section.
+   */
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  skill: QuestionSkill | null;
+
   // ── Curriculum Binding ─────────────────────────────────────────────────
   @Column({ name: 'hsk_level', type: 'int', nullable: true })
   hskLevel: number | null;
@@ -42,6 +64,9 @@ export class Question extends BaseEntity {
 
   @Column({ name: 'topic_id', type: 'uuid', nullable: true })
   topicId: string | null;
+
+  @Column({ name: 'display_order', type: 'int', default: 0 })
+  displayOrder: number;
 
   // ── Content ────────────────────────────────────────────────────────────
   /** Generic JSONB content - format varies by type */
@@ -74,4 +99,7 @@ export class Question extends BaseEntity {
 
   @Column({ name: 'hidden_at', type: 'timestamptz', nullable: true })
   hiddenAt: Date | null;
+
+  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz', nullable: true })
+  deletedAt: Date;
 }

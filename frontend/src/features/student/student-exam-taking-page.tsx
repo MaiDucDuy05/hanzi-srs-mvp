@@ -1,8 +1,8 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState, useRef, useCallback } from 'react';
-import { ChevronLeft, ChevronRight, Flag, Send, Menu, X, Bookmark, BookmarkCheck, Clock, Maximize } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { ChevronLeft, ChevronRight, Menu, X, Bookmark, BookmarkCheck, Clock, Maximize } from 'lucide-react';
 import { testApi } from '@/lib/api/endpoints/test';
 import type { Test, TestAttempt, TestQuestion } from '@/lib/api/types';
 import { Button } from '@/features/ui/components/button';
@@ -146,12 +146,34 @@ export function StudentExamTakingPage() {
     };
   }, [loading, test, timeLeft]);
 
-  const handleAnswerChange = async (questionId: string, value: unknown) => {
+  const handleAnswerChange = async (questionId: string, questionType: string, childQuestionId: string | undefined, value: unknown) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
     try {
-      await testApi.submitAnswer(attemptId, { questionId, answer: value });
+      if (questionType === 'GROUP' && childQuestionId) {
+        // For GROUP: submit each child answer individually
+        await testApi.submitAnswer(attemptId, { questionId: childQuestionId, answer: value });
+      } else {
+        await testApi.submitAnswer(attemptId, { questionId, answer: value });
+      }
     } catch (e) {
       console.error('Failed to save answer:', e);
+    }
+  };
+
+  // For GROUP questions, the onChange fires with the full dict { [childId]: answer }.
+  // We intercept it to submit each changed child answer individually.
+  const handleGroupAnswerChange = async (questionId: string, newGroupValue: Record<string, unknown>, prevGroupValue: Record<string, unknown>) => {
+    setAnswers((prev) => ({ ...prev, [questionId]: newGroupValue }));
+    // Find which child changed and submit that child answer
+    const changedChildId = Object.keys(newGroupValue).find(
+      (k) => newGroupValue[k] !== prevGroupValue[k]
+    );
+    if (changedChildId) {
+      try {
+        await testApi.submitAnswer(attemptId, { questionId: changedChildId, answer: newGroupValue[changedChildId] });
+      } catch (e) {
+        console.error('Failed to save group child answer:', e);
+      }
     }
   };
 
@@ -211,11 +233,20 @@ export function StudentExamTakingPage() {
       case 'TRUE_FALSE': return t('typeTrueFalse');
       case 'SPEAKING': return t('typeSpeaking');
       case 'WRITING': return t('typeWriting');
+      case 'GROUP': return 'Đọc hiểu / Nghe hiểu';
       default: return t('typeQuestion');
     }
   };
 
-  const answeredCount = Object.keys(answers).length;
+  // A question is "answered" if: non-GROUP has any value, GROUP has at least one child answered
+  const isQuestionAnswered = (q: typeof questions[number]) => {
+    const ans = answers[q.questionId];
+    if (q.question?.type === 'GROUP') {
+      return ans !== undefined && typeof ans === 'object' && !Array.isArray(ans) && Object.keys(ans as object).length > 0;
+    }
+    return ans !== undefined;
+  };
+  const answeredCount = questions.filter(isQuestionAnswered).length;
 
   if (loading) return <PageLoading label={t('preparing')} />;
   if (error || !test) return <ErrorState message={error || t('notFound')} />;
@@ -235,7 +266,7 @@ export function StudentExamTakingPage() {
             <h2 className="text-3xl font-extrabold text-[#11321e] mb-4">{t('examModeTitle')}</h2>
             <p className="text-gray-600 font-medium mb-8">
               {t.rich('examModeDesc', {
-                strong: (chunks) => <strong className="font-bold text-gray-800">{chunks}</strong>,
+                strong: (chunks) => <strong>{chunks}</strong>
               })}
             </p>
             <Button
@@ -325,7 +356,16 @@ export function StudentExamTakingPage() {
                   index={currentQuestion}
                   mode="take"
                   value={answers[q.questionId]}
-                  onChange={(val) => handleAnswerChange(q.questionId, val)}
+                  onChange={(val) => {
+                    if (q.question?.type === 'GROUP') {
+                      const prevVal = (answers[q.questionId] && typeof answers[q.questionId] === 'object' && !Array.isArray(answers[q.questionId]))
+                        ? (answers[q.questionId] as Record<string, unknown>)
+                        : {};
+                      handleGroupAnswerChange(q.questionId, val as Record<string, unknown>, prevVal);
+                    } else {
+                      handleAnswerChange(q.questionId, q.question?.type || '', undefined, val);
+                    }
+                  }}
                 />
               </div>
 
@@ -361,7 +401,7 @@ export function StudentExamTakingPage() {
           <div className="grid grid-cols-5 gap-3">
             {questions.map((question, idx) => {
               const isCurrent = currentQuestion === idx;
-              const isAnswered = answers[question.questionId] !== undefined;
+              const isAnswered = isQuestionAnswered(question);
               const isReview = markedForReview.has(question.questionId);
 
               return (
@@ -419,7 +459,7 @@ export function StudentExamTakingPage() {
             <div className="grid grid-cols-6 gap-3">
               {questions.map((question, idx) => {
                 const isCurrent = currentQuestion === idx;
-                const isAnswered = answers[question.questionId] !== undefined;
+                const isAnswered = isQuestionAnswered(question);
                 const isReview = markedForReview.has(question.questionId);
                 return (
                   <button

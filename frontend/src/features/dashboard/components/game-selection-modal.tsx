@@ -19,8 +19,8 @@ const VOCAB_DEFS: { id: GameId; icon: React.ReactNode }[] = [
 
 const SENTENCE_DEFS: { id: GameId; icon: React.ReactNode }[] = [
   { id: 'sentence', icon: <img src="/assets/game/sentence.png" alt="Sentence" className="w-full h-full object-contain" /> },
-  { id: 'write-sentence', icon: <div className="w-16 h-16 rounded-full bg-[#eef7e9] flex items-center justify-center text-[#466a50]"><PenTool className="w-8 h-8" /></div> },
-  { id: 'fill', icon: <div className="w-16 h-16 rounded-full bg-[#eef7e9] flex items-center justify-center text-[#466a50]"><FileText className="w-8 h-8" /></div> },
+  { id: 'write-sentence', icon: <img src="/assets/game/match.png" alt="Stroke" className="w-full h-full object-contain" />},
+  { id: 'fill', icon:<img src="/assets/game/stroke.png" alt="Stroke" className="w-full h-full object-contain" />},
 ];
 
 interface GameSelectionModalProps {

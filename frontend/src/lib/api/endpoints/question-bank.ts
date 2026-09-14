@@ -2,7 +2,7 @@ import { apiFetch, unwrap } from '../client';
 import type { Paginated, Single } from '../types';
 
 // Question source types
-export type TestQuestionType = 'SINGLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'FILL_IN' | 'ORDERING' | 'MATCHING' | 'SPEAKING' | 'WRITING';
+export type TestQuestionType = 'SINGLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'FILL_IN' | 'ORDERING' | 'MATCHING' | 'SPEAKING' | 'WRITING' | 'GROUP';
 export type QuestionSourceType = 'PRACTICE' | 'EXAM' | 'BOTH';
 
 export interface QuestionBankItem {
@@ -11,12 +11,16 @@ export interface QuestionBankItem {
   creator?: { id: string; email: string; fullName: string };
   type: TestQuestionType;
   questionType: string | null;
+  skill: string | null;
   sourceType: QuestionSourceType;
   visibility: 'PUBLIC' | 'PRIVATE';
   hskLevel: number | null;
   lessonId: string | null;
   topicId: string | null;
+  parentId: string | null;
+  children?: QuestionBankItem[];
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  displayOrder: number;
   content: Record<string, unknown>;
   explanation: string | null;
   tags: string[] | null;
@@ -30,11 +34,14 @@ export interface QuestionBankItem {
 
 export interface CreateQuestionDto {
   type: TestQuestionType;
+  skill?: string;
   content: Record<string, unknown>;
   visibility?: 'PUBLIC' | 'PRIVATE';
   hskLevel?: number | null;
   lessonId?: string | null;
   topicId?: string | null;
+  parentId?: string | null;
+  displayOrder?: number;
   difficulty?: 'EASY' | 'MEDIUM' | 'HARD';
   explanation?: string | null;
   tags?: string[];
@@ -56,6 +63,7 @@ export interface QueryQuestionDto {
   search?: string;
   sourceType?: QuestionSourceType;
   topicId?: string;
+  skill?: string;
 }
 
 export const questionBankApi = {

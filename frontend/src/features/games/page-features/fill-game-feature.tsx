@@ -82,7 +82,7 @@ export function FillGameFeature({ sourceId, sourceType }: FillGameFeatureProps) 
         <img
           src="/assets/illustrations/panda/panda-holding-ball.svg"
           alt=""
-          className="w-24 h-24 mb-4 animate-panda-idle drop-shadow-md"
+          className="w-24 h-24 mb-4 drop-shadow-md"
         />
         <Loader2 className="w-8 h-8 animate-spin text-[#5e7f26] mb-2" />
         <p className="text-[#215b3b] font-bold">{t('fillLoading')}</p>
@@ -156,7 +156,7 @@ export function FillGameFeature({ sourceId, sourceType }: FillGameFeatureProps) 
       {/* Header: title + timer + question counter */}
       <div className="relative z-10 flex items-center justify-between gap-3 px-2 sm:px-4 mb-1 shrink-0">
         <h1 className="text-xl sm:text-2xl font-black text-[#215b3b] font-heading drop-shadow-sm flex items-center gap-2">
-          <PenTool className="w-6 h-6 text-[#466a50]" /> {t('fillHeading')}
+         {t('fillHeading')}
         </h1>
         <div className="flex items-center gap-2">
           <div className="bg-white/80 backdrop-blur text-[#215b3b] font-bold text-sm px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm border border-[#eaf3c5]">

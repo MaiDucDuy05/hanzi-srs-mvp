@@ -16,3 +16,4 @@ export { type StartPracticeInput, type SubmitPracticeInput } from './endpoints/p
 export * from './endpoints/test-assignments';
 export * from './endpoints/question-bank';
 export * from './endpoints/study';
+export { testTemplateApi, testSectionApi, type TestTemplate, type TestTemplateSection, type TestSection, type TestValidationResult } from './endpoints/test';

@@ -35,7 +35,7 @@ export function PracticeHubFeature() {
       </div>
 
       <div className="relative w-full h-12 bg-white rounded-full p-1.5 shadow-sm mb-10 overflow-hidden flex items-center border border-white">
-        <div className="absolute left-1.5 top-1.5 bottom-1.5 rounded-full bg-[#aadd4a] transition-all duration-1000 ease-out" style={{ width: `${progressPercent}%` }} />
+        <div className="absolute left-1.5 top-1.5 bottom-1.5 rounded-full bg-[#aadd4a]" style={{ width: `${progressPercent}%` }} />
         <div className="relative z-10 font-bold text-[#215b3b] pl-4 tracking-wide">
           {t('dailyGoal', { current: currentXp, goal: goalXp })}
         </div>
@@ -43,8 +43,8 @@ export function PracticeHubFeature() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 flex-1 mb-8">
         {MODES.map((mode) => (
-          <Link href={`/dashboard/practice/lessons?mode=${mode.id}`} key={mode.id} className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-6 sm:p-8 rounded-[2.5rem] border-4 border-transparent hover:border-[#aadd4a] bg-white transition-all shadow-sm hover:shadow-md group text-center sm:text-left">
-            <div className="w-24 h-24 flex-shrink-0 bg-[#f9fdf5] rounded-full flex items-center justify-center text-[#8BC34A] group-hover:scale-110 transition-transform">
+          <Link href={`/dashboard/practice/lessons?mode=${mode.id}`} key={mode.id} className="flex flex-col sm:flex-row items-center sm:items-start gap-6 p-6 sm:p-8 rounded-[2.5rem] border-4 border-transparent hover:border-[#aadd4a] bg-white shadow-sm hover:shadow-md group text-center sm:text-left">
+            <div className="w-24 h-24 flex-shrink-0 bg-[#f9fdf5] rounded-full flex items-center justify-center text-[#8BC34A]">
               <mode.icon className="w-12 h-12" strokeWidth={2.5} />
             </div>
             <div className="flex flex-col justify-center h-full sm:pt-2">

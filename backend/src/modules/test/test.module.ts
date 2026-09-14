@@ -5,6 +5,9 @@ import { TestQuestion } from './entities/test-question.entity';
 import { TestAttempt } from './entities/test-attempt.entity';
 import { TestAnswer } from './entities/test-answer.entity';
 import { TestAssignment } from './entities/test-assignment.entity';
+import { TestSection } from './entities/test-section.entity';
+import { TestTemplate } from './entities/test-template.entity';
+import { TestTemplateSection } from './entities/test-template-section.entity';
 import {
   TestService,
   TestQuestionService,
@@ -12,8 +15,11 @@ import {
   TestAnswerService,
 } from './test.service';
 import { TestAssignmentService } from './test-assignment.service';
+import { TestTemplateService } from './test-template.service';
 import { TestController, TestQuestionController, TestAttemptController } from './test.controller';
 import { TestAssignmentController } from './test-assignment.controller';
+import { TestTemplateController, TestSectionController, TestValidateController } from './test-template.controller';
+import { Question } from '../question-bank/entities/question.entity';
 
 @Module({
   imports: [
@@ -23,6 +29,10 @@ import { TestAssignmentController } from './test-assignment.controller';
       TestAttempt,
       TestAnswer,
       TestAssignment,
+      TestSection,
+      TestTemplate,
+      TestTemplateSection,
+      Question,
     ]),
   ],
   controllers: [
@@ -30,6 +40,9 @@ import { TestAssignmentController } from './test-assignment.controller';
     TestQuestionController,
     TestAttemptController,
     TestAssignmentController,
+    TestTemplateController,
+    TestSectionController,
+    TestValidateController,
   ],
   providers: [
     TestService,
@@ -37,6 +50,7 @@ import { TestAssignmentController } from './test-assignment.controller';
     TestAttemptService,
     TestAnswerService,
     TestAssignmentService,
+    TestTemplateService,
   ],
   exports: [TestService],
 })

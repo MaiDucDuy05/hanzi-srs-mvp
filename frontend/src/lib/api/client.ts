@@ -48,6 +48,7 @@ export async function apiFetch<T = unknown>(
       res = await fetch(`${BASE_URL}${path}`, {
         ...rest,
         credentials: 'include',
+        cache: 'no-store',
         headers: {
           ...(contentType !== false ? { 'Content-Type': contentType } : {}),
           ...(headers as Record<string, string> | undefined),

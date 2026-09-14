@@ -44,6 +44,9 @@ export class MistakeBook extends BaseEntity {
   @Column({ type: 'text', nullable: true })
   explanation: string | null;
 
+  @Column({ name: 'user_note', type: 'text', nullable: true })
+  userNote: string | null;
+
   @Column({ name: 'fail_count', type: 'int', default: 1 })
   failCount: number;
 

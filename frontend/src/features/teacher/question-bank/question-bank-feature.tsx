@@ -146,7 +146,7 @@ export function QuestionBankFeature() {
                     <Badge tone={q.visibility === 'PUBLIC' ? 'green' : 'gray'}>{q.visibility}</Badge>
                     {q.hiddenByAdmin && <Badge tone="red">Bị ẩn</Badge>}
                   </div>
-                  <div className="text-sm font-medium">
+                  <div className="text-sm font-medium text-gray-800 line-clamp-3">
                     {(q.content as any)?.questionText || (q.content as any)?.prompt || (q.content as any)?.question || (q.content as any)?.sentence || '(Không có nội dung)'}
                   </div>
                   {q.hiddenByAdmin && (

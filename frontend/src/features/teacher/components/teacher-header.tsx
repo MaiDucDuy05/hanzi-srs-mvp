@@ -55,7 +55,6 @@ export function TeacherHeader() {
           </div>
           <div className="hidden sm:block text-left">
             <p className="text-xs font-black text-[#1f5333] leading-tight">{user?.fullName || 'Giáo viên HSK'}</p>
-            <p className="text-[10px] text-gray-400 font-bold tracking-wide">Chủ nhiệm lớp HSK</p>
           </div>
         </div>
       </div>

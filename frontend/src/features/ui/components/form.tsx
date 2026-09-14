@@ -39,9 +39,9 @@ export function Field({
  error,
  children,
 }: {
- label?: string;
- hint?: string;
- error?: string;
+ label?: React.ReactNode;
+ hint?: React.ReactNode;
+ error?: React.ReactNode;
  children: React.ReactNode;
 }) {
  return (

@@ -36,8 +36,8 @@ export function CoursesFeature() {
                   <img src="/assets/illustrations/bamboo/bamboo.png" alt="Bamboo" className="w-auto h-48 object-contain relative z-10" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h2 className="text-xl font-black text-[#215b3b] mb-2">{level.code} — {level.name}</h2>
-                  <p className="text-xs font-semibold text-gray-500">{t('hskLevelLabel', { level: level.code.replace('HSK ', '') })}</p>
+                  <h2 className="text-xl font-black text-[#215b3b] mb-2">{level.name}</h2>
+                  <p className="text-xs font-semibold text-gray-500">{t('hskLevelLabel', { level: level.name.replace('HSK ', '') })}</p>
                 </div>
               </div>
               <button className="w-full py-3 px-4 bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold rounded-full transition-colors text-sm shadow-sm pointer-events-none">

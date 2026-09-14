@@ -32,7 +32,7 @@ export type PracticeQuestionType = 'FILL_BLANK' | 'SENTENCE_ORDERING';
 export type PracticeAnswerType = 'HANZI' | 'PINYIN' | 'TEXT';
 export type PracticeAttemptStatus = 'IN_PROGRESS' | 'COMPLETED';
 export type TestStatus = 'DRAFT' | 'PUBLISHED' | 'CLOSED';
-export type TestQuestionType = 'SINGLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'FILL_IN' | 'ORDERING' | 'MATCHING' | 'SPEAKING' | 'WRITING';
+export type TestQuestionType = 'SINGLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'FILL_IN' | 'ORDERING' | 'MATCHING' | 'SPEAKING' | 'WRITING' | 'GROUP';
 export type TestAttemptStatus = 'IN_PROGRESS' | 'SUBMITTED' | 'GRADED';
 export type SubscriptionPlan = 'FREE' | 'VIP';
 export type SubscriptionStatus = 'PENDING_PAYMENT' | 'ACTIVE' | 'EXPIRED' | 'CANCELLED';
@@ -302,6 +302,10 @@ export interface Test {
   deletedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  /** ID cua Template neu duoc tao tu Template HSK. null = de thi thu cong. */
+  templateId?: string | null;
+  /** Phan loai de thi (QUIZ_15M, TEST_1H, MID_TERM, FINAL_EXAM, CUSTOM). */
+  category?: string | null;
 }
 
 export interface QuestionContent {
@@ -324,6 +328,7 @@ export interface TestQuestion {
     type: TestQuestionType;
     difficulty: string;
     content: QuestionContent;
+    children?: any[];
   };
   points: number;
   displayOrder: number;
@@ -409,13 +414,20 @@ export interface Resource {
 export interface MistakeBookEntry {
   id: string;
   userId: string;
+  questionId: string | null;
+  vocabularyId: string | null;
   sourceType: string;
   sourceId: string;
   questionType: string;
-  questionSnapshot: Record<string, unknown>;
-  userAnswer: Record<string, unknown> | null;
-  correctAnswer: Record<string, unknown> | null;
+  questionSnapshot: Record<string, any>;
+  userAnswer: Record<string, any> | null;
+  correctAnswer: Record<string, any> | null;
   explanation: string | null;
+  userNote: string | null;
+  failCount: number;
+  correctStreak: number;
+  lastFailedAt: string;
+  lastReviewedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }

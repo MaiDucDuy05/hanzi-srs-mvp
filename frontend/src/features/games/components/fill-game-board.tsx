@@ -45,7 +45,7 @@ export function FillGameBoard({ question, onAnswer }: FillGameBoardProps) {
           src="/assets/illustrations/panda/panda-holding-ball.svg"
           alt=""
           aria-hidden="true"
-          className="hidden sm:block absolute -top-9 -right-5 w-20 h-20 drop-shadow-md animate-panda-idle pointer-events-none"
+          className="hidden sm:block absolute -top-9 -right-5 w-20 h-20 drop-shadow-md pointer-events-none"
         />
 
         <p className="text-xs font-black text-[#78993a] uppercase tracking-[0.2em] mb-4 text-center">

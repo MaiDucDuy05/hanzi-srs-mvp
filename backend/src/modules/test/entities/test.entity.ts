@@ -1,6 +1,6 @@
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, DeleteDateColumn } from 'typeorm';
 import { BaseEntity } from '../../../common/base.entity';
-import { TestStatus } from '../../../common/enums/test.enums';
+import { TestStatus, TestCategory } from '../../../common/enums/test.enums';
 
 /**
  * Bài kiểm tra do giáo viên tạo (PR-05).
@@ -42,6 +42,20 @@ export class Test extends BaseEntity {
   @Column({ name: 'show_score_immediately', type: 'boolean', default: true })
   showScoreImmediately: boolean;
 
+  /**
+   * Phan loai bai thi. VD: QUIZ_15M, FINAL_EXAM, CUSTOM...
+   * null = de thi cu (truoc khi co tinh nang Template).
+   */
+  @Column({ type: 'varchar', length: 30, nullable: true })
+  category: TestCategory | null;
+
+  /**
+   * FK -> test_templates.id.
+   * null = bai Custom hoac de thi khong duoc sinh tu Template.
+   */
+  @Column({ name: 'template_id', type: 'uuid', nullable: true })
+  templateId: string | null;
+
   @Column({ name: 'hidden_by_admin', type: 'boolean', default: false })
   hiddenByAdmin: boolean;
 
@@ -51,6 +65,6 @@ export class Test extends BaseEntity {
   @Column({ name: 'hidden_at', type: 'timestamptz', nullable: true })
   hiddenAt: Date | null;
 
-  @Column({ name: 'deleted_at', type: 'timestamptz', nullable: true })
+  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz', nullable: true })
   deletedAt: Date | null;
 }

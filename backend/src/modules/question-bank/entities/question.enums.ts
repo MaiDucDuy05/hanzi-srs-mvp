@@ -17,3 +17,10 @@ export enum QuestionSourceType {
   EXAM = 'EXAM',
   BOTH = 'BOTH',
 }
+
+/** The language skill that a question tests */
+export enum QuestionSkill {
+  LISTENING = 'LISTENING',
+  READING = 'READING',
+  WRITING = 'WRITING',
+  GRAMMAR = 'GRAMMAR', }

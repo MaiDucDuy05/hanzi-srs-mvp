@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Vocabulary } from '@/lib/api/types';
 
 import { ArrowRight, Languages, Lightbulb, CheckCircle2 } from 'lucide-react';
@@ -14,31 +14,40 @@ export function ReverseTranslationStep({ vocabulary, onNext }: ReverseTranslatio
   const [isPassed, setIsPassed] = useState(false);
   const [showHint, setShowHint] = useState(false);
 
-  // Parse example (assume format "Chinese - Vietnamese")
-  const exampleParts = vocabulary.example?.split('-') || [];
-  const targetZh = exampleParts[0]?.trim() || '';
-  const hintVi = exampleParts[1]?.trim() || 'Không có bản dịch.';
+  // Robustly extract Chinese sentence and Vietnamese hint
+  let targetZh = vocabulary.hanzi;
+  let hintVi = vocabulary.meaningVi;
 
-  // If no example available, skip this step
-  useEffect(() => {
-    if (!vocabulary.example) {
-      onNext();
+  if (vocabulary.example) {
+    const parts = vocabulary.example.split('-');
+    if (parts.length >= 2) {
+      const part0 = parts[0].trim();
+      const part1 = parts[1].trim();
+      // Part with Chinese characters is the target sentence
+      if (/[\u4e00-\u9fa5]/.test(part0)) {
+        targetZh = part0;
+        hintVi = part1 || vocabulary.meaningVi;
+      } else if (/[\u4e00-\u9fa5]/.test(part1)) {
+        targetZh = part1;
+        hintVi = part0 || vocabulary.meaningVi;
+      }
+    } else if (/[\u4e00-\u9fa5]/.test(vocabulary.example)) {
+      targetZh = vocabulary.example.trim();
     }
-  }, [vocabulary.example, onNext]);
-
-  if (!vocabulary.example) {
-    return null;
   }
 
   const normalize = (text: string) => {
-    return text.replace(/[，。！？\s]/g, '').toLowerCase();
+    return text.replace(/[，。！？\s\.,!\?]/g, '').toLowerCase();
   };
 
   const handleCheck = () => {
-    if (normalize(answer) === normalize(targetZh)) {
+    const normAns = normalize(answer);
+    const normTarget = normalize(targetZh);
+    const normHanzi = normalize(vocabulary.hanzi);
+
+    if (normAns && (normAns === normTarget || normAns === normHanzi)) {
       setIsPassed(true);
     } else {
-      // Just show hint if they get it wrong
       setShowHint(true);
     }
   };
@@ -73,6 +82,15 @@ export function ReverseTranslationStep({ vocabulary, onNext }: ReverseTranslatio
             onChange={(e) => {
               setAnswer(e.target.value);
               setIsPassed(false);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                if (isPassed) {
+                  onNext();
+                } else if (answer.trim()) {
+                  handleCheck();
+                }
+              }
             }}
             placeholder="Gõ tiếng Trung vào đây..."
             className="w-full bg-white border-2 border-gray-100 rounded-xl px-6 py-4 text-xl outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/20 transition-all text-center font-serif text-gray-800 placeholder:font-sans placeholder:text-gray-300 shadow-sm"

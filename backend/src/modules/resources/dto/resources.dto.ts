@@ -96,6 +96,10 @@ export class CreateMistakeBookDto {
   @IsOptional() @IsString() explanation?: string | null;
 }
 
+export class UpdateMistakeBookDto {
+  @IsOptional() @IsString() userNote?: string | null;
+}
+
 export class CreateSpeakingAttemptDto {
   @IsString() audioKey: string;
 }

@@ -22,7 +22,7 @@ const NAV_ITEMS = [
   { href: '/teacher/students', title: 'Học sinh', icon: GraduationCap },
   { href: '/teacher/exams', title: 'Đề thi', icon: FileCheck },
   { href: '/teacher/questions', title: 'Ngân hàng câu hỏi', icon: Database },
-  { href: '/teacher/hskk-grading', title: 'Chấm bài thi nói', icon: BookOpenCheck },
+  { href: '/teacher/hskk-grading', title: 'Chấm bài thi', icon: BookOpenCheck },
   { href: '/teacher/exam-statistics', title: 'Thống kê điểm', icon: BarChart },
 ];
 
@@ -33,10 +33,6 @@ export function TeacherSidebar() {
   return (
     <aside className="flex h-full w-[260px] flex-col bg-[#fcfce8] p-6 shadow-sm border-r border-[#f3f4e1] relative">
       <div className="mb-10 flex flex-col items-center text-center mt-4">
-        <div className="h-16 w-16 bg-[#d9e6d8] rounded-full flex items-center justify-center mb-3 shadow-inner overflow-hidden border-2 border-white">
-           <img src="https://api.dicebear.com/7.x/bottts/svg?seed=panda" alt="Logo" className="h-12 w-12 object-cover" />
-        </div>
-        <h1 className="text-xl font-extrabold text-[#1f5333] tracking-tight">Cute Panda Forest</h1>
         <p className="text-[10px] text-gray-500 font-medium tracking-wide mt-1">Cổng Giáo Viên & Quản Trị</p>
       </div>
 

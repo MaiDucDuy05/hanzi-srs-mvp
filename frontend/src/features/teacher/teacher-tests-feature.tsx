@@ -13,7 +13,8 @@ import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
 import { Badge } from '@/features/ui/components/badge';
 import { formatDate } from '@/lib/utils/format';
-import { Clock, HelpCircle, Key, Calendar } from 'lucide-react';
+import { Clock, HelpCircle, Key, Calendar, LayoutTemplate, PenLine } from 'lucide-react';
+import { CreateTestFromTemplateModal } from './components/create-test-from-template-modal';
 
 
 export function TeacherTestsFeature() {
@@ -22,6 +23,7 @@ export function TeacherTestsFeature() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
+  const [showTemplate, setShowTemplate] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     name: '',
@@ -92,8 +94,24 @@ export function TeacherTestsFeature() {
           </Link>
           <h1 className="mt-1 text-2xl font-bold">Quản lý bài kiểm tra</h1>
         </div>
-        <Button onClick={() => setShowCreate(true)}>+ Đề mới</Button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowTemplate(true)}
+            className="flex items-center gap-2 bg-[#1f5333] text-white px-4 py-2.5 rounded-xl text-[13px] font-bold hover:bg-[#17432a] transition-colors"
+          >
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            Tạo từ Template HSK
+          </button>
+          <Button onClick={() => setShowCreate(true)}>+ Đề rống</Button>
+        </div>
       </header>
+
+      <CreateTestFromTemplateModal
+        open={showTemplate}
+        onClose={() => { setShowTemplate(false); load(); }}
+      />
 
       {loading && <PageLoading label="Đang tải bài kiểm tra..." />}
       {error && <ErrorState message={error} onRetry={load} />}
@@ -119,7 +137,7 @@ export function TeacherTestsFeature() {
                   </div>
 
                   <div className="flex gap-2">
-                    <Link href={`/teacher/tests/${t.id}`}>
+                    <Link href={`/teacher/exams/${t.id}`}>
                       <Button variant="outline" size="sm">Quản lý</Button>
                     </Link>
                     <Button variant="danger" size="sm" onClick={() => remove(t)}>
