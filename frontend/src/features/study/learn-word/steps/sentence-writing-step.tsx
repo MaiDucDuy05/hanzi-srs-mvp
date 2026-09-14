@@ -85,7 +85,7 @@ export function SentenceWritingStep({ vocabulary, onNext }: SentenceWritingStepP
               setCheckResult(null);
             }}
             placeholder="Ví dụ: 你好吗？..."
-            className="w-full min-h-[100px] p-4 resize-none outline-none text-xl text-gray-800 placeholder:text-gray-300 font-serif leading-relaxed rounded-2xl"
+            className="w-full min-h-[100px] p-4 resize-none outline-none text-xl text-gray-800 placeholder:font-sans placeholder:text-gray-300 font-serif leading-relaxed rounded-2xl"
           />
         </div>
         
