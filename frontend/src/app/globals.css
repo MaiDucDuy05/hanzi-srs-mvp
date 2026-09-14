@@ -53,6 +53,8 @@
     "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
   --font-heading: var(--font-nunito), var(--font-poppins), var(--font-inter), "PingFang SC",
     "Microsoft YaHei", "Noto Sans CJK SC", system-ui, sans-serif;
+  --font-serif: var(--font-serif-vi), var(--font-serif-sc), "Noto Serif SC", "Source Han Serif SC",
+    "Songti SC", "SimSun", Georgia, "Times New Roman", serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
   /* Soft panda shadows */
@@ -159,4 +161,10 @@ button {
 ruby rt, .pinyin-text {
   font-family: var(--font-nunito), var(--font-inter), Arial, Helvetica, sans-serif !important;
   letter-spacing: 0.025em;
+}
+
+/* Ensure placeholders consistently use sans-serif font supporting full Vietnamese tone marks */
+input::placeholder,
+textarea::placeholder {
+  font-family: var(--font-sans) !important;
 }

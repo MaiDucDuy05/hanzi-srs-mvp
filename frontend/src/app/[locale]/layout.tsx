@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Inter, Poppins, Nunito } from "next/font/google";
+import { Geist_Mono, Inter, Poppins, Nunito, Noto_Serif, Noto_Serif_SC } from "next/font/google";
 import { AuthProvider } from "@/lib/auth/auth-context";
 import { AppShell } from "@/features/layout/components/app-shell";
 import { NextIntlClientProvider } from 'next-intl';
@@ -16,14 +16,28 @@ const poppins = Poppins({
 
 const nunito = Nunito({
   variable: "--font-nunito",
-  subsets: ["latin"],
+  subsets: ["latin", "vietnamese"],
   weight: ["600", "700", "800", "900"],
   display: "swap",
 });
 
 const inter = Inter({
   variable: "--font-inter",
+  subsets: ["latin", "vietnamese"],
+  display: "swap",
+});
+
+const notoSerif = Noto_Serif({
+  variable: "--font-serif-vi",
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "600", "700"],
+  display: "swap",
+});
+
+const notoSerifSC = Noto_Serif_SC({
+  variable: "--font-serif-sc",
   subsets: ["latin"],
+  weight: ["400", "600", "700", "900"],
   display: "swap",
 });
 
@@ -67,7 +81,7 @@ export default async function RootLayout({
   return (
     <html
       lang={locale}
-      className={`${poppins.variable} ${inter.variable} ${geistMono.variable} ${nunito.variable} h-full antialiased`}
+      className={`${poppins.variable} ${inter.variable} ${geistMono.variable} ${nunito.variable} ${notoSerif.variable} ${notoSerifSC.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
