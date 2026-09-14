@@ -174,8 +174,12 @@ export function ChildQuestionList({ editId, children, setChildren }: ChildQuesti
           onClose={() => { setShowChildModal(false); setEditingChild(null); }}
           parentId={editId}
           editChild={editingChild}
-          onSuccess={() => {
-            questionBankApi.get(editId).then(q => setChildren(q.children || []));
+          onSuccess={(child) => {
+            if (editingChild) {
+              setChildren(children.map(c => c.id === child.id ? child : c));
+            } else {
+              setChildren([...children, child]);
+            }
           }}
         />
       )}

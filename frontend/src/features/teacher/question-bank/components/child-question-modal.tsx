@@ -2,13 +2,13 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { Modal } from '@/features/ui/components/modal';
 import { Button } from '@/features/ui/components/button';
 import { Field, Input, Select, Textarea } from '@/features/ui/components/form';
-import { questionBankApi } from '@/lib/api/endpoints/question-bank';
+import { questionBankApi, type QuestionBankItem } from '@/lib/api/endpoints/question-bank';
 import { resourceApi } from '@/lib/api/endpoints';
 
 interface ChildQuestionModalProps {
   open: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (child: QuestionBankItem) => void;
   parentId: string;
   editChild?: any;
 }
@@ -152,14 +152,15 @@ export function ChildQuestionModal({ open, onClose, onSuccess, parentId, editChi
         explanation: explanation || null,
       };
 
+      let savedChild: QuestionBankItem;
       if (editChild) {
-        await questionBankApi.update(editChild.id, qData);
+        savedChild = await questionBankApi.update(editChild.id, qData);
       } else {
-        await questionBankApi.create(qData);
+        savedChild = await questionBankApi.create(qData);
       }
 
       resetForm();
-      onSuccess();
+      onSuccess(savedChild);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Lỗi tạo câu hỏi phụ.');
