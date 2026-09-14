@@ -5,18 +5,18 @@ export class AddTestTemplateAndSection1789326660738 implements MigrationInterfac
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`ALTER TABLE "test_questions" DROP CONSTRAINT "FK_5badfac5ec550e555213ad2e5bc"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_tests_status"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_test_questions_question"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_test_questions_test"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_test_attempts_test"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_test_attempts_user"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_lessons_status"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_prac_q_lesson"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_prac_q_topic"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_prac_q_type_status"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_courses_status"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_course_lessons_lesson"`);
-        await queryRunner.query(`DROP INDEX "public"."idx_user_activities_user_type"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_tests_status"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_test_questions_question"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_test_questions_test"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_test_attempts_test"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_test_attempts_user"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_lessons_status"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_prac_q_lesson"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_prac_q_topic"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_prac_q_type_status"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_courses_status"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_course_lessons_lesson"`);
+        await queryRunner.query(`DROP INDEX IF EXISTS "public"."idx_user_activities_user_type"`);
         await queryRunner.query(`CREATE TABLE "test_sections" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "test_id" uuid NOT NULL, "name" character varying(200) NOT NULL, "instruction" text, "order_index" integer NOT NULL DEFAULT '0', "target_skill" character varying(20), "required_question_count" integer, CONSTRAINT "PK_e2437ba617affcf6ef3ed443dcc" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "test_templates" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "category" character varying(30) NOT NULL, "hsk_level" integer, "name" character varying(200) NOT NULL, "description" text, "time_limit_minutes" integer NOT NULL DEFAULT '0', "is_system_default" boolean NOT NULL DEFAULT false, "created_by" uuid, "is_public" boolean NOT NULL DEFAULT false, CONSTRAINT "PK_eb5603dc71cc6d0bf9f1c3799ce" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "test_template_sections" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "created_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "updated_at" TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(), "template_id" uuid NOT NULL, "name" character varying(200) NOT NULL, "order_index" integer NOT NULL DEFAULT '0', "target_skill" character varying(20) NOT NULL, "question_count" integer NOT NULL, "group_count_allowed" integer NOT NULL DEFAULT '0', "points_per_question" double precision NOT NULL DEFAULT '1', CONSTRAINT "PK_84c86a6fcb46ea07babc69b0143" PRIMARY KEY ("id"))`);
