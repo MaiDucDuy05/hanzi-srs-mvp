@@ -14,6 +14,7 @@ export class CreateQuestionDto {
   @IsOptional() @IsArray() @IsString({ each: true }) tags?: string[];
   @IsOptional() @IsUUID() parentId?: string;
   @IsOptional() @IsEnum(QuestionSkill) skill?: QuestionSkill;
+  @IsOptional() @IsInt() displayOrder?: number;
 }
 
 export class UpdateQuestionDto extends CreateQuestionDto {}

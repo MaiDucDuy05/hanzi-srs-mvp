@@ -20,6 +20,7 @@ export interface QuestionBankItem {
   parentId: string | null;
   children?: QuestionBankItem[];
   difficulty: 'EASY' | 'MEDIUM' | 'HARD';
+  displayOrder: number;
   content: Record<string, unknown>;
   explanation: string | null;
   tags: string[] | null;
@@ -40,6 +41,7 @@ export interface CreateQuestionDto {
   lessonId?: string | null;
   topicId?: string | null;
   parentId?: string | null;
+  displayOrder?: number;
   difficulty?: 'EASY' | 'MEDIUM' | 'HARD';
   explanation?: string | null;
   tags?: string[];

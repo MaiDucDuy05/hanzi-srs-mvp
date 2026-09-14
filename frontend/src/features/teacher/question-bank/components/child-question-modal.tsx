@@ -19,6 +19,7 @@ export function ChildQuestionModal({ open, onClose, onSuccess, parentId, editChi
   
   const [type, setType] = useState('SINGLE_CHOICE');
   const [difficulty, setDifficulty] = useState<'EASY' | 'MEDIUM' | 'HARD'>('MEDIUM');
+  const [displayOrder, setDisplayOrder] = useState(0);
   const [explanation, setExplanation] = useState('');
   
   // MCQ state
@@ -48,6 +49,7 @@ export function ChildQuestionModal({ open, onClose, onSuccess, parentId, editChi
       if (editChild) {
         setType(editChild.type || 'SINGLE_CHOICE');
         setDifficulty(editChild.difficulty || 'MEDIUM');
+        setDisplayOrder(editChild.displayOrder || 0);
         setExplanation(editChild.explanation || '');
         const content = editChild.content || {};
         
@@ -88,6 +90,7 @@ export function ChildQuestionModal({ open, onClose, onSuccess, parentId, editChi
   const resetForm = () => {
     setType('SINGLE_CHOICE');
     setDifficulty('MEDIUM');
+    setDisplayOrder(0);
     setExplanation('');
     setMcqText('');
     setMcqOptions([{id:'A', text:''}, {id:'B', text:''}, {id:'C', text:''}, {id:'D', text:''}]);
@@ -143,6 +146,7 @@ export function ChildQuestionModal({ open, onClose, onSuccess, parentId, editChi
         type: type as any,
         parentId,
         difficulty,
+        displayOrder,
         visibility: 'PRIVATE' as const, // Inherit in practice, but API requires it
         content,
         explanation: explanation || null,
@@ -180,7 +184,7 @@ export function ChildQuestionModal({ open, onClose, onSuccess, parentId, editChi
       <form id="create-child-form" onSubmit={handleCreateQuestion} className="space-y-4">
         {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
         
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           <Field label="Loại câu hỏi *">
             <Select value={type} onChange={e => setType(e.target.value)} required>
               <option value="SINGLE_CHOICE">Trắc nghiệm (1 đáp án)</option>
@@ -199,6 +203,9 @@ export function ChildQuestionModal({ open, onClose, onSuccess, parentId, editChi
               <option value="MEDIUM">Trung bình</option>
               <option value="HARD">Khó</option>
             </Select>
+          </Field>
+          <Field label="Thứ tự (Order)">
+            <Input type="number" value={displayOrder} onChange={e => setDisplayOrder(parseInt(e.target.value) || 0)} />
           </Field>
         </div>
 
