@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, OneToMany, JoinColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, OneToMany, JoinColumn, DeleteDateColumn } from 'typeorm';
 import { BaseEntity } from '../../../common/base.entity';
 import { TestQuestionType } from '../../../common/enums/test.enums';
 import { QuestionVisibility, QuestionDifficulty, QuestionSourceType, QuestionSkill } from './question.enums';
@@ -96,4 +96,7 @@ export class Question extends BaseEntity {
 
   @Column({ name: 'hidden_at', type: 'timestamptz', nullable: true })
   hiddenAt: Date | null;
+
+  @DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz', nullable: true })
+  deletedAt: Date;
 }
