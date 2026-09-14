@@ -93,7 +93,7 @@ export function ReverseTranslationStep({ vocabulary, onNext }: ReverseTranslatio
               }
             }}
             placeholder="Gõ tiếng Trung vào đây..."
-            className="w-full bg-white border-2 border-gray-100 rounded-xl px-6 py-4 text-xl outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/20 transition-all text-center font-serif text-gray-800 placeholder:text-gray-300 shadow-sm"
+            className="w-full bg-white border-2 border-gray-100 rounded-xl px-6 py-4 text-xl outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/20 transition-all text-center font-serif text-gray-800 placeholder:font-sans placeholder:text-gray-300 shadow-sm"
           />
           {isPassed && (
             <div className="absolute right-4 top-1/2 -translate-y-1/2 text-emerald-500 animate-in zoom-in">

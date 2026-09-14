@@ -145,9 +145,19 @@ export class TestTemplateService {
     let allValid = true;
 
     for (const section of sections) {
-      const questions = await this.testQuestionRepo.find({ where: { sectionId: section.id } as any });
+      const questions = await this.testQuestionRepo.find({ 
+        where: { sectionId: section.id } as any,
+        relations: ['question', 'question.children']
+      });
       const required = section.requiredQuestionCount ?? 0;
-      const actual = questions.length;
+      let actual = 0;
+      for (const tq of questions) {
+        if (tq.question?.type === 'GROUP') {
+          actual += (tq.question.children?.length || 0);
+        } else {
+          actual += 1;
+        }
+      }
       const isValid = required === 0 || actual >= required;
       if (!isValid) allValid = false;
 

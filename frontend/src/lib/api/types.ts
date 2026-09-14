@@ -328,6 +328,7 @@ export interface TestQuestion {
     type: TestQuestionType;
     difficulty: string;
     content: QuestionContent;
+    children?: any[];
   };
   points: number;
   displayOrder: number;
