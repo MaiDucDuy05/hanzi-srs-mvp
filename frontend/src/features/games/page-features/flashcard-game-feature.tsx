@@ -233,7 +233,7 @@ export function FlashcardGameFeature({ vocabularies, onComplete }: FlashcardGame
                 <div className="absolute left-1/2 top-0 h-full border-l border-dashed border-[#d0c9b7]" />
               </div>
               <div className="absolute inset-0 flex items-center justify-center">
-                <HanziWriterAnimation char={char} speed="normal" />
+                <HanziWriterAnimation char={char} speed="normal" size={150} />
               </div>
             </div>
           ))}
