@@ -3,6 +3,7 @@ import { Modal } from '@/features/ui/components/modal';
 import { Button } from '@/features/ui/components/button';
 import { questionBankApi } from '@/lib/api/endpoints/question-bank';
 import { testApi } from '@/lib/api/endpoints/test';
+import { testSectionApi } from '@/lib/api/endpoints';
 import { QuestionBankModal as QuestionBankContent } from './question-bank-modal';
 
 interface TestAddBankModalProps {
@@ -11,9 +12,13 @@ interface TestAddBankModalProps {
   onSuccess: () => void;
   testId: string;
   existingQuestionIds: string[];
+  /** If provided, add questions to this section instead of the flat test. */
+  sectionId?: string;
+  targetSkill?: string;
+  hskLevel?: number;
 }
 
-export function TestAddBankModal({ open, onClose, onSuccess, testId, existingQuestionIds }: TestAddBankModalProps) {
+export function TestAddBankModal({ open, onClose, onSuccess, testId, existingQuestionIds, sectionId, targetSkill, hskLevel }: TestAddBankModalProps) {
   const [bankQuestions, setBankQuestions] = useState<any[]>([]);
   const [selectedBankIds, setSelectedBankIds] = useState<string[]>([]);
   const [savingBank, setSavingBank] = useState(false);
@@ -24,7 +29,7 @@ export function TestAddBankModal({ open, onClose, onSuccess, testId, existingQue
     if (open) {
       setLoading(true);
       setError(null);
-      questionBankApi.list({ limit: 500 })
+      questionBankApi.list({ limit: 500, skill: targetSkill, hskLevel: hskLevel })
         .then((allBank) => {
           setBankQuestions(allBank);
           setSelectedBankIds(existingQuestionIds);
@@ -42,7 +47,11 @@ export function TestAddBankModal({ open, onClose, onSuccess, testId, existingQue
     try {
       const newIds = selectedBankIds.filter((id) => !existingQuestionIds.includes(id));
       if (newIds.length > 0) {
-        await testApi.addQuestions(testId, newIds);
+        if (sectionId) {
+          await testSectionApi.addQuestions(sectionId, newIds);
+        } else {
+          await testApi.addQuestions(testId, newIds);
+        }
         onSuccess();
       }
       onClose();

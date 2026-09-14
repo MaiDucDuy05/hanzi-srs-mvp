@@ -9,16 +9,18 @@ import { Button } from '@/features/ui/components/button';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
 import { cn } from '@/lib/utils/cn';
+import { useTranslations } from 'next-intl';
 
 export function TakeExamFeature() {
   const { attemptId } = useParams<{ attemptId: string }>();
   const router = useRouter();
+  const t = useTranslations('Exams.take');
 
   const [attempt, setAttempt] = useState<TestAttempt | null>(null);
   const [test, setTest] = useState<Test | null>(null);
   const [questions, setQuestions] = useState<TestQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, unknown>>({});
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
@@ -31,12 +33,12 @@ export function TakeExamFeature() {
     try {
       const att = await testApi.getAttempt(attemptId);
       if (att.status !== 'IN_PROGRESS') {
-        alert('Bài kiểm tra này đã kết thúc!');
+        alert(t('alreadyEnded'));
         router.push('/dashboard/exams');
         return;
       }
 
-      const t = await testApi.get(att.testId);
+      const fetchedTest = await testApi.get(att.testId);
       const qs = await testApi.listQuestions({ testId: att.testId });
       // Fetch existing answers if any
       const existingAnswers = await testApi.listAnswers(attemptId);
@@ -46,9 +48,9 @@ export function TakeExamFeature() {
       });
 
       setAttempt(att);
-      setTest(t);
+      setTest(fetchedTest);
       let sortedQs = qs.sort((a, b) => a.displayOrder - b.displayOrder);
-      if (t.shuffleQuestions) {
+      if (fetchedTest.shuffleQuestions) {
         let seed = 0;
         for (let i = 0; i < attemptId.length; i++) seed += attemptId.charCodeAt(i);
         const random = () => {
@@ -67,18 +69,18 @@ export function TakeExamFeature() {
       const startedAtTime = new Date(att.startedAt).getTime();
       const now = Date.now();
       const elapsedSeconds = Math.floor((now - startedAtTime) / 1000);
-      const totalSeconds = t.timeLimitMinutes * 60;
+      const totalSeconds = fetchedTest.timeLimitMinutes * 60;
       const remaining = Math.max(0, totalSeconds - elapsedSeconds);
-      
+
       setTimeLeft(remaining);
       durationSecondsRef.current = elapsedSeconds;
 
       setLoading(false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Lỗi tải bài kiểm tra.');
+      setError(e instanceof Error ? e.message : t('loadError'));
       setLoading(false);
     }
-  }, [attemptId, router]);
+  }, [attemptId, router, t]);
 
   useEffect(() => {
     void load();
@@ -118,7 +120,7 @@ export function TakeExamFeature() {
   }, [attempt]);
 
   const handleTimeUp = async () => {
-    alert('Đã hết thời gian làm bài! Hệ thống sẽ tự động nộp bài.');
+    alert(t('timeUpAlert'));
     await submitTest();
   };
 
@@ -129,13 +131,13 @@ export function TakeExamFeature() {
       await testApi.submitAttempt(attemptId, durationSecondsRef.current);
       router.push('/dashboard/exams');
     } catch (e) {
-      setError('Lỗi nộp bài. Vui lòng thử lại.');
+      setError(t('submitError'));
       setSubmitting(false);
     }
   };
 
   const onManualSubmit = async () => {
-    if (window.confirm('Bạn có chắc chắn muốn nộp bài?')) {
+    if (window.confirm(t('manualSubmitConfirm'))) {
       await submitTest();
     }
   };
@@ -156,8 +158,8 @@ export function TakeExamFeature() {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  if (loading) return <PageLoading label="Đang chuẩn bị đề thi..." />;
-  if (error || !test) return <ErrorState message={error || 'Lỗi không xác định'} />;
+  if (loading) return <PageLoading label={t('loading')} />;
+  if (error || !test) return <ErrorState message={error || t('unknownError')} />;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 pb-20 relative">
@@ -165,13 +167,13 @@ export function TakeExamFeature() {
       <div className="sticky top-0 z-10 bg-white/90 backdrop-blur border-b border-gray-200 py-4 shadow-sm px-6 rounded-b-xl flex justify-between items-center">
         <div>
           <h1 className="text-xl font-bold">{test.name}</h1>
-          <p className="text-sm text-gray-500">{questions.length} câu hỏi</p>
+          <p className="text-sm text-gray-500">{t('questionCount', { count: questions.length })}</p>
         </div>
         <div className="flex items-center gap-6">
           <div className={cn("text-2xl font-mono font-bold", timeLeft < 300 ? "text-red-600" : "text-brand")}>
             {formatTime(timeLeft)}
           </div>
-          <Button onClick={onManualSubmit} loading={submitting}>Nộp bài</Button>
+          <Button onClick={onManualSubmit} loading={submitting}>{t('submitButton')}</Button>
         </div>
       </div>
 
@@ -182,7 +184,7 @@ export function TakeExamFeature() {
           const type = q?.type || 'UNKNOWN';
           let text = qContent.questionText || qContent.sentence || JSON.stringify(qContent);
           if (type === 'ORDERING') text = (qContent.correctOrder || []).join(' / ');
-          if (type === 'MATCHING') text = 'Nối từ';
+          if (type === 'MATCHING') text = t('matchingLabel');
           const options = qContent.options as string[] | undefined;
 
           return (
@@ -222,7 +224,7 @@ export function TakeExamFeature() {
                         onChange={() => handleAnswerChange(qObj.questionId, true)}
                         className="w-4 h-4"
                       />
-                      <span>Đúng (True)</span>
+                      <span>{t('trueLabel')}</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -232,7 +234,7 @@ export function TakeExamFeature() {
                         onChange={() => handleAnswerChange(qObj.questionId, false)}
                         className="w-4 h-4"
                       />
-                      <span>Sai (False)</span>
+                      <span>{t('falseLabel')}</span>
                     </label>
                   </div>
                 )}
@@ -241,7 +243,7 @@ export function TakeExamFeature() {
                   <textarea
                     rows={3}
                     className="w-full p-3 border rounded-lg focus:ring focus:ring-brand focus:border-brand"
-                    placeholder="Nhập câu trả lời của bạn..."
+                    placeholder={t('shortAnswerPlaceholder')}
                     value={(answers[qObj.questionId] as string) || ''}
                     onBlur={(e) => handleAnswerChange(qObj.questionId, e.target.value)}
                     onChange={(e) => setAnswers(prev => ({ ...prev, [qObj.questionId]: e.target.value }))}

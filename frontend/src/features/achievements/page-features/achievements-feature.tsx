@@ -14,17 +14,24 @@ import {
 import { SkillRadar } from '../components/skill-radar';
 import { StreakHeatmap } from '../components/streak-heatmap';
 import { RedeemModal } from '../components/redeem-modal';
-import { ErrorNotebookModal } from '@/features/teacher/teacher-students-feature/components/error-notebook-modal';
+import { useTranslations } from 'next-intl';
+
+import {
+  BarChart2, Store, Backpack, Flame, BookX, Inbox, BookText, Target,
+  Sparkles, Wrench, Gamepad2, ShoppingBag, Crown, Ticket, Gift, Zap, Diamond, Loader2
+} from 'lucide-react';
 
 type Tab = 'overview' | 'shop' | 'inventory';
 
-const TABS: { key: Tab; label: string; icon: string }[] = [
-  { key: 'overview', label: 'Tổng quan', icon: '📊' },
-  { key: 'shop', label: 'Cửa hàng', icon: '🎁' },
-  { key: 'inventory', label: 'Kho đồ', icon: '🎒' },
-];
+
 
 export function AchievementsFeature() {
+  const t = useTranslations('Achievements');
+  const TABS: { key: Tab; label: string; icon: React.ReactNode }[] = [
+    { key: 'overview', label: t('overview'), icon: <BarChart2 className="w-4 h-4 mb-0.5 inline-block mr-1.5" /> },
+    { key: 'shop', label: t('shop'), icon: <Store className="w-4 h-4 mb-0.5 inline-block mr-1.5" /> },
+    { key: 'inventory', label: t('inventory'), icon: <Backpack className="w-4 h-4 mb-0.5 inline-block mr-1.5" /> },
+  ];
   const [tab, setTab] = useState<Tab>('overview');
   const [dashboard, setDashboard] = useState<AchievementsDashboard | null>(null);
   const [heatmap, setHeatmap] = useState<HeatmapEntry[]>([]);
@@ -59,7 +66,7 @@ export function AchievementsFeature() {
       setRadar(r);
       setTimeline(t);
     } catch (e: any) {
-      setError(e?.message ?? 'Không tải được dữ liệu');
+      setError(e?.message ?? t('loadError'));
     } finally {
       setLoading(false);
     }
@@ -77,17 +84,17 @@ export function AchievementsFeature() {
       await achievementsApi.redeem(rewardId, `${rewardId}:${Date.now()}`);
       await loadAll();
     } catch (e: any) {
-      setError(e?.message ?? 'Redeem thất bại');
+      setError(e?.message ?? t('redeemError'));
     }
   };
 
-  if (loading) return <div className="p-8 text-center text-[#4a5a3a]">Đang tải... 🐼</div>;
+  if (loading) return <div className="flex justify-center items-center p-12 text-[#4a5a3a]"><Loader2 className="w-6 h-6 animate-spin mr-2" /> {t('loading')}</div>;
   if (error) return <div className="p-8 text-center text-red-500">{error}</div>;
 
   return (
     <div className="flex h-full w-full flex-col">
       <div className="w-full px-2 py-4 sm:px-6 sm:py-6 lg:px-8">
-        <h1 className="mb-6 text-3xl font-black text-[#215b3b]">🏆 Thành tựu & Phần thưởng</h1>
+        <h1 className="font-heading text-4xl font-black text-[#215b3b] mb-8">{t('title')}</h1>
 
         {/* Tab bar */}
         <div className="mb-6 flex gap-2 rounded-2xl bg-white p-2 shadow-sm">
@@ -101,13 +108,14 @@ export function AchievementsFeature() {
                   : 'text-[#4a5a3a] hover:bg-[#f3f9f5]'
               }`}
             >
-              {t.icon} {t.label}
+              <div className="flex justify-center items-center">{t.icon} {t.label}</div>
             </button>
           ))}
         </div>
 
         {tab === 'overview' && (
           <OverviewTab 
+            t={t}
             dashboard={dashboard} 
             heatmap={heatmap} 
             radar={radar} 
@@ -115,10 +123,10 @@ export function AchievementsFeature() {
           />
         )}
         {tab === 'shop' && (
-          <ShopTab catalog={catalog} onRedeem={handleRedeemClick} />
+          <ShopTab t={t} catalog={catalog} onRedeem={handleRedeemClick} />
         )}
         {tab === 'inventory' && (
-          <InventoryTab inventory={inventory} />
+          <InventoryTab t={t} inventory={inventory} />
         )}
       </div>
 
@@ -133,18 +141,18 @@ export function AchievementsFeature() {
 }
 
 function OverviewTab({ 
+  t,
   dashboard, 
   heatmap, 
   radar, 
   timeline 
 }: { 
+  t: any;
   dashboard: AchievementsDashboard | null;
   heatmap: HeatmapEntry[];
   radar: RadarEntry[];
   timeline: TimelineResult | null;
 }) {
-  const [mistakeModalOpen, setMistakeModalOpen] = useState(false);
-
   if (!dashboard) return null;
   const { balance, level, streak } = dashboard;
   return (
@@ -154,7 +162,7 @@ function OverviewTab({
         {/* Balance + Level card */}
         <div className="rounded-[2rem] bg-[#d4ed8f] p-6 shadow-sm">
           <div className="mb-4">
-            <p className="text-sm font-bold text-[#4a6b38]">Cấp độ hiện tại</p>
+            <p className="text-sm font-bold text-[#4a6b38]">{t('currentLevel')}</p>
             <div className="flex items-baseline gap-2">
               <span className="text-4xl font-black text-[#215b3b]">Lv {level.level}</span>
             </div>
@@ -171,18 +179,18 @@ function OverviewTab({
                 style={{ width: `${level.progress * 100}%` }} 
               />
             </div>
-            <p className="mt-1 text-xs text-[#4a6b38] font-medium text-right">Còn {level.expToNext} EXP lên Lv {level.level + 1}</p>
+            <p className="mt-1 text-xs text-[#4a6b38] font-medium text-right">{t('expToNext', { exp: level.expToNext, nextLv: level.level + 1 })}</p>
           </div>
 
           <div className="mt-6 rounded-2xl bg-white/60 p-4 backdrop-blur-sm">
-            <p className="text-sm font-bold text-[#4a6b38]">EXP khả dụng (Tiêu xài)</p>
-            <p className="text-3xl font-black text-[#5e7f26]">{balance.current} 💎</p>
+            <p className="text-sm font-bold text-[#4a6b38]">{t('availableExp')}</p>
+            <p className="flex items-center gap-2 text-3xl font-black text-[#5e7f26]">{balance.current} <Diamond className="w-6 h-6 text-[#5e7f26] fill-[#5e7f26]" /></p>
           </div>
         </div>
 
         {/* Radar Chart */}
         <div className="rounded-[2rem] bg-white p-6 shadow-sm">
-          <h3 className="mb-4 text-lg font-bold text-[#215b3b]">Phân tích Kỹ năng</h3>
+          <h3 className="mb-4 text-lg font-bold text-[#215b3b]">{t('skillAnalysis')}</h3>
           <SkillRadar data={radar} />
         </div>
       </div>
@@ -192,10 +200,10 @@ function OverviewTab({
         {/* Streak Heatmap */}
         <div className="rounded-[2rem] bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-bold text-[#215b3b]">Mức độ chuyên cần</h3>
+            <h3 className="text-lg font-bold text-[#215b3b]">{t('attendanceLevel')}</h3>
             <div className="flex items-center gap-2 rounded-xl bg-[#fff4e5] px-3 py-1">
-              <span>🔥</span>
-              <span className="font-bold text-[#d97706]">{streak} ngày liên tục</span>
+              <Flame className="w-4 h-4 text-[#d97706] fill-[#d97706]" />
+              <span className="font-bold text-[#d97706]">{t('streakDays', { streak })}</span>
             </div>
           </div>
           <div className="overflow-x-auto pb-2">
@@ -209,79 +217,77 @@ function OverviewTab({
         <div className="rounded-[2rem] bg-[#fff0f0] p-6 shadow-sm border border-[#ffcdcd]">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <span className="text-3xl">📓</span>
+              <BookX className="w-8 h-8 text-[#c53030]" />
               <div>
-                <h3 className="text-lg font-bold text-[#c53030]">Sổ Lỗi Sai</h3>
-                <p className="text-sm text-[#9b2c2c]">Bạn có một số từ vựng cần ôn tập lại để nhận EXP!</p>
+                <h3 className="text-lg font-bold text-[#c53030]">{t('mistakeBook')}</h3>
+                <p className="text-sm text-[#9b2c2c]">{t('mistakeBookDesc')}</p>
               </div>
             </div>
             <div className="flex gap-2">
-              <button 
-                onClick={() => setMistakeModalOpen(true)}
+              <Link 
+                href="/study/mistake-book"
                 className="rounded-xl bg-white px-4 py-2 font-bold text-[#c53030] transition-colors border border-[#ffcdcd] hover:bg-[#fff5f5]"
               >
-                Chi tiết
-              </button>
+                {t('details')}
+              </Link>
               <Link 
                 href="/dashboard/practice" 
                 className="rounded-xl bg-[#c53030] px-4 py-2 font-bold text-white transition-colors hover:bg-[#9b2c2c]"
               >
-                Ôn tập ngay
+                {t('reviewNow')}
               </Link>
             </div>
           </div>
         </div>
 
-        <ErrorNotebookModal open={mistakeModalOpen} onClose={() => setMistakeModalOpen(false)} />
-
         {/* Timeline */}
         <div className="rounded-[2rem] bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-bold text-[#215b3b]">Dòng thời gian hoạt động</h3>
-            <span className="text-sm font-medium text-[#4a5a3a]">30 ngày qua</span>
+            <h3 className="text-lg font-bold text-[#215b3b]">{t('activityTimeline')}</h3>
+            <span className="text-sm font-medium text-[#4a5a3a]">{t('last30Days')}</span>
           </div>
           
           {!timeline || timeline.data.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <span className="mb-2 text-4xl">📭</span>
-              <p className="text-[#4a5a3a] font-medium">Chưa có hoạt động nào gần đây.</p>
-              <p className="text-sm text-gray-400">Hãy hoàn thành một bài học để nhận EXP nhé!</p>
+              <Inbox className="mb-2 w-10 h-10 text-gray-300" />
+              <p className="text-[#4a5a3a] font-medium">{t('noActivity')}</p>
+              <p className="text-sm text-gray-400">{t('noActivityDesc')}</p>
             </div>
           ) : (
             <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
               {timeline.data.map((item) => {
                 let label = item.activityType.replace(/_/g, ' ');
-                if (item.activityType === 'LESSON_COMPLETED') label = 'Hoàn thành bài học';
+                if (item.activityType === 'LESSON_COMPLETED') label = t('actLessonCompleted');
                 else if (item.activityType === 'PRACTICE_COMPLETED') {
                   const pType = item.details?.type as string | undefined;
-                  if (pType === 'SENTENCE_ORDERING') label = 'Hoàn thành luyện tập: Sắp xếp câu';
-                  else if (pType === 'HANZI_WRITING') label = 'Hoàn thành luyện tập: Viết Hán tự';
-                  else if (pType === 'FILL_BLANK') label = 'Hoàn thành luyện tập: Điền vào chỗ trống';
-                  else if (pType === 'WORD_MATCHING') label = 'Hoàn thành luyện tập: Nối từ';
-                  else if (pType === 'FLASHCARD') label = 'Hoàn thành luyện tập: Flashcard';
-                  else if (pType === 'PINYIN_BALLOON_GAME') label = 'Hoàn thành luyện tập: Bóng bay Pinyin';
-                  else if (pType === 'MEMORY_GAME') label = 'Hoàn thành luyện tập: Lật thẻ ghi nhớ';
-                  else if (pType === 'TEST') label = `Hoàn thành Bài kiểm tra (Điểm: ${item.details?.score || 0})`;
-                  else label = 'Hoàn thành luyện tập';
+                  if (pType === 'SENTENCE_ORDERING') label = t('actPracticeSentence');
+                  else if (pType === 'HANZI_WRITING') label = t('actPracticeHanzi');
+                  else if (pType === 'FILL_BLANK') label = t('actPracticeFill');
+                  else if (pType === 'WORD_MATCHING') label = t('actPracticeMatch');
+                  else if (pType === 'FLASHCARD') label = t('actPracticeFlashcard');
+                  else if (pType === 'PINYIN_BALLOON_GAME') label = t('actPracticeBalloon');
+                  else if (pType === 'MEMORY_GAME') label = t('actPracticeMemory');
+                  else if (pType === 'TEST') label = t('actTestCompleted', { score: item.details?.score || 0 });
+                  else label = t('actPracticeGeneral');
                 }
-                else if (item.activityType.includes('BONUS')) label = 'Thưởng thêm EXP';
-                else if (item.activityType === 'MISTAKE_REVIEWED') label = 'Ôn tập lỗi sai';
+                else if (item.activityType.includes('BONUS')) label = t('actBonusExp');
+                else if (item.activityType === 'MISTAKE_REVIEWED') label = t('actMistakeReview');
 
                 return (
                 <div key={item.id} className="flex items-start gap-4 rounded-xl border border-gray-100 p-4 transition-colors hover:bg-gray-50">
-                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#f3f9f5] text-lg">
-                    {item.activityType === 'LESSON_COMPLETED' ? '📚' : 
-                     item.activityType === 'PRACTICE_COMPLETED' ? '🎯' : 
-                     item.activityType.includes('BONUS') ? '✨' : 
-                     item.activityType === 'MISTAKE_REVIEWED' ? '🔧' : '🕹️'}
+                  <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#f3f9f5] text-[#215b3b]">
+                    {item.activityType === 'LESSON_COMPLETED' ? <BookText className="w-5 h-5" /> : 
+                     item.activityType === 'PRACTICE_COMPLETED' ? <Target className="w-5 h-5" /> : 
+                     item.activityType.includes('BONUS') ? <Sparkles className="w-5 h-5 text-amber-500" /> : 
+                     item.activityType === 'MISTAKE_REVIEWED' ? <Wrench className="w-5 h-5" /> : <Gamepad2 className="w-5 h-5" />}
                   </div>
                   <div className="flex-1">
                     <p className="font-bold text-[#215b3b]">{label}</p>
                     {!!item.details?.lessonId && (
-                      <p className="text-sm text-gray-500">Bài học ID: {String(item.details.lessonId)}</p>
+                      <p className="text-sm text-gray-500">{t('lessonId')} {String(item.details.lessonId)}</p>
                     )}
                     {item.details?.score !== undefined && (
-                      <p className="text-sm text-gray-500">Điểm: {String(item.details.score)}%</p>
+                      <p className="text-sm text-gray-500">{t('score')} {String(item.details.score)}%</p>
                     )}
                     <p className="mt-1 text-xs text-gray-400">
                       {new Date(item.createdAt).toLocaleString('vi-VN', { dateStyle: 'medium', timeStyle: 'short' })}
@@ -304,12 +310,12 @@ function OverviewTab({
   );
 }
 
-function ShopTab({ catalog, onRedeem }: { catalog: RewardItem[]; onRedeem: (reward: RewardItem) => void }) {
+function ShopTab({ t, catalog, onRedeem }: { t: any; catalog: RewardItem[]; onRedeem: (reward: RewardItem) => void }) {
   if (catalog.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-[2rem] shadow-sm">
-        <span className="mb-2 text-4xl">🛍️</span>
-        <p className="text-[#4a5a3a] font-medium">Cửa hàng hiện đang trống.</p>
+        <ShoppingBag className="mb-2 w-10 h-10 text-gray-300" />
+        <p className="text-[#4a5a3a] font-medium">{t('shopEmpty')}</p>
       </div>
     );
   }
@@ -317,7 +323,7 @@ function ShopTab({ catalog, onRedeem }: { catalog: RewardItem[]; onRedeem: (rewa
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
       {catalog.map((r) => {
-        const icon = r.type === 'TEMPORARY_VIP' ? '👑' : r.type === 'DISCOUNT_VOUCHER' ? '🎟️' : '🎁';
+        const icon = r.type === 'TEMPORARY_VIP' ? <Crown className="w-6 h-6 text-amber-500" /> : r.type === 'DISCOUNT_VOUCHER' ? <Ticket className="w-6 h-6 text-indigo-500" /> : <Gift className="w-6 h-6 text-rose-500" />;
         const progress = Math.min(100, (r.expNeeded ? ((r.costExp - r.expNeeded) / r.costExp) * 100 : 100));
 
         return (
@@ -328,27 +334,27 @@ function ShopTab({ catalog, onRedeem }: { catalog: RewardItem[]; onRedeem: (rewa
             </div>
 
             <div className="mb-4 mt-2">
-              <span className="mb-3 inline-block rounded-full bg-[#f3f9f5] p-3 text-2xl">{icon}</span>
+              <span className="mb-3 inline-flex items-center justify-center rounded-full bg-[#f3f9f5] p-3">{icon}</span>
               <h3 className="text-lg font-black text-[#215b3b] line-clamp-2 leading-tight">{r.title}</h3>
             </div>
             
             <div className="mt-auto">
               <div className="mb-3 flex items-center justify-between">
                 <span className="flex items-center gap-1 font-black text-[#5e7f26] text-xl">
-                  {r.costExp} 💎
+                  {r.costExp} <Diamond className="w-5 h-5 fill-[#5e7f26]" />
                 </span>
               </div>
               
               {!r.affordable && (
                 <div className="mb-3">
                   <div className="flex justify-between text-[10px] font-bold text-gray-400 mb-1">
-                    <span>Tiến độ</span>
+                    <span>{t('progress')}</span>
                     <span>{Math.round(progress)}%</span>
                   </div>
                   <div className="h-1.5 w-full rounded-full bg-gray-100">
                     <div className="h-1.5 rounded-full bg-[#c2df7a]" style={{ width: `${progress}%` }} />
                   </div>
-                  <p className="mt-1 text-[10px] text-center text-gray-400 font-medium">Cần thêm {r.expNeeded} EXP</p>
+                  <p className="mt-1 text-[10px] text-center text-gray-400 font-medium">{t('needMoreExp', { exp: r.expNeeded })}</p>
                 </div>
               )}
 
@@ -371,13 +377,13 @@ function ShopTab({ catalog, onRedeem }: { catalog: RewardItem[]; onRedeem: (rewa
   );
 }
 
-function InventoryTab({ inventory }: { inventory: UserRewardItem[] }) {
+function InventoryTab({ t, inventory }: { t: any; inventory: UserRewardItem[] }) {
   if (inventory.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center bg-white rounded-[2rem] shadow-sm">
-        <span className="mb-2 text-4xl">🎒</span>
-        <p className="text-[#4a5a3a] font-medium">Kho đồ của bạn đang trống.</p>
-        <p className="text-sm text-gray-400">Hãy vào Cửa hàng để đổi thưởng nhé!</p>
+        <Backpack className="mb-2 w-10 h-10 text-gray-300" />
+        <p className="text-[#4a5a3a] font-medium">{t('inventoryEmpty')}</p>
+        <p className="text-sm text-gray-400">{t('inventoryEmptyDesc')}</p>
       </div>
     );
   }
@@ -386,14 +392,14 @@ function InventoryTab({ inventory }: { inventory: UserRewardItem[] }) {
     <div className="grid gap-6 md:grid-cols-2">
       {inventory.map((r) => {
         const isExpired = r.expiresAt ? new Date(r.expiresAt).getTime() < Date.now() : false;
-        const icon = r.type === 'TEMPORARY_VIP' ? '👑' : r.type === 'DISCOUNT_VOUCHER' ? '🎟️' : '🎁';
+        const icon = r.type === 'TEMPORARY_VIP' ? <Crown className="w-6 h-6 text-amber-500" /> : r.type === 'DISCOUNT_VOUCHER' ? <Ticket className="w-6 h-6 text-indigo-500" /> : <Gift className="w-6 h-6 text-rose-500" />;
         const voucherCode = r.metadata?.voucherCode as string | undefined;
 
         return (
           <div key={r.id} className={`flex flex-col rounded-[2rem] p-6 shadow-sm border ${r.isUsed ? 'bg-gray-50 border-gray-100 opacity-70' : 'bg-white border-[#eaf3c5]'}`}>
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f3f9f5] text-2xl">{icon}</span>
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f3f9f5]">{icon}</span>
                 <div>
                   <h3 className="font-black text-[#215b3b] text-lg">{r.type.replace(/_/g, ' ')}</h3>
                   <p className="text-sm text-gray-500">
@@ -431,7 +437,7 @@ function InventoryTab({ inventory }: { inventory: UserRewardItem[] }) {
               
               {r.type === 'TEMPORARY_VIP' && !r.isUsed && (
                 <div className="flex items-center gap-2 text-sm text-[#d97706] font-medium bg-[#fff4e5] p-3 rounded-xl">
-                  <span>⚡</span> Tính năng sẽ tự kích hoạt ngay khi bạn làm bài.
+                  <Zap className="w-4 h-4 fill-[#d97706]" /> Tính năng sẽ tự kích hoạt ngay khi bạn làm bài.
                 </div>
               )}
 

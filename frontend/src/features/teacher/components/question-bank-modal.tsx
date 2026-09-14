@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Search, X } from 'lucide-react';
+import { Search, X, Globe, Lock } from 'lucide-react';
 import type { QuestionBankItem } from '@/lib/api/endpoints/question-bank';
 import { Input } from '@/features/ui/components/form';
 import { Badge } from '@/features/ui/components/badge';
@@ -78,6 +78,8 @@ export function QuestionBankModal({
         return 'Sắp xếp';
       case 'MATCHING':
         return 'Nối tương ứng';
+      case 'GROUP':
+        return 'Nhóm câu hỏi (Đọc/Nghe)';
       default:
         return type;
     }
@@ -193,8 +195,14 @@ export function QuestionBankModal({
                   onChange={() => setSelectedDifficulty(diff)}
                   className="w-4 h-4"
                 />
-                <span className="text-sm text-gray-700">
-                  {diff === 'EASY' ? '🟢 Dễ' : diff === 'MEDIUM' ? '🟡 Trung bình' : '🔴 Khó'}
+                <span className="text-sm text-gray-700 flex items-center gap-1.5">
+                  <span
+                    className={cn(
+                      'w-2 h-2 rounded-full',
+                      diff === 'EASY' ? 'bg-emerald-500' : diff === 'MEDIUM' ? 'bg-amber-500' : 'bg-rose-500'
+                    )}
+                  />
+                  {diff === 'EASY' ? 'Dễ' : diff === 'MEDIUM' ? 'Trung bình' : 'Khó'}
                 </span>
                 <span className="text-xs text-gray-500">
                   ({questions.filter((q) => q.difficulty === diff).length})
@@ -268,11 +276,20 @@ export function QuestionBankModal({
                         </Badge>
                       )}
                       {q.visibility && (
-                        <Badge tone={q.visibility === 'PUBLIC' ? 'green' : 'gray'}>
-                          {q.visibility === 'PUBLIC' ? '🌐 Công khai' : '🔒 Riêng tư'}
+                        <Badge tone={q.visibility === 'PUBLIC' ? 'green' : 'gray'} className="flex items-center gap-1">
+                          {q.visibility === 'PUBLIC' ? (
+                            <>
+                              <Globe className="w-3 h-3" /> Công khai
+                            </>
+                          ) : (
+                            <>
+                              <Lock className="w-3 h-3" /> Riêng tư
+                            </>
+                          )}
                         </Badge>
                       )}
                     </div>
+
 
                       {q.tags && q.tags.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1">

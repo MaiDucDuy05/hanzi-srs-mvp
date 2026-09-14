@@ -117,13 +117,9 @@ h6 {
     transform: translateY(-6px);
   }
 }
-
-.animate-leaf-float {
-  animation: leaf-float 8s ease-in-out infinite;
-}
-
-.animate-panda-idle {
-  animation: panda-idle 2.2s ease-in-out infinite;
+/* Global button cursor */
+button {
+  cursor: pointer;
 }
 
 /* Respect reduced motion */
@@ -146,4 +142,21 @@ h6 {
 }
 .rotate-y-180 {
   transform: rotateY(180deg);
+}
+
+/* Hide scrollbar globally for a cleaner, app-like UI */
+::-webkit-scrollbar {
+  display: none;
+  width: 0px;
+  background: transparent;
+}
+
+* {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+/* Fix for Pinyin font rendering */
+ruby rt, .pinyin-text {
+  font-family: var(--font-nunito), var(--font-inter), Arial, Helvetica, sans-serif !important;
+  letter-spacing: 0.025em;
 }

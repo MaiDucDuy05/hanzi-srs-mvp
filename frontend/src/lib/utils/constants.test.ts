@@ -1,37 +1,41 @@
 import { describe, expect, it } from 'vitest';
 import {
-  PRACTICE_TYPE_LABELS,
-  SOURCE_TYPE_LABELS,
-  ROLE_LABELS,
+  labelForPracticeType,
+  labelForSourceType,
+  labelForRole,
   activityKey,
   APP_NAME,
+  type Translator,
 } from './constants';
 
-describe('PRACTICE_TYPE_LABELS', () => {
-  it('có nhãn cho mọi loại luyện tập', () => {
-    expect(PRACTICE_TYPE_LABELS.WORD_MATCHING).toBeTruthy();
-    expect(PRACTICE_TYPE_LABELS.FLASHCARD).toBeTruthy();
-    expect(PRACTICE_TYPE_LABELS.FILL_BLANK).toBeTruthy();
-    expect(PRACTICE_TYPE_LABELS.SENTENCE_ORDERING).toBeTruthy();
-    expect(PRACTICE_TYPE_LABELS.PINYIN_BALLOON_GAME).toBeTruthy();
-    expect(PRACTICE_TYPE_LABELS.MEMORY_GAME).toBeTruthy();
-    expect(PRACTICE_TYPE_LABELS.HANZI_WRITING).toBeTruthy();
+/** Identity translator: keys are returned as-is, so we can assert on key→label mapping. */
+const t: Translator = (key: string) => key;
+
+describe('labelForPracticeType', () => {
+  it('trả về translation key cho mọi loại luyện tập', () => {
+    expect(labelForPracticeType(t, 'WORD_MATCHING')).toBe('practiceTypeWordMatching');
+    expect(labelForPracticeType(t, 'FLASHCARD')).toBe('practiceTypeFlashcard');
+    expect(labelForPracticeType(t, 'FILL_BLANK')).toBe('practiceTypeFillBlank');
+    expect(labelForPracticeType(t, 'SENTENCE_ORDERING')).toBe('practiceTypeSentenceOrdering');
+    expect(labelForPracticeType(t, 'PINYIN_BALLOON_GAME')).toBe('practiceTypePinyinBalloonGame');
+    expect(labelForPracticeType(t, 'MEMORY_GAME')).toBe('practiceTypeMemoryGame');
+    expect(labelForPracticeType(t, 'HANZI_WRITING')).toBe('practiceTypeHanziWriting');
   });
 });
 
-describe('SOURCE_TYPE_LABELS', () => {
-  it('có nhãn cho LEVEL/LESSON/TOPIC', () => {
-    expect(SOURCE_TYPE_LABELS.LEVEL).toBeTruthy();
-    expect(SOURCE_TYPE_LABELS.LESSON).toBeTruthy();
-    expect(SOURCE_TYPE_LABELS.TOPIC).toBeTruthy();
+describe('labelForSourceType', () => {
+  it('trả về translation key cho LEVEL/LESSON/TOPIC', () => {
+    expect(labelForSourceType(t, 'LEVEL')).toBe('sourceTypeLevel');
+    expect(labelForSourceType(t, 'LESSON')).toBe('sourceTypeLesson');
+    expect(labelForSourceType(t, 'TOPIC')).toBe('sourceTypeTopic');
   });
 });
 
-describe('ROLE_LABELS', () => {
-  it('có nhãn cho FREE/TEACHER/ADMIN', () => {
-    expect(ROLE_LABELS.FREE).toBeTruthy();
-    expect(ROLE_LABELS.TEACHER).toBeTruthy();
-    expect(ROLE_LABELS.ADMIN).toBeTruthy();
+describe('labelForRole', () => {
+  it('trả về translation key cho FREE/TEACHER/ADMIN', () => {
+    expect(labelForRole(t, 'FREE')).toBe('roleFree');
+    expect(labelForRole(t, 'TEACHER')).toBe('roleTeacher');
+    expect(labelForRole(t, 'ADMIN')).toBe('roleAdmin');
   });
 });
 

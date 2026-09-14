@@ -1,0 +1,27 @@
+import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
+import { getServerUser } from '@/lib/auth/server-auth';
+import { HeroSection } from '@/features/home/components/hero-section';
+
+// SEO (P1-1): trang chủ là Server Component — metadata + HTML render sẵn từ server.
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations('Home');
+  return {
+    title: t('metaTitle'),
+    description: t('metaDescription'),
+  };
+}
+
+/**
+ * RSC (FE-006): user đọc server-side từ cookie HttpOnly qua getServerUser().
+ * Trang chủ hiện tại chỉ có một layout riêng biệt duy nhất là HeroSection.
+ */
+export default async function HomePage() {
+  const user = await getServerUser();
+
+  return (
+    <div className="w-full flex-1">
+      <HeroSection user={user} />
+    </div>
+  );
+}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { studentApi, LessonProgressItem } from '@/lib/api/endpoints/student';
 import { achievementsApi, type AchievementsDashboard } from '@/lib/api/endpoints/achievements';
 
@@ -41,10 +42,13 @@ const CircularProgress = ({ value, label }: { value: number; label: string }) =>
   );
 };
 
+
 export function DashboardFeature() {
   const [progress, setProgress] = useState<AchievementsDashboard | null>(null);
   const [recommendedLessons, setRecommendedLessons] = useState<LessonProgressItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const t = useTranslations('Dashboard');
+  const tCommon = useTranslations('Common');
 
   useEffect(() => {
     Promise.all([
@@ -60,30 +64,39 @@ export function DashboardFeature() {
   }, []);
 
   const remainingXp = progress ? Math.max(0, progress.dailyGoal - progress.dailyXp) : 0;
-  const remainingText = remainingXp > 0 ? `${remainingXp} more XP needed` : 'Goal reached! 🎉';
+  const remainingText = remainingXp > 0 ? t('moreXpNeeded', { xp: remainingXp }) : t('goalReached');
 
   return (
     <div className="flex flex-col gap-6 h-full justify-center">
       <header className="flex justify-between items-center mb-2 relative">
         <h1 className="font-[family-name:var(--font-nunito)] text-4xl font-black text-[#215b3b]">
-          Welcome back, Learner!
+          {t('welcomeBack')}
         </h1>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Today&apos;s Goal */}
-        <div className="bg-[#d4ed8f] rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center">
-          <h2 className="font-bold text-[#215b3b] mb-2 font-[family-name:var(--font-nunito)] text-2xl">
-            Today&apos;s Goal
+        <div className="relative bg-[#d4ed8f] rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center overflow-hidden">
+          <h2 className="font-bold text-[#215b3b] mb-2 font-[family-name:var(--font-nunito)] text-2xl relative z-10">
+            {t('todaysGoal')}
           </h2>
           {loading ? (
-            <div className="w-32 h-32 flex items-center justify-center">
-              <span className="text-gray-400 text-sm">Loading...</span>
+            <div className="w-32 h-32 flex items-center justify-center relative z-10">
+              <span className="text-gray-400 text-sm">{tCommon('loading')}</span>
             </div>
           ) : (
             <>
-              <CircularProgress value={progress?.progressPercent ?? 0} label={remainingText} />
-              <p className="mt-2 text-[#4a6b38] text-sm font-medium">
+              <div className="relative z-10 flex flex-row items-center justify-center mt-2 w-full pr-6">
+                <img 
+                  src="/assets/illustrations/panda/panda-in-grove.svg" 
+                  alt="Panda" 
+                  className="w-36 h-36 object-contain pointer-events-none z-10 -mr-6"
+                />
+                <div className="relative z-0">
+                  <CircularProgress value={progress?.progressPercent ?? 0} label={remainingText} />
+                </div>
+              </div>
+              <p className="mt-6 text-[#4a6b38] text-[15px] font-medium relative z-10">
                 {progress?.dailyXp ?? 0} / {progress?.dailyGoal ?? 50} XP — {remainingText}
               </p>
             </>
@@ -97,13 +110,13 @@ export function DashboardFeature() {
           </div>
           <div className="flex flex-col justify-center">
             <h2 className="font-bold text-[#215b3b] font-[family-name:var(--font-nunito)] text-2xl">
-              Daily Streak
+              {t('dailyStreak')}
             </h2>
             {loading ? (
-              <span className="text-gray-400 text-sm mt-1">Loading...</span>
+              <span className="text-gray-400 text-sm mt-1">{tCommon('loading')}</span>
             ) : (
               <p className="text-[#5e7f26] font-medium text-lg mt-1">
-                <span className="text-3xl font-black text-[#8fc353]">{progress?.streak ?? 0}</span> days in a row
+                <span className="text-3xl font-black text-[#8fc353]">{progress?.streak ?? 0}</span> {t('daysInARow')}
               </p>
             )}
           </div>
@@ -112,41 +125,50 @@ export function DashboardFeature() {
         {/* Third Column: Live Quiz & Review */}
         <div className="flex flex-col gap-6 h-full">
           {/* Live Quiz */}
-          <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center text-center flex-1">
-            <h2 className="font-black text-[#215b3b] font-[family-name:var(--font-nunito)] text-xl mb-4">
-              Tham gia Live Quiz
-            </h2>
-            <div className="flex w-full gap-2 px-2">
-               <input 
-                  id="live-pin-input"
-                  type="text" 
-                  placeholder="Nhập mã PIN"
-                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-2 font-bold text-center text-xs tracking-widest focus:border-[#8BC34A] focus:outline-none"
-               />
-               <button 
-                 onClick={() => {
-                   const pin = (document.getElementById('live-pin-input') as HTMLInputElement)?.value;
-                   if (pin && pin.length >= 4) {
-                     window.location.href = `/live-quiz?pin=${pin}`;
-                   }
-                 }}
-                 className="bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold py-2 px-4 rounded-xl shadow-md transition-transform hover:scale-105 whitespace-nowrap"
-               >
-                 Tham gia
-               </button>
+          <div className="relative flex-1 flex flex-col">
+            <img 
+              src="/assets/illustrations/panda/panda-holding-ball.svg" 
+              alt="Panda" 
+              className="absolute -top-20 right-3 w-36 h-36 z-0 pointer-events-none"
+            />
+            <div className="relative z-10 bg-white rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center text-center flex-1">
+              <div className="w-full flex flex-col items-center">
+                <h2 className="font-black text-[#215b3b] font-[family-name:var(--font-nunito)] text-xl mb-4">
+                  {t('joinLiveQuiz')}
+                </h2>
+                <div className="flex w-full gap-2 px-2">
+                   <input 
+                      id="live-pin-input"
+                      type="text" 
+                      placeholder={t('enterPin')}
+                      className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-2 font-bold text-center text-xs tracking-widest focus:border-[#8BC34A] focus:outline-none"
+                   />
+                   <button 
+                     onClick={() => {
+                       const pin = (document.getElementById('live-pin-input') as HTMLInputElement)?.value;
+                       if (pin && pin.length >= 4) {
+                         window.location.href = `/live-quiz?pin=${pin}`;
+                       }
+                     }}
+                     className="bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold py-2 px-4 rounded-xl shadow-md transition-transform hover:scale-105 whitespace-nowrap"
+                   >
+                     {t('join')}
+                   </button>
+                </div>
+              </div>
             </div>
           </div>
 
           {/* Ready for Review */}
           <div className="bg-white rounded-[2rem] p-6 shadow-sm flex flex-col items-center justify-center text-center flex-1">
             <h2 className="font-black text-[#215b3b] font-[family-name:var(--font-nunito)] text-xl mb-4">
-              Review Today
+              {t('reviewToday')}
             </h2>
             <button 
-              onClick={() => window.location.href = '/review'}
+              onClick={() => window.location.href = '/study/review'}
               className="bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold py-2 px-6 rounded-full shadow-md transition-transform hover:scale-105"
             >
-              Review Now
+              {t('reviewNow')}
             </button>
           </div>
         </div>
@@ -155,12 +177,12 @@ export function DashboardFeature() {
       {/* Recommended Lessons */}
       <div className="mt-4">
         <h2 className="font-black text-[#215b3b] font-[family-name:var(--font-nunito)] text-2xl mb-6">
-          Recommended Lessons
+          {t('recommendedLessons')}
         </h2>
         {loading ? (
-          <p className="text-gray-400">Loading...</p>
+          <p className="text-gray-400">{tCommon('loading')}</p>
         ) : recommendedLessons.length === 0 ? (
-          <p className="text-gray-400">No lessons available yet.</p>
+          <p className="text-gray-400">{t('noLessonsAvailable')}</p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {recommendedLessons.map((item) => (

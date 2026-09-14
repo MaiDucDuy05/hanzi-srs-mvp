@@ -41,12 +41,12 @@ import { AwsModule } from './modules/aws/aws.module';
           {
             name: 'default',
             ttl: 60000, // 1 minute
-            limit: 10000, // Very high limit for dev
+            limit: 1000000, // Very high limit for dev
           },
           {
             name: 'auth',
             ttl: 60000, // 1 minute
-            limit: 1000, // High limit for auth
+            limit: 1000000, // High limit for auth
           },
         ],
       }),

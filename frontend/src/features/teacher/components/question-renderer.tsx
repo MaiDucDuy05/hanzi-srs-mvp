@@ -15,9 +15,10 @@ interface QuestionRendererProps {
   mode?: 'view' | 'take';
   value?: any;
   onChange?: (val: any) => void;
+  hidePoints?: boolean;
 }
 
-export function QuestionRenderer({ question, index = 0, compact = false, mode = 'view', value, onChange }: QuestionRendererProps) {
+export function QuestionRenderer({ question, index = 0, compact = false, mode = 'view', value, onChange, hidePoints = false }: QuestionRendererProps) {
   const q = question.question;
   const content = (q?.content || {}) as Record<string, any>;
   const type = q?.type || 'UNKNOWN';
@@ -262,6 +263,87 @@ export function QuestionRenderer({ question, index = 0, compact = false, mode = 
           </div>
         );
 
+      case 'GROUP': {
+        // value = { [childId]: childAnswer }
+        const groupChildren: any[] = (q as any).children || [];
+        const groupValue = (value && typeof value === 'object' && !Array.isArray(value))
+          ? (value as Record<string, unknown>)
+          : {};
+        return (
+          <div className="w-full space-y-6">
+            {/* Passage / intro text */}
+            {content.questionText && (
+              <div className="p-6 bg-[#f4f8f5] border border-[#e9efe7] rounded-2xl">
+                <p className="text-gray-800 font-medium leading-relaxed text-lg whitespace-pre-wrap">{content.questionText}</p>
+              </div>
+            )}
+
+            {/* Audio */}
+            {content.audioUrl && (
+              <div className="flex flex-col gap-2">
+                <audio
+                  ref={audioRef}
+                  src={content.audioUrl}
+                  controls
+                  className="w-full"
+                  onPlay={handlePlay}
+                  onEnded={handleEnded}
+                />
+                {content.audioPlayLimit && (
+                  <span className="text-xs text-center text-amber-600 font-medium">
+                    Số lần nghe còn lại: {Math.max(0, content.audioPlayLimit - playCount)} / {content.audioPlayLimit}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Image */}
+            {content.imageUrl && (
+              <div className="flex justify-center">
+                <img src={content.imageUrl} alt="" className="max-w-full rounded-2xl border border-[#e9efe7] shadow-sm" style={{ maxHeight: 320 }} />
+              </div>
+            )}
+
+            {/* Child questions in 2-column grid */}
+            {groupChildren.length > 0 ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                {groupChildren.map((child: any, childIdx: number) => (
+                  <div key={child.id || childIdx} className="bg-white rounded-2xl border border-[#e9efe7] p-6 shadow-sm">
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="inline-flex items-center justify-center w-7 h-7 bg-[#466a50] text-white rounded-full font-bold text-sm shrink-0">
+                        {childIdx + 1}
+                      </span>
+                      <span className="text-xs font-semibold text-[#466a50] uppercase tracking-wider">
+                        {child.type === 'SINGLE_CHOICE' ? 'Trắc nghiệm'
+                          : child.type === 'TRUE_FALSE' ? 'Đúng/Sai'
+                          : child.type === 'FILL_IN' ? 'Điền chỗ trống'
+                          : child.type === 'SHORT_ANSWER' ? 'Trả lời ngắn'
+                          : child.type === 'ORDERING' ? 'Sắp xếp'
+                          : child.type}
+                      </span>
+                    </div>
+                    <QuestionRenderer
+                      question={{ id: child.id, testId: question.testId, points: 1, displayOrder: childIdx, questionId: child.id, question: child } as any}
+                      index={childIdx}
+                      mode="take"
+                      hidePoints={true}
+                      value={groupValue[child.id]}
+                      onChange={(val) => {
+                        onChange?.({ ...groupValue, [child.id]: val });
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-6 bg-amber-50 rounded-2xl border border-amber-200 text-center">
+                <p className="text-amber-700 font-medium">Nhóm này chưa có câu hỏi con.</p>
+              </div>
+            )}
+          </div>
+        );
+      }
+
       default:
         return (
           <div className="p-8 bg-amber-50 rounded-2xl border border-amber-200 text-center">
@@ -282,6 +364,7 @@ export function QuestionRenderer({ question, index = 0, compact = false, mode = 
       case 'MATCHING': return 'bg-indigo-50 border-indigo-200';
       case 'SPEAKING': return 'bg-teal-50 border-teal-200';
       case 'WRITING': return 'bg-red-50 border-red-200';
+      case 'GROUP': return 'bg-yellow-50 border-yellow-200';
       default: return 'bg-gray-50 border-gray-200';
     }
   };
@@ -296,12 +379,21 @@ export function QuestionRenderer({ question, index = 0, compact = false, mode = 
       case 'MATCHING': return 'Nối tương ứng';
       case 'SPEAKING': return 'Luyện nói';
       case 'WRITING': return 'Viết chữ';
+      case 'GROUP': return 'Câu hỏi nhóm';
       default: return t;
     }
   };
 
   // If we are in "take" mode, we just return the clean content without the outer Card
   if (mode === 'take') {
+    // GROUP questions render their own media internally
+    if (type === 'GROUP') {
+      return (
+        <div className="w-full animate-in fade-in duration-300">
+          {renderTakeModeContent()}
+        </div>
+      );
+    }
     return (
       <div className="w-full h-full animate-in fade-in duration-300">
         {(content.imageUrl || content.audioUrl) && (
@@ -407,7 +499,7 @@ export function QuestionRenderer({ question, index = 0, compact = false, mode = 
             />
             {content.acceptedAnswers && (
               <div className="p-3 bg-green-100 border border-green-300 rounded text-xs text-green-700 mt-2">
-                <strong>✓ Các đáp án được chấp nhận:</strong> {(content.acceptedAnswers as string[]).join(', ')}
+                <strong className="inline-flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Các đáp án được chấp nhận:</strong> {(content.acceptedAnswers as string[]).join(', ')}
               </div>
             )}
           </div>
@@ -423,7 +515,7 @@ export function QuestionRenderer({ question, index = 0, compact = false, mode = 
             />
             {content.acceptedAnswers && (
               <div className="p-3 bg-green-100 border border-green-300 rounded text-xs text-green-700 mt-2">
-                <strong>✓ Các đáp án được chấp nhận:</strong>
+                <strong className="inline-flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Các đáp án được chấp nhận:</strong>
                 <ul className="list-disc ml-5 mt-1">
                   {(content.acceptedAnswers as string[]).map((ans, i) => (
                     <li key={i}>{ans}</li>
@@ -446,7 +538,38 @@ export function QuestionRenderer({ question, index = 0, compact = false, mode = 
             </div>
             {content.correctOrder && (
               <div className="p-3 bg-green-100 border border-green-300 rounded text-xs text-green-700 mt-2">
-                <strong>✓ Thứ tự đúng:</strong> {(content.correctOrder as string[]).join(' → ')}
+                <strong className="inline-flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Thứ tự đúng:</strong> {(content.correctOrder as string[]).join(' → ')}
+              </div>
+            )}
+          </div>
+        );
+      case 'GROUP':
+        const children = (q as any).children || [];
+        return (
+          <div className="space-y-4">
+            <p className="font-medium text-gray-900 whitespace-pre-wrap">{content.questionText || 'Nhóm câu hỏi'}</p>
+            {children.length > 0 ? (
+              compact ? (
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded text-sm text-gray-600">
+                  Nhóm này có <strong>{children.length}</strong> câu hỏi con.
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-4">
+                  {children.map((child: any, childIdx: number) => (
+                    <QuestionRenderer 
+                      key={child.id || childIdx}
+                      question={{ id: child.id, testId: question.testId, points: question.points, displayOrder: childIdx, question: child } as any} 
+                      index={childIdx} 
+                      compact={compact}
+                      mode={mode}
+                      hidePoints={true}
+                    />
+                  ))}
+                </div>
+              )
+            ) : (
+              <div className="p-3 bg-gray-50 border border-gray-200 rounded text-sm text-gray-600">
+                Nhóm này chưa có câu hỏi con.
               </div>
             )}
           </div>
@@ -474,7 +597,9 @@ export function QuestionRenderer({ question, index = 0, compact = false, mode = 
                 {index + 1}
               </span>
               <Badge tone="blue">{getTypeLabel(type)}</Badge>
-              <Badge tone="gray">{question.points} điểm</Badge>
+              {!compact && !hidePoints && (
+                <Badge tone="gray">{question.points} điểm</Badge>
+              )}
             </div>
           </div>
         </div>

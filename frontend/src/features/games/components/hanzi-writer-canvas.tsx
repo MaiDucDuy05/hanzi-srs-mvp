@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type HanziWriterType from 'hanzi-writer';
 import { loadCharData } from '@/lib/hanzi/char-data-loader';
 
@@ -22,6 +22,7 @@ export function HanziWriterCanvas({
   onMistake,
 }: HanziWriterCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [hasError, setHasError] = useState(false);
   const onCompleteRef = useRef(onComplete);
   const onMistakeRef = useRef(onMistake);
   useEffect(() => {
@@ -31,6 +32,7 @@ export function HanziWriterCanvas({
 
   useEffect(() => {
     let cancelled = false;
+    setHasError(false);
     let writer: ReturnType<typeof HanziWriterType.create> | null = null;
 
     (async () => {
@@ -53,11 +55,11 @@ export function HanziWriterCanvas({
             .then((data) => {
               if (data) onLoad(data);
               else {
-                try { onError(new Error('no data')); } catch {}
+                if (!cancelled) setHasError(true);
               }
             })
             .catch((e) => {
-              try { onError(e); } catch {}
+              if (!cancelled) setHasError(true);
             });
         },
         onComplete: (summary) => onCompleteRef.current?.(summary.totalMistakes),
@@ -81,6 +83,17 @@ export function HanziWriterCanvas({
       if (containerRef.current) containerRef.current.innerHTML = '';
     };
   }, [char, size]);
+
+  if (hasError) {
+    return (
+      <div 
+        className="mx-auto w-fit flex items-center justify-center font-serif text-gray-300 pointer-events-none" 
+        style={{ width: size, height: size, fontSize: size * 0.8 }}
+      >
+        {char}
+      </div>
+    );
+  }
 
   return <div ref={containerRef} className="mx-auto w-fit" />;
 }

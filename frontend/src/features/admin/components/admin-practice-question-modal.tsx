@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, FileText, Puzzle } from 'lucide-react';
 import { adminContentApi } from '@/lib/api/endpoints/admin-content';
 import { resourceApi } from '@/lib/api/endpoints';
 
@@ -154,7 +154,9 @@ export const AdminPracticeQuestionModal = ({
           {editForm.questionType === 'FILL_BLANK' && (
             <div className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 space-y-4">
               <h3 className="font-bold text-blue-900 flex items-center gap-2">
-                <span className="bg-blue-100 text-blue-600 p-1 rounded-md">📝</span> 
+                <span className="bg-blue-100 text-blue-600 p-1.5 rounded-lg flex items-center justify-center">
+                  <FileText className="w-4 h-4" />
+                </span> 
                 Cấu hình Điền từ (Fill Blank)
               </h3>
               
@@ -228,7 +230,9 @@ export const AdminPracticeQuestionModal = ({
           {editForm.questionType === 'SENTENCE_ORDERING' && (
             <div className="bg-emerald-50/50 p-5 rounded-2xl border border-emerald-100 space-y-4">
               <h3 className="font-bold text-emerald-900 flex items-center gap-2">
-                <span className="bg-emerald-100 text-emerald-600 p-1 rounded-md">🧩</span> 
+                <span className="bg-emerald-100 text-emerald-600 p-1.5 rounded-lg flex items-center justify-center">
+                  <Puzzle className="w-4 h-4" />
+                </span> 
                 Cấu hình Sắp xếp câu (Sentence Ordering)
               </h3>
               

@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Req } from '@nestjs/common';
 import { StudyService } from './study.service';
 import { GenerateStoryDto } from './dto/generate-story.dto';
 import { GenerateGrammarExamplesDto, GenerateGrammarPracticeDto, GradeGrammarPracticeDto, GenerateGrammarStoryDto } from './dto/grammar.dto';
@@ -37,4 +37,16 @@ export class StudyController {
   async checkSpelling(@Body() dto: CheckSpellingDto) {
     return this.studyService.checkSpelling(dto.text);
   }
+
+  @Post('ai/generate-exam-questions')
+  async generateExamQuestions(@Body() dto: any) {
+    return this.studyService.generateExamQuestions(dto);
+  }
+
+  @Post('ai/generate-and-create-test')
+  async generateAndCreateTest(@Body() dto: any, @Req() req: any) {
+    const userId = req.user?.id || '00000000-0000-0000-0000-000000000001';
+    return this.studyService.generateAndCreateTest(dto, userId);
+  }
 }
+

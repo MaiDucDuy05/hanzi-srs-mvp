@@ -1,9 +1,10 @@
-export function speakText(text: string) {
+export function speakText(text: string, rate: number = 1) {
   if (typeof window === 'undefined' || !window.speechSynthesis) return;
 
   window.speechSynthesis.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'zh-CN';
+  utterance.rate = rate;
   
   const voices = window.speechSynthesis.getVoices();
   const zhVoice = 

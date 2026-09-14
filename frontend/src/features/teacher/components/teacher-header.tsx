@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bell, Search } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { useAuth } from '@/lib/auth/auth-context';
 
 const HEADER_NAV = [
-  { href: '/teacher', title: 'Dashboard', exact: true },
+  { href: '/teacher', title: 'Tổng quan', exact: true },
 ];
 
 export function TeacherHeader() {
@@ -41,26 +41,22 @@ export function TeacherHeader() {
 
       {/* Right Actions */}
       <div className="flex items-center gap-5">
-        <div className="relative hidden md:block">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <input 
-            type="text" 
-            placeholder="Search library..." 
-            className="pl-10 pr-4 py-2 bg-[#f0f2f5] rounded-full text-[13px] font-medium w-64 border-none outline-none focus:ring-2 focus:ring-[#eaf3c5] transition-all"
-          />
-        </div>
-
         <button className="h-10 w-10 rounded-full border border-gray-200 flex items-center justify-center text-gray-400 hover:text-[#1f5333] hover:border-gray-300 transition-colors shrink-0">
           <Bell className="h-5 w-5" />
         </button>
         
-        <button className="h-10 w-10 rounded-full bg-gray-100 border border-gray-200 overflow-hidden hover:ring-2 hover:ring-[#c7cf35] transition-all">
-          <img 
-            src={`https://api.dicebear.com/7.x/notionists/svg?seed=${user?.id || 'Teacher'}`} 
-            alt="Profile" 
-            className="h-full w-full object-cover"
-          />
-        </button>
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-full bg-gray-100 border border-gray-200 overflow-hidden shrink-0">
+            <img 
+              src={`https://api.dicebear.com/7.x/notionists/svg?seed=${user?.id || 'Teacher'}`} 
+              alt="Profile" 
+              className="h-full w-full object-cover"
+            />
+          </div>
+          <div className="hidden sm:block text-left">
+            <p className="text-xs font-black text-[#1f5333] leading-tight">{user?.fullName || 'Giáo viên HSK'}</p>
+          </div>
+        </div>
       </div>
     </header>
   );

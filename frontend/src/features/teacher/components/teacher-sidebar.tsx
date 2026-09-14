@@ -1,7 +1,6 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { Link, usePathname } from '@/i18n/routing';
 import { useAuth } from '@/lib/auth/auth-context';
 import { 
   Users, 
@@ -19,11 +18,11 @@ import {
 } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { href: '/teacher', title: 'Dashboard', icon: LayoutDashboard },
-  { href: '/teacher/students', title: 'Students', icon: GraduationCap },
-  { href: '/teacher/exams', title: 'Exams', icon: FileCheck },
-  { href: '/teacher/questions', title: 'Question Bank', icon: Database },
-  { href: '/teacher/hskk-grading', title: 'HSKK Grading', icon: BookOpenCheck },
+  { href: '/teacher', title: 'Tổng quan', icon: LayoutDashboard },
+  { href: '/teacher/students', title: 'Học sinh', icon: GraduationCap },
+  { href: '/teacher/exams', title: 'Đề thi', icon: FileCheck },
+  { href: '/teacher/questions', title: 'Ngân hàng câu hỏi', icon: Database },
+  { href: '/teacher/hskk-grading', title: 'Chấm bài thi', icon: BookOpenCheck },
   { href: '/teacher/exam-statistics', title: 'Thống kê điểm', icon: BarChart },
 ];
 
@@ -34,25 +33,25 @@ export function TeacherSidebar() {
   return (
     <aside className="flex h-full w-[260px] flex-col bg-[#fcfce8] p-6 shadow-sm border-r border-[#f3f4e1] relative">
       <div className="mb-10 flex flex-col items-center text-center mt-4">
-        <div className="h-16 w-16 bg-[#d9e6d8] rounded-full flex items-center justify-center mb-3 shadow-inner overflow-hidden border-2 border-white">
-           <img src="https://api.dicebear.com/7.x/bottts/svg?seed=panda" alt="Logo" className="h-12 w-12 object-cover" />
-        </div>
-        <h1 className="text-xl font-extrabold text-[#1f5333] tracking-tight">Cute Panda Forest</h1>
-        <p className="text-[10px] text-gray-500 font-medium tracking-wide mt-1">Wise Guardian Portal</p>
+        <p className="text-[10px] text-gray-500 font-medium tracking-wide mt-1">Cổng Giáo Viên & Quản Trị</p>
       </div>
 
       <nav className="flex-1 space-y-1">
         {NAV_ITEMS.map((item) => {
-          const isActive = item.href === '/teacher' 
-            ? pathname === '/teacher'
-            : pathname?.startsWith(item.href);
+          // Normalize pathname (remove trailing slash)
+          const cleanPath = pathname?.replace(/\/$/, '') || '';
+          const cleanHref = item.href.replace(/\/$/, '');
+          const isActive = cleanHref === '/teacher' 
+            ? cleanPath === '/teacher'
+            : cleanPath === cleanHref || cleanPath.startsWith(`${cleanHref}/`);
+
           return (
             <Link
               key={item.href}
               href={item.href}
               className={`flex items-center gap-4 rounded-xl px-4 py-3.5 text-[13px] font-bold transition-all duration-200 ${
                 isActive
-                  ? 'bg-[#eaf3c5] text-[#1f5333] shadow-sm'
+                  ? 'bg-[#eaf3c5] text-[#1f5333] shadow-sm border-2 border-[#c7cf35]/60'
                   : 'text-gray-600 hover:bg-[#f3f4e1]/50 hover:text-[#1f5333]'
               }`}
             >
@@ -63,24 +62,28 @@ export function TeacherSidebar() {
         })}
       </nav>
 
+
       <div className="mt-8 mb-6">
-        <button className="w-full bg-[#1f5333] text-white px-4 py-3 rounded-xl text-[13px] font-bold hover:bg-[#1f4e31] transition-colors shadow-sm flex items-center justify-center gap-2">
+        <Link 
+          href="/teacher/exams"
+          className="w-full bg-[#1f5333] text-white px-4 py-3 rounded-xl text-[13px] font-bold hover:bg-[#1f4e31] transition-colors shadow-sm flex items-center justify-center gap-2"
+        >
           <Plus className="h-4 w-4" strokeWidth={3} />
-          New Lesson Plan
-        </button>
+          Tạo giáo án mới
+        </Link>
       </div>
 
       <div className="pt-6 border-t border-[#eaf3c5] space-y-1">
         <Link href="/teacher/settings" className="flex items-center gap-4 rounded-xl px-4 py-3 text-[13px] font-bold text-gray-600 hover:bg-[#f3f4e1]/50 hover:text-[#11321e] transition-colors">
           <Settings className="h-[18px] w-[18px]" />
-          Settings
+          Cài đặt
         </Link>
         <button 
           onClick={() => logout()}
           className="w-full flex items-center gap-4 rounded-xl px-4 py-3 text-[13px] font-bold text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors"
         >
           <LogOut className="h-[18px] w-[18px]" />
-          Log Out
+          Đăng xuất
         </button>
       </div>
     </aside>

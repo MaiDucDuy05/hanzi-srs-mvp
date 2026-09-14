@@ -29,13 +29,34 @@ export class MistakeBookService {
     return paginatedResult(data, total, page, limit);
   }
   async findById(id: string) {
-    return findOrNotFound(this.repo, id, 'Mistake book entry');
+    const entry = await this.repo.findOne({
+      where: { id } as any,
+      relations: ['user'],
+    });
+    if (!entry) {
+      throw new Error('Mistake book entry not found');
+    }
+    if (entry.user) {
+      entry.userId = entry.user.id;
+    }
+    return entry;
   }
   async create(dto: DTO.CreateMistakeBookDto) {
     return this.repo.save(this.repo.create(dto as any));
   }
   async delete(id: string) {
     await this.repo.remove(await this.findById(id));
+  }
+
+  async update(id: string, userId: string, dto: DTO.UpdateMistakeBookDto) {
+    const entry = await this.findById(id);
+    if (entry.userId !== userId) {
+      throw new Error('Not authorized to update this mistake');
+    }
+    if (dto.userNote !== undefined) {
+      entry.userNote = dto.userNote;
+    }
+    return this.repo.save(entry);
   }
 
   async addToMistakeBook(

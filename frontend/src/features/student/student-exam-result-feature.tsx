@@ -11,10 +11,12 @@ import { ErrorState } from '@/features/ui/components/error-state';
 import { formatDateTime } from '@/lib/utils/format';
 import { cn } from '@/lib/utils/cn';
 import { CheckCircle } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: { attemptId?: string; onBack?: () => void } = {}) {
   const params = useParams<{ attemptId: string }>();
   const router = useRouter();
+  const t = useTranslations('Exams.result');
   const attemptId = propAttemptId || params?.attemptId;
 
   const [data, setData] = useState<{
@@ -23,7 +25,7 @@ export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: {
     questions: TestQuestion[];
     answers: TestAnswer[];
   } | null>(null);
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,11 +36,11 @@ export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: {
       .finally(() => setLoading(false));
   }, [attemptId]);
 
-  if (loading) return <PageLoading label="Đang tải kết quả..." />;
-  if (error || !data) return <ErrorState message={error || 'Không tìm thấy dữ liệu'} />;
+  if (loading) return <PageLoading label={t('loading')} />;
+  if (error || !data) return <ErrorState message={error || t('notFound')} />;
 
   const { attempt, test, questions, answers } = data;
-  
+
   // Create answer map for quick lookup
   const answerMap = new Map(answers.map(a => [a.questionId, a]));
 
@@ -46,14 +48,14 @@ export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: {
     <div className="max-w-4xl mx-auto space-y-6 pb-10">
       <div className="flex items-center gap-4 mb-4">
         <Button variant="ghost" onClick={() => onBack ? onBack() : router.push('/dashboard/exams')}>
-          ← Quay lại
+          {t('back')}
         </Button>
       </div>
 
       <Card>
         <CardBody className="text-center py-6 space-y-4">
-          <h1 className="text-2xl font-bold text-gray-800">Kết quả: {test.name}</h1>
-          
+          <h1 className="text-2xl font-bold text-gray-800">{t('title', { name: test.name })}</h1>
+
           {attempt.status === 'SUBMITTED' ? (
             <div className="py-6">
               <div className="inline-flex items-center justify-center p-4 bg-yellow-50 text-yellow-600 rounded-full mb-4">
@@ -61,36 +63,39 @@ export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <h2 className="text-xl font-bold text-gray-800 mb-2">Đang chờ chấm điểm</h2>
-              <p className="text-gray-500">Bài làm của bạn đang chờ giáo viên chấm phần tự luận/nói. Điểm số sẽ được cập nhật sau.</p>
+              <h2 className="text-xl font-bold text-gray-800 mb-2">{t('pendingTitle')}</h2>
+              <p className="text-gray-500">{t('pendingDesc')}</p>
             </div>
           ) : (
-            <div className="text-6xl font-bold text-brand">{attempt.score || 0}<span className="text-3xl text-gray-400">/100</span></div>
+            <div className="text-6xl font-bold text-brand">{attempt.score || 0}<span className="text-3xl text-gray-400">{t('scoreTotal')}</span></div>
           )}
 
           <div className="flex justify-center gap-8 text-sm text-gray-600 mt-4 border-t pt-6">
             <div>
-              <p className="font-semibold text-gray-900">Thời gian làm bài</p>
-              <p>{Math.floor((attempt.durationSeconds || 0) / 60)} phút {(attempt.durationSeconds || 0) % 60} giây</p>
+              <p className="font-semibold text-gray-900">{t('durationLabel')}</p>
+              <p>{t('durationValue', {
+                minutes: Math.floor((attempt.durationSeconds || 0) / 60),
+                seconds: (attempt.durationSeconds || 0) % 60,
+              })}</p>
             </div>
             <div>
-              <p className="font-semibold text-gray-900">Nộp lúc</p>
-              <p>{attempt.submittedAt ? formatDateTime(attempt.submittedAt) : 'N/A'}</p>
+              <p className="font-semibold text-gray-900">{t('submittedAtLabel')}</p>
+              <p>{attempt.submittedAt ? formatDateTime(attempt.submittedAt) : t('submittedAtFallback')}</p>
             </div>
           </div>
         </CardBody>
       </Card>
 
       <div className="space-y-4">
-        <h2 className="text-xl font-bold">Chi tiết bài làm</h2>
-        {questions.length === 0 && <p className="text-gray-500">Đề bài không có câu hỏi.</p>}
+        <h2 className="text-xl font-bold">{t('detailsHeading')}</h2>
+        {questions.length === 0 && <p className="text-gray-500">{t('noQuestions')}</p>}
         {questions.map((qObj, index) => {
           const q = qObj.question;
           const qContent = (q?.content || {}) as Record<string, any>;
           const type = q?.type || 'UNKNOWN';
           let text = qContent.questionText || qContent.question || qContent.text || qContent.sentence;
           if (type === 'ORDERING') text = (qContent.correctOrder || []).join(' / ');
-          if (type === 'MATCHING') text = 'Nối từ';
+          if (type === 'MATCHING') text = t('matchingLabel');
 
           if (!text && typeof qContent === 'object') {
             text = JSON.stringify(qContent);
@@ -100,7 +105,7 @@ export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: {
 
           const ans = answerMap.get(qObj.question.id);
           const isCorrect = ans?.isCorrect;
-          
+
           return (
             <Card key={qObj.id} className={cn("border-l-4", attempt.status === 'SUBMITTED' ? "border-l-gray-300" : (isCorrect ? "border-l-green-500" : (isCorrect === false ? "border-l-red-500" : "border-l-gray-300")))}>
               <CardBody className="p-6">
@@ -110,7 +115,7 @@ export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: {
                     <div className="text-gray-900 leading-relaxed font-medium">
                       {text}
                       {type === 'FILL_IN' && <span className="inline-block w-16 border-b-2 border-gray-400 mx-2" />}
-                      
+
                       {qContent.options && Array.isArray(qContent.options) && (
                         <div className="mt-4 space-y-2">
                           {qContent.options.map((opt: any, i: number) => {
@@ -124,13 +129,13 @@ export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: {
                           })}
                         </div>
                       )}
-                      
+
                       {qContent.imageUrl && (
                         <div className="mt-4">
-                          <img src={qContent.imageUrl} alt="Question image" className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm" style={{ maxHeight: '250px' }} />
+                          <img src={qContent.imageUrl} alt={t('imageAlt')} className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm" style={{ maxHeight: '250px' }} />
                         </div>
                       )}
-                      
+
                       {qContent.audioUrl && (
                         <div className="mt-4">
                           <audio src={qContent.audioUrl} controls className="w-full max-w-sm rounded-full" />
@@ -139,19 +144,19 @@ export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: {
                     </div>
                   </div>
                   <div className="text-sm font-semibold text-gray-500 whitespace-nowrap bg-gray-50 px-3 py-1 rounded-full border border-gray-100 h-fit">
-                    {ans?.pointsAwarded || 0} / {qObj.points} điểm
+                    {t('points', { awarded: ans?.pointsAwarded || 0, total: qObj.points })}
                   </div>
                 </div>
 
                 <div className="ml-8 space-y-4">
                   <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 text-sm">
-                    <p className="text-gray-500 font-medium mb-1 text-xs uppercase tracking-wider">Câu trả lời của bạn</p>
+                    <p className="text-gray-500 font-medium mb-1 text-xs uppercase tracking-wider">{t('yourAnswerLabel')}</p>
                     {ans?.answer ? (
                       <p className={cn("font-medium text-base", attempt.status === 'SUBMITTED' ? "text-gray-900" : (isCorrect ? "text-green-700" : "text-red-700"))}>
                         {typeof ans.answer === 'object' ? JSON.stringify(ans.answer) : String(ans.answer)}
                       </p>
                     ) : (
-                      <p className="text-gray-400 font-medium italic">Không trả lời</p>
+                      <p className="text-gray-400 font-medium italic">{t('notAnswered')}</p>
                     )}
                   </div>
 
@@ -159,14 +164,14 @@ export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: {
                     <div className="p-4 bg-green-50 rounded-2xl border border-green-100 text-sm mt-3 relative overflow-hidden">
                       <div className="absolute top-0 left-0 w-1 h-full bg-green-500" />
                       <p className="text-green-700 font-medium mb-1 text-xs uppercase tracking-wider flex items-center gap-1">
-                        <CheckCircle className="w-3 h-3" /> Đáp án đúng
+                        <CheckCircle className="w-3 h-3" /> {t('correctAnswerLabel')}
                       </p>
                       <p className="text-green-900 font-semibold text-base">
-                        {Array.isArray(correctAnswer) ? correctAnswer.join(' hoặc ') : (typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : String(correctAnswer))}
+                        {Array.isArray(correctAnswer) ? correctAnswer.join(t('answerOrJoiner')) : (typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : String(correctAnswer))}
                       </p>
                       {qContent.explanation && (
                         <p className="text-green-800 mt-2 text-xs opacity-90 border-t border-green-200/50 pt-2">
-                          Giải thích: {qContent.explanation}
+                          {t('explanationPrefix')} {qContent.explanation}
                         </p>
                       )}
                     </div>

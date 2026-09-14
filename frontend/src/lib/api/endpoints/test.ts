@@ -111,3 +111,76 @@ export const testApi = {
   gradeAnswer: (attemptId: string, questionId: string, pointsAwarded: number) =>
     unwrap(apiFetch<Single<TestAnswer>>(`/test-attempts/${attemptId}/answers/${questionId}/grade`, { method: 'PATCH', body: JSON.stringify({ pointsAwarded }) })),
 };
+
+// ── Test Template API ─────────────────────────────────────────────────────────
+export interface TestTemplate {
+  id: string;
+  category: 'QUIZ_15M' | 'TEST_1H' | 'MID_TERM' | 'FINAL_EXAM' | 'CUSTOM';
+  hskLevel: number | null;
+  name: string;
+  description: string | null;
+  timeLimitMinutes: number;
+  isSystemDefault: boolean;
+  sections?: TestTemplateSection[];
+}
+
+export interface TestTemplateSection {
+  id: string;
+  templateId: string;
+  name: string;
+  orderIndex: number;
+  targetSkill: 'LISTENING' | 'READING' | 'WRITING' | 'GRAMMAR';
+  questionCount: number;
+  groupCountAllowed: number;
+  pointsPerQuestion: number;
+}
+
+export interface TestSection {
+  id: string;
+  testId: string;
+  name: string;
+  orderIndex: number;
+  targetSkill: 'LISTENING' | 'READING' | 'WRITING' | 'GRAMMAR' | null;
+  requiredQuestionCount: number | null;
+}
+
+export interface TestValidationResult {
+  testId: string;
+  isValid: boolean;
+  sections: Array<{
+    sectionId: string;
+    sectionName: string;
+    targetSkill: string;
+    required: number;
+    actual: number;
+    isValid: boolean;
+    missing: number;
+  }>;
+}
+
+export const testTemplateApi = {
+  list: (params: { hskLevel?: number; category?: string } = {}) =>
+    apiFetch<Paginated<TestTemplate>>(`/test-templates${toQuery(params)}`).then((r) => r.data),
+
+  get: (id: string) => unwrap(apiFetch<Single<TestTemplate>>(`/test-templates/${id}`)),
+
+  createTest: (templateId: string, name?: string) =>
+    unwrap(apiFetch<Single<{ test: Test; sections: TestSection[] }>>(
+      `/test-templates/${templateId}/create-test`,
+      { method: 'POST', body: JSON.stringify({ name }) }
+    )),
+};
+
+export const testSectionApi = {
+  list: (testId: string) =>
+    unwrap(apiFetch<Single<TestSection[]>>(`/test-sections?testId=${testId}`)),
+
+  autoGenerate: (sectionId: string) =>
+    unwrap(apiFetch<Single<{ inserted: number }>>(`/test-sections/${sectionId}/auto-generate`, { method: 'POST' })),
+
+  addQuestions: (sectionId: string, questionIds: string[]) =>
+    unwrap(apiFetch<Single<{ inserted: number }>>(`/test-sections/${sectionId}/questions`, { method: 'POST', body: JSON.stringify({ questionIds }) })),
+
+  validate: (testId: string) =>
+    unwrap(apiFetch<Single<TestValidationResult>>(`/tests/${testId}/validate-structure`)),
+};

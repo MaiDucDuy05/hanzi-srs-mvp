@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Test } from './entities/test.entity';
 import { TestQuestion } from './entities/test-question.entity';
+import { Question } from '../question-bank/entities/question.entity';
 import { TestAttempt } from './entities/test-attempt.entity';
 import { TestAssignment } from './entities/test-assignment.entity';
 import { TestAnswer } from './entities/test-answer.entity';
@@ -55,6 +56,32 @@ export function gradeQuestion(testQuestion: TestQuestion, submitted: unknown): {
   const qType = testQuestion.question.type;
   const qContent = testQuestion.question.content as any;
   let isCorrect = false;
+
+  // GROUP: submitted is a dict { [childQuestionId]: childAnswer }
+  // Grade each child independently and sum points proportionally.
+  if ((qType as string) === 'GROUP') {
+    const children: any[] = testQuestion.question.children || [];
+    if (children.length === 0) return { isCorrect: false, pointsAwarded: 0 };
+    const pointsPerChild = testQuestion.points / children.length;
+    const submittedMap = (submitted && typeof submitted === 'object' && !Array.isArray(submitted))
+      ? (submitted as Record<string, unknown>)
+      : {};
+    let totalEarned = 0;
+    let allCorrect = true;
+    for (const child of children) {
+      const childAnswer = submittedMap[child.id];
+      // Build a fake TestQuestion wrapper to reuse gradeQuestion logic
+      const childWrapper = {
+        ...testQuestion,
+        points: pointsPerChild,
+        question: child,
+      } as TestQuestion;
+      const { isCorrect: childCorrect, pointsAwarded: childPoints } = gradeQuestion(childWrapper, childAnswer);
+      if (!childCorrect) allCorrect = false;
+      totalEarned += childPoints;
+    }
+    return { isCorrect: allCorrect, pointsAwarded: Math.round(totalEarned * 100) / 100 };
+  }
 
   if (qType === TestQuestionType.FILL_IN || qType === TestQuestionType.SHORT_ANSWER) {
     const acceptedAnswers = qContent.accepted_answers || qContent.acceptedAnswers;
@@ -192,14 +219,23 @@ export class TestService {
     const existing = await testQuestionRepo.find({ where: { testId: id } as any, order: { displayOrder: 'DESC' }, take: 1 });
     let maxOrder = existing.length > 0 ? existing[0].displayOrder : 0;
 
+    // Get all questions with children to calculate default points
+    const questionEntities = await this.repo.manager.getRepository(Question).find({
+      where: { id: In(questionIds) } as any,
+      relations: ['children'],
+    });
+    const questionMap = new Map(questionEntities.map(q => [q.id, q]));
+
     // Create new questions
     const toSave: Partial<TestQuestion>[] = questionIds.map((questionId) => {
       maxOrder += 1;
+      const q = questionMap.get(questionId);
+      const points = (q?.type === 'GROUP' && q?.children?.length) ? q.children.length : 1;
       return {
         testId: id,
         questionId,
         displayOrder: maxOrder,
-        points: 1, // Default points
+        points: points,
       };
     });
 
@@ -230,13 +266,24 @@ export class TestService {
     const testQuestionRepo = this.repo.manager.getRepository(TestQuestion);
     await testQuestionRepo.delete({ testId: id } as any);
 
+    // Get all questions with children to calculate default points
+    const questionEntities = await this.repo.manager.getRepository(Question).find({
+      where: { id: In(questionIds) } as any,
+      relations: ['children'],
+    });
+    const questionMap = new Map(questionEntities.map(q => [q.id, q]));
+
     // Create new questions
-    const toSave: Partial<TestQuestion>[] = questionIds.map((questionId, index) => ({
-      testId: id,
-      questionId,
-      displayOrder: index,
-      points: 1, // Default points
-    }));
+    const toSave: Partial<TestQuestion>[] = questionIds.map((questionId, index) => {
+      const q = questionMap.get(questionId);
+      const points = (q?.type === 'GROUP' && q?.children?.length) ? q.children.length : 1;
+      return {
+        testId: id,
+        questionId,
+        displayOrder: index,
+        points: points,
+      };
+    });
     await testQuestionRepo.save(toSave);
 
     return { replacedCount: toSave.length };
@@ -258,7 +305,19 @@ export class TestQuestionService {
         correctAnswer, acceptedAnswers, correctOrder,
         ...safeContent 
       } = q.question.content as any;
-      q.question = { ...q.question, content: safeContent } as any;
+      // Strip answers from child questions too (for GROUP)
+      const safeChildren = Array.isArray(q.question.children)
+        ? q.question.children.map((child: any) => {
+            if (!child.content) return child;
+            const {
+              correct_answer: ca, accepted_answers: aa, correct_order: co, pairs: p,
+              correctAnswer: ca2, acceptedAnswers: aa2, correctOrder: co2,
+              ...safeChildContent
+            } = child.content;
+            return { ...child, content: safeChildContent };
+          })
+        : q.question.children;
+      q.question = { ...q.question, content: safeContent, children: safeChildren } as any;
     }
     return q;
   }
@@ -269,7 +328,7 @@ export class TestQuestionService {
     if (testId) where.testId = testId;
     const [data, total] = await this.repo.findAndCount({
       where,
-      relations: ['question'],
+      relations: ['question', 'question.children'],
       skip: (page - 1) * limit,
       take: limit,
       order: { displayOrder: 'ASC' },
@@ -282,7 +341,7 @@ export class TestQuestionService {
     );
   }
   async findById(id: string, includeAnswer = false) {
-    const q = await this.repo.findOne({ where: { id } as any, relations: ['question'] });
+    const q = await this.repo.findOne({ where: { id } as any, relations: ['question', 'question.children'] });
     if (!q) throw new BadRequestException('Test question not found');
     return includeAnswer ? q : this.stripAnswers(q);
   }
@@ -297,7 +356,7 @@ export class TestQuestionService {
   async delete(id: string) {
     const q = await this.findById(id);
     const attempts = await this.attemptRepo.count({
-      where: { testId: q.testId, status: In([TestAttemptStatus.SUBMITTED, TestAttemptStatus.GRADED]) }
+      where: { testId: q.testId as string, status: In([TestAttemptStatus.SUBMITTED, TestAttemptStatus.GRADED]) }
     });
     // For MVP/Development, we allow removing questions even if there are submissions
     // if (attempts > 0) {
@@ -406,10 +465,25 @@ export class TestAttemptService {
       }),
     ]);
     const qIds = new Set(questions.map((q) => q.questionId));
+    // Also include child question IDs from GROUP questions
+    const groupQuestions = questions.filter((q) => (q.question as any)?.type === 'GROUP' || (q as any).question?.type === 'GROUP');
+    const childIds = new Set<string>();
+    // We need children - reload with relations
+    const questionsWithChildren = await this.questionRepo.find({
+      where: { testId: test.id } as any,
+      relations: ['question', 'question.children'],
+      order: { displayOrder: 'ASC' },
+    });
+    questionsWithChildren.forEach((q) => {
+      if ((q.question as any)?.type === 'GROUP' && Array.isArray((q.question as any).children)) {
+        (q.question as any).children.forEach((child: any) => childIds.add(child.id));
+      }
+    });
+    const allValidIds = new Set([...qIds, ...childIds]);
     const totalPoints = questions.reduce((s, q) => s + q.points, 0);
     // Chỉ tính điểm cho câu thuộc đúng bài test của attempt (chặn inject câu bài khác).
     const earned = answers
-      .filter((a) => qIds.has(a.questionId))
+      .filter((a) => allValidIds.has(a.questionId))
       .reduce((s, a) => s + a.pointsAwarded, 0);
     const score = totalPoints ? Math.round((earned / totalPoints) * 100) : 0;
 
@@ -486,8 +560,20 @@ export class TestAttemptService {
     ]);
     const qIds = new Set(questions.map((q) => q.questionId));
     const totalPoints = questions.reduce((s, q) => s + q.points, 0);
+    // Include child IDs from GROUP questions for scoring
+    const questionsWithChildren = await this.questionRepo.find({
+      where: { testId: test.id } as any,
+      relations: ['question', 'question.children'],
+    });
+    const childIds = new Set<string>();
+    questionsWithChildren.forEach((q) => {
+      if ((q.question as any)?.type === 'GROUP' && Array.isArray((q.question as any).children)) {
+        (q.question as any).children.forEach((child: any) => childIds.add(child.id));
+      }
+    });
+    const allValidIds = new Set([...qIds, ...childIds]);
     const earned = answers
-      .filter((a) => qIds.has(a.questionId))
+      .filter((a) => allValidIds.has(a.questionId))
       .reduce((s, a) => s + a.pointsAwarded, 0);
     const score = totalPoints ? Math.round((earned / totalPoints) * 100) : 0;
 
@@ -518,8 +604,8 @@ export class TestAttemptService {
     
     for (const q of questions) {
       const type = q.question.type;
-      // Skip subjective questions
-      if (type === 'SHORT_ANSWER' || type === 'SPEAKING' || type === 'WRITING') {
+      // Skip subjective + GROUP (GROUP points are derived from child answers individually)
+      if (type === 'SHORT_ANSWER' || type === 'SPEAKING' || type === 'WRITING' || (type as string) === 'GROUP') {
         continue;
       }
       
@@ -559,6 +645,8 @@ export class TestAnswerService {
     @InjectRepository(TestAttempt) private attemptRepo: Repository<TestAttempt>,
     @InjectRepository(TestQuestion)
     private questionRepo: Repository<TestQuestion>,
+    @InjectRepository(Question)
+    private questionBankRepo: Repository<Question>,
   ) {}
 
   /** Attempt phải thuộc người dùng và còn IN_PROGRESS mới nhận đáp án (PR-05 §3.4). */
@@ -586,13 +674,46 @@ export class TestAnswerService {
   ) {
     const attempt = await this.assertCanAnswer(attemptId, userId);
     
-    const question = await this.questionRepo.findOne({
+    // Try to find direct TestQuestion (standalone or GROUP parent)
+    let question = await this.questionRepo.findOne({
       where: { testId: attempt.testId, questionId: dto.questionId } as any,
-      relations: ['question'],
+      relations: ['question', 'question.children'],
     });
-    if (!question) throw new BadRequestException('Test question not found');
-    const submitted = dto.answer;
-    const { isCorrect, pointsAwarded } = gradeQuestion(question, submitted);
+
+    let isCorrect = false;
+    let pointsAwarded = 0;
+
+    if (!question) {
+      // questionId might be a child question inside a GROUP. Look up its parent.
+      const childQ = await this.questionBankRepo.findOne({
+        where: { id: dto.questionId } as any,
+      });
+      if (!childQ || !childQ.parentId) {
+        throw new BadRequestException('Test question not found');
+      }
+      // Find the parent GROUP TestQuestion
+      const parentTestQuestion = await this.questionRepo.findOne({
+        where: { testId: attempt.testId, questionId: childQ.parentId } as any,
+        relations: ['question', 'question.children'],
+      });
+      if (!parentTestQuestion) {
+        throw new BadRequestException('Parent test question not found');
+      }
+      // Grade this specific child question individually
+      const childPointsEach = parentTestQuestion.points / (parentTestQuestion.question.children?.length || 1);
+      const childWrapper = {
+        ...parentTestQuestion,
+        points: childPointsEach,
+        question: childQ,
+      } as TestQuestion;
+      const result = gradeQuestion(childWrapper, dto.answer);
+      isCorrect = result.isCorrect;
+      pointsAwarded = result.pointsAwarded;
+    } else {
+      const result = gradeQuestion(question, dto.answer);
+      isCorrect = result.isCorrect;
+      pointsAwarded = result.pointsAwarded;
+    }
 
     const existing = await this.repo.findOne({
       where: { attemptId, questionId: dto.questionId },

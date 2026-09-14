@@ -8,6 +8,8 @@ import { Subscription } from '../subscription/entities/subscription.entity';
 import { TestAttempt } from '../test/entities/test-attempt.entity';
 import { UserVocabularyProgress } from '../srs/entities/user-vocabulary-progress.entity';
 import { UserActivity } from '../achievements/entities/user-activity.entity';
+import { UserLessonProgress } from '../student/entities/user-lesson-progress.entity';
+import { Lesson } from '../curriculum/entities/lesson.entity';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UserService } from './user.service';
@@ -21,7 +23,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User, Subscription, TestAttempt, UserVocabularyProgress, UserActivity]),
+    TypeOrmModule.forFeature([User, Subscription, TestAttempt, UserVocabularyProgress, UserActivity, UserLessonProgress, Lesson]),
     CacheModule.register(),
     MailModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),

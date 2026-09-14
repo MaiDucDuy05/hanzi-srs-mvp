@@ -2,6 +2,7 @@
 
 import React, { use, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { curriculumApi } from '@/lib/api/endpoints';
 import type { Topic, Vocabulary } from '@/lib/api/types';
 import { PageLoading } from '@/features/ui/components/spinner';
@@ -10,6 +11,7 @@ import { AudioButton } from '@/features/ui/components/audio-button';
 
 export function TopicDetailFeature({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = use(params);
+  const t = useTranslations('TopicDetail');
   const [topic, setTopic] = useState<Topic | null>(null);
   const [vocabularies, setVocabularies] = useState<Vocabulary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,32 +26,32 @@ export function TopicDetailFeature({ params }: { params: Promise<{ slug: string 
       try {
         const topics = await curriculumApi.listTopics({ status: 'PUBLISHED', limit: 100 });
         if (cancelled) return;
-        
+
         const found = topics.find((t) => t.slug === resolvedParams.slug);
         if (!found) {
-          setError('Không tìm thấy chủ đề này.');
+          setError(t('topicNotFound'));
           setLoading(false);
           return;
         }
-        
+
         setTopic(found);
         const links = await curriculumApi.listTopicVocabularies({ topicId: found.id, limit: 1000 });
         if (cancelled) return;
-        
+
         const vocabs = await Promise.all(
           links.map((link) => curriculumApi.getVocabulary(link.vocabularyId)),
         );
-        
+
         if (cancelled) return;
         setVocabularies(vocabs);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : 'Lỗi tải chủ đề.');
+        if (!cancelled) setError(e instanceof Error ? e.message : t('loadError'));
       } finally {
         if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [resolvedParams.slug]);
+  }, [resolvedParams.slug, t]);
 
   const filteredVocabs = useMemo(() => {
     if (!searchQuery.trim()) return vocabularies;
@@ -67,8 +69,11 @@ export function TopicDetailFeature({ params }: { params: Promise<{ slug: string 
     return filteredVocabs.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredVocabs, currentPage]);
 
-  if (loading) return <PageLoading label="Đang tải chủ đề..." />;
-  if (error || !topic) return <ErrorState message={error ?? 'Không tìm thấy chủ đề.'} onRetry={() => location.reload()} />;
+  if (loading) return <PageLoading label={t('loading')} />;
+  if (error || !topic) return <ErrorState message={error ?? t('notFound')} onRetry={() => location.reload()} />;
+
+  const pageStart = (currentPage - 1) * itemsPerPage + 1;
+  const pageEnd = Math.min(currentPage * itemsPerPage, filteredVocabs.length);
 
   return (
     <div className="w-full flex flex-col min-h-full">
@@ -82,10 +87,10 @@ export function TopicDetailFeature({ params }: { params: Promise<{ slug: string 
             <h1 className="text-3xl sm:text-4xl font-black text-[#215b3b] font-heading">
               {topic.name}
             </h1>
-            <p className="text-sm text-gray-500 mt-1">{vocabularies.length} từ vựng</p>
+            <p className="text-sm text-gray-500 mt-1">{t('vocabCount', { count: vocabularies.length })}</p>
           </div>
         </div>
-        
+
         <div className="flex flex-col sm:flex-row gap-4 items-center">
           <div className="relative w-full sm:w-64 flex-shrink-0">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -95,16 +100,16 @@ export function TopicDetailFeature({ params }: { params: Promise<{ slug: string 
             </div>
             <input
               type="text"
-              placeholder="Tìm từ vựng..."
+              placeholder={t('searchPlaceholder')}
               value={searchQuery}
               onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
               className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white border-2 border-transparent focus:border-[#8BC34A] focus:outline-none shadow-sm transition-all text-[#215b3b] font-medium placeholder:font-normal"
             />
           </div>
-          
+
           <Link href={`/dashboard/practice?sourceType=TOPIC&sourceId=${topic.id}&type=WORD_MATCHING`} className="w-full sm:w-auto">
             <button className="w-full sm:w-auto py-3 px-8 bg-[#8BC34A] hover:bg-[#7CB342] text-white font-extrabold rounded-2xl transition-all shadow-[0_4px_15px_-4px_rgba(139,195,74,0.4)] hover:shadow-[0_6px_20px_-4px_rgba(139,195,74,0.5)] hover:-translate-y-0.5">
-              Luyện tập ngay
+              {t('practiceNow')}
             </button>
           </Link>
         </div>
@@ -119,7 +124,7 @@ export function TopicDetailFeature({ params }: { params: Promise<{ slug: string 
 
         {currentVocabs.length === 0 ? (
           <div className="py-12 text-center text-[#4a6b38]">
-            {searchQuery ? `Không tìm thấy từ vựng cho "${searchQuery}"` : 'Chủ đề này chưa có từ vựng nào.'}
+            {searchQuery ? t('noVocabSearch', { query: searchQuery }) : t('noVocab')}
           </div>
         ) : (
           <ul className="divide-y divide-gray-100">
@@ -140,10 +145,10 @@ export function TopicDetailFeature({ params }: { params: Promise<{ slug: string 
       {totalPages > 1 && (
         <div className="mt-8 mb-4 flex items-center justify-center md:justify-end gap-2 text-sm font-medium text-[#4a6b38]">
           <span className="mr-4 hidden sm:inline">
-            Hiển thị {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredVocabs.length)} / {filteredVocabs.length} từ
+            {t('paginationLabel', { start: pageStart, end: pageEnd, total: filteredVocabs.length })}
           </span>
           <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            className="px-3 py-1 rounded-lg hover:bg-white disabled:opacity-50 transition-colors">Trước</button>
+            className="px-3 py-1 rounded-lg hover:bg-white disabled:opacity-50 transition-colors">{t('prev')}</button>
           <div className="flex items-center gap-1">
             {Array.from({ length: totalPages }, (_, i) => i + 1)
               .filter(page => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 1)
@@ -158,7 +163,7 @@ export function TopicDetailFeature({ params }: { params: Promise<{ slug: string 
               ))}
           </div>
           <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-            className="px-3 py-1 rounded-lg hover:bg-white disabled:opacity-50 transition-colors">Sau</button>
+            className="px-3 py-1 rounded-lg hover:bg-white disabled:opacity-50 transition-colors">{t('next')}</button>
         </div>
       )}
     </div>

@@ -114,7 +114,7 @@ export function TeacherExamStatisticsFeature() {
         </div>
       ) : attempts.length === 0 ? (
         <div className="bg-white rounded-[24px] p-12 text-center shadow-sm">
-          <span className="text-6xl mb-4 block">📊</span>
+          <BarChartIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-gray-700">Chưa có dữ liệu</h3>
           <p className="text-gray-500 mt-2">Hiện tại chưa có bài kiểm tra nào được chấm điểm.</p>
         </div>

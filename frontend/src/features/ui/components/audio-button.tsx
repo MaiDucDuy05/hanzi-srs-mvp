@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils/cn';
+import { Volume2, Square } from 'lucide-react';
+
 
 // Backend phát audio qua GET /api/v1/audio/:key (AUDIO_STORAGE_DIR); next.config.ts
 // rewrite /api/audio/:path* sang backend. Nơi deploy có thể trỏ sang CDN/S3 qua env.
@@ -103,8 +105,13 @@ export function AudioButton({
           className
         )}
       >
-        {playing ? '◼' : '🔊'}
+        {playing ? (
+          <Square className={size === 'sm' ? 'w-3.5 h-3.5 fill-current' : 'w-4 h-4 fill-current'} />
+        ) : (
+          <Volume2 className={size === 'sm' ? 'w-4 h-4' : 'w-5 h-5'} />
+        )}
       </button>
+
     </>
   );
 }

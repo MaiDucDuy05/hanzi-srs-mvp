@@ -17,6 +17,9 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         autoLoadEntities: true,
         synchronize: false, // schema quản lý bằng migration
         logging: false,
+        extra: {
+          max: 30, // Giữ an toàn dưới 100 (giới hạn của infra), nhường chỗ cho zombies/admin.
+        },
       }),
     }),
   ],

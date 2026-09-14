@@ -71,8 +71,12 @@ export function BambooProgressBar({ progress, className = '', label, hidePanda, 
           className="absolute z-20 transition-all duration-500" 
           style={{ top: '50%', left: `${clampedProgress}%`, transform: 'translate(-50%, -50%)' }}
         >
-          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full flex items-center justify-center shadow-[0_3px_10px_rgba(0,0,0,0.15)] border-2 border-[#eef7e9] text-xl sm:text-2xl">
-            🐼
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full flex items-center justify-center shadow-[0_3px_10px_rgba(0,0,0,0.15)] border-2 border-[#eef7e9] overflow-hidden p-1">
+            <img 
+              src="/assets/illustrations/panda/panda.png" 
+              alt="Panda" 
+              className="w-full h-full object-contain"
+            />
           </div>
         </div>
       )}

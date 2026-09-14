@@ -1,0 +1,21 @@
+{
+  "name": "load-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Load testing system for Hanzi SRS backend (k6 REST + socket.io-client WS). See ARCHITECTURE.md.",
+  "scripts": {
+    "load:smoke": "k6 run scenarios/smoke.js",
+    "load:load": "k6 run scenarios/load.js",
+    "load:stress": "k6 run scenarios/stress.js",
+    "load:spike": "k6 run scenarios/spike.js",
+    "load:soak": "k6 run scenarios/soak.js",
+    "load:errors": "k6 run scenarios/errors.js",
+    "load:ws": "node live-quiz-socket.js",
+    "bench:api": "node api-test.js",
+    "load:spike:read": "k6 run scenarios/spike-read-only.js"
+  },
+  "dependencies": {
+    "autocannon": "^8.0.0",
+    "socket.io-client": "^4.8.3"
+  }
+}

@@ -5,7 +5,7 @@ export function StudentCard({ student, onClick }: { student: Student; onClick: (
   const testAvg = clampPct(student.testAvg);
   const completion = clampPct(student.courseProgress);
   const vocabMastery = clampPct(student.vocabMastery);
-  const name = student.fullName?.trim() || 'Unnamed Student';
+  const name = student.fullName?.trim() || 'Học viên ẩn danh';
 
   return (
     <button
@@ -21,20 +21,19 @@ export function StudentCard({ student, onClick }: { student: Student; onClick: (
           <div>
             <h3 className="font-extrabold text-[#1f5333] text-lg mb-1">{name}</h3>
             <div className="flex items-center gap-2">
-              <span className="bg-[#c7cf35] text-[#1f5333] px-2 py-0.5 rounded text-[10px] font-extrabold tracking-wide uppercase">HSK 1</span>
-              <span className="text-[12px] text-gray-500 font-medium">Completion: {completion}%</span>
+              <span className="text-[12px] text-gray-500 font-medium">Hoàn thành: {completion}%</span>
             </div>
           </div>
         </div>
         <div className="text-right">
           <div className="text-2xl font-extrabold text-[#1f5333]">{testAvg}%</div>
-          <div className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Test Avg</div>
+          <div className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">Điểm TB Thi</div>
         </div>
       </div>
 
       <div className="mb-5">
         <div className="flex justify-between text-[11px] font-bold text-[#1f5333] mb-2">
-          <span>Course Progress</span>
+          <span>Tiến độ học tập</span>
           <span>{completion}%</span>
         </div>
         <div className="h-2 w-full bg-[#eaf3c5] rounded-full overflow-hidden">
@@ -47,7 +46,7 @@ export function StudentCard({ student, onClick }: { student: Student; onClick: (
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
           </svg>
-          <span className="text-[12px] font-bold">Vocab Mastery (FSRS): {vocabMastery}%</span>
+          <span className="text-[12px] font-bold">Thuộc từ vựng (FSRS): {vocabMastery}%</span>
         </div>
         <span className="text-[12px] font-bold text-[#78993a]">Xem chi tiết →</span>
       </div>

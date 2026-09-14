@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { Mail, Lock, KeyRound, Loader2, ArrowRight, RefreshCcw, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
@@ -12,6 +13,8 @@ type Step = 1 | 2 | 3;
 export function ForgotPasswordForm() {
   const router = useRouter();
   const { resetPassword } = useAuth();
+  const t = useTranslations('Auth.forgotPassword');
+
   const [step, setStep] = useState<Step>(1);
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -20,11 +23,11 @@ export function ForgotPasswordForm() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Xử lý gửi email để nhận OTP
+  // Step 1: Submit email to receive OTP
   const onSubmitEmail = async (e: FormEvent) => {
     e.preventDefault();
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Email không hợp lệ');
+      setError(t('emailError'));
       return;
     }
     setIsLoading(true);
@@ -33,41 +36,41 @@ export function ForgotPasswordForm() {
       await authApi.requestForgotPasswordOtp({ email: email.trim() });
       setStep(2);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Đã xảy ra lỗi, vui lòng thử lại sau.');
+      setError(err instanceof Error ? err.message : t('genericError'));
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Xử lý xác nhận OTP
+  // Step 2: Verify OTP
   const onVerifyOtp = async () => {
     const code = otp.join('');
     if (code.length < 6) {
-      setError('Vui lòng nhập đủ 6 số OTP.');
+      setError(t('otpLengthError'));
       return;
     }
-    
+
     setIsLoading(true);
     setError(null);
     try {
       await authApi.verifyForgotPasswordOtp({ email: email.trim(), otp: code });
       setStep(3);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Mã OTP không chính xác hoặc đã hết hạn.');
+      setError(err instanceof Error ? err.message : t('otpVerifyError'));
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Xử lý đổi mật khẩu mới
+  // Step 3: Submit new password
   const onSubmitPassword = async (e: FormEvent) => {
     e.preventDefault();
     if (password.length < 8) {
-      setError('Mật khẩu phải có ít nhất 8 ký tự');
+      setError(t('passwordLengthError'));
       return;
     }
     if (password !== confirmPassword) {
-      setError('Mật khẩu xác nhận không khớp');
+      setError(t('passwordMismatchError'));
       return;
     }
 
@@ -76,12 +79,12 @@ export function ForgotPasswordForm() {
     try {
       const code = otp.join('');
       const user = await resetPassword(email.trim(), code, password);
-      
-      // Đăng nhập tự động và chuyển hướng
+
+      // Auto-login and redirect
       const target = user.role === 'ADMIN' ? '/admin' : '/';
       router.replace(target);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Không thể đổi mật khẩu, vui lòng thử lại.');
+      setError(err instanceof Error ? err.message : t('resetError'));
     } finally {
       setIsLoading(false);
     }
@@ -119,14 +122,14 @@ export function ForgotPasswordForm() {
       {/* Header */}
       <div className="text-center mb-8">
         <h2 className="text-[28px] font-black text-[#215b3b] font-[family-name:var(--font-nunito)] mb-3">
-          {step === 1 && 'Quên mật khẩu?'}
-          {step === 2 && 'Xác nhận mã OTP'}
-          {step === 3 && 'Thiết lập mật khẩu mới'}
+          {step === 1 && t('step1Heading')}
+          {step === 2 && t('step2Heading')}
+          {step === 3 && t('step3Heading')}
         </h2>
         <p className="text-gray-600 text-sm leading-relaxed px-4">
-          {step === 1 && 'Đừng lo, hãy nhập email của bạn và chúng tôi sẽ gửi mã khôi phục.'}
-          {step === 2 && 'Chúng tôi đã gửi mã xác minh đến email của bạn. Vui lòng nhập mã gồm 6 chữ số.'}
-          {step === 3 && 'Hãy chọn một mật khẩu mạnh để bảo vệ tài khoản của bạn.'}
+          {step === 1 && t('step1Subheading')}
+          {step === 2 && t('step2Subheading')}
+          {step === 3 && t('step3Subheading')}
         </p>
       </div>
 
@@ -141,7 +144,7 @@ export function ForgotPasswordForm() {
       {step === 1 && (
         <form onSubmit={onSubmitEmail} className="w-full flex flex-col gap-5">
           <div className="space-y-1.5">
-            <label className="text-sm font-bold text-[#1f4a2d]">Địa chỉ Email</label>
+            <label className="text-sm font-bold text-[#1f4a2d]">{t('emailLabel')}</label>
             <div className="relative group">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-[#285e3a] transition-colors" />
               <input
@@ -149,7 +152,7 @@ export function ForgotPasswordForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="ví dụ: teacher@cutepanda.edu"
+                placeholder={t('emailPlaceholder')}
                 className="w-full h-[52px] bg-[#f8f9f2] rounded-2xl pl-12 pr-4 outline-none border border-transparent focus:border-[#285e3a]/30 focus:bg-white transition-all text-gray-700 font-medium placeholder:font-normal"
               />
             </div>
@@ -160,7 +163,7 @@ export function ForgotPasswordForm() {
             disabled={isLoading}
             className="w-full h-[52px] bg-[#1a4a2a] hover:bg-[#143a21] text-white rounded-2xl font-bold text-base transition-all mt-2 shadow-lg shadow-[#1a4a2a]/20 flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Gửi mã khôi phục'}
+            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t('submitButton')}
             {!isLoading && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
           </button>
         </form>
@@ -189,16 +192,16 @@ export function ForgotPasswordForm() {
             disabled={isLoading || otp.join('').length < 6}
             className="w-full h-[52px] bg-[#1a4a2a] hover:bg-[#143a21] text-white rounded-2xl font-bold text-base transition-all shadow-lg shadow-[#1a4a2a]/20 flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Xác nhận mã'}
+            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t('verifyOtpButton')}
             {!isLoading && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
           </button>
 
-          <button 
-            type="button" 
+          <button
+            type="button"
             className="text-[#5E7F26] text-sm font-semibold hover:underline"
             onClick={() => setStep(1)}
           >
-            Gửi lại mã ngay
+            {t('resendCode')}
           </button>
         </div>
       )}
@@ -207,7 +210,7 @@ export function ForgotPasswordForm() {
       {step === 3 && (
         <form onSubmit={onSubmitPassword} className="w-full flex flex-col gap-5">
           <div className="space-y-1.5">
-            <label className="text-sm font-bold text-[#1f4a2d]">Mật khẩu mới</label>
+            <label className="text-sm font-bold text-[#1f4a2d]">{t('passwordLabel')}</label>
             <div className="relative group">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-[#285e3a] transition-colors" />
               <input
@@ -215,14 +218,14 @@ export function ForgotPasswordForm() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Nhập mật khẩu mới"
+                placeholder={t('passwordPlaceholder')}
                 className="w-full h-[52px] bg-[#f8f9f2] rounded-2xl pl-12 pr-4 outline-none border border-transparent focus:border-[#285e3a]/30 focus:bg-white transition-all text-gray-700 font-medium placeholder:font-normal"
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-sm font-bold text-[#1f4a2d]">Xác nhận mật khẩu</label>
+            <label className="text-sm font-bold text-[#1f4a2d]">{t('confirmPasswordLabel')}</label>
             <div className="relative group">
               <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-[#285e3a] transition-colors" />
               <input
@@ -230,7 +233,7 @@ export function ForgotPasswordForm() {
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Nhập lại mật khẩu mới"
+                placeholder={t('confirmPasswordPlaceholder')}
                 className="w-full h-[52px] bg-[#f8f9f2] rounded-2xl pl-12 pr-4 outline-none border border-transparent focus:border-[#285e3a]/30 focus:bg-white transition-all text-gray-700 font-medium placeholder:font-normal"
               />
             </div>
@@ -241,19 +244,19 @@ export function ForgotPasswordForm() {
             disabled={isLoading}
             className="w-full h-[52px] bg-[#1a4a2a] hover:bg-[#143a21] text-white rounded-2xl font-bold text-base transition-all mt-2 shadow-lg shadow-[#1a4a2a]/20 flex items-center justify-center gap-2 group disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Đổi mật khẩu'}
+            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t('submitPasswordButton')}
           </button>
         </form>
       )}
 
       {/* Footer Link */}
       <div className="mt-8">
-        <Link 
-          href="/login" 
+        <Link
+          href="/login"
           className="text-[#306844] hover:text-[#1f4a2d] font-bold text-sm flex items-center gap-1 group transition-colors"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          Quay lại trang đăng nhập
+          {t('backToLogin')}
         </Link>
       </div>
     </div>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import type { SentenceQuestion, SentenceToken } from '@/lib/api/types';
-import { Volume2 } from 'lucide-react';
+import { Volume2, Lightbulb, Check } from 'lucide-react';
 
 interface WriteSentenceBoardProps {
   questions: SentenceQuestion[];
@@ -129,7 +129,8 @@ export function WriteSentenceBoard({
               onClick={() => setShowHints(true)}
               className="text-sm font-bold text-gray-400 hover:text-[#215b3b] transition-colors flex items-center gap-2"
             >
-              💡 Cần gợi ý từ vựng?
+              <Lightbulb className="w-4 h-4 text-amber-500" />
+              <span>Cần gợi ý từ vựng?</span>
             </button>
           ) : (
             <div className="flex flex-wrap justify-center gap-2">
@@ -153,13 +154,20 @@ export function WriteSentenceBoard({
         <div className="flex items-center gap-3 w-full">
           <button
             onClick={handleNext}
-            className={`flex-1 py-4 rounded-xl font-bold text-lg text-white transition-all shadow-md active:scale-95 ${
+            className={`flex-1 py-4 rounded-xl font-bold text-lg text-white transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 ${
               inputValue.length > 0 
                 ? 'bg-[#2b7149] hover:bg-[#215b3b]' 
                 : 'bg-gray-400 hover:bg-gray-500'
             }`}
           >
-            {isLast ? 'Hoàn thành 🎉' : 'Kiểm tra (Enter)'}
+            {isLast ? (
+              <>
+                <span>Hoàn thành</span>
+                <Check className="w-5 h-5 stroke-[2.5]" />
+              </>
+            ) : (
+              'Kiểm tra (Enter)'
+            )}
           </button>
           <button
             onClick={() => speakText(fullChineseText)}

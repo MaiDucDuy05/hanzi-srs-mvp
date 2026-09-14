@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import  { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { FlashcardGameFeature } from '@/features/games/page-features/flashcard-game-feature';
 import { curriculumApi, srsApi } from '@/lib/api/endpoints';
@@ -16,6 +17,7 @@ import { LearnWordFlow } from './learn-word/learn-word-flow';
 type StudyMode = 'level' | 'topic';
 
 export function StudyFeature() {
+  const t = useTranslations('Study');
   const searchParams = useSearchParams();
   const levelId = searchParams.get('levelId');
   const topicId = searchParams.get('topicId');
@@ -49,12 +51,12 @@ export function StudyFeature() {
       setVocabularies(data);
       setLoading(false);
     }).catch((e) => {
-      if (!cancelled) setError(e instanceof Error ? e.message : 'Lỗi tải dữ liệu.');
+      if (!cancelled) setError(e instanceof Error ? e.message : t('loadError'));
       setLoading(false);
     });
 
     return () => { cancelled = true; };
-  }, [studyMode, levelId, topicId]);
+  }, [studyMode, levelId, topicId, t]);
 
   // Fetch SRS progress
   useEffect(() => {
@@ -63,17 +65,7 @@ export function StudyFeature() {
     srsApi.getProgress(studyKey, type).then(setProgressMap).catch(console.error);
   }, [studyKey, studyMode]);
 
-  // Filtered vocabularies
-  const filteredVocab = useMemo(() => {
-    if (!search.trim()) return vocabularies;
-    const q = search.toLowerCase();
-    return vocabularies.filter(
-      (v) =>
-        v.hanzi.toLowerCase().includes(q) ||
-        v.pinyin.toLowerCase().includes(q) ||
-        v.meaningVi.toLowerCase().includes(q),
-    );
-  }, [vocabularies, search]);
+;
 
   const handleComplete = () => {
     setMode('list');
@@ -86,7 +78,7 @@ export function StudyFeature() {
 
   if (mode === 'learn-word') {
     return (
-      <div className="w-full h-[80vh] pt-4 pb-12">
+      <div className="w-full h-[90vh] min-h-[600px] pt-4 pb-12">
         <LearnWordFlow
           vocabularies={vocabularies}
           initialIndex={learnIndex}
@@ -127,13 +119,13 @@ export function StudyFeature() {
             onClick={() => setListTab('vocab')}
             className={`px-8 py-3 rounded-full font-bold transition-all border-2 ${listTab === 'vocab' ? 'bg-white border-gray-100 shadow-sm text-[#215b3b]' : 'bg-[#f9f9f9] border-transparent text-gray-500 hover:bg-gray-100'}`}
           >
-            Từ vựng ({vocabularies.length})
+            {t('tabVocab', { count: vocabularies.length })}
           </button>
           <button
             onClick={() => setListTab('grammar')}
             className={`px-8 py-3 rounded-full font-bold transition-all border-2 ${listTab === 'grammar' ? 'bg-white border-gray-100 shadow-sm text-[#215b3b]' : 'bg-[#f9f9f9] border-transparent text-gray-500 hover:bg-gray-100'}`}
           >
-            Ngữ pháp (0)
+            {t('tabGrammar', { count: 0 })}
           </button>
         </div>
 
@@ -145,30 +137,30 @@ export function StudyFeature() {
         {/* Title */}
         <div className="mb-8">
           <h1 className="text-2xl font-black text-[#111] mb-2 font-heading">
-            {listTab === 'vocab' ? 'Vocabulary Library List' : 'Grammar Points'}
+            {listTab === 'vocab' ? t('vocabListTitle') : t('grammarListTitle')}
           </h1>
           <p className="text-gray-500 text-sm">
             {listTab === 'vocab'
-              ? `${vocabularies.length} từ vựng — Học theo ${studyMode === 'level' ? 'cấp độ HSK' : 'chủ đề'}`
-              : 'Key grammar structures to master'}
+              ? t('vocabListSubheading', { count: vocabularies.length, grouping: t(studyMode === 'level' ? 'groupingLevel' : 'groupingTopic') })
+              : t('grammarListSubheading')}
           </p>
         </div>
 
         {listTab === 'vocab' ? (
           loading ? (
             <div className="flex justify-center py-12">
-              <PageLoading label="Đang tải..." />
+              <PageLoading label={t('loading')} />
             </div>
-          ) : filteredVocab.length === 0 ? (
+          ) : vocabularies.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <p className="text-gray-500 font-bold">
-                {search ? 'Không tìm thấy từ phù hợp.' : 'Chưa có từ vựng nào.'}
+                {search ? t('noResults') : t('emptyVocab')}
               </p>
             </div>
           ) : (
-            <StudyLessonVocabTable 
-              filteredVocab={filteredVocab} 
-              progressMap={progressMap} 
+            <StudyLessonVocabTable
+              vocabularies={vocabularies}
+              progressMap={progressMap}
               onLearn={(id) => {
                 const idx = vocabularies.findIndex(v => v.id === id);
                 setLearnIndex(idx !== -1 ? idx : 0);
@@ -188,13 +180,13 @@ export function StudyFeature() {
             onClick={() => setMode('learn-word')}
             className="px-12 py-4 bg-[#1f5333] hover:bg-[#163f25] text-white text-lg font-bold rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2"
           >
-            Bắt đầu học từ mới
+            {t('learnNewWordsButton')}
           </button>
           <button
             onClick={() => setMode('flashcard')}
             className="px-12 py-4 bg-[#8BC34A] hover:bg-[#7CB342] text-white text-lg font-bold rounded-full shadow-[0_8px_30px_rgb(139,195,74,0.3)] transition-transform hover:scale-105 flex items-center gap-2"
           >
-            Ôn tập Flashcard
+            {t('reviewFlashcardButton')}
           </button>
         </div>
       )}

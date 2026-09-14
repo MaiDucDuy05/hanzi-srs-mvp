@@ -105,9 +105,8 @@ export function AdminSettingsFeature() {
   const currentTabConfigs = configs.filter(c => c.group === activeTab);
 
   return (
-    <AuthGuard>
-      <div className="flex flex-col md:flex-row gap-8 pb-10 max-w-[1200px]">
-        {/* Sidebar */}
+    <div className="flex flex-col md:flex-row gap-8 pb-10 max-w-[1200px]">
+      {/* Sidebar */}
         <div className="w-full md:w-72 shrink-0">
           <div className="mb-6">
             <h1 className="text-3xl font-extrabold text-[#11321e] mb-2">Cài đặt</h1>
@@ -234,6 +233,5 @@ export function AdminSettingsFeature() {
           </div>
         </div>
       </div>
-    </AuthGuard>
   );
 }
