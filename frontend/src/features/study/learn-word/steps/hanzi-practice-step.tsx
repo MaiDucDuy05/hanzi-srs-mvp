@@ -107,13 +107,13 @@ export function HanziPracticeStep({ vocabulary, onNext }: HanziPracticeStepProps
               <span className="w-1.5 h-1.5 rounded-full bg-[#8BC34A]"></span>
               Gợi ý nét viết
             </h3>
-            <div className="relative bg-white border-2 border-[#d0c9b7] rounded-xl w-[140px] h-[140px] shadow-sm overflow-hidden">
+            <div className="relative bg-white border-2 border-[#d0c9b7] rounded-xl w-[140px] h-[140px] shadow-sm overflow-hidden flex items-center justify-center">
               <div className="absolute inset-0 pointer-events-none opacity-60">
                 <div className="absolute top-1/2 left-0 w-full border-t border-dashed border-[#d0c9b7]" />
                 <div className="absolute left-1/2 top-0 h-full border-l border-dashed border-[#d0c9b7]" />
               </div>
-              <div className="absolute inset-0 flex items-center justify-center scale-90">
-                {currentChar && <HanziWriterAnimation char={currentChar} speed="normal" />}
+              <div className="relative z-10 flex items-center justify-center">
+                {currentChar && <HanziWriterAnimation char={currentChar} speed="normal" size={130} />}
               </div>
             </div>
           </div>

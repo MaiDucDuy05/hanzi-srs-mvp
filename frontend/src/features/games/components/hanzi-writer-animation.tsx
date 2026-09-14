@@ -6,9 +6,10 @@ import { loadCharData } from '@/lib/hanzi/char-data-loader';
 interface HanziWriterAnimationProps {
   char: string;
   speed: 'slow' | 'normal' | 'fast';
+  size?: number;
 }
 
-export function HanziWriterAnimation({ char, speed }: HanziWriterAnimationProps) {
+export function HanziWriterAnimation({ char, speed, size = 180 }: HanziWriterAnimationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hasError, setHasError] = useState(false);
 
@@ -23,7 +24,7 @@ export function HanziWriterAnimation({ char, speed }: HanziWriterAnimationProps)
       if (cancelled || !containerRef.current) return;
       containerRef.current.innerHTML = '';
       writer = HanziWriter.create(containerRef.current, char, {
-        width: 180, height: 180, padding: 5,
+        width: size, height: size, padding: Math.round(size * 0.05),
         showOutline: true, showCharacter: false,
         strokeColor: '#333', drawingColor: '#333',
         charDataLoader: (c: string, onLoad: any, onError: any) => {
@@ -60,12 +61,12 @@ export function HanziWriterAnimation({ char, speed }: HanziWriterAnimationProps)
       if (writer && typeof writer.destroy === 'function') writer.destroy();
       if (containerRef.current) containerRef.current.innerHTML = '';
     };
-  }, [char, speed]);
+  }, [char, speed, size]);
 
   if (hasError) {
     return (
       <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
-        <span className="text-8xl font-serif text-[#333]/20">{char}</span>
+        <span className="font-serif text-[#333]/20" style={{ fontSize: size * 0.55 }}>{char}</span>
       </div>
     );
   }
