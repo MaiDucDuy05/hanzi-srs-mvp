@@ -65,6 +65,9 @@ export class Question extends BaseEntity {
   @Column({ name: 'topic_id', type: 'uuid', nullable: true })
   topicId: string | null;
 
+  @Column({ name: 'display_order', type: 'int', default: 0 })
+  displayOrder: number;
+
   // ── Content ────────────────────────────────────────────────────────────
   /** Generic JSONB content - format varies by type */
   @Column({ type: 'jsonb' })
