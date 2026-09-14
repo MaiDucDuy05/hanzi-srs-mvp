@@ -41,4 +41,4 @@ jobs:                         # CÔNG VIỆC cần làm
             npm run test
             npm run build
             npm run migration:run
-            pm2 start ecosystem.config.js --env production
+            pm2 reload ecosystem.config.js --env production
