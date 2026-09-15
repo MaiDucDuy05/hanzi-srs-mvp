@@ -132,7 +132,7 @@ export function StudentExamResultFeature({ attemptId: propAttemptId, onBack }: {
 
                       {qContent.imageUrl && (
                         <div className="mt-4">
-                          <img src={qContent.imageUrl} alt={t('imageAlt')} className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm" style={{ maxHeight: '250px' }} />
+                          <img src={qContent.imageUrl} className="max-w-full h-auto rounded-lg border border-gray-200 shadow-sm" style={{ maxHeight: '250px' }} />
                         </div>
                       )}
 

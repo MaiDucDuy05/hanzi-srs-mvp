@@ -27,7 +27,7 @@ export default async function LoginPage({
       <div className="hidden md:flex md:w-5/12 relative bg-[#415e44] text-white p-8 flex-col justify-end">
         <Image
           src="/images/auth-bg.jpg"
-          alt={t('imageAlt')}
+          alt="login background"
           fill
           className="object-cover opacity-80 mix-blend-overlay"
           priority

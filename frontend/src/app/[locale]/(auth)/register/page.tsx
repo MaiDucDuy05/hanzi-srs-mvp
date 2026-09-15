@@ -26,7 +26,7 @@ export default async function RegisterPage({
       <div className="absolute inset-0 z-0 bg-[#415e44]">
         <Image
           src="/images/auth-bg.jpg"
-          alt={t('imageAlt')}
+          alt="register background"
           fill
           className="object-cover opacity-80 mix-blend-overlay"
           priority
