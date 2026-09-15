@@ -29,7 +29,7 @@ export default async function ContactPage() {
           <div className="w-32 h-32 rounded-full border-4 border-white shadow-sm overflow-hidden mb-6 relative bg-white flex items-center justify-center">
             <Image
               src="/assets/illustrations/panda/panda-bamboo-circle.svg"
-              alt={t('imageAlt')}
+              alt=''
               width={100}
               height={100}
               className="object-contain"

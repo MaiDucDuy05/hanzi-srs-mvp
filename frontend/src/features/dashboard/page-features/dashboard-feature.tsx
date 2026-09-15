@@ -147,7 +147,7 @@ export function DashboardFeature() {
                      onClick={() => {
                        const pin = (document.getElementById('live-pin-input') as HTMLInputElement)?.value;
                        if (pin && pin.length >= 4) {
-                         window.location.href = `/live-quiz?pin=${pin}`;
+                         window.location.href = `/study/live-quiz?pin=${pin}`;
                        }
                      }}
                      className="bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold py-2 px-4 rounded-xl shadow-md transition-transform hover:scale-105 whitespace-nowrap"
