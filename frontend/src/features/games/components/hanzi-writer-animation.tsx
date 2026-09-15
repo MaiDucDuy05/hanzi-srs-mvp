@@ -33,10 +33,12 @@ export function HanziWriterAnimation({ char, speed, size = 180 }: HanziWriterAni
               if (data) onLoad(data);
               else {
                 if (!cancelled) setHasError(true);
+                if (typeof onError === 'function') onError();
               }
             })
             .catch(e => {
               if (!cancelled) setHasError(true);
+              if (typeof onError === 'function') onError(e);
             });
         },
       });
@@ -65,11 +67,20 @@ export function HanziWriterAnimation({ char, speed, size = 180 }: HanziWriterAni
 
   if (hasError) {
     return (
-      <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
-        <span className="font-serif text-[#333]/20" style={{ fontSize: size * 0.55 }}>{char}</span>
+      <div 
+        className="flex items-center justify-center pointer-events-none select-none"
+        style={{ width: size, height: size }}
+      >
+        <span className="font-serif text-[#333]/30 leading-none" style={{ fontSize: size * 0.7 }}>{char}</span>
       </div>
     );
   }
 
-  return <div ref={containerRef} className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none" />;
+  return (
+    <div 
+      ref={containerRef} 
+      className="flex items-center justify-center pointer-events-none" 
+      style={{ width: size, height: size }} 
+    />
+  );
 }

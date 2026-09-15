@@ -112,9 +112,14 @@ export function HanziPracticeStep({ vocabulary, onNext }: HanziPracticeStepProps
                 <div className="absolute top-1/2 left-0 w-full border-t border-dashed border-[#d0c9b7]" />
                 <div className="absolute left-1/2 top-0 h-full border-l border-dashed border-[#d0c9b7]" />
               </div>
-              <div className="relative z-10 flex items-center justify-center">
-                {currentChar && <HanziWriterAnimation char={currentChar} speed="normal" size={130} />}
-              </div>
+              {currentChar && (
+                <HanziWriterAnimation 
+                  key={currentChar} 
+                  char={currentChar} 
+                  speed="normal" 
+                  size={130} 
+                />
+              )}
             </div>
           </div>
           
