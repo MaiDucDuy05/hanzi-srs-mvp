@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Vocabulary } from '../../curriculum/entities/vocabulary.entity';
@@ -42,8 +42,13 @@ export class AdminVocabulariesService {
   }
 
   async create(data: any, adminId: string, ipAddress: string) {
+    if (data.partOfSpeech && typeof data.partOfSpeech === 'string' && data.partOfSpeech.trim().length > 100) {
+      throw new BadRequestException('Từ loại (partOfSpeech) không được vượt quá 100 ký tự');
+    }
+    const cleanPartOfSpeech = typeof data.partOfSpeech === 'string' ? data.partOfSpeech.trim() || null : data.partOfSpeech ?? null;
     const newVocab = this.vocabRepo.create({
       ...data,
+      partOfSpeech: cleanPartOfSpeech,
       status: data.status || ContentStatus.DRAFT,
     }) as unknown as Vocabulary;
     
@@ -56,8 +61,16 @@ export class AdminVocabulariesService {
     const vocab = await this.vocabRepo.findOne({ where: { id, isActive: true } });
     if (!vocab) throw new NotFoundException('Vocabulary not found');
 
+    if (data.partOfSpeech && typeof data.partOfSpeech === 'string' && data.partOfSpeech.trim().length > 100) {
+      throw new BadRequestException('Từ loại (partOfSpeech) không được vượt quá 100 ký tự');
+    }
+
     const oldValue = { ...vocab };
-    Object.assign(vocab, data);
+    const updateData = { ...data };
+    if (updateData.partOfSpeech !== undefined) {
+      updateData.partOfSpeech = typeof updateData.partOfSpeech === 'string' ? updateData.partOfSpeech.trim() || null : updateData.partOfSpeech ?? null;
+    }
+    Object.assign(vocab, updateData);
     await this.vocabRepo.save(vocab);
 
     await this.auditLogService.logAction(adminId, 'UPDATE_VOCAB', 'VOCABULARY', vocab.id, ipAddress, { oldValue, newValue: data });

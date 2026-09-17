@@ -1,5 +1,4 @@
-import { IsEnum, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsInt, IsOptional, IsString, IsUUID, MaxLength, Min } from 'class-validator';
 import { PaginationQueryDto } from '../../../common/pagination.dto';
 
 // ── Query DTOs ──
@@ -82,6 +81,7 @@ export class CreateVocabularyDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   partOfSpeech?: string | null;
 
   @IsOptional()
@@ -112,6 +112,7 @@ export class UpdateVocabularyDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(100)
   partOfSpeech?: string | null;
 
   @IsOptional()
