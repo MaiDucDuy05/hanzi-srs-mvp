@@ -267,6 +267,7 @@ export function BulkAddVocabularyModal({
                       placeholder="VD: Danh từ"
                       value={row.partOfSpeech}
                       onChange={e => handleChange(idx, 'partOfSpeech', e.target.value)}
+                      maxLength={100}
                     />
                   </td>
                   <td className="p-3">

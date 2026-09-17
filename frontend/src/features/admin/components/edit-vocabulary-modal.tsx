@@ -97,6 +97,7 @@ export function EditVocabularyModal({
                 value={editForm.partOfSpeech || ''} 
                 onChange={e => setEditForm({...editForm, partOfSpeech: e.target.value})} 
                 placeholder="vd: Danh từ, Động từ..."
+                maxLength={100}
               />
             </div>
           </div>
