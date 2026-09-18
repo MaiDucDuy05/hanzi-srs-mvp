@@ -46,7 +46,7 @@ export function UserDrawer({ user, onClose, isOpen }: UserDrawerProps) {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-gray-500 flex items-center gap-2">
-                <Tag className="h-4 w-4" /> User ID
+                <Tag className="h-4 w-4" /> Mã người dùng (ID)
               </span>
               <span className="text-sm font-mono text-gray-800 bg-gray-100 px-2 py-0.5 rounded">
                 {user.id}
@@ -58,7 +58,7 @@ export function UserDrawer({ user, onClose, isOpen }: UserDrawerProps) {
                 <Shield className="h-4 w-4" /> Phân quyền
               </span>
               <span className="text-sm font-semibold text-gray-800">
-                {user.role}
+                {user.role === 'ADMIN' ? 'Quản trị viên (Admin)' : user.role === 'TEACHER' ? 'Giáo viên' : 'Học viên'}
               </span>
             </div>
 
@@ -67,7 +67,7 @@ export function UserDrawer({ user, onClose, isOpen }: UserDrawerProps) {
                 <AlertCircle className="h-4 w-4" /> Trạng thái
               </span>
               <span className={`text-sm font-semibold ${user.status === 'ACTIVE' ? 'text-forest' : 'text-red-500'}`}>
-                {user.status}
+                {user.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã bị khóa'}
               </span>
             </div>
 

@@ -57,7 +57,7 @@ export function ReviewTodayFeature() {
           title={vocabularies.length === 0 ? t('allDoneTitle') : t('completedTitle')}
           subtitle={vocabularies.length === 0 ? t('allDoneSubtitle') : t('completedSubtitle')}
           result={{
-            score: vocabularies.length * 10,
+            score: 100,
             correctCount: vocabularies.length,
             wrongCount: 0,
             moveCount: 0,

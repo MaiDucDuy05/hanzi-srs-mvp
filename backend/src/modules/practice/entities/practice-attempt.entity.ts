@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, JoinColumn, Index, PrimaryGeneratedColumn, PrimaryColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, JoinColumn, Index, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, DeleteDateColumn } from 'typeorm';
 import { BaseEntity } from '../../../common/base.entity';
 import {
   PracticeAttemptStatus,
@@ -24,7 +24,7 @@ export class PracticeAttempt {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @PrimaryColumn({ name: 'created_at', type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })

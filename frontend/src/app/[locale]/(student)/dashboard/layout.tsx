@@ -47,38 +47,47 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Sidebar */}
         <aside className={`flex-shrink-0 bg-white rounded-[2rem] flex flex-col gap-2 transition-all duration-300 relative overflow-hidden ${isCollapsed ? 'w-full lg:w-0 lg:p-0 lg:opacity-0 lg:border-none shadow-none' : 'w-full lg:w-64 p-4 lg:p-6 shadow-sm'}`}>
-          {/* Collapse Toggle (Desktop only) */}
-          <button 
-            onClick={() => setIsCollapsed(true)}
-            className={`hidden lg:flex absolute right-4 top-4 w-8 h-8 bg-gray-50 border border-gray-100 rounded-full items-center justify-center text-gray-400 hover:text-[#215b3b] hover:bg-[#e5f5eb] hover:border-[#aadd4a] transition-all z-20 ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-
-          <div className="flex-1 flex flex-col justify-center gap-1.5 min-w-[200px]">
-            {NAV_ITEMS.map((item) => {
-            const isActive = item.href === '/dashboard' 
-              ? pathname === item.href 
-              : pathname.startsWith(item.href);
-
-            return (
-              <Link 
-                key={item.href} 
-                href={item.href}
-                className={`flex items-center justify-start gap-3 w-full lg:w-48 mx-auto px-5 py-2.5 rounded-full transition-colors ${
-                  isActive 
-                    ? 'bg-[#e5f5eb] text-[#215b3b]' 
-                    : 'text-[#215b3b] hover:bg-[#f3f9f5]'
-                }`}
-              >
-                <PawIcon className="w-5 h-5 shrink-0" />
-                <span className="font-[family-name:var(--font-nunito)] text-[15px] font-black whitespace-nowrap overflow-hidden">
-                  {item.label}
-                </span>
-              </Link>
-            );
-          })}
+          {/* Brand Logo Header with collapse button on the left */}
+          <div className="flex items-center gap-2 pb-3.5 mb-1 border-b border-gray-100">
+            <button 
+              onClick={() => setIsCollapsed(true)}
+              className={`hidden lg:flex shrink-0 w-7 h-7 bg-gray-50 border border-gray-200/80 rounded-full items-center justify-center text-gray-400 hover:text-[#215b3b] hover:bg-[#e5f5eb] hover:border-[#aadd4a] transition-all shadow-xs ${isCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+              title="Thu gọn thanh menu"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <Link href="/" className="flex items-center gap-2 min-w-0 hover:opacity-90 transition-opacity">
+              <img src="/assets/images/logo/logo-mark.png" alt="Mầm Tre Hoa Ngữ" className="w-7 h-7 shrink-0 object-contain" />
+              <span className="font-[family-name:var(--font-nunito)] text-[14px] font-black text-[#215b3b] whitespace-nowrap">
+                Mầm Tre Hoa Ngữ
+              </span>
+            </Link>
           </div>
+
+            <div className="flex-1 flex flex-col justify-center gap-1.5 min-w-[200px]">
+              {NAV_ITEMS.map((item) => {
+              const isActive = item.href === '/dashboard' 
+                ? pathname === item.href 
+                : pathname.startsWith(item.href);
+
+              return (
+                <Link 
+                  key={item.href} 
+                  href={item.href}
+                  className={`flex items-center justify-start gap-3 w-full lg:w-48 mx-auto px-5 py-2.5 rounded-full transition-colors ${
+                    isActive 
+                      ? 'bg-[#e5f5eb] text-[#215b3b]' 
+                      : 'text-[#215b3b] hover:bg-[#f3f9f5]'
+                  }`}
+                >
+                  <PawIcon className="w-5 h-5 shrink-0" />
+                  <span className="font-[family-name:var(--font-nunito)] text-[15px] font-black whitespace-nowrap overflow-hidden">
+                    {item.label}
+                  </span>
+                </Link>
+              );
+            })}
+            </div>
 
           {/* VIP Status Box */}
           {user && (

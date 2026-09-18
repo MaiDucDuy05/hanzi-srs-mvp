@@ -84,9 +84,8 @@ export function MistakeReviewFeature() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-4">
         <GameSummary
-          title={t('greatJob')}
           subtitle={t('mistakeReviewCompleted')}
-          result={{ correctCount, wrongCount: total - correctCount, moveCount: 0, score: Math.round(correctCount / total * 100), answerData: {} }}
+          result={{ correctCount, wrongCount: total - correctCount, moveCount: 0, score: total > 0 ? Math.round(correctCount / total * 100) : 0, answerData: {} }}
           elapsed={elapsed}
           onReplay={() => window.location.reload()}
           onExit={() => router.push('/dashboard/practice')}

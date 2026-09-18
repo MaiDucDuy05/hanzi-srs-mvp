@@ -33,10 +33,17 @@ export default async function LoginPage({
           priority
         />
         <div className="relative z-10">
-          <h2 className="text-2xl font-bold mb-2 flex items-center gap-2">
-            <Trees className="w-8 h-8 text-[#a7d08c]" /> {t('brandTitle')}
-          </h2>
-          <p className="text-sm text-gray-100 font-medium">
+          <div className="flex items-center gap-3 mb-3">
+            <img 
+              src="/assets/images/logo/logo-mark.png" 
+              alt="Mầm Tre Hoa Ngữ" 
+              className="w-12 h-12 object-contain brightness-110 drop-shadow-md" 
+            />
+            <h2 className="text-2xl font-bold tracking-wide text-white">
+              {t('brandTitle')}
+            </h2>
+          </div>
+          <p className="text-sm text-gray-100 font-medium leading-relaxed">
             {t('brandTagline')}
           </p>
         </div>

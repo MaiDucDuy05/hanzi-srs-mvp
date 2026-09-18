@@ -39,8 +39,7 @@ function MemoryGameContent({ searchParams }: { searchParams: URLSearchParams }) 
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-4 min-h-[60vh]">
         <GameSummary
-          title={t('memoryTitle')}
-          subtitle={t('memoryDesc')}
+          subtitle="Hoàn thành Trò chơi trí nhớ (Memory Game)"
           result={engine.result}
           elapsed={engine.elapsed}
           onReplay={() => window.location.reload()}

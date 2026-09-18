@@ -56,7 +56,6 @@ function MatchGameContent() {
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-4">
         <GameSummary
-          title="Tuyệt vời!"
           subtitle="Hoàn thành Ghép thẻ (Match Game)"
           result={engine.result}
           elapsed={engine.elapsed}

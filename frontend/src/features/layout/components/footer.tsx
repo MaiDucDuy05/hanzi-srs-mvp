@@ -46,8 +46,8 @@ export async function Footer() {
  <BambooSprig className="absolute -left-1 bottom-2 w-20 opacity-80" />
  <BambooSprig className="absolute -right-1 bottom-2 w-20 -scale-x-100 opacity-80" />
  <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm text-gray-500 sm:flex-row">
- <p className="flex items-center gap-1.5">
- <img src="/assets/illustrations/panda/panda-at-beach.svg" alt="Panda" className="inline-block h-10 w-auto" />
+ <p className="flex items-center gap-2">
+ <img src="/assets/images/logo/logo-mark.png" alt="Mầm Tre Hoa Ngữ" className="inline-block h-8 w-auto object-contain" />
  © {new Date().getFullYear()} {APP_NAME} — {t('footerTagline')}
  </p>
  <div className="flex gap-5">

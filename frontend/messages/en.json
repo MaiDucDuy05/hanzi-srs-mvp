@@ -37,12 +37,12 @@
     "reviewNow": "Review Now",
     "recommendedLessons": "Recommended Lessons",
     "noLessonsAvailable": "No lessons available yet.",
-    "appName": "Hanzi SRS",
-    "resourcesTitle": "Resources | Hanzi SRS",
+    "appName": "Mầm Tre Hoa Ngữ",
+    "resourcesTitle": "Resources | Mầm Tre Hoa Ngữ",
     "resourcesDescription": "Reference library for learners",
-    "examsListTitle": "Exams | Hanzi SRS",
-    "examTakingTitle": "Take exam | Hanzi SRS",
-    "examResultTitle": "Exam result | Hanzi SRS"
+    "examsListTitle": "Exams | Mầm Tre Hoa Ngữ",
+    "examTakingTitle": "Take exam | Mầm Tre Hoa Ngữ",
+    "examResultTitle": "Exam result | Mầm Tre Hoa Ngữ"
   },
   "Courses": {
     "topicTitle": "Topic Courses",
@@ -78,20 +78,7 @@
       "next": "Next"
     }
   },
-  "TopicDetail": {
-    "loading": "Loading topic...",
-    "notFound": "Topic not found.",
-    "topicNotFound": "Topic not found.",
-    "loadError": "Failed to load topic.",
-    "vocabCount": "{count} words",
-    "searchPlaceholder": "Search vocabulary...",
-    "practiceNow": "Practice now",
-    "noVocabSearch": "No vocabulary found for \"{query}\"",
-    "noVocab": "This topic has no vocabulary yet.",
-    "paginationLabel": "Showing {start}–{end} / {total} words",
-    "prev": "Previous",
-    "next": "Next"
-  },
+  "TopicDetail": {},
   "GameSelection": {
     "practiceHeading": "Practice",
     "tabVocab": "Vocabulary",
@@ -166,7 +153,7 @@
     "mistakeReviewTitle": "Mistake Review",
     "unsupportedQuestion": "This question type is not supported for review",
     "skip": "Skip",
-    "correct": "Correct!",
+    "correct": "Correct",
     "wrongAnswer": "Wrong! Correct answer:",
     "errorLoadChars": "Cannot load character list.",
     "errorStart": "Cannot start. Please try again.",
@@ -185,7 +172,6 @@
     "gameLoading": "Preparing game...",
     "summaryTitle": "Great job! 🎉",
     "finishedTitle": "Completed! 🎉",
-    "correct": "Correct",
     "wrong": "Wrong",
     "duration": "Duration",
     "back": "Back"
@@ -419,7 +405,7 @@
     "loadingLabel": "Loading...",
     "genericError": "Cannot display this page.",
     "studentError": "An error occurred while processing.",
-    "footerTagline": "Chinese learning & HSK exam platform",
+    "footerTagline": "Connecting Languages - Touching The World",
     "footerContact": "Contact",
     "footerResources": "Resources",
     "footerUpgradeVip": "Upgrade VIP",
@@ -445,7 +431,7 @@
     "modalCloseAria": "Close modal"
   },
   "Home": {
-    "metaTitle": "Hán Tự HSK — Learn Chinese in the Bamboo Forest",
+    "metaTitle": "Mầm Tre Hoa Ngữ — Connecting Languages, Touching The World",
     "metaDescription": "Vocabulary, games, and HSK tests — fun to play, unforgettable like bamboo. A free Chinese learning and HSK exam platform."
   },
   "GamesLayout": {
@@ -458,8 +444,9 @@
     "login": {
       "metaTitle": "Log in",
       "metaDescription": "Log in to continue.",
-      "brandTitle": "Cute Panda Forest",
-      "brandTagline": "Join our sanctuary of learning and growth. Nurturing minds in a calm, organized environment.",
+      "brandTitle": "Mầm Tre Hoa Ngữ",
+      "brandTagline": "Nơi ươm mầm tri thức và nuôi dưỡng niềm đam mê tiếng Trung mỗi ngày. Từng nét chữ Hán bạn luyện tập như mầm tre kiên cường bén rễ sâu vào lòng đất, từng bước vươn cao vững chãi trên hành trình chinh phục ngôn ngữ.",
+      "imageAlt": "Mầm Tre Hoa Ngữ",
       "heading": "Welcome Back!",
       "subheading": "Log in to your sanctuary and continue nurturing your classroom.",
       "emailLabel": "Email Address",
@@ -475,8 +462,8 @@
     },
     "register": {
       "metaTitle": "Create account",
-      "metaDescription": "Create a free account to start learning Chinese with Hán Tự HSK.",
-      "imageAlt": "Cute Panda Forest",
+      "metaDescription": "Create a free account to start learning Chinese with Mầm Tre Hoa Ngữ.",
+      "imageAlt": "Mầm Tre Hoa Ngữ",
       "heading": "Welcome!",
       "subheading": "Create your account to start nurturing your classroom.",
       "fullNameLabel": "Full name",
@@ -506,9 +493,9 @@
       "errorOtpVerify": "Verification failed."
     },
     "forgotPassword": {
-      "metaTitle": "Forgot password — Hán Tự HSK",
-      "metaDescription": "Reset your Hán Tự HSK account password",
-      "imageAlt": "Cute Panda Forest",
+      "metaTitle": "Forgot password — Mầm Tre Hoa Ngữ",
+      "metaDescription": "Reset your Mầm Tre Hoa Ngữ account password",
+      "imageAlt": "Mầm Tre Hoa Ngữ",
       "step1Heading": "Forgot your password?",
       "step1Subheading": "Don't worry — enter your email and we'll send a recovery code.",
       "step2Heading": "Verify the OTP code",
@@ -539,7 +526,7 @@
   },
   "Contact": {
     "metaTitle": "Contact",
-    "metaDescription": "Send us feedback, suggestions, or support requests about the Hán Tự HSK Chinese learning platform.",
+    "metaDescription": "Send us feedback, suggestions, or support requests about the Mầm Tre Hoa Ngữ Chinese learning platform.",
     "imageAlt": "Cute Panda Support",
     "supportTitle": "24/7 Support",
     "supportTagline": "We're always here to help our dedicated \"forest keepers\".",
@@ -558,7 +545,7 @@
     "sendAnother": "Send another request"
   },
   "MistakeBook": {
-    "metaTitle": "Mistake book - Hanzi SRS",
+    "metaTitle": "Mistake book - Mầm Tre Hoa Ngữ",
     "loadingMistakes": "Loading mistakes...",
     "loadingDetail": "Loading detail...",
     "noNotes": "No notes.",
@@ -716,6 +703,7 @@
     "summaryExcellent": "Excellent! 🎉",
     "summaryGood": "Good job! 👍",
     "summaryTryHarder": "Keep trying! 💪",
+    "summaryNeedsPractice": "Needs more practice! 📚",
     "summaryCorrect": "Correct",
     "summaryWrong": "Wrong",
     "summaryTime": "Time",
@@ -847,6 +835,5 @@
     "recentTests": "Recent tests",
     "noTestsYet": "No tests taken yet.",
     "loadError": "Failed to load profile."
-  },
-  "TopicDetail": {}
+  }
 }

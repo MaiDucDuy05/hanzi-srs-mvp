@@ -4,8 +4,21 @@ import React from 'react';
 import { useTranslations } from 'next-intl';
 import { StudyBackground } from '@/features/background/components/study-background';
 import { useRouter, usePathname } from 'next/navigation';
+import { StudyLayoutProvider, useStudyLayout } from '@/providers/study-layout-provider';
 
 export default function StudyLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <StudyLayoutProvider>
+      <StudyLayoutInner>{children}</StudyLayoutInner>
+    </StudyLayoutProvider>
+  );
+}
+
+function StudyLayoutInner({
   children,
 }: {
   children: React.ReactNode;
@@ -13,13 +26,15 @@ export default function StudyLayout({
   const router = useRouter();
   const pathname = usePathname();
   const t = useTranslations('StudyLayout');
+  const { hideHeader } = useStudyLayout();
 
   const isMistakeBook = pathname.includes('/mistake-book');
+  const showHeader = !isMistakeBook && !hideHeader;
 
   return (
     <StudyBackground className="min-h-screen flex flex-col p-4 sm:p-6 overflow-hidden">
       {/* Top Header */}
-      {!isMistakeBook && (
+      {showHeader && (
         <header className="fixed top-4 sm:top-6 left-0 right-0 w-full max-w-6xl mx-auto px-4 sm:px-6 flex items-center gap-4 z-50">
           <button
             onClick={() => router.back()}

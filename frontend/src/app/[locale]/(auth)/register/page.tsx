@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import Image from 'next/image';
+import Link from 'next/link';
 import { RegisterForm } from '@/features/auth/components/register-form';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -35,6 +36,11 @@ export default async function RegisterPage({
 
       {/* Form Card */}
       <div className="w-full max-w-md px-8 py-10 bg-white/95 backdrop-blur-md rounded-[2.5rem] shadow-2xl relative z-10 flex flex-col justify-center">
+        <div className="flex justify-center mb-4">
+          <Link href="/">
+            <img src="/assets/images/logo/logo-horizontal.png" alt="Mầm Tre Hoa Ngữ" className="h-12 w-auto object-contain" />
+          </Link>
+        </div>
         <h1 className="text-3xl md:text-4xl font-serif font-bold text-[#1a472a] mb-2 text-center">
           {t('heading')}
         </h1>

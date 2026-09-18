@@ -66,4 +66,6 @@ export function activityKey(
   return `${practiceType}:${sourceType}:${sourceId}`;
 }
 
-export const APP_NAME = 'Hán Tự HSK';
+export const APP_NAME = 'Mầm Tre Hoa Ngữ';
+export const APP_SLOGAN = 'Kết Nối Ngôn Ngữ - Chạm Tới Thế Giới';
+
