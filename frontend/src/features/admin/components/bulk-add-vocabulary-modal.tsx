@@ -16,16 +16,11 @@ export function BulkAddVocabularyModal({
   hskLevels,
 }: BulkAddVocabularyModalProps) {
   const [rows, setRows] = useState<any[]>([
-    { hanzi: '', pinyin: '', meaningVi: '', levelId: hskLevels[0]?.id || '', partOfSpeech: '', example: '' }
+    { hanzi: '', pinyin: '', meaningVi: '', levelId: '', partOfSpeech: '', example: '' }
   ]);
   const [saving, setSaving] = useState(false);
-  const [selectedImportLevelId, setSelectedImportLevelId] = useState<string>(hskLevels[0]?.id || '');
+  const [selectedImportLevelId, setSelectedImportLevelId] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Sync selected level when hskLevels load
-  if (!selectedImportLevelId && hskLevels.length > 0) {
-    setSelectedImportLevelId(hskLevels[0].id);
-  }
 
   if (!isOpen) return null;
 
@@ -91,7 +86,7 @@ export function BulkAddVocabularyModal({
       const hasHeader = header.includes('hanzi') || header.includes('pinyin') || header.includes('meaning') || header.includes('meaning_vi');
       
       const dataRows = hasHeader ? parsed.slice(1) : parsed;
-      const defaultLevelId = selectedImportLevelId || hskLevels[0]?.id || '';
+      const defaultLevelId = selectedImportLevelId || '';
 
       const newRows = dataRows.map(r => ({
         hanzi: r[0]?.trim() || '',
@@ -119,7 +114,7 @@ export function BulkAddVocabularyModal({
   };
 
   const handleAddRow = () => {
-    setRows([...rows, { hanzi: '', pinyin: '', meaningVi: '', levelId: hskLevels[0]?.id || '', partOfSpeech: '', example: '' }]);
+    setRows([...rows, { hanzi: '', pinyin: '', meaningVi: '', levelId: selectedImportLevelId || '', partOfSpeech: '', example: '' }]);
   };
 
   const handleRemoveRow = (index: number) => {
@@ -140,9 +135,9 @@ export function BulkAddVocabularyModal({
     const validRows = rows.filter(r => r.hanzi.trim() || r.pinyin.trim() || r.meaningVi.trim());
     
     // Validate
-    const invalidRow = validRows.find(r => !r.hanzi.trim() || !r.pinyin.trim() || !r.meaningVi.trim() || !r.levelId);
+    const invalidRow = validRows.find(r => !r.hanzi.trim() || !r.pinyin.trim() || !r.meaningVi.trim());
     if (invalidRow) {
-      alert('Vui lòng điền đầy đủ Hán tự, Pinyin, Nghĩa và Cấp độ cho tất cả các hàng có dữ liệu!');
+      alert('Vui lòng điền đầy đủ Hán tự, Pinyin và Nghĩa cho tất cả các hàng có dữ liệu!');
       return;
     }
 
@@ -158,6 +153,7 @@ export function BulkAddVocabularyModal({
         validRows.map(row => 
           adminContentApi.createVocabulary({
             ...row,
+            levelId: row.levelId ? row.levelId : null,
             status: 'PUBLISHED',
             isActive: true
           })
@@ -166,7 +162,7 @@ export function BulkAddVocabularyModal({
       
       alert(`Đã thêm thành công ${validRows.length} từ vựng!`);
       // Reset form
-      setRows([{ hanzi: '', pinyin: '', meaningVi: '', levelId: hskLevels[0]?.id || '', partOfSpeech: '', example: '' }]);
+      setRows([{ hanzi: '', pinyin: '', meaningVi: '', levelId: selectedImportLevelId || '', partOfSpeech: '', example: '' }]);
       onSuccess();
       onClose();
     } catch (error) {
@@ -193,6 +189,7 @@ export function BulkAddVocabularyModal({
                 value={selectedImportLevelId}
                 onChange={e => setSelectedImportLevelId(e.target.value)}
               >
+                <option value="">-- Không gán HSK (Từ vựng tự do/Chủ đề) --</option>
                 {hskLevels.map(lvl => (
                   <option key={lvl.id} value={lvl.id}>{lvl.name}</option>
                 ))}
@@ -228,7 +225,7 @@ export function BulkAddVocabularyModal({
                 <th className="p-3 font-semibold w-[20%]">Nghĩa Tiếng Việt *</th>
                 <th className="p-3 font-semibold w-[15%]">Từ loại</th>
                 <th className="p-3 font-semibold w-[20%]">Ví dụ</th>
-                <th className="p-3 font-semibold w-[10%]">HSK *</th>
+                <th className="p-3 font-semibold w-[10%]">HSK (Tùy chọn)</th>
                 <th className="p-3 font-semibold w-16 text-center">Hành động</th>
               </tr>
             </thead>
@@ -281,10 +278,10 @@ export function BulkAddVocabularyModal({
                   <td className="p-3">
                     <select 
                       className="w-full bg-transparent border-0 focus:ring-0 p-0 text-gray-700 font-medium"
-                      value={row.levelId}
+                      value={row.levelId || ''}
                       onChange={e => handleChange(idx, 'levelId', e.target.value)}
                     >
-                      <option value="" disabled>-- HSK --</option>
+                      <option value="">-- Không --</option>
                       {hskLevels.map(lvl => (
                         <option key={lvl.id} value={lvl.id}>{lvl.name}</option>
                       ))}

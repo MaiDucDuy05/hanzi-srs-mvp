@@ -64,6 +64,16 @@ export class AdminLessonsController {
     return { data: result, message: 'Lesson status updated successfully' };
   }
 
+  @Delete('lessons/:id')
+  async remove(
+    @Param('id') id: string,
+    @CurrentUser('sub') adminId: string,
+    @Ip() ipAddress: string,
+  ) {
+    const result = await this.adminLessonsService.softDelete(id, adminId, ipAddress);
+    return { data: result, message: 'Lesson deleted successfully' };
+  }
+
   @Get('lesson-contents')
   async getLessonContents(@Query() query: any) {
     const result = await this.adminLessonsService.getLessonContents(query);

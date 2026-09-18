@@ -3,6 +3,7 @@ import { BaseEntity } from '../../../common/base.entity';
 import { ContentStatus } from '../../../common/enums/curriculum.enums';
 import { ResourceTier } from '../../../common/enums/resources.enums';
 import { User } from '../../auth/entities/user.entity';
+import { ResourceType } from './resource-type.entity';
 
 /** Tài liệu tham khảo (PPT...) trong thư viện (FR-24). file_key trỏ S3. */
 @Entity('resources')
@@ -10,6 +11,15 @@ import { User } from '../../auth/entities/user.entity';
   where: 'deleted_at IS NULL',
 })
 export class Resource extends BaseEntity {
+  @Column({ name: 'resource_type_id', type: 'uuid', nullable: true })
+  resourceTypeId: string | null;
+
+  @ManyToOne(() => ResourceType, (type) => type.resources, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'resource_type_id' })
+  resourceType?: ResourceType | null;
   @Column({ type: 'varchar', length: 200 })
   title: string;
 

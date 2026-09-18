@@ -161,13 +161,20 @@ export function FlashcardGameFeature({ vocabularies, onComplete }: FlashcardGame
               </div>
             </div>
 
-            {/* Center Content */}
-            <div className="flex flex-col items-center justify-center mt-6 sm:mt-10">
-              <span className="text-3xl sm:text-[44px] font-medium text-[#7bc62d] mb-1 sm:mb-3 tracking-wider">{current.pinyin}</span>
-              <ClickableHanzi text={current.hanzi} className="leading-tight drop-shadow-sm tracking-wide" charClassName="text-7xl sm:text-[120px] font-bold text-[#215b3b]" />
-              <span className="text-gray-600 font-semibold text-base sm:text-xl mt-3">{current.meaningVi}</span>
+            {/* Center Content (Không hiển thị chữ Hán ở mặt sau) */}
+            <div className="flex flex-col items-center justify-center text-center px-6 mt-4 sm:mt-6">
+              <span className="text-3xl sm:text-5xl font-bold text-[#7bc62d] mb-3 sm:mb-4 tracking-wider">
+                {current.pinyin}
+              </span>
+              <span className="text-2xl sm:text-4xl font-extrabold text-[#11321e] mb-2 sm:mb-3 leading-snug">
+                {current.meaningVi}
+              </span>
               {current.example && (
-                <p className="text-gray-400 text-sm sm:text-base mt-2 italic text-center px-4">{current.example}</p>
+                <div className="mt-4 px-6 py-3 bg-[#f7f9ea] border border-[#d8e28c]/50 rounded-2xl max-w-md shadow-xs">
+                  <p className="text-gray-600 text-sm sm:text-base italic">
+                    {current.example}
+                  </p>
+                </div>
               )}
             </div>
           </div>

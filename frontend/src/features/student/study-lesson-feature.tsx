@@ -8,7 +8,6 @@ import { studentApi } from '@/lib/api/endpoints/student';
 import type { Vocabulary, GrammarPoint, UserVocabProgress, UserLessonProgress } from '@/lib/api/types';
 import { StudyLessonVocabTable } from './components/study-lesson-vocab-table';
 import { StudyLessonGrammarList } from './components/study-lesson-grammar-list';
-import { StudyLessonFilterBar } from './components/study-lesson-filter-bar';
 import { LearnWordFlow } from '@/features/study/learn-word/learn-word-flow';
 import { LearnGrammarFlow } from '@/features/study/learn-grammar/learn-grammar-flow';
 import { CheckCircle2 } from 'lucide-react';
@@ -64,7 +63,7 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
 
   if (mode === 'learn-word') {
     return (
-      <div className="w-full h-[98vh] min-h-[600px] pt-4 pb-12">
+      <div className="w-full h-[98vh] min-h-[600px] pt-12 pb-4">
         <LearnWordFlow
           vocabularies={vocabularies}
           initialIndex={learnIndex}

@@ -34,8 +34,8 @@ export default function GamesLayout({ children }: { children: React.ReactNode })
       </header>
 
       {/* Game Area */}
-      <main className="flex-1 w-full max-w-5xl mx-auto flex flex-col items-center justify-center relative z-10 pb-8 h-full overflow-hidden">
-        <div className="w-full  flex-1 flex flex-col overflow-hidden">
+      <main className="flex-1 w-full max-w-5xl mx-auto flex flex-col items-center justify-center relative z-10 pb-4 sm:pb-8 h-full min-h-0 overflow-hidden">
+        <div className="w-full flex-1 flex flex-col min-h-0 overflow-y-auto">
           {children}
         </div>
       </main>

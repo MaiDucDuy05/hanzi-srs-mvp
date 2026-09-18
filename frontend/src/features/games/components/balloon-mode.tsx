@@ -80,8 +80,8 @@ const GameCanvas = React.memo(function GameCanvas({ secRef }: { secRef: React.Re
         if (state.phase === 'playing') secRef.current.tick(dt);
       }
 
-      // Cap React rendering to ~30 FPS (every 33ms) to save CPU/GPU and bypass react-scan lag
-      if (accumulatedDt >= 33) {
+      // Render at ~60 FPS (16ms) for smooth and responsive animations
+      if (accumulatedDt >= 16) {
         setTick(t => t + 1);
         accumulatedDt = 0;
       }

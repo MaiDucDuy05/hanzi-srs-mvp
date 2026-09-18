@@ -98,7 +98,7 @@ export function StorySummary({ vocabularies, onClose }: StorySummaryProps) {
 
         <button 
           onClick={fetchStory}
-          className="w-full bg-gradient-to-r from-[#1a4a2b] to-[#2c7a47] hover:from-[#133820] hover:to-[#1a4a2b] text-white py-4 text-lg rounded-2xl shadow-[0_10px_25px_-5px_rgba(44,122,71,0.4)] hover:shadow-[0_15px_30px_-5px_rgba(44,122,71,0.6)] hover:-translate-y-1 transition-all font-bold flex items-center justify-center gap-2 mt-auto shrink-0"
+          className="w-full bg-[#1f5333] hover:bg-[#163f26] text-white py-4 text-lg rounded-2xl shadow-[0_10px_25px_-5px_rgba(31,83,51,0.4)] hover:shadow-[0_15px_30px_-5px_rgba(31,83,51,0.6)] hover:-translate-y-0.5 transition-all font-bold flex items-center justify-center gap-2 mt-auto shrink-0 cursor-pointer"
         >
           <Sparkles className="w-5 h-5" /> Bắt đầu tạo truyện
         </button>
@@ -183,7 +183,7 @@ export function StorySummary({ vocabularies, onClose }: StorySummaryProps) {
 
       <button 
         onClick={onClose}
-        className="w-full max-w-sm mx-auto bg-gradient-to-r from-[#1a4a2b] to-[#2c7a47] hover:from-[#133820] hover:to-[#1a4a2b] text-white py-4 text-lg rounded-2xl shadow-[0_10px_25px_-5px_rgba(44,122,71,0.4)] hover:shadow-[0_15px_30px_-5px_rgba(44,122,71,0.6)] hover:-translate-y-1 transition-all font-bold mt-auto shrink-0"
+        className="w-full max-w-sm mx-auto bg-[#1f5333] hover:bg-[#163f26] text-white py-4 text-lg rounded-2xl shadow-[0_10px_25px_-5px_rgba(31,83,51,0.4)] hover:shadow-[0_15px_30px_-5px_rgba(31,83,51,0.6)] hover:-translate-y-0.5 transition-all font-bold mt-auto shrink-0 cursor-pointer"
       >
         Hoàn tất bài học
       </button>

@@ -15,11 +15,12 @@ export class AdminLessonsService {
   ) {}
 
   async findAllByCourse(courseId: string, query: any) {
-    const limit = parseInt(query.limit) || 20;
+    const limit = parseInt(query.limit) || 1000;
     const page = parseInt(query.page) || 1;
     
     const qb = this.lessonRepo.createQueryBuilder('lesson')
       .where('lesson.levelId = :courseId', { courseId }) // levelId relates to HskLevel (Course)
+      .andWhere('lesson.isActive = :isActive', { isActive: true })
       .skip((page - 1) * limit)
       .take(limit)
       .orderBy('lesson.displayOrder', 'ASC')
@@ -42,6 +43,7 @@ export class AdminLessonsService {
     
     const qb = this.lessonRepo.createQueryBuilder('lesson')
       .leftJoinAndSelect('lesson.level', 'course')
+      .where('lesson.isActive = :isActive', { isActive: true })
       .skip((page - 1) * limit)
       .take(limit)
       .orderBy('course.displayOrder', 'ASC') 
@@ -59,21 +61,21 @@ export class AdminLessonsService {
     };
   }
 
-  async create(courseId: string, data: any, adminId: string, ipAddress: string) {
+  async create(courseId: string, data: Partial<Lesson>, adminId: string, ipAddress: string) {
     const newLesson = this.lessonRepo.create({
       ...data,
       levelId: courseId,
       status: data.status || ContentStatus.DRAFT,
-    }) as unknown as Lesson;
-    
+      isActive: true,
+    });
     await this.lessonRepo.save(newLesson);
 
     await this.auditLogService.logAction(adminId, 'CREATE_LESSON', 'LESSON', newLesson.id, ipAddress, { newValue: data });
     return newLesson;
   }
 
-  async update(id: string, data: any, adminId: string, ipAddress: string) {
-    const lesson = await this.lessonRepo.findOne({ where: { id } });
+  async update(id: string, data: Partial<Lesson>, adminId: string, ipAddress: string) {
+    const lesson = await this.lessonRepo.findOne({ where: { id, isActive: true } });
     if (!lesson) throw new NotFoundException('Lesson not found');
 
     const oldValue = { ...lesson };
@@ -89,11 +91,11 @@ export class AdminLessonsService {
       await this.lessonRepo.update({ id: item.id }, { displayOrder: item.order });
     }
     await this.auditLogService.logAction(adminId, 'REORDER_LESSONS', 'LESSON', 'multiple', ipAddress, { newValue: items });
-    return true;
+    return { success: true };
   }
 
   async changeStatus(id: string, status: string, adminId: string, ipAddress: string) {
-    const lesson = await this.lessonRepo.findOne({ where: { id } });
+    const lesson = await this.lessonRepo.findOne({ where: { id, isActive: true } });
     if (!lesson) throw new NotFoundException('Lesson not found');
 
     const oldStatus = lesson.status;
@@ -105,6 +107,20 @@ export class AdminLessonsService {
 
     await this.auditLogService.logAction(adminId, 'CHANGE_LESSON_STATUS', 'LESSON', lesson.id, ipAddress, { oldValue: { status: oldStatus }, newValue: { status } });
     return lesson;
+  }
+
+  async softDelete(id: string, adminId: string, ipAddress: string) {
+    const lesson = await this.lessonRepo.findOne({ where: { id, isActive: true } });
+    if (!lesson) throw new NotFoundException('Lesson not found');
+
+    lesson.isActive = false;
+    lesson.deletedAt = new Date();
+    await this.lessonRepo.save(lesson);
+
+    await this.auditLogService.logAction(adminId, 'DELETE_LESSON', 'LESSON', lesson.id, ipAddress, {
+      oldValue: { id: lesson.id, title: lesson.title },
+    });
+    return { success: true };
   }
   
    async getLessonContents(query: any) {

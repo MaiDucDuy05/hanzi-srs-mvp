@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePracticeEngine } from '@/features/practice/components/practice-engine';
 import { GameSummary } from '../components/game-summary';
@@ -17,6 +17,12 @@ interface WriteSentenceFeatureProps {
 export function WriteSentenceFeature({ sourceId, sourceType }: WriteSentenceFeatureProps) {
   const router = useRouter();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Cuộn lên đầu trang khi đổi câu hỏi
+  useEffect(() => {
+    scrollContainerRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentIndex]);
 
   const engine = usePracticeEngine({
     practiceType: 'SENTENCE_ORDERING',
@@ -75,29 +81,36 @@ export function WriteSentenceFeature({ sourceId, sourceType }: WriteSentenceFeat
   if (!currentQuestion) return null;
 
   return (
-    <div className="relative w-full min-h-screen flex flex-col overflow-hidden">
-      <BambooBackground />
-      <WriteSentenceBoard
-        questions={engine.sentenceQuestions}
-        currentIndex={currentIndex}
-        userAnswers={engine.userAnswers}
-        onUpdateAnswers={(tokenIds) => {
-          engine.setUserAnswers({ ...engine.userAnswers, [currentQuestion.questionId]: tokenIds });
-        }}
-        onPrev={() => setCurrentIndex((i) => Math.max(0, i - 1))}
-        onNext={() => {
-          if (currentIndex < engine.sentenceQuestions.length - 1) {
-            setCurrentIndex((i) => i + 1);
-          } else {
-            engine.handleComplete({
-              correctCount: 0, wrongCount: 0, moveCount: 0, score: 0, answerData: {},
-            });
-          }
-        }}
-        onSubmit={() => engine.handleComplete({
-          correctCount: 0, wrongCount: 0, moveCount: 0, score: 0, answerData: {},
-        })}
-      />
+    <div
+      ref={scrollContainerRef}
+      className="relative w-full h-full flex-1 flex flex-col min-h-0 overflow-y-auto scroll-smooth"
+    >
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <BambooBackground />
+      </div>
+      <div className="relative z-10 w-full flex-1 flex flex-col">
+        <WriteSentenceBoard
+          questions={engine.sentenceQuestions}
+          currentIndex={currentIndex}
+          userAnswers={engine.userAnswers}
+          onUpdateAnswers={(tokenIds) => {
+            engine.setUserAnswers({ ...engine.userAnswers, [currentQuestion.questionId]: tokenIds });
+          }}
+          onPrev={() => setCurrentIndex((i) => Math.max(0, i - 1))}
+          onNext={() => {
+            if (currentIndex < engine.sentenceQuestions.length - 1) {
+              setCurrentIndex((i) => i + 1);
+            } else {
+              engine.handleComplete({
+                correctCount: 0, wrongCount: 0, moveCount: 0, score: 0, answerData: {},
+              });
+            }
+          }}
+          onSubmit={() => engine.handleComplete({
+            correctCount: 0, wrongCount: 0, moveCount: 0, score: 0, answerData: {},
+          })}
+        />
+      </div>
     </div>
   );
 }

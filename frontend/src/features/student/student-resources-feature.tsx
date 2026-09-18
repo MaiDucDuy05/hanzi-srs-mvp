@@ -9,11 +9,13 @@ import { Badge } from '@/features/ui/components/badge';
 import { resourceApi } from '@/lib/api/endpoints/resource';
 import { Download, FileText, Search } from 'lucide-react';
 import { DocumentViewerModal } from '@/features/ui/components/document-viewer-modal';
-import type { Resource } from '@/lib/api/types';
+import type { Resource, ResourceType } from '@/lib/api/types';
 
 export function StudentResourcesFeature() {
   const t = useTranslations('Resources');
   const [resources, setResources] = useState<Resource[]>([]);
+  const [resourceTypes, setResourceTypes] = useState<ResourceType[]>([]);
+  const [selectedTypeId, setSelectedTypeId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [downloading, setDownloading] = useState<string | null>(null);
@@ -23,24 +25,14 @@ export function StudentResourcesFeature() {
   const loadResources = async () => {
     try {
       setLoading(true);
-      // Fetch only published resources (admin manages status)
-      const res = await resourceApi.list({ status: 'PUBLISHED', limit: 100 });
+      // Fetch only published resources & active types
+      const [res, types] = await Promise.all([
+        resourceApi.list({ status: 'PUBLISHED', limit: 100 }),
+        resourceApi.listTypes(false).catch(() => []),
+      ]);
       
-      // MOCK DATA: Add 8 mock books to test UI as requested
-      const mockBooks: Resource[] = Array.from({ length: 8 }).map((_, i) => ({
-        id: `mock-book-${i}`,
-        title: t('mockBookTitle', { number: i + 1 }),
-        description: t('defaultDesc'),
-        tier: i >= 4 ? 'PREMIUM' : 'FREE',
-        status: 'PUBLISHED',
-        fileKey: '',
-        fileSize: 0,
-        coverImageUrl: null, // Will fall back to default icon, or we can use a placeholder URL if needed
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      } as unknown as Resource));
-      
-      setResources([...res, ...mockBooks]);
+      setResources(res);
+      setResourceTypes(types || []);
     } catch (error) {
       console.error('Failed to load resources:', error);
     } finally {
@@ -70,11 +62,13 @@ export function StudentResourcesFeature() {
     }
   };
 
-  const filteredResources = resources.filter(
-    (r) =>
+  const filteredResources = resources.filter((r) => {
+    const matchesSearch =
       r.title.toLowerCase().includes(search.toLowerCase()) ||
-      (r.description && r.description.toLowerCase().includes(search.toLowerCase()))
-  );
+      (r.description && r.description.toLowerCase().includes(search.toLowerCase()));
+    const matchesType = !selectedTypeId || r.resourceTypeId === selectedTypeId;
+    return matchesSearch && matchesType;
+  });
 
   return (
     <div className="space-y-8 mt-4">
@@ -93,6 +87,37 @@ export function StudentResourcesFeature() {
           />
         </div>
       </div>
+
+      {/* Category Filter Pills */}
+      {resourceTypes.length > 0 && (
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          <button
+            type="button"
+            onClick={() => setSelectedTypeId('')}
+            className={`px-4 py-2 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer ${
+              selectedTypeId === ''
+                ? 'bg-[#215b3b] text-white shadow-sm'
+                : 'bg-white text-gray-600 hover:bg-emerald-50 border border-gray-100 shadow-2xs'
+            }`}
+          >
+            Tất cả
+          </button>
+          {resourceTypes.map((type) => (
+            <button
+              key={type.id}
+              type="button"
+              onClick={() => setSelectedTypeId(type.id)}
+              className={`px-4 py-2 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer ${
+                selectedTypeId === type.id
+                  ? 'bg-[#215b3b] text-white shadow-sm'
+                  : 'bg-white text-gray-600 hover:bg-emerald-50 border border-gray-100 shadow-2xs'
+              }`}
+            >
+              {type.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-pulse">
@@ -128,9 +153,16 @@ export function StudentResourcesFeature() {
               {/* Right: Content */}
               <div className="flex-1 min-w-0 flex flex-col py-1">
                  <div className="flex justify-between items-start gap-2 mb-1.5">
-                    <h3 className="text-[17px] font-bold text-[#11321e] line-clamp-2 leading-[1.3] pr-2 tracking-tight" title={resource.title}>
-                       {resource.title}
-                    </h3>
+                    <div className="flex-1 min-w-0 pr-2">
+                       {resource.resourceType && (
+                         <span className="inline-block text-[10px] font-semibold text-[#215b3b] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100/80 mb-1">
+                           {resource.resourceType.name}
+                         </span>
+                       )}
+                       <h3 className="text-[17px] font-bold text-[#11321e] line-clamp-2 leading-[1.3] tracking-tight" title={resource.title}>
+                          {resource.title}
+                       </h3>
+                    </div>
                     { resource.tier === 'VIP' ? (
                       <Badge tone="amber" className="shrink-0 uppercase text-[10px] px-2.5 py-0.5 rounded-full font-bold tracking-wider shadow-sm">PREMIUM</Badge>
                     ) : (

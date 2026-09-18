@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { adminContentApi } from '@/lib/api/endpoints/admin-content';
 import { useConfirm } from '@/providers/confirm-provider';
-import { X, Search, Check, Trash2, Plus } from 'lucide-react';
+import { X, Search, Check, Trash2, Plus, UploadCloud } from 'lucide-react';
 
 interface Props {
   topic: any;
@@ -13,27 +13,29 @@ export const AdminTopicVocabulariesModal = ({ topic, onClose }: Props) => {
   const [allVocabs, setAllVocabs] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const confirm = useConfirm();
 
+  const fetchVocabs = async () => {
+    try {
+      setLoading(true);
+      const [topicRes, allRes] = await Promise.all([
+        adminContentApi.getTopicVocabularies(topic.id),
+        adminContentApi.getVocabularies({ limit: 1000 })
+      ]);
+      
+      const currentVocabs = (topicRes as any).data || [];
+      setTopicVocabs(currentVocabs);
+      setAllVocabs((allRes as any).data?.items || (allRes as any).data || []);
+    } catch (error) {
+      console.error('Error fetching vocabularies:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchVocabs = async () => {
-      try {
-        setLoading(true);
-        const [topicRes, allRes] = await Promise.all([
-          adminContentApi.getTopicVocabularies(topic.id),
-          adminContentApi.getVocabularies({ limit: 1000 })
-        ]);
-        
-        const currentVocabs = (topicRes as any).data || [];
-        setTopicVocabs(currentVocabs);
-        setAllVocabs((allRes as any).data?.items || (allRes as any).data || []);
-      } catch (error) {
-        console.error('Error fetching vocabularies:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     fetchVocabs();
   }, [topic.id]);
 
@@ -66,6 +68,118 @@ export const AdminTopicVocabulariesModal = ({ topic, onClose }: Props) => {
     }
   };
 
+  const parseCSV = (text: string) => {
+    const rows = [];
+    let curRow = [];
+    let curCell = '';
+    let insideQuote = false;
+    
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (c === '"') {
+        if (insideQuote && text[i+1] === '"') {
+          curCell += '"';
+          i++;
+        } else {
+          insideQuote = !insideQuote;
+        }
+      } else if (c === ',' && !insideQuote) {
+        curRow.push(curCell);
+        curCell = '';
+      } else if ((c === '\n' || c === '\r') && !insideQuote) {
+        if (c === '\r' && text[i+1] === '\n') i++;
+        curRow.push(curCell);
+        if (curRow.some(cell => cell.trim())) {
+          rows.push(curRow);
+        }
+        curRow = [];
+        curCell = '';
+      } else {
+        curCell += c;
+      }
+    }
+    if (curCell || curRow.length) {
+      curRow.push(curCell);
+      if (curRow.some(cell => cell.trim())) {
+        rows.push(curRow);
+      }
+    }
+    return rows;
+  };
+
+  const handleImportCsv = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      let text = evt.target?.result as string;
+      if (!text) return;
+      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+
+      const parsed = parseCSV(text);
+      if (parsed.length === 0) {
+        alert('File CSV trống hoặc không đúng định dạng!');
+        return;
+      }
+
+      const header = parsed[0].map(s => s.toLowerCase().trim());
+      const hasHeader = header.includes('hanzi') || header.includes('pinyin') || header.includes('meaning') || header.includes('meaning_vi');
+      const dataRows = hasHeader ? parsed.slice(1) : parsed;
+
+      const validItems = dataRows
+        .map(r => ({
+          hanzi: r[0]?.trim() || '',
+          pinyin: r[1]?.trim() || '',
+          meaningVi: r[2]?.trim() || '',
+          partOfSpeech: r[3]?.trim() || null,
+          example: r[4]?.trim() || null,
+          levelId: null, // Không gắn HSK
+          status: 'PUBLISHED',
+          isActive: true
+        }))
+        .filter(item => item.hanzi && item.pinyin && item.meaningVi);
+
+      if (validItems.length === 0) {
+        alert('Không tìm thấy dòng từ vựng hợp lệ (yêu cầu tối thiểu cột Hán tự, Pinyin, Nghĩa).');
+        return;
+      }
+
+      try {
+        setImporting(true);
+        // Chia nhỏ (chunk) danh sách từ vựng thành từng nhóm 100 từ để tránh lỗi Payload Too Large (413) từ backend
+        const chunkSize = 100;
+        let createdIds: string[] = [];
+        
+        for (let i = 0; i < validItems.length; i += chunkSize) {
+          const chunk = validItems.slice(i, i + chunkSize);
+          const response = await adminContentApi.bulkCreateVocabulary(chunk);
+          const chunkIds = (response as any).data?.ids || [];
+          createdIds = [...createdIds, ...chunkIds];
+        }
+        
+        if (createdIds.length > 0) {
+          // 2. Gán ngay vào chủ đề này
+          const currentIds = topicVocabs.map(v => v.id);
+          const combinedIds = Array.from(new Set([...currentIds, ...createdIds]));
+          await adminContentApi.assignTopicVocabularies(topic.id, combinedIds);
+
+          alert(`Đã thêm và gán thành công ${createdIds.length} từ vựng vào chủ đề "${topic.name}"!`);
+          fetchVocabs();
+        } else {
+          alert('Không có từ vựng nào được import.');
+        }
+      } catch (err: any) {
+        console.error('Import CSV failed:', err);
+        alert(err instanceof Error ? err.message : 'Lỗi khi import từ vựng vào chủ đề');
+      } finally {
+        setImporting(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const currentIds = topicVocabs.map(v => v.id);
   const filteredVocabs = allVocabs.filter(v => 
     !currentIds.includes(v.id) && 
@@ -75,14 +189,32 @@ export const AdminTopicVocabulariesModal = ({ topic, onClose }: Props) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div className="bg-white rounded-3xl w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
-        <div className="p-6 border-b flex justify-between items-center">
+        <div className="p-6 border-b flex justify-between items-center bg-white">
           <div>
             <h2 className="text-xl font-bold text-[#11321e]">Từ vựng của Chủ đề: {topic.name}</h2>
             <p className="text-sm text-gray-500 mt-1">Gán hoặc gỡ bỏ từ vựng cho chủ đề này</p>
           </div>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 p-2">
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-3">
+            <input
+              type="file"
+              accept=".csv"
+              className="hidden"
+              ref={fileInputRef}
+              onChange={handleImportCsv}
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={importing}
+              className="flex items-center gap-2 bg-[#11321e] text-[#c7cf35] hover:bg-[#1a4a2b] px-4 py-2 rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer disabled:opacity-50"
+            >
+              <UploadCloud className="h-4 w-4" />
+              {importing ? 'Đang import...' : 'Import CSV vào chủ đề'}
+            </button>
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-700 p-2">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
         
         <div className="flex-1 flex overflow-hidden">

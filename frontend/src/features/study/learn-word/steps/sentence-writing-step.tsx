@@ -125,17 +125,26 @@ export function SentenceWritingStep({ vocabulary, onNext }: SentenceWritingStepP
       </div>
 
       {!isPassed ? (
-        <button 
-          onClick={handleCheck}
-          disabled={!sentence.trim() || isChecking}
-          className="w-full max-w-sm bg-gray-900 hover:bg-black text-white py-4 text-lg rounded-2xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.3)] hover:shadow-[0_15px_30px_-5px_rgba(0,0,0,0.4)] hover:-translate-y-1 transition-all font-bold flex items-center justify-center gap-2 mt-auto disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-none"
-        >
-          {isChecking ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Kiểm tra lỗi'}
-        </button>
+        <div className="w-full max-w-sm flex flex-col items-center gap-2 mt-auto">
+          <button 
+            onClick={handleCheck}
+            disabled={!sentence.trim() || isChecking}
+            className="w-full bg-gray-900 hover:bg-black text-white py-3.5 text-lg rounded-2xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.3)] hover:shadow-[0_15px_30px_-5px_rgba(0,0,0,0.4)] hover:-translate-y-0.5 transition-all font-bold flex items-center justify-center gap-2 disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-none cursor-pointer"
+          >
+            {isChecking ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Kiểm tra lỗi'}
+          </button>
+          <button
+            type="button"
+            onClick={onNext}
+            className="text-xs font-semibold text-gray-500 hover:text-gray-800 py-1 transition-colors cursor-pointer"
+          >
+            Bỏ qua bước đặt câu này →
+          </button>
+        </div>
       ) : (
         <button 
           onClick={onNext}
-          className="w-full max-w-sm bg-gradient-to-r from-[#1a4a2b] to-[#2c7a47] hover:from-[#133820] hover:to-[#1a4a2b] text-white py-4 text-lg rounded-2xl shadow-[0_10px_25px_-5px_rgba(44,122,71,0.4)] hover:shadow-[0_15px_30px_-5px_rgba(44,122,71,0.6)] hover:-translate-y-1 transition-all font-bold flex items-center justify-center gap-2 mt-auto animate-in fade-in duration-500"
+          className="w-full max-w-sm bg-[#1f5333] hover:bg-[#163f26] text-white py-3.5 text-lg rounded-2xl shadow-[0_10px_25px_-5px_rgba(31,83,51,0.4)] hover:shadow-[0_15px_30px_-5px_rgba(31,83,51,0.6)] hover:-translate-y-0.5 transition-all font-bold flex items-center justify-center gap-2 mt-auto animate-in fade-in duration-500 cursor-pointer"
         >
           Tiếp tục <ArrowRight className="w-5 h-5" />
         </button>

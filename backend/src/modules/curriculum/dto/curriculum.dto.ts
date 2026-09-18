@@ -63,8 +63,9 @@ export class UpdateHskLevelDto {
 }
 
 export class CreateVocabularyDto {
+  @IsOptional()
   @IsUUID()
-  levelId: string;
+  levelId?: string | null;
 
   @IsString()
   hanzi: string;

@@ -1,9 +1,9 @@
 import { apiFetch, unwrap } from '../client';
-import type { Paginated, Single, Resource, MistakeBookEntry, VipUpgradeRequest, AiJob, User } from '../types';
+import type { Paginated, Single, Resource, ResourceType, MistakeBookEntry, VipUpgradeRequest, AiJob, User } from '../types';
 import { toQuery } from './utils';
 
 export const resourceApi = {
-  list: (params: { tier?: string; status?: string; page?: number; limit?: number } = {}) =>
+  list: (params: { tier?: string; status?: string; resourceTypeId?: string; page?: number; limit?: number } = {}) =>
     apiFetch<Paginated<Resource>>(`/resources${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
 
   get: (id: string) => unwrap(apiFetch<Single<Resource>>(`/resources/${id}`)),
@@ -21,6 +21,22 @@ export const resourceApi = {
 
   getDownloadUrl: (id: string) =>
     unwrap(apiFetch<Single<{ downloadUrl: string; resource: Resource }>>(`/resources/${id}/download-url`)),
+
+  // Resource Types (Loại giáo trình)
+  listTypes: (includeInactive?: boolean) =>
+    apiFetch<Single<ResourceType[]>>(`/resources/types${toQuery({ includeInactive })}`).then((r) => r.data),
+
+  getType: (id: string) =>
+    unwrap(apiFetch<Single<ResourceType>>(`/resources/types/${id}`)),
+
+  createType: (data: Partial<ResourceType>) =>
+    unwrap(apiFetch<Single<ResourceType>>('/resources/types', { method: 'POST', body: JSON.stringify(data) })),
+
+  updateType: (id: string, data: Partial<ResourceType>) =>
+    unwrap(apiFetch<Single<ResourceType>>(`/resources/types/${id}`, { method: 'PATCH', body: JSON.stringify(data) })),
+
+  deleteType: (id: string) =>
+    apiFetch(`/resources/types/${id}`, { method: 'DELETE' }),
 
 
   createContact: (data: { name: string; email: string; phone?: string; message: string }) =>
