@@ -63,12 +63,12 @@ export interface ShooterConfig {
 
 const DEFAULT_CONFIG: ShooterConfig = {
   initialHp: 5,
-  spawnRateMs: 4500, // Slower initial spawn rate (1 balloon every 4.5s)
-  minSpawnRateMs: 1200,
-  baseFallSpeed: 2.5, // Slower initial fall speed (takes 40s to reach bottom)
-  maxFallSpeed: 18,
-  difficultyRamp: 0.012, // More gradual difficulty curve
-  bulletSpeed: 150,
+  spawnRateMs: 2400, // Spawn a balloon every 2.4s (down to 1s as difficulty ramps)
+  minSpawnRateMs: 1000,
+  baseFallSpeed: 8.5, // Takes ~12s to reach bottom (much more engaging and fun)
+  maxFallSpeed: 20,
+  difficultyRamp: 0.015,
+  bulletSpeed: 220,
 };
 
 export class ShooterSec {
@@ -118,6 +118,8 @@ export class ShooterSec {
     this.ctx = this.getInitialState();
     this.ctx.phase = 'playing';
     this.lastSpawnTime = 0;
+    // Spawn bóng đầu tiên ngay lập tức để người chơi không phải chờ
+    this.spawnTarget();
   }
 
   pause(): void {
@@ -237,11 +239,16 @@ export class ShooterSec {
   }
 
   private checkSpawns(): void {
-    // Current spawn rate based on difficulty
-    const currentSpawnRate = Math.max(
+    // Tốc độ sinh bóng dựa theo độ khó
+    const targetSpawnRate = Math.max(
       this.config.minSpawnRateMs, 
       this.config.spawnRateMs / Math.sqrt(this.ctx.difficulty)
     );
+
+    // Nếu trên màn hình chưa có bóng nào, sinh bóng mới nhanh chóng (400ms) để không bị ngắt quãng
+    const currentSpawnRate = this.ctx.targets.length === 0
+      ? Math.min(400, targetSpawnRate)
+      : targetSpawnRate;
 
     if (this.ctx.timeElapsed - this.lastSpawnTime >= currentSpawnRate) {
       this.spawnTarget();

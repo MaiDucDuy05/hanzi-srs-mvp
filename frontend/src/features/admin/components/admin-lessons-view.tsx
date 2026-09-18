@@ -2,7 +2,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { adminContentApi } from '@/lib/api/endpoints/admin-content';
-import { Edit2, Plus, X, MoreVertical, Eye, EyeOff } from 'lucide-react';
+import { Edit2, Plus, X, MoreVertical, Eye, EyeOff, Trash2 } from 'lucide-react';
 import { LessonContentManager } from './lesson-content-manager';
 import { useConfirm } from '@/providers/confirm-provider';
 
@@ -78,6 +78,24 @@ export const AdminLessonsView = () => {
     } catch (error) {
       console.error('Failed to update lesson status:', error);
       alert('Lỗi khi cập nhật trạng thái bài học');
+    }
+  };
+
+  const handleDeleteLesson = async (id: string, title?: string) => {
+    if (!(await confirm({ 
+      title: 'Xóa bài học', 
+      message: `Bạn có chắc chắn muốn xóa bài học "${title || ''}"? Hành động này sẽ chuyển trạng thái bài học thành đã xóa.`, 
+      variant: 'danger',
+      confirmText: 'Xóa bài học',
+      cancelText: 'Hủy'
+    }))) return;
+
+    try {
+      await adminContentApi.deleteLesson(id);
+      setLessons(prev => prev.filter(l => l.id !== id));
+    } catch (error) {
+      console.error('Failed to delete lesson:', error);
+      alert('Lỗi khi xóa bài học');
     }
   };
 
@@ -230,9 +248,16 @@ export const AdminLessonsView = () => {
                       </button>
                       <button 
                         onClick={() => { setManagingLessonId(lesson.id); setOpenMenuId(null); }}
-                        className="w-full text-left px-4 py-2.5 text-[13px] font-bold text-gray-500 hover:text-[#11321e] hover:bg-gray-50 transition-colors"
+                        className="w-full text-left px-4 py-2.5 text-[13px] font-bold text-gray-500 hover:text-[#11321e] hover:bg-gray-50 transition-colors border-b border-gray-50"
                       >
                         Quản lý nội dung
+                      </button>
+                      <button 
+                        onClick={() => { handleDeleteLesson(lesson.id, lesson.title); setOpenMenuId(null); }}
+                        className="w-full text-left px-4 py-2.5 text-[13px] font-bold text-red-600 hover:bg-red-50 transition-colors flex items-center gap-1.5"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Xóa bài học
                       </button>
                     </div>
                   )}
@@ -253,7 +278,7 @@ export const AdminLessonsView = () => {
                 </div>
                 
                 <div className="flex items-center gap-2">
-                  <button onClick={() => handleOpenModal(lesson)} className="h-8 w-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-[#11321e] transition-colors">
+                  <button onClick={() => handleOpenModal(lesson)} title="Sửa bài học" className="h-8 w-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-[#11321e] transition-colors">
                     <Edit2 className="h-4 w-4" />
                   </button>
                   <button 
@@ -266,6 +291,13 @@ export const AdminLessonsView = () => {
                     }`}
                   >
                     {lesson.status === 'PUBLISHED' ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                  </button>
+                  <button 
+                    onClick={() => handleDeleteLesson(lesson.id, lesson.title)}
+                    title="Xóa bài học"
+                    className="h-8 w-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               </div>

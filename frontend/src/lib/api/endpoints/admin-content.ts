@@ -28,6 +28,8 @@ export const adminContentApi = {
     apiFetch(`/admin/lessons/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
   reorderLessons: (items: { id: string; order: number }[]) =>
     apiFetch(`/admin/lessons/reorder`, { method: 'PUT', body: JSON.stringify({ items }) }),
+  deleteLesson: (id: string) =>
+    apiFetch(`/admin/lessons/${id}`, { method: 'DELETE' }),
 
   // Lesson Contents (Linking vocab/grammar to lessons)
   getLessonContents: (params?: Record<string, string | number | boolean | undefined>) =>
@@ -44,10 +46,14 @@ export const adminContentApi = {
     apiFetch(`/admin/vocabularies/import`, { method: 'POST', body: data, contentType: false }),
   createVocabulary: (data: any) =>
     apiFetch(`/admin/vocabularies`, { method: 'POST', body: JSON.stringify(data) }),
+  bulkCreateVocabulary: (data: any[]) =>
+    apiFetch(`/admin/vocabularies/bulk-create`, { method: 'POST', body: JSON.stringify(data) }),
   updateVocabulary: (id: string, data: any) =>
     apiFetch(`/admin/vocabularies/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteVocabulary: (id: string) =>
     apiFetch(`/admin/vocabularies/${id}`, { method: 'DELETE' }),
+  bulkDeleteVocabularies: (ids: string[]) =>
+    apiFetch(`/admin/vocabularies/bulk-delete`, { method: 'POST', body: JSON.stringify({ ids }) }),
   exportVocabulariesCsv: () =>
     apiFetch(`/admin/vocabularies/export`, { method: 'GET' }),
   uploadVocabularyAudio: (id: string, data: FormData) =>

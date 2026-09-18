@@ -31,7 +31,13 @@ export class AdminVocabulariesService {
         { search: `%${query.search}%` }
       );
     }
-    if (query.levelId) qb.andWhere('vocab.levelId = :levelId', { levelId: query.levelId });
+    if (query.levelId) {
+      if (query.levelId === 'none') {
+        qb.andWhere('vocab.levelId IS NULL');
+      } else {
+        qb.andWhere('vocab.levelId = :levelId', { levelId: query.levelId });
+      }
+    }
 
     const [data, total] = await qb.getManyAndCount();
 
@@ -46,8 +52,10 @@ export class AdminVocabulariesService {
       throw new BadRequestException('Từ loại (partOfSpeech) không được vượt quá 100 ký tự');
     }
     const cleanPartOfSpeech = typeof data.partOfSpeech === 'string' ? data.partOfSpeech.trim() || null : data.partOfSpeech ?? null;
+    const cleanLevelId = data.levelId ? data.levelId : null;
     const newVocab = this.vocabRepo.create({
       ...data,
+      levelId: cleanLevelId,
       partOfSpeech: cleanPartOfSpeech,
       status: data.status || ContentStatus.DRAFT,
     }) as unknown as Vocabulary;
@@ -88,6 +96,30 @@ export class AdminVocabulariesService {
 
     await this.auditLogService.logAction(adminId, 'DELETE_VOCAB', 'VOCABULARY', vocab.id, ipAddress, {});
     return { success: true };
+  }
+
+  async bulkSoftDelete(ids: string[], adminId: string, ipAddress: string) {
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return { success: true, count: 0 };
+    }
+
+    const result = await this.vocabRepo.createQueryBuilder()
+      .update(Vocabulary)
+      .set({ isActive: false, deletedAt: new Date() })
+      .where('id IN (:...ids) AND isActive = :isActive', { ids, isActive: true })
+      .execute();
+
+    const affectedCount = result.affected || 0;
+    await this.auditLogService.logAction(
+      adminId,
+      'BULK_DELETE_VOCAB',
+      'VOCABULARY',
+      'bulk',
+      ipAddress,
+      { oldValue: { requestedIds: ids }, newValue: { count: affectedCount } },
+    );
+
+    return { success: true, count: affectedCount };
   }
 
   async exportCsv() {

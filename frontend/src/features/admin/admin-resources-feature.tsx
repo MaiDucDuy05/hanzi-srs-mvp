@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { resourceApi, subscriptionApi } from '@/lib/api/endpoints';
-import type { Resource } from '@/lib/api/types';
+import type { Resource, ResourceType } from '@/lib/api/types';
 import { useAuth } from '@/lib/auth/auth-context';
 import { AuthGuard } from '@/features/layout/components/auth-guard';
 import { PageLoading } from '@/features/ui/components/spinner';
@@ -10,6 +10,7 @@ import { ErrorState } from '@/features/ui/components/error-state';
 import { useConfirm } from '@/providers/confirm-provider';
 import { Modal } from '@/features/ui/components/modal';
 import { DocumentViewerModal } from '@/features/ui/components/document-viewer-modal';
+import { AdminResourceTypesModal } from './components/admin-resource-types-modal';
 import { Field, Input, Select, Textarea } from '@/features/ui/components/form';
 import { Button } from '@/features/ui/components/button';
 import { 
@@ -22,25 +23,42 @@ import {
   Settings,
   Gamepad2,
   Hourglass,
-  ChevronDown
+  ChevronDown,
+  Tags
 } from 'lucide-react';
 
 export function AdminResourcesFeature() {
   const { user } = useAuth();
   const [resources, setResources] = useState<Resource[]>([]);
+  const [resourceTypes, setResourceTypes] = useState<ResourceType[]>([]);
+  const [selectedTypeId, setSelectedTypeId] = useState<string>('');
+  const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
   const [isVip, setIsVip] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [createForm, setCreateForm] = useState({ title: '', description: '', tier: 'FREE' as 'FREE' | 'VIP', status: 'PUBLISHED' as 'DRAFT' | 'PUBLISHED' });
+  const [createForm, setCreateForm] = useState({ 
+    title: '', 
+    description: '', 
+    tier: 'FREE' as 'FREE' | 'VIP', 
+    status: 'PUBLISHED' as 'DRAFT' | 'PUBLISHED',
+    resourceTypeId: ''
+  });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedCoverFile, setSelectedCoverFile] = useState<File | null>(null);
   const [creating, setCreating] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editForm, setEditForm] = useState<{ id: string; title: string; description: string; tier: 'FREE' | 'VIP'; status: 'DRAFT' | 'PUBLISHED' } | null>(null);
+  const [editForm, setEditForm] = useState<{ 
+    id: string; 
+    title: string; 
+    description: string; 
+    tier: 'FREE' | 'VIP'; 
+    status: 'DRAFT' | 'PUBLISHED';
+    resourceTypeId: string;
+  } | null>(null);
   const [editFile, setEditFile] = useState<File | null>(null);
   const [editCoverFile, setEditCoverFile] = useState<File | null>(null);
   const [viewingItem, setViewingItem] = useState<any | null>(null);
@@ -58,13 +76,30 @@ export function AdminResourcesFeature() {
     return () => window.removeEventListener('click', closeMenu);
   }, []);
 
+  const loadData = async () => {
+    try {
+      const [list, types] = await Promise.all([
+        resourceApi.list({}),
+        resourceApi.listTypes(true).catch(() => []),
+      ]);
+      setResources(list.filter((r) => !r.deletedAt));
+      setResourceTypes(types || []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Lỗi tải dữ liệu.');
+    }
+  };
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const list = await resourceApi.list({});
+        const [list, types] = await Promise.all([
+          resourceApi.list({}),
+          resourceApi.listTypes(true).catch(() => []),
+        ]);
         if (cancelled) return;
         setResources(list.filter((r) => !r.deletedAt));
+        setResourceTypes(types || []);
         
         const vipRole = user?.role === 'TEACHER' || user?.role === 'ADMIN';
         let vipActive = false;
@@ -134,10 +169,21 @@ export function AdminResourcesFeature() {
       setUploadProgress(80);
 
       // 4. Save to DB
-      const newRes = await resourceApi.create({ ...createForm, fileKey: key, coverImageKey: coverKey });
+      const newRes = await resourceApi.create({ 
+        ...createForm, 
+        resourceTypeId: createForm.resourceTypeId || null,
+        fileKey: key, 
+        coverImageKey: coverKey 
+      });
       setResources([newRes, ...resources]);
       setIsModalOpen(false);
-      setCreateForm({ title: '', description: '', tier: 'FREE', status: 'PUBLISHED' });
+      setCreateForm({ 
+        title: '', 
+        description: '', 
+        tier: 'FREE', 
+        status: 'PUBLISHED',
+        resourceTypeId: ''
+      });
       setSelectedFile(null);
       setSelectedCoverFile(null);
     } catch (e) {
@@ -161,7 +207,8 @@ export function AdminResourcesFeature() {
         title: editForm.title,
         description: editForm.description,
         tier: editForm.tier,
-        status: editForm.status
+        status: editForm.status,
+        resourceTypeId: editForm.resourceTypeId || null,
       };
 
       if (editFile) {
@@ -247,8 +294,11 @@ export function AdminResourcesFeature() {
     return <File className="h-5 w-5 text-gray-500" />;
   };
 
-  const freeResources = resources.filter(r => r.tier === 'FREE');
-  const vipResources = resources.filter(r => r.tier === 'VIP');
+  const displayedResources = selectedTypeId 
+    ? resources.filter(r => r.resourceTypeId === selectedTypeId)
+    : resources;
+  const freeResources = displayedResources.filter(r => r.tier === 'FREE');
+  const vipResources = displayedResources.filter(r => r.tier === 'VIP');
 
   if (loading) return <PageLoading label="Đang tải tài liệu..." />;
   if (error) return <ErrorState message={error} onRetry={() => location.reload()} />;
@@ -268,20 +318,59 @@ export function AdminResourcesFeature() {
 
       {/* Global Library Card */}
       <div className="bg-white rounded-2xl shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] border border-gray-100 p-8">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3 text-[#11321e]">
             <Library className="h-6 w-6 text-[#78993a]" strokeWidth={2.5} />
             <h2 className="text-xl font-bold">Thư viện Toàn cầu (Global Library)</h2>
           </div>
           {user?.role === 'ADMIN' && (
-            <button 
-              onClick={() => setIsModalOpen(true)}
-              className="bg-[#11321e] text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-[#1f4e31] transition-colors shadow-sm flex items-center gap-2"
-            >
-              <UploadCloud className="h-4 w-4" strokeWidth={2.5} />
-              Tải lên Tài liệu
-            </button>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setIsTypeModalOpen(true)}
+                className="bg-white text-[#11321e] border border-gray-200 px-4 py-2 rounded-full text-xs font-bold hover:bg-emerald-50 hover:border-emerald-200 transition-colors shadow-xs flex items-center gap-1.5"
+              >
+                <Tags className="h-3.5 w-3.5 text-[#78993a]" strokeWidth={2.5} />
+                Loại giáo trình
+              </button>
+              <button 
+                onClick={() => setIsModalOpen(true)}
+                className="bg-[#11321e] text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-[#1f4e31] transition-colors shadow-sm flex items-center gap-1.5"
+              >
+                <UploadCloud className="h-3.5 w-3.5" strokeWidth={2.5} />
+                Tải lên Tài liệu
+              </button>
+            </div>
           )}
+        </div>
+
+        {/* Category Filter Pills */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 border-b border-gray-100 scrollbar-none">
+          <button
+            onClick={() => setSelectedTypeId('')}
+            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-all ${
+              selectedTypeId === ''
+                ? 'bg-[#11321e] text-white shadow-xs'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            }`}
+          >
+            Tất cả ({resources.length})
+          </button>
+          {resourceTypes.map((type) => {
+            const count = resources.filter((r) => r.resourceTypeId === type.id).length;
+            return (
+              <button
+                key={type.id}
+                onClick={() => setSelectedTypeId(type.id)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-all ${
+                  selectedTypeId === type.id
+                    ? 'bg-[#11321e] text-white shadow-xs'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {type.name} ({count})
+              </button>
+            );
+          })}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -304,7 +393,14 @@ export function AdminResourcesFeature() {
                       {getFileIcon(res)}
                     </div>
                     <div className="truncate">
-                      <p className="text-sm font-bold text-gray-800 truncate hover:text-[#78993a] transition-colors">{res.title}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-gray-800 truncate hover:text-[#78993a] transition-colors">{res.title}</p>
+                        {res.resourceType && (
+                          <span className="shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-[#1f5333] border border-emerald-100">
+                            {res.resourceType.name}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[11px] text-gray-400 font-medium mt-0.5">
                         {res.description || 'Tài liệu miễn phí'} • 
                         <span className={res.status === 'PUBLISHED' ? 'text-green-500 ml-1' : 'text-amber-500 ml-1'}>
@@ -325,7 +421,14 @@ export function AdminResourcesFeature() {
                         <button 
                           onClick={(e) => { 
                             e.stopPropagation(); 
-                            setEditForm({ id: res.id, title: res.title, description: res.description || '', tier: res.tier as 'FREE'|'VIP', status: res.status as 'DRAFT'|'PUBLISHED' });
+                            setEditForm({ 
+                              id: res.id, 
+                              title: res.title, 
+                              description: res.description || '', 
+                              tier: res.tier as 'FREE'|'VIP', 
+                              status: res.status as 'DRAFT'|'PUBLISHED',
+                              resourceTypeId: res.resourceTypeId || ''
+                            });
                             setIsEditModalOpen(true);
                             setActiveMenuId(null); 
                           }}
@@ -374,7 +477,14 @@ export function AdminResourcesFeature() {
                       {getFileIcon(res)}
                     </div>
                     <div className="truncate">
-                      <p className="text-sm font-bold text-gray-800 truncate hover:text-[#78993a] transition-colors">{res.title}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-bold text-gray-800 truncate hover:text-[#78993a] transition-colors">{res.title}</p>
+                        {res.resourceType && (
+                          <span className="shrink-0 text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-[#1f5333] border border-emerald-100">
+                            {res.resourceType.name}
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[11px] text-gray-400 font-medium mt-0.5">
                         {res.description || 'Tài liệu độc quyền'} • 
                         <span className={res.status === 'PUBLISHED' ? 'text-green-500 ml-1' : 'text-amber-500 ml-1'}>
@@ -395,7 +505,14 @@ export function AdminResourcesFeature() {
                         <button 
                           onClick={(e) => { 
                             e.stopPropagation(); 
-                            setEditForm({ id: res.id, title: res.title, description: res.description || '', tier: res.tier as 'FREE'|'VIP', status: res.status as 'DRAFT'|'PUBLISHED' });
+                            setEditForm({ 
+                              id: res.id, 
+                              title: res.title, 
+                              description: res.description || '', 
+                              tier: res.tier as 'FREE'|'VIP', 
+                              status: res.status as 'DRAFT'|'PUBLISHED',
+                              resourceTypeId: res.resourceTypeId || ''
+                            });
                             setIsEditModalOpen(true);
                             setActiveMenuId(null); 
                           }}
@@ -474,7 +591,7 @@ export function AdminResourcesFeature() {
               </div>
             </Field>
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Loại tài liệu">
+              <Field label="Cấp độ tài liệu">
                 <Select value={createForm.tier} onChange={e => setCreateForm({...createForm, tier: e.target.value as 'FREE'|'VIP'})} disabled={creating}>
                   <option value="FREE">Miễn phí</option>
                   <option value="VIP">VIP</option>
@@ -487,6 +604,18 @@ export function AdminResourcesFeature() {
                 </Select>
               </Field>
             </div>
+            <Field label="Loại giáo trình">
+              <Select 
+                value={createForm.resourceTypeId} 
+                onChange={e => setCreateForm({...createForm, resourceTypeId: e.target.value})} 
+                disabled={creating}
+              >
+                <option value="">-- Chưa phân loại / Khác --</option>
+                {resourceTypes.map(t => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </Select>
+            </Field>
           </div>
         </Modal>
       )}
@@ -535,7 +664,7 @@ export function AdminResourcesFeature() {
               </div>
             </Field>
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Loại tài liệu">
+              <Field label="Cấp độ tài liệu">
                 <Select value={editForm.tier} onChange={e => setEditForm({...editForm, tier: e.target.value as 'FREE'|'VIP'})} disabled={creating}>
                   <option value="FREE">Miễn phí</option>
                   <option value="VIP">VIP</option>
@@ -548,8 +677,30 @@ export function AdminResourcesFeature() {
                 </Select>
               </Field>
             </div>
+            <Field label="Loại giáo trình">
+              <Select 
+                value={editForm.resourceTypeId} 
+                onChange={e => setEditForm({...editForm, resourceTypeId: e.target.value})} 
+                disabled={creating}
+              >
+                <option value="">-- Chưa phân loại / Khác --</option>
+                {resourceTypes.map(t => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </Select>
+            </Field>
           </div>
         </Modal>
+      )}
+
+      {/* Admin Resource Types Management Modal */}
+      {user?.role === 'ADMIN' && (
+        <AdminResourceTypesModal
+          open={isTypeModalOpen}
+          onClose={() => setIsTypeModalOpen(false)}
+          types={resourceTypes}
+          onRefresh={loadData}
+        />
       )}
 
       {/* Document Viewer Modal */}

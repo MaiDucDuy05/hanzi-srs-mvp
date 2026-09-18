@@ -12,7 +12,7 @@ export class MistakeBookController {
   constructor(private readonly svc: MistakeBookService) {}
   @Get()
   async findAll(@Query() q: DTO.MistakeBookQueryDto, @CurrentUser() user: any) {
-    if (user.role === 'STUDENT') {
+    if (user.role !== 'ADMIN' && user.role !== 'TEACHER') {
       q.userId = user.sub;
     }
     return ok(await this.svc.findAll(q), 'Mistake book entries retrieved');
@@ -21,7 +21,7 @@ export class MistakeBookController {
   @Get(':id')
   async findOne(@Param('id') id: string, @CurrentUser() user: any) {
     const entry = await this.svc.findById(id);
-    if (user.role === 'STUDENT' && entry.userId !== user.sub) {
+    if (user.role !== 'ADMIN' && user.role !== 'TEACHER' && entry.userId !== user.sub) {
       throw new Error('Not authorized to view this mistake');
     }
     return ok(entry, 'Mistake book entry retrieved');

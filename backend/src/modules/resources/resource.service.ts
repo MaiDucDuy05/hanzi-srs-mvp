@@ -61,15 +61,17 @@ export class ResourceService {
   }
 
   async findAll(q: DTO.ResourceQueryDto, userId?: string, role?: string) {
-    const { page = 1, limit = 20, tier, status } = q;
+    const { page = 1, limit = 20, tier, status, resourceTypeId } = q;
     const where: any = {};
     if (tier) where.tier = tier;
     if (status) where.status = status;
+    if (resourceTypeId) where.resourceTypeId = resourceTypeId;
     if (role !== Role.ADMIN && role !== Role.TEACHER) {
       where.hiddenByAdmin = false;
     }
     const [data, total] = await this.repo.findAndCount({
       where,
+      relations: ['resourceType'],
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: 'DESC' },
@@ -83,7 +85,13 @@ export class ResourceService {
   }
 
   async findById(id: string, userId?: string, role?: string) {
-    const resource = await findOrNotFound(this.repo, id, 'Resource');
+    const resource = await this.repo.findOne({
+      where: { id },
+      relations: ['resourceType'],
+    });
+    if (!resource) {
+      throw new ForbiddenException(`Resource ${id} not found`);
+    }
     if (role !== Role.ADMIN && role !== Role.TEACHER && resource.hiddenByAdmin) {
       throw new ForbiddenException('This resource has been hidden by administrator');
     }
@@ -91,15 +99,24 @@ export class ResourceService {
   }
 
   async create(dto: DTO.CreateResourceDto) {
-    const r = await this.repo.save(this.repo.create(dto as any));
-    return this.maskFileKey(r, undefined, Role.ADMIN);
+    const entity = this.repo.create(dto as Partial<Resource>);
+    const saved = await this.repo.save(entity);
+    const r = await this.repo.findOne({
+      where: { id: saved.id },
+      relations: ['resourceType'],
+    });
+    return this.maskFileKey(r || saved, undefined, Role.ADMIN);
   }
 
   async update(id: string, dto: DTO.UpdateResourceDto) {
-    const e = await findOrNotFound(this.repo, id, 'Resource');
+    const e = (await findOrNotFound(this.repo, id, 'Resource')) as Resource;
     Object.assign(e, dto);
-    const r = await this.repo.save(e);
-    return this.maskFileKey(r, undefined, Role.ADMIN);
+    const saved = await this.repo.save(e);
+    const r = await this.repo.findOne({
+      where: { id: saved.id },
+      relations: ['resourceType'],
+    });
+    return this.maskFileKey(r || saved, undefined, Role.ADMIN);
   }
 
   async softDelete(id: string) {

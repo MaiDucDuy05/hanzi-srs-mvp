@@ -8,7 +8,7 @@ import { SentenceWritingStep } from './steps/sentence-writing-step';
 import { ReverseTranslationStep } from './steps/reverse-translation-step';
 import { StorySummary } from './story-summary';
 import { srsApi } from '@/lib/api/endpoints/srs';
-import { ArrowLeft, BookOpen, PenTool, Edit3, Languages, FastForward } from 'lucide-react';
+import { ArrowLeft, BookOpen, PenTool, Edit3, Languages, FastForward, SkipForward } from 'lucide-react';
 
 interface LearnWordFlowProps {
   vocabularies: Vocabulary[];
@@ -100,67 +100,90 @@ export function LearnWordFlow({
     <div className="flex flex-col h-full bg-white relative rounded-3xl shadow-sm border border-gray-100 overflow-hidden min-h-[75vh]">
       
       {/* Top Navigation Bar */}
-      <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-gray-100 bg-gray-50/70 backdrop-blur-sm z-20">
+      <div className="flex items-center justify-between px-3 sm:px-6 py-3.5 border-b border-gray-100 bg-gray-50/70 backdrop-blur-sm z-20 gap-2">
         <button
           onClick={onClose}
-          className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors cursor-pointer shrink-0"
         >
           <ArrowLeft className="w-4 h-4" />
           <span className="hidden sm:inline">Quay lại</span>
         </button>
 
-        {/* Center: Word Counter & Step Indicators */}
-        <div className="flex items-center gap-4">
-          <span className="text-xs sm:text-sm font-bold text-gray-700 bg-white px-3 py-1 rounded-full border border-gray-200/80 shadow-xs">
+        {/* Center: Word Counter & Clickable Step Indicators */}
+        <div className="flex items-center gap-2 sm:gap-4">
+          <span className="text-xs sm:text-sm font-bold text-gray-700 bg-white px-2.5 sm:px-3 py-1 rounded-full border border-gray-200/80 shadow-xs shrink-0">
             Từ {currentWordIndex + 1} / {vocabularies.length}
           </span>
 
-          <div className="hidden md:flex items-center gap-1.5 bg-white px-2 py-1 rounded-full border border-gray-200/60 shadow-xs">
+          <div className="hidden md:flex items-center gap-1 bg-white px-1.5 py-1 rounded-full border border-gray-200/60 shadow-xs">
             {STEP_CONFIG.map((step, idx) => {
               const Icon = step.icon;
               const isPast = currentStepIndex > idx;
               const isCurrent = currentStepIndex === idx;
 
               return (
-                <div
+                <button
                   key={step.key}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all ${
+                  type="button"
+                  onClick={() => setCurrentStep(step.key)}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold transition-all cursor-pointer ${
                     isCurrent
                       ? 'bg-[#1f5333] text-white shadow-xs'
                       : isPast
-                      ? 'bg-emerald-50 text-emerald-800'
-                      : 'text-gray-400'
+                      ? 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+                      : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
                   }`}
+                  title={`Chuyển sang bước: ${step.label}`}
                 >
                   <Icon className="w-3 h-3" />
                   <span>{step.label}</span>
-                </div>
+                </button>
               );
             })}
           </div>
 
-          {/* Mobile step dot indicator */}
-          <div className="flex md:hidden gap-1">
+          {/* Mobile clickable step dot indicator */}
+          <div className="flex md:hidden gap-1.5">
             {STEP_CONFIG.map((step, idx) => (
-              <div
+              <button
                 key={step.key}
-                className={`h-1.5 w-6 rounded-full transition-colors ${
-                  currentStepIndex >= idx ? 'bg-[#1f5333]' : 'bg-gray-200'
+                type="button"
+                onClick={() => setCurrentStep(step.key)}
+                className={`h-2 rounded-full transition-all cursor-pointer ${
+                  currentStepIndex === idx
+                    ? 'w-6 bg-[#1f5333]'
+                    : currentStepIndex > idx
+                    ? 'w-3 bg-emerald-300'
+                    : 'w-2 bg-gray-200'
                 }`}
+                title={step.label}
               />
             ))}
           </div>
         </div>
 
-        {/* Skip action */}
-        <button
-          onClick={handleSkipToNextWord}
-          className="text-xs font-semibold text-gray-400 hover:text-gray-700 transition-colors cursor-pointer flex items-center gap-1"
-          title="Bỏ qua từ này và chuyển sang từ kế tiếp"
-        >
-          <span className="hidden sm:inline">Bỏ qua từ này</span>
-          <FastForward className="w-3.5 h-3.5" />
-        </button>
+        {/* Skip actions: Bỏ qua bước & Bỏ qua từ */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={handleNextStep}
+            className="inline-flex items-center gap-1 text-xs font-semibold text-gray-600 hover:text-[#1f5333] bg-white hover:bg-emerald-50 px-2.5 py-1.5 rounded-full border border-gray-200 shadow-2xs transition-colors cursor-pointer"
+            title="Bỏ qua bước hiện tại và chuyển sang bước tiếp theo"
+          >
+            <span>Bỏ qua bước</span>
+            <SkipForward className="w-3.5 h-3.5 text-[#1f5333]" />
+          </button>
+
+          <button
+            type="button"
+            onClick={handleSkipToNextWord}
+            className="text-xs font-semibold text-gray-400 hover:text-gray-700 transition-colors cursor-pointer hidden sm:flex items-center gap-1 pl-1"
+            title="Bỏ qua toàn bộ các bước của từ này và chuyển sang từ kế tiếp"
+          >
+            <span>Bỏ qua từ</span>
+            <FastForward className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       {/* Main Content Area */}

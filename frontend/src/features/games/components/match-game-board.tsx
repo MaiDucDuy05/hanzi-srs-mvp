@@ -32,7 +32,7 @@ function generateTiles(pairs: QuestionItem[]): Tile[] {
   let tId = 1;
   for (const item of pairs) {
     arr.push({ id: tId++, content: item.hanzi, pairId: item.id, type: 'hanzi' });
-    arr.push({ id: tId++, content: item.pinyin, pairId: item.id, type: 'pinyin' });
+    arr.push({ id: tId++, content: `${item.pinyin} - ${item.meaning}`, pairId: item.id, type: 'pinyin' });
   }
   return shuffle(arr);
 }
@@ -167,7 +167,7 @@ export function MatchBoard({ items, initialState, onStateChange, onComplete, ela
           </div>
         ) : (
           <div className="bg-white/80 backdrop-blur-sm px-4 sm:px-6 py-1.5 sm:py-2 rounded-full text-[#4a6b38] font-bold shadow-sm border border-[#eef7e9] text-xs sm:text-base text-center">
-            Match Hán tự với Pinyin
+            Match Hán tự với Pinyin - Nghĩa
           </div>
         )}
       </div>

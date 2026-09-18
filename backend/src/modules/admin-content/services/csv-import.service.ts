@@ -54,7 +54,7 @@ export class CsvImportService {
             }));
             
             await this.vocabRepository.save(newVocabs);
-            resolve({ count: newVocabs.length });
+            resolve({ count: newVocabs.length, ids: newVocabs.map(v => v.id) });
           } catch (error) {
             console.error('Error saving imported vocabs:', error);
             reject(new BadRequestException('Lỗi khi lưu từ vựng vào CSDL'));

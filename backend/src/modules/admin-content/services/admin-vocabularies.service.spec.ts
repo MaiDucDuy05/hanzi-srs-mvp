@@ -124,6 +124,41 @@ describe('AdminVocabulariesService', () => {
     });
   });
 
+  describe('bulkSoftDelete', () => {
+    it('returns count 0 if ids array is empty', async () => {
+      const result = await service.bulkSoftDelete([], 'admin-1', '127.0.0.1');
+      expect(result).toEqual({ success: true, count: 0 });
+    });
+
+    it('updates matching vocabularies and logs audit action', async () => {
+      const qb: any = {
+        update: jest.fn().mockReturnThis(),
+        set: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
+        execute: jest.fn().mockResolvedValue({ affected: 2 }),
+      };
+      vocabRepo.createQueryBuilder.mockReturnValue(qb);
+
+      const result = await service.bulkSoftDelete(['v1', 'v2'], 'admin-1', '127.0.0.1');
+
+      expect(qb.update).toHaveBeenCalledWith(Vocabulary);
+      expect(qb.set).toHaveBeenCalledWith(expect.objectContaining({ isActive: false }));
+      expect(qb.where).toHaveBeenCalledWith(
+        'id IN (:...ids) AND isActive = :isActive',
+        { ids: ['v1', 'v2'], isActive: true },
+      );
+      expect(auditLog.logAction).toHaveBeenCalledWith(
+        'admin-1',
+        'BULK_DELETE_VOCAB',
+        'VOCABULARY',
+        'bulk',
+        '127.0.0.1',
+        expect.objectContaining({ oldValue: { requestedIds: ['v1', 'v2'] }, newValue: { count: 2 } }),
+      );
+      expect(result).toEqual({ success: true, count: 2 });
+    });
+  });
+
   describe('exportCsv', () => {
     it('returns CSV header + rows', async () => {
       vocabRepo.find.mockResolvedValue([

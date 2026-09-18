@@ -1,11 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { adminContentApi } from '@/lib/api/endpoints/admin-content';
 import { FileDown, Edit2, Trash2, ListPlus, Search } from 'lucide-react';
 import { EditVocabularyModal } from './edit-vocabulary-modal';
 import { BulkAddVocabularyModal } from './bulk-add-vocabulary-modal';
+import { VocabulariesBulkActionBar } from './vocabularies-bulk-action-bar';
 import { useConfirm } from '@/providers/confirm-provider';
 
 export function VocabulariesTable() {
@@ -13,6 +14,11 @@ export function VocabulariesTable() {
   const [hskLevels, setHskLevels] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
+  // Selection state
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const headerCheckboxRef = useRef<HTMLInputElement>(null);
+
   // Modal state for Edit/Create
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
@@ -49,11 +55,38 @@ export function VocabulariesTable() {
   };
 
   useEffect(() => {
+    setSelectedIds([]);
     const timer = setTimeout(() => {
       fetchData(searchQuery, filterLevel, filterStatus);
     }, 500);
     return () => clearTimeout(timer);
   }, [searchQuery, filterLevel, filterStatus]);
+
+  // Sync header indeterminate state
+  const isAllSelected = vocabularies.length > 0 && vocabularies.every(v => selectedIds.includes(v.id));
+  const isSomeSelected = selectedIds.length > 0 && !isAllSelected;
+
+  useEffect(() => {
+    if (headerCheckboxRef.current) {
+      headerCheckboxRef.current.indeterminate = isSomeSelected;
+    }
+  }, [isSomeSelected]);
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      const currentVisibleIds = new Set(vocabularies.map(v => v.id));
+      setSelectedIds(prev => prev.filter(id => !currentVisibleIds.has(id)));
+    } else {
+      const newIds = new Set([...selectedIds, ...vocabularies.map(v => v.id)]);
+      setSelectedIds(Array.from(newIds));
+    }
+  };
+
+  const handleToggleSelect = (id: string) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
 
   const handleOpenModal = (vocab?: any) => {
     if (vocab) {
@@ -89,7 +122,7 @@ export function VocabulariesTable() {
         alert('Tạo mới thành công!');
       }
       handleCloseModal();
-      fetchData(searchQuery);
+      fetchData(searchQuery, filterLevel, filterStatus);
     } catch (error) {
       console.error('Failed to save vocabulary', error);
       alert('Lỗi khi lưu từ vựng');
@@ -102,10 +135,35 @@ export function VocabulariesTable() {
     if (!(await confirm({ title: 'Xóa từ vựng', message: 'Bạn có chắc chắn muốn xóa từ vựng này?', variant: 'danger' }))) return;
     try {
       await adminContentApi.deleteVocabulary(id);
-      fetchData(searchQuery);
+      setSelectedIds(prev => prev.filter(item => item !== id));
+      fetchData(searchQuery, filterLevel, filterStatus);
     } catch (error) {
       console.error('Failed to delete vocabulary', error);
       alert('Lỗi khi xóa từ vựng');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const ok = await confirm({
+      title: 'Xóa nhiều từ vựng',
+      message: `Bạn có chắc chắn muốn xóa ${selectedIds.length} từ vựng đã chọn? Hành động này không thể hoàn tác.`,
+      variant: 'danger',
+      confirmText: `Xóa ${selectedIds.length} từ`,
+      cancelText: 'Hủy',
+    });
+    if (!ok) return;
+
+    try {
+      setBulkDeleting(true);
+      await adminContentApi.bulkDeleteVocabularies(selectedIds);
+      setSelectedIds([]);
+      fetchData(searchQuery, filterLevel, filterStatus);
+    } catch (error) {
+      console.error('Failed to bulk delete vocabularies', error);
+      alert('Lỗi khi xóa nhiều từ vựng');
+    } finally {
+      setBulkDeleting(false);
     }
   };
 
@@ -113,7 +171,6 @@ export function VocabulariesTable() {
     try {
       const response = await fetch('/api/v1/admin/vocabularies/export', {
         method: 'GET',
-        // credentials: 'include' can be added if needed, but for MVP Next.js proxy forwards cookies
       });
       if (!response.ok) throw new Error('Export failed');
       const text = await response.text();
@@ -132,9 +189,10 @@ export function VocabulariesTable() {
     }
   };
 
-  const getLevelName = (levelId: string) => {
+  const getLevelName = (levelId?: string | null) => {
+    if (!levelId) return 'Chưa phân cấp';
     const level = hskLevels.find(l => l.id === levelId);
-    return level ? level.name : 'Chưa xếp loại';
+    return level ? level.name : 'Chưa phân cấp';
   };
 
   return (
@@ -163,6 +221,7 @@ export function VocabulariesTable() {
               className="w-full sm:w-auto pl-4 pr-8 py-2 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#c7cf35] transition-shadow bg-white cursor-pointer"
             >
               <option value="">Tất cả cấp độ</option>
+              <option value="none">Chưa phân cấp HSK</option>
               {hskLevels.map(level => (
                 <option key={level.id} value={level.id}>{level.name}</option>
               ))}
@@ -197,12 +256,31 @@ export function VocabulariesTable() {
             </button>
           </div>
         </div>
+
+        {/* Thanh thao tác hàng loạt khi có phần tử được chọn */}
+        <VocabulariesBulkActionBar
+          selectedCount={selectedIds.length}
+          bulkDeleting={bulkDeleting}
+          onClearSelection={() => setSelectedIds([])}
+          onBulkDelete={handleBulkDelete}
+        />
       </div>
 
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-100">
           <thead className="bg-gray-50">
             <tr>
+              <th className="w-12 px-4 py-4 text-center">
+                <input
+                  type="checkbox"
+                  ref={headerCheckboxRef}
+                  checked={isAllSelected}
+                  onChange={handleToggleSelectAll}
+                  disabled={loading || vocabularies.length === 0}
+                  className="h-4 w-4 rounded border-gray-300 text-[#11321e] accent-[#11321e] focus:ring-[#c7cf35] cursor-pointer disabled:cursor-not-allowed"
+                  title="Chọn tất cả"
+                />
+              </th>
               <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Hán Tự / Pinyin</th>
               <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider w-1/3">Nghĩa & Loại từ</th>
               <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Cấp độ</th>
@@ -213,16 +291,29 @@ export function VocabulariesTable() {
           <tbody className="bg-white divide-y divide-gray-100">
             {loading ? (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-gray-500 font-medium">Đang tải...</td>
+                <td colSpan={6} className="px-6 py-12 text-center text-gray-500 font-medium">Đang tải...</td>
               </tr>
             ) : vocabularies.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-6 py-12 text-center text-gray-500 font-medium">Chưa có từ vựng nào</td>
+                <td colSpan={6} className="px-6 py-12 text-center text-gray-500 font-medium">Chưa có từ vựng nào</td>
               </tr>
             ) : (
               vocabularies.map((vocab) => {
+                const isSelected = selectedIds.includes(vocab.id);
                 return (
-                  <tr key={vocab.id} className="transition-colors hover:bg-gray-50">
+                  <tr 
+                    key={vocab.id} 
+                    className={`transition-colors ${isSelected ? 'bg-[#f7f8df]/70' : 'hover:bg-gray-50'}`}
+                  >
+                    <td className="w-12 px-4 py-4 text-center">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleToggleSelect(vocab.id)}
+                        className="h-4 w-4 rounded border-gray-300 text-[#11321e] accent-[#11321e] focus:ring-[#c7cf35] cursor-pointer"
+                        title={`Chọn từ ${vocab.hanzi}`}
+                      />
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col">
                         <span className="text-2xl font-bold text-[#11321e]">{vocab.hanzi}</span>
@@ -241,7 +332,7 @@ export function VocabulariesTable() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-3 py-1 bg-gray-100 text-gray-700 font-bold text-xs rounded-full">
+                      <span className={`px-3 py-1 font-bold text-xs rounded-full ${vocab.levelId ? 'bg-gray-100 text-gray-700' : 'bg-amber-50 text-amber-700 border border-amber-200/70'}`}>
                         {getLevelName(vocab.levelId)}
                       </span>
                     </td>
@@ -284,7 +375,10 @@ export function VocabulariesTable() {
       <BulkAddVocabularyModal
         isOpen={isBulkModalOpen}
         onClose={() => setIsBulkModalOpen(false)}
-        onSuccess={fetchData}
+        onSuccess={() => {
+          setSelectedIds([]);
+          fetchData(searchQuery, filterLevel, filterStatus);
+        }}
         hskLevels={hskLevels}
       />
 

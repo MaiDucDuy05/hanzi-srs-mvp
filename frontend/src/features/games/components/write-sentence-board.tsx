@@ -92,7 +92,7 @@ export function WriteSentenceBoard({
   const fullChineseText = q.tokens.map(t => t.text).join('');
 
   return (
-    <div className="flex-1 flex flex-col items-center justify-center w-full max-w-2xl mx-auto px-4 py-6 relative z-10 min-h-[500px]">
+    <div className="flex-1 flex flex-col items-center my-auto w-full max-w-2xl mx-auto px-4 py-6 sm:py-10 pb-16 relative z-10 min-h-min">
 
       {/* Header */}
       <div className="w-full flex justify-between items-center mb-6">

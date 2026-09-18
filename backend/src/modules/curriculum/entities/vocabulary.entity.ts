@@ -7,12 +7,12 @@ import { TopicVocabulary } from './topic-vocabulary.entity';
 /** Từ vựng (FR-01). Dùng cho: bài học, chủ đề, practice, flashcard, game. */
 @Entity('vocabularies')
 export class Vocabulary extends BaseEntity {
-  @Column({ name: 'level_id', type: 'uuid' })
-  levelId: string;
+  @Column({ name: 'level_id', type: 'uuid', nullable: true })
+  levelId: string | null;
 
-  @ManyToOne(() => HskLevel)
+  @ManyToOne(() => HskLevel, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'level_id' })
-  level: HskLevel;
+  level?: HskLevel | null;
 
   @Column({ type: 'varchar', length: 50 })
   hanzi: string;

@@ -87,7 +87,7 @@ export function GrammarSummary({ grammarPoints, onClose }: GrammarSummaryProps) 
           <button
             onClick={handleGenerate}
             disabled={!topic.trim()}
-            className="w-full py-4 bg-gradient-to-r from-[#8BC34A] to-[#689F38] text-white font-bold rounded-2xl text-lg shadow-[0_8px_30px_rgb(139,195,74,0.3)] transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2"
+            className="w-full py-4 bg-[#1f5333] hover:bg-[#163f26] text-white font-bold rounded-2xl text-lg shadow-[0_8px_30px_rgba(31,83,51,0.3)] transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 flex items-center justify-center gap-2 cursor-pointer"
           >
             <Sparkles className="w-5 h-5" /> Bắt đầu tạo truyện
           </button>

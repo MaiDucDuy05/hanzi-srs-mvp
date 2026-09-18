@@ -396,6 +396,18 @@ export interface DailyUsageCheck {
 }
 
 // ── Resources ──
+export interface ResourceType {
+  id: string;
+  name: string;
+  code: string;
+  description: string | null;
+  displayOrder: number;
+  isActive: boolean;
+  deletedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Resource {
   id: string;
   title: string;
@@ -405,6 +417,8 @@ export interface Resource {
   coverImageUrl?: string | null;
   tier: ResourceTier;
   uploaderId: string;
+  resourceTypeId?: string | null;
+  resourceType?: ResourceType | null;
   status: ContentStatus;
   deletedAt: string | null;
   createdAt: string;

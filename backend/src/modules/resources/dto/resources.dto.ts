@@ -19,6 +19,7 @@ import { PaginationQueryDto } from '../../../common/pagination.dto';
 export class ResourceQueryDto extends PaginationQueryDto {
   @IsOptional() @IsEnum(ResourceTier) tier?: ResourceTier;
   @IsOptional() @IsString() status?: string;
+  @IsOptional() @IsUUID() resourceTypeId?: string;
 }
 
 export class AiJobQueryDto extends PaginationQueryDto {
@@ -53,6 +54,7 @@ export class CreateResourceDto {
   @IsOptional() @IsString() coverImageKey?: string | null;
   @IsEnum(ResourceTier) tier: ResourceTier;
   @IsOptional() @IsUUID() uploaderId?: string;
+  @IsOptional() @IsUUID() resourceTypeId?: string | null;
 }
 
 export class UpdateResourceDto {
@@ -62,6 +64,7 @@ export class UpdateResourceDto {
   @IsOptional() @IsString() coverImageKey?: string | null;
   @IsOptional() @IsEnum(ResourceTier) tier?: ResourceTier;
   @IsOptional() @IsString() status?: string;
+  @IsOptional() @IsUUID() resourceTypeId?: string | null;
 }
 
 export class CreateAiJobDto {

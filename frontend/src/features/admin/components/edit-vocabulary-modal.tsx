@@ -26,14 +26,16 @@ export function EditVocabularyModal({
     if (!payload.meaningVi && payload.meaning) {
       payload.meaningVi = payload.meaning;
     }
+    if (!payload.levelId) {
+      payload.levelId = null;
+    }
     onSave(payload);
   };
 
   const isFormValid =
     editForm.hanzi &&
     editForm.pinyin &&
-    (editForm.meaningVi || editForm.meaning) &&
-    editForm.levelId;
+    (editForm.meaningVi || editForm.meaning);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
@@ -78,13 +80,13 @@ export function EditVocabularyModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">Cấp độ (HSK) *</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Cấp độ (HSK) <span className="text-gray-400 font-normal">(Tùy chọn)</span></label>
               <select 
                 className="w-full border p-2 rounded-xl focus:ring-2 focus:ring-[#c7cf35] outline-none bg-white"
                 value={editForm.levelId || ''} 
-                onChange={e => setEditForm({...editForm, levelId: e.target.value})}
+                onChange={e => setEditForm({...editForm, levelId: e.target.value || null})}
               >
-                <option value="" disabled>-- Chọn HSK --</option>
+                <option value="">-- Không phân cấp HSK --</option>
                 {hskLevels.map(lvl => (
                   <option key={lvl.id} value={lvl.id}>{lvl.name}</option>
                 ))}

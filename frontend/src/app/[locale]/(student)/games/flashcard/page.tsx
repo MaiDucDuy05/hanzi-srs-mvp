@@ -26,7 +26,11 @@ export default function FlashcardGame() {
     
     curriculumApi.listVocabularies(params)
       .then((data) => {
-        setVocabularies(data.map((v) => ({
+        // Trộn ngẫu nhiên và lấy tối đa 20 từ
+        const shuffled = [...data].sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, 20);
+
+        setVocabularies(selected.map((v) => ({
           id: v.id,
           hanzi: v.hanzi,
           pinyin: v.pinyin,

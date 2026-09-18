@@ -117,29 +117,44 @@ export function ReverseTranslationStep({ vocabulary, onNext }: ReverseTranslatio
         )}
       </div>
 
-      <div className="flex gap-3 w-full">
-        {!isPassed ? (
-          <>
+      <div className="flex flex-col items-center gap-2 w-full mt-auto">
+        <div className="flex gap-3 w-full">
+          {!isPassed ? (
+            <>
+              <button 
+                type="button"
+                onClick={() => setShowHint(true)}
+                className="flex-1 py-3.5 text-base sm:text-lg rounded-2xl font-bold border-2 border-gray-200 text-gray-600 bg-white hover:bg-gray-50 hover:border-gray-300 shadow-sm transition-all cursor-pointer"
+              >
+                Xem gợi ý
+              </button>
+              <button 
+                type="button"
+                onClick={handleCheck}
+                disabled={!answer.trim()}
+                className="flex-1 bg-gray-900 hover:bg-black text-white py-3.5 text-base sm:text-lg rounded-2xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.3)] hover:shadow-[0_15px_30px_-5px_rgba(0,0,0,0.4)] hover:-translate-y-0.5 transition-all font-bold disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-none cursor-pointer"
+              >
+                Kiểm tra
+              </button>
+            </>
+          ) : (
             <button 
-              onClick={() => setShowHint(true)}
-              className="flex-1 py-4 text-lg rounded-2xl font-bold border-2 border-gray-200 text-gray-600 bg-white hover:bg-gray-50 hover:border-gray-300 shadow-sm transition-all"
+              type="button"
+              onClick={onNext}
+              className="w-full bg-[#1f5333] hover:bg-[#163f26] text-white py-3.5 text-base sm:text-lg rounded-2xl shadow-[0_10px_25px_-5px_rgba(31,83,51,0.4)] hover:shadow-[0_15px_30px_-5px_rgba(31,83,51,0.6)] hover:-translate-y-0.5 transition-all font-bold flex items-center justify-center gap-2 animate-in fade-in duration-500 cursor-pointer"
             >
-              Xem gợi ý
+              Hoàn thành từ này <ArrowRight className="w-5 h-5" />
             </button>
-            <button 
-              onClick={handleCheck}
-              disabled={!answer.trim()}
-              className="flex-1 bg-gray-900 hover:bg-black text-white py-4 text-lg rounded-2xl shadow-[0_10px_25px_-5px_rgba(0,0,0,0.3)] hover:shadow-[0_15px_30px_-5px_rgba(0,0,0,0.4)] hover:-translate-y-1 transition-all font-bold disabled:opacity-40 disabled:hover:translate-y-0 disabled:hover:shadow-none"
-            >
-              Kiểm tra
-            </button>
-          </>
-        ) : (
-          <button 
+          )}
+        </div>
+
+        {!isPassed && (
+          <button
+            type="button"
             onClick={onNext}
-            className="w-full bg-gradient-to-r from-[#1a4a2b] to-[#2c7a47] hover:from-[#133820] hover:to-[#1a4a2b] text-white py-4 text-lg rounded-2xl shadow-[0_10px_25px_-5px_rgba(44,122,71,0.4)] hover:shadow-[0_15px_30px_-5px_rgba(44,122,71,0.6)] hover:-translate-y-1 transition-all font-bold flex items-center justify-center gap-2 animate-in fade-in duration-500"
+            className="text-xs font-semibold text-gray-500 hover:text-gray-800 py-1 transition-colors cursor-pointer"
           >
-            Hoàn thành từ này <ArrowRight className="w-5 h-5" />
+            Bỏ qua bước dịch này →
           </button>
         )}
       </div>

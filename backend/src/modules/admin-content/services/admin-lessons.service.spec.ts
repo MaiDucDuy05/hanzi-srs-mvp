@@ -82,6 +82,7 @@ describe('AdminLessonsService', () => {
     function buildQb(data: any[] = [], total = 0) {
       const qb: any = {
         leftJoinAndSelect: jest.fn().mockReturnThis(),
+        where: jest.fn().mockReturnThis(),
         skip: jest.fn().mockReturnThis(),
         take: jest.fn().mockReturnThis(),
         orderBy: jest.fn().mockReturnThis(),
@@ -186,6 +187,35 @@ describe('AdminLessonsService', () => {
       lessonRepo.findOne.mockResolvedValue(null);
 
       await expect(service.changeStatus('l-x', ContentStatus.PUBLISHED, 'admin-1', '127.0.0.1'))
+        .rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('softDelete', () => {
+    it('marks lesson as inactive and sets deletedAt', async () => {
+      const lesson = { id: 'l1', title: 'Lesson 1', isActive: true } as any;
+      lessonRepo.findOne.mockResolvedValue(lesson);
+
+      const result = await service.softDelete('l1', 'admin-1', '127.0.0.1');
+
+      expect(lesson.isActive).toBe(false);
+      expect(lesson.deletedAt).toBeInstanceOf(Date);
+      expect(lessonRepo.save).toHaveBeenCalledWith(lesson);
+      expect(auditLog.logAction).toHaveBeenCalledWith(
+        'admin-1',
+        'DELETE_LESSON',
+        'LESSON',
+        'l1',
+        '127.0.0.1',
+        expect.objectContaining({ oldValue: { id: 'l1', title: 'Lesson 1' } }),
+      );
+      expect(result).toEqual({ success: true });
+    });
+
+    it('throws NotFoundException when lesson does not exist', async () => {
+      lessonRepo.findOne.mockResolvedValue(null);
+
+      await expect(service.softDelete('l-x', 'admin-1', '127.0.0.1'))
         .rejects.toThrow(NotFoundException);
     });
   });
