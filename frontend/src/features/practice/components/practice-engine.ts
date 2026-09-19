@@ -9,7 +9,7 @@ import { activityKey } from '@/lib/utils/constants';
 import { clearSession, loadSession, saveSession } from '@/lib/utils/storage';
 import { uuid } from '@/lib/utils/format';
 import { loadSourceVocab } from './source-loader';
-import { buildQuestions, type ModeResult, type QuestionItem } from './practice-models';
+import { buildQuestions, computeScore, type ModeResult, type QuestionItem } from './practice-models';
 
 export type EngineStatus = 'loading' | 'limit' | 'error' | 'running' | 'finished';
 
@@ -461,11 +461,12 @@ export function usePracticeEngine<TState = unknown>(options: {
           durationSeconds: duration,
         });
         // Override result = kết quả backend đã chấm (đáng tin cậy hơn)
+        const total = grading.totalCorrect + grading.totalWrong;
         setResult({
           correctCount: grading.totalCorrect,
           wrongCount: grading.totalWrong,
           moveCount: 0,
-          score: grading.score,
+          score: computeScore(grading.totalCorrect, total),
           answerData: { results: grading.results } as unknown as Record<string, unknown>,
         });
       } else if (practiceType === 'FILL_BLANK') {
@@ -478,11 +479,12 @@ export function usePracticeEngine<TState = unknown>(options: {
           answers,
           durationSeconds: duration,
         });
+        const total = grading.totalCorrect + grading.totalWrong;
         setResult({
           correctCount: grading.totalCorrect,
           wrongCount: grading.totalWrong,
           moveCount: 0,
-          score: grading.score,
+          score: computeScore(grading.totalCorrect, total),
           answerData: { results: grading.results } as unknown as Record<string, unknown>,
         });
       } else if (practiceType === 'HANZI_WRITING') {

@@ -97,7 +97,7 @@ export function AdminUsersFeature() {
       />
       
       {loading && !data && <PageLoading />}
-      {error && <ErrorState message="Failed to load users" onRetry={refetch} />}
+      {error && <ErrorState message="Không thể tải danh sách người dùng" onRetry={refetch} />}
 
       {!loading && !error && (
         <AdminUsersTable 

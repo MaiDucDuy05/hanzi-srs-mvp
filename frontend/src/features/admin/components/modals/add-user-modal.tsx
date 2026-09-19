@@ -92,10 +92,10 @@ export function AddUserModal({ isOpen, onClose, onSubmit, loading }: AddUserModa
               disabled={loading}
               className="w-full rounded-xl border-gray-200 border bg-gray-50/50 p-3 text-sm focus:border-forest focus:ring-forest outline-none"
             >
-              <option value="FREE">FREE</option>
-              <option value="VIP">VIP</option>
-              <option value="TEACHER">TEACHER</option>
-              <option value="ADMIN">ADMIN</option>
+              <option value="FREE">Học viên (FREE)</option>
+              <option value="VIP">Học viên VIP</option>
+              <option value="TEACHER">Giáo viên</option>
+              <option value="ADMIN">Quản trị viên (ADMIN)</option>
             </select>
           </div>
 

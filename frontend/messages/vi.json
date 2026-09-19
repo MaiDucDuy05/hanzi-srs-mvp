@@ -78,20 +78,7 @@
       "next": "Sau"
     }
   },
-  "TopicDetail": {
-    "loading": "Đang tải chủ đề...",
-    "notFound": "Không tìm thấy chủ đề.",
-    "topicNotFound": "Không tìm thấy chủ đề này.",
-    "loadError": "Lỗi tải chủ đề.",
-    "vocabCount": "{count} từ vựng",
-    "searchPlaceholder": "Tìm từ vựng...",
-    "practiceNow": "Luyện tập ngay",
-    "noVocabSearch": "Không tìm thấy từ vựng cho \"{query}\"",
-    "noVocab": "Chủ đề này chưa có từ vựng nào.",
-    "paginationLabel": "Hiển thị {start}–{end} / {total} từ",
-    "prev": "Trước",
-    "next": "Sau"
-  },
+  "TopicDetail": {},
   "GameSelection": {
     "practiceHeading": "Practice",
     "tabVocab": "Luyện từ vựng",
@@ -184,7 +171,6 @@
     "gameLoading": "Đang chuẩn bị trò chơi...",
     "summaryTitle": "Tuyệt vời! 🎉",
     "finishedTitle": "Hoàn thành! 🎉",
-    "correct": "Đúng",
     "wrong": "Sai",
     "duration": "Thời gian",
     "back": "Quay lại"
@@ -418,7 +404,7 @@
     "loadingLabel": "Đang tải...",
     "genericError": "Không thể hiển thị trang này.",
     "studentError": "Đã có lỗi xảy ra trong quá trình xử lý.",
-    "footerTagline": "Nền tảng học tiếng Trung & luyện thi HSK",
+    "footerTagline": "Kết Nối Ngôn Ngữ - Chạm Tới Thế Giới",
     "footerContact": "Liên hệ",
     "footerResources": "Tài liệu",
     "footerUpgradeVip": "Nâng cấp VIP",
@@ -444,7 +430,7 @@
     "modalCloseAria": "Đóng modal"
   },
   "Home": {
-    "metaTitle": "Hán Tự HSK — Học tiếng Trung trong khu rừng tre",
+    "metaTitle": "Mầm Tre Hoa Ngữ — Kết Nối Ngôn Ngữ, Chạm Tới Thế Giới",
     "metaDescription": "Học từ vựng, trò chơi và bài kiểm tra HSK — vui như chơi, nhớ lâu như tre. Hệ thống học tiếng Trung và luyện thi HSK hoàn toàn miễn phí."
   },
   "GamesLayout": {
@@ -457,8 +443,9 @@
     "login": {
       "metaTitle": "Đăng nhập",
       "metaDescription": "Đăng nhập vào hệ thống để tiếp tục.",
-      "brandTitle": "Cute Panda Forest",
-      "brandTagline": "Join our sanctuary of learning and growth. Nurturing minds in a calm, organized environment.",
+      "brandTitle": "Mầm Tre Hoa Ngữ",
+      "brandTagline": "Nơi ươm mầm tri thức và nuôi dưỡng niềm đam mê tiếng Trung mỗi ngày. Từng nét chữ Hán bạn luyện tập như mầm tre kiên cường bén rễ sâu vào lòng đất, từng bước vươn cao vững chãi trên hành trình chinh phục ngôn ngữ.",
+      "imageAlt": "Mầm Tre Hoa Ngữ",
       "heading": "Welcome Back!",
       "subheading": "Log in to your sanctuary and continue nurturing your classroom.",
       "emailLabel": "Email Address",
@@ -474,8 +461,8 @@
     },
     "register": {
       "metaTitle": "Đăng ký tài khoản",
-      "metaDescription": "Đăng ký tài khoản miễn phí để bắt đầu học tiếng Trung với Hán Tự HSK.",
-      "imageAlt": "Cute Panda Forest",
+      "metaDescription": "Đăng ký tài khoản miễn phí để bắt đầu học tiếng Trung với Mầm Tre Hoa Ngữ.",
+      "imageAlt": "Mầm Tre Hoa Ngữ",
       "heading": "Welcome!",
       "subheading": "Create your account to start nurturing your classroom.",
       "fullNameLabel": "Họ và tên",
@@ -505,9 +492,9 @@
       "errorOtpVerify": "Xác thực thất bại."
     },
     "forgotPassword": {
-      "metaTitle": "Quên mật khẩu — Hán Tự HSK",
-      "metaDescription": "Khôi phục mật khẩu tài khoản Hán Tự HSK",
-      "imageAlt": "Cute Panda Forest",
+      "metaTitle": "Quên mật khẩu — Mầm Tre Hoa Ngữ",
+      "metaDescription": "Khôi phục mật khẩu tài khoản Mầm Tre Hoa Ngữ",
+      "imageAlt": "Mầm Tre Hoa Ngữ",
       "step1Heading": "Quên mật khẩu?",
       "step1Subheading": "Đừng lo, hãy nhập email của bạn và chúng tôi sẽ gửi mã khôi phục.",
       "step2Heading": "Xác nhận mã OTP",
@@ -538,7 +525,7 @@
   },
   "Contact": {
     "metaTitle": "Liên hệ",
-    "metaDescription": "Phản hồi, góp ý hoặc cần hỗ trợ về nền tảng học tiếng Trung Hán Tự HSK.",
+    "metaDescription": "Phản hồi, góp ý hoặc cần hỗ trợ về nền tảng học tiếng Trung Mầm Tre Hoa Ngữ.",
     "imageAlt": "Cute Panda Support",
     "supportTitle": "Hỗ trợ 24/7",
     "supportTagline": "Chúng tôi luôn sẵn sàng hỗ trợ các \"người gác rừng\" tận tâm.",
@@ -712,9 +699,10 @@
     "maxDurationSuffix": "/ {time}"
   },
   "Games": {
-    "summaryExcellent": "Tuyệt vời! 🎉",
+    "summaryExcellent": "Xuất sắc! 🎉",
     "summaryGood": "Khá tốt! 👍",
-    "summaryTryHarder": "Cố gắng lên nhé! 💪",
+    "summaryTryHarder": "Cố gắng hơn nhé! 💪",
+    "summaryNeedsPractice": "Cần luyện tập thêm! 📚",
     "summaryCorrect": "Đúng",
     "summaryWrong": "Sai",
     "summaryTime": "Thời gian",
@@ -846,6 +834,5 @@
     "recentTests": "Bài kiểm tra gần đây",
     "noTestsYet": "Chưa làm bài kiểm tra nào.",
     "loadError": "Lỗi tải hồ sơ."
-  },
-  "TopicDetail": {}
+  }
 }

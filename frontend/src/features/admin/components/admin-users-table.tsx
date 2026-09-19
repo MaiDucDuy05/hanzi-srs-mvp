@@ -85,15 +85,15 @@ export function AdminUsersTable({
                       isTeacher ? 'bg-[#c7cf35] text-forest' : 'bg-gray-100 text-gray-600'
                     }`}>
                       {isAdmin ? <Shield className="h-3 w-3" /> : isTeacher ? <UserCheck className="h-3 w-3" /> : <GraduationCap className="h-3 w-3" />}
-                      {isAdmin ? 'Admin' : isTeacher ? 'Teacher' : 'Student'}
+                      {isAdmin ? 'Quản trị viên' : isTeacher ? 'Giáo viên' : 'Học viên'}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1.5">
                       {isBanned ? (
-                        <><Ban className="h-4 w-4 text-red-500" /><span className="text-red-500 font-medium">Banned</span></>
+                        <><Ban className="h-4 w-4 text-red-500" /><span className="text-red-500 font-medium">Đã khóa</span></>
                       ) : (
-                        <><CheckCircle2 className="h-4 w-4 text-forest" /><span className="text-forest font-medium">Active</span></>
+                        <><CheckCircle2 className="h-4 w-4 text-forest" /><span className="text-forest font-medium">Hoạt động</span></>
                       )}
                     </div>
                   </td>
@@ -102,7 +102,7 @@ export function AdminUsersTable({
                       {isVip ? (
                         <><Star className="h-3.5 w-3.5 text-accent-lime fill-accent-lime" /><span className="text-gray-700 font-medium">VIP</span></>
                       ) : (
-                        <span className="text-gray-500">Free</span>
+                        <span className="text-gray-500">Miễn phí</span>
                       )}
                     </div>
                   </td>

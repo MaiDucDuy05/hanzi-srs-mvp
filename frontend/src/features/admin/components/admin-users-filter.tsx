@@ -44,7 +44,7 @@ export function AdminUsersFilter({
           <input
             type="text"
             className="block w-full pl-10 pr-3 py-2 border border-gray-200 rounded-full leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-brand sm:text-sm transition-shadow"
-            placeholder="Search users by name or email..."
+            placeholder="Tìm kiếm người dùng theo tên hoặc email..."
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
           />
@@ -63,71 +63,71 @@ export function AdminUsersFilter({
         
         {/* User Management Card */}
         <Card className="p-6 col-span-1 shadow-sm border-2 border-transparent hover:border-pale-green transition-colors">
-          <h2 className="text-2xl font-bold text-forest mb-2">User<br/>Management</h2>
-          <p className="text-sm text-gray-500 mb-6 w-4/5">Manage guardians, guides, and explorers of the forest.</p>
+          <h2 className="text-2xl font-bold text-forest mb-2">Quản lý<br/>Người dùng</h2>
+          <p className="text-sm text-gray-500 mb-6 w-4/5">Quản lý người dùng, giáo viên và học viên của hệ thống.</p>
           <button 
             onClick={onAddUser}
             className="bg-forest text-white px-4 py-2.5 rounded-full text-sm font-medium hover:bg-brand-dark transition-colors flex items-center gap-2"
           >
             <UserPlus className="h-4 w-4" />
-            Add User
+            Thêm người dùng
           </button>
         </Card>
 
         {/* Filter Directory Card */}
         <Card className="p-6 col-span-2 shadow-sm relative">
           <div className="flex justify-between items-start mb-6">
-            <h2 className="text-lg font-bold text-gray-700">Filter Directory</h2>
+            <h2 className="text-lg font-bold text-gray-700">Bộ lọc danh mục</h2>
             <div className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1.5">
               <UsersIcon className="h-3.5 w-3.5" />
-              Total: {total.toLocaleString()}
+              Tổng: {total.toLocaleString()}
             </div>
           </div>
           
           <div className="flex gap-4">
             <div className="flex-1">
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">Role</label>
+              <label className="block text-xs font-medium text-gray-400 mb-1.5">Vai trò</label>
               <div className="relative">
                 <select 
                   value={role}
                   onChange={(e) => onRoleChange(e.target.value)}
                   className="appearance-none w-full bg-pale-green/50 border-none text-forest text-sm font-medium rounded-full py-2.5 pl-4 pr-10 focus:outline-none focus:ring-2 focus:ring-forest/20"
                 >
-                  <option value="All Roles">All Roles</option>
-                  <option value="FREE">Student (FREE)</option>
-                  <option value="TEACHER">Teacher</option>
-                  <option value="ADMIN">Admin</option>
+                  <option value="All Roles">Tất cả vai trò</option>
+                  <option value="FREE">Học viên (FREE)</option>
+                  <option value="TEACHER">Giáo viên</option>
+                  <option value="ADMIN">Quản trị viên</option>
                 </select>
                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-forest pointer-events-none" />
               </div>
             </div>
             
             <div className="flex-1">
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">Status</label>
+              <label className="block text-xs font-medium text-gray-400 mb-1.5">Trạng thái</label>
               <div className="relative">
                 <select 
                   value={status}
                   onChange={(e) => onStatusChange(e.target.value)}
                   className="appearance-none w-full bg-pale-green/50 border-none text-forest text-sm font-medium rounded-full py-2.5 pl-4 pr-10 focus:outline-none focus:ring-2 focus:ring-forest/20"
                 >
-                  <option value="All Statuses">All Statuses</option>
-                  <option value="ACTIVE">Active</option>
-                  <option value="BANNED">Banned</option>
+                  <option value="All Statuses">Tất cả trạng thái</option>
+                  <option value="ACTIVE">Đang hoạt động</option>
+                  <option value="BANNED">Đã bị khóa</option>
                 </select>
                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-forest pointer-events-none" />
               </div>
             </div>
 
             <div className="flex-1">
-              <label className="block text-xs font-medium text-gray-400 mb-1.5">Plan</label>
+              <label className="block text-xs font-medium text-gray-400 mb-1.5">Gói</label>
               <div className="relative">
                 <select 
                   value={plan}
                   onChange={(e) => onPlanChange(e.target.value)}
                   className="appearance-none w-full bg-pale-green/50 border-none text-forest text-sm font-medium rounded-full py-2.5 pl-4 pr-10 focus:outline-none focus:ring-2 focus:ring-forest/20"
                 >
-                  <option value="All Plans">All Plans</option>
-                  <option value="FREE">Free</option>
+                  <option value="All Plans">Tất cả gói</option>
+                  <option value="FREE">Miễn phí</option>
                   <option value="VIP">VIP</option>
                 </select>
                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-forest pointer-events-none" />

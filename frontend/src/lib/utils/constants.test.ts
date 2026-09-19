@@ -48,6 +48,6 @@ describe('activityKey', () => {
 
 describe('APP_NAME', () => {
   it('có giá trị mặc định', () => {
-    expect(APP_NAME).toBe('Hán Tự HSK');
+    expect(APP_NAME).toBe('Mầm Tre Hoa Ngữ');
   });
 });

@@ -13,6 +13,7 @@ import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
 
 import { LearnWordFlow } from './learn-word/learn-word-flow';
+import { useStudyLayout } from '@/providers/study-layout-provider';
 
 type StudyMode = 'level' | 'topic';
 
@@ -21,6 +22,7 @@ export function StudyFeature() {
   const searchParams = useSearchParams();
   const levelId = searchParams.get('levelId');
   const topicId = searchParams.get('topicId');
+  const { setHideHeader } = useStudyLayout();
 
   const [mode, setMode] = useState<'list' | 'flashcard' | 'learn-word'>('list');
   const [listTab, setListTab] = useState<'vocab' | 'grammar'>('vocab');
@@ -31,6 +33,12 @@ export function StudyFeature() {
   const [error, setError] = useState<string | null>(null);
 
   const [learnIndex, setLearnIndex] = useState(0);
+
+  // Hide outer layout exit button when in learn-word flow
+  useEffect(() => {
+    setHideHeader(mode === 'learn-word');
+    return () => setHideHeader(false);
+  }, [mode, setHideHeader]);
 
   // Determine study mode
   const studyMode: StudyMode | null = levelId ? 'level' : topicId ? 'topic' : null;
