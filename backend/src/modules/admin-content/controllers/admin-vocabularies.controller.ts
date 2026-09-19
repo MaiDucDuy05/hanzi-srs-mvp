@@ -39,13 +39,7 @@ export class AdminVocabulariesController {
     if (!Array.isArray(dtos)) {
       throw new BadRequestException('Body must be an array of vocabularies');
     }
-    // Note: To be efficient, we can either use save() on array or loop. 
-    // Since adminVocabulariesService.create might do extra logic (audit logs, etc), 
-    // looping is safer but might be slow for huge arrays. For MVP it is fine.
-    const results = [];
-    for (const dto of dtos) {
-      results.push(await this.adminVocabulariesService.create(dto, adminId, ipAddress));
-    }
+    const results = await this.adminVocabulariesService.bulkCreate(dtos, adminId, ipAddress);
     return { data: { ids: results.map((r: any) => r.id), count: results.length }, message: `Bulk created ${results.length} vocabularies` };
   }
 

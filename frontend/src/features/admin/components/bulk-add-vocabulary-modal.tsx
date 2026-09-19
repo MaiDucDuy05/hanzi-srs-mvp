@@ -148,19 +148,16 @@ export function BulkAddVocabularyModal({
 
     try {
       setSaving(true);
-      // Execute all create requests in parallel
-      await Promise.all(
-        validRows.map(row => 
-          adminContentApi.createVocabulary({
-            ...row,
-            levelId: row.levelId ? row.levelId : null,
-            status: 'PUBLISHED',
-            isActive: true
-          })
-        )
-      );
+      // Send bulk create request
+      const payload = validRows.map(row => ({
+        ...row,
+        levelId: row.levelId ? row.levelId : null,
+        status: 'PUBLISHED',
+        isActive: true
+      }));
+      await adminContentApi.bulkCreateVocabulary(payload);
       
-      alert(`Đã thêm thành công ${validRows.length} từ vựng!`);
+      alert(`Đã thêm thành công ${validRows.length} từ vựng (Bulk Mode)!`);
       // Reset form
       setRows([{ hanzi: '', pinyin: '', meaningVi: '', levelId: selectedImportLevelId || '', partOfSpeech: '', example: '' }]);
       onSuccess();

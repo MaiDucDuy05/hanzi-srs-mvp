@@ -65,6 +65,31 @@ export class AdminVocabulariesService {
     return newVocab;
   }
 
+  async bulkCreate(dtos: any[], adminId: string, ipAddress: string) {
+    if (!dtos || dtos.length === 0) return [];
+    
+    const newVocabsData = dtos.map(data => {
+      const cleanPartOfSpeech = typeof data.partOfSpeech === 'string' ? data.partOfSpeech.trim() || null : data.partOfSpeech ?? null;
+      const cleanLevelId = data.levelId ? data.levelId : null;
+      if (cleanPartOfSpeech && cleanPartOfSpeech.length > 100) {
+        throw new BadRequestException('Từ loại (partOfSpeech) không được vượt quá 100 ký tự');
+      }
+      return {
+        ...data,
+        levelId: cleanLevelId,
+        partOfSpeech: cleanPartOfSpeech,
+        status: data.status || ContentStatus.DRAFT,
+      };
+    });
+
+    const insertResult = await this.vocabRepo.insert(newVocabsData);
+    const ids = insertResult.identifiers.map(id => id.id);
+
+    await this.auditLogService.logAction(adminId, 'BULK_CREATE_VOCAB', 'VOCABULARY', ids[0] || '00000000-0000-0000-0000-000000000000', ipAddress, { newValue: { count: dtos.length } });
+    
+    return ids.map(id => ({ id }));
+  }
+
   async update(id: string, data: any, adminId: string, ipAddress: string) {
     const vocab = await this.vocabRepo.findOne({ where: { id, isActive: true } });
     if (!vocab) throw new NotFoundException('Vocabulary not found');
@@ -114,7 +139,7 @@ export class AdminVocabulariesService {
       adminId,
       'BULK_DELETE_VOCAB',
       'VOCABULARY',
-      'bulk',
+      ids[0] || '00000000-0000-0000-0000-000000000000',
       ipAddress,
       { oldValue: { requestedIds: ids }, newValue: { count: affectedCount } },
     );

@@ -44,17 +44,15 @@ export class CsvImportService {
           }
 
           try {
-            // Bulk insert for simplicity
-            const newVocabs = results.map(r => this.vocabRepository.create({
+            // Bulk insert for simplicity using .insert() for a single query
+            const newVocabs = results.map(r => ({
               hanzi: r.hanzi,
               pinyin: r.pinyin,
               meaningVi: r.vietnameseMeaning || r.meaning,
-              // Check the actual entity properties if there's exampleSentence
-              // exampleSentence: r.exampleSentence,
             }));
             
-            await this.vocabRepository.save(newVocabs);
-            resolve({ count: newVocabs.length, ids: newVocabs.map(v => v.id) });
+            const insertResult = await this.vocabRepository.insert(newVocabs);
+            resolve({ count: newVocabs.length, ids: insertResult.identifiers.map(id => id.id) });
           } catch (error) {
             console.error('Error saving imported vocabs:', error);
             reject(new BadRequestException('Lỗi khi lưu từ vựng vào CSDL'));
