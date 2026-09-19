@@ -43,12 +43,16 @@ export function HeroSection({ user }: { user: User | null }) {
 
         {/* Right: Content */}
         <div className="text-center lg:text-left">
-          <h1 className="font-[family-name:var(--font-nunito)] text-[2.5rem] font-black leading-[1.15] text-[#215b3b] sm:text-5xl lg:text-[4rem] tracking-tight">
-            Master Chinese<br />
-            in the Heart of<br />
-            the Forest
-          </h1>
-          
+          <div className="flex flex-col gap-4">
+            <h1 className="font-[family-name:var(--font-nunito)] text-[3rem] font-black leading-[1.1] text-[#215b3b] sm:text-6xl lg:text-[4.5rem] tracking-tight">
+              Mầm Tre<br />
+              Hoa Ngữ
+            </h1>
+            <p className="font-sans text-sm font-bold uppercase tracking-[0.2em] text-[#2a754b] sm:text-base lg:text-lg">
+              Kết Nối Ngôn Ngữ - Chạm Tới Thế Giới
+            </p>
+          </div>
+
           <div className="mt-10">
             {user?.role === 'ADMIN' ? (
               <Link
@@ -69,7 +73,7 @@ export function HeroSection({ user }: { user: User | null }) {
                 href="/dashboard"
                 className="font-[family-name:var(--font-nunito)] inline-block rounded-full bg-[#8BC34A] px-8 py-4 text-lg font-black text-white shadow-md transition-all hover:scale-105 hover:bg-[#7CB342]"
               >
-                Start Your Journey
+                Bắt Đầu Hành Trình
               </Link>
             )}
           </div>
