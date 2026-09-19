@@ -24,18 +24,28 @@ export function GameSummary({
 }: GameSummaryProps) {
   const t = useTranslations('Games');
 
+  // Chuẩn hóa điểm số phần trăm an toàn (Defensive normalization)
+  const total = result.correctCount + result.wrongCount;
+  let normalizedScore = result.score;
+  if (total > 0 && (result.score <= total || (result.score <= 1 && result.correctCount > 0))) {
+    normalizedScore = Math.round((result.correctCount / total) * 100);
+  }
+  normalizedScore = Math.min(100, Math.max(0, Math.round(normalizedScore)));
+
   const getStars = (score: number) => {
-    if (score >= 90) return 3;
-    if (score >= 60) return 2;
-    return 1;
+    if (score >= 80) return 3;
+    if (score >= 50) return 2;
+    if (score > 0) return 1;
+    return 0;
   };
 
-  const stars = getStars(result.score);
+  const stars = getStars(normalizedScore);
 
   const getTitle = () => {
     if (stars === 3) return t('summaryExcellent');
     if (stars === 2) return t('summaryGood');
-    return t('summaryTryHarder');
+    if (stars === 1) return t('summaryTryHarder');
+    return t('summaryNeedsPractice');
   };
   const title = propTitle || getTitle();
 
@@ -64,7 +74,7 @@ export function GameSummary({
         <div className="relative">
           <Trophy className="w-24 h-24 text-yellow-400 opacity-10 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           <p className="text-6xl sm:text-7xl font-black text-[#215b3b] relative z-10 drop-shadow-sm">
-            {result.score}
+            {normalizedScore}
             <span className="text-3xl sm:text-4xl ml-1">%</span>
           </p>
         </div>

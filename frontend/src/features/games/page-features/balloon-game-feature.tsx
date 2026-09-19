@@ -37,7 +37,6 @@ function BalloonGameContent({ searchParams }: { searchParams: URLSearchParams })
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-4 min-h-[60vh]">
         <GameSummary
-          title="Tuyệt vời!"
           subtitle="Hoàn thành Bảo Vệ Căn Cứ (Balloon Game)"
           result={engine.result}
           elapsed={engine.elapsed}

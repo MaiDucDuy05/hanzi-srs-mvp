@@ -11,8 +11,8 @@ export function HeroSection({ user }: { user: User | null }) {
 
       {/* Floating Navbar (Bên trong hero như thiết kế) */}
       <div className="absolute top-8 left-1/2 z-20 flex w-[90%] lg:w-[50%] max-w-3xl -translate-x-1/2 items-center justify-between rounded-full bg-gradient-to-r from-[#e5f5eb] via-[#e9f9ef] to-[#e0f5e9] shadow-md px-6 py-2 font-[family-name:var(--font-nunito)] text-base sm:text-lg font-black text-[#215b3b]">
-        <Link href="/">
-          <img src="/assets/illustrations/panda/panda-at-beach.svg" alt="Panda" className="h-14 w-auto sm:h-16 lg:h-20" />
+        <Link href="/" className="flex items-center">
+          <img src="/assets/images/logo/logo-horizontal.png" alt="Mầm Tre Hoa Ngữ" className="h-12 w-auto sm:h-14 lg:h-16 object-contain" />
         </Link>
         <div className="flex items-center gap-4 sm:gap-6 lg:gap-8 pr-2">
           {user?.role === 'ADMIN' ? (

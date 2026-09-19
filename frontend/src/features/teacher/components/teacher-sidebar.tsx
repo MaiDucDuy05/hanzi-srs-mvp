@@ -32,8 +32,12 @@ export function TeacherSidebar() {
 
   return (
     <aside className="flex h-full w-[260px] flex-col bg-[#fcfce8] p-6 shadow-sm border-r border-[#f3f4e1] relative">
-      <div className="mb-10 flex flex-col items-center text-center mt-4">
-        <p className="text-[10px] text-gray-500 font-medium tracking-wide mt-1">Cổng Giáo Viên & Quản Trị</p>
+      <div className="mb-8 flex items-center gap-3">
+        <img src="/assets/images/logo/logo-mark.png" alt="Mầm Tre Hoa Ngữ" className="h-10 w-10 object-contain" />
+        <div>
+          <h1 className="text-base font-bold text-[#1f5333] leading-tight">Mầm Tre Hoa Ngữ</h1>
+          <p className="text-[11px] text-gray-500 mt-0.5">Cổng Giáo Viên</p>
+        </div>
       </div>
 
       <nav className="flex-1 space-y-1">

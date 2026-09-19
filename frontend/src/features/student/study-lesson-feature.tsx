@@ -12,11 +12,13 @@ import { LearnWordFlow } from '@/features/study/learn-word/learn-word-flow';
 import { LearnGrammarFlow } from '@/features/study/learn-grammar/learn-grammar-flow';
 import { CheckCircle2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import { useStudyLayout } from '@/providers/study-layout-provider';
 
 export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: string }> }) {
   const resolvedParams = React.use(params);
   const { lessonId } = resolvedParams;
   const t = useTranslations('Study');
+  const { setHideHeader } = useStudyLayout();
 
   const [mode, setMode] = useState<'list' | 'flashcard' | 'learn-word' | 'learn-grammar'>('list');
   const [listTab, setListTab] = useState<'vocab' | 'grammar'>('vocab');
@@ -29,6 +31,12 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
   const [grammarPoints, setGrammarPoints] = useState<GrammarPoint[]>([]);
   const [progressMap, setProgressMap] = useState<Record<string, UserVocabProgress>>({});
   const [lessonProgress, setLessonProgress] = useState<UserLessonProgress | null>(null);
+
+  // Hide outer layout exit button when in sub-flows that have their own back button
+  useEffect(() => {
+    setHideHeader(mode === 'learn-word' || mode === 'learn-grammar');
+    return () => setHideHeader(false);
+  }, [mode, setHideHeader]);
 
   // Fetch lesson contents
   useEffect(() => {

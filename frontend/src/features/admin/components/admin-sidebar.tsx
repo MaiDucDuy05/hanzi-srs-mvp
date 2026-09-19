@@ -39,9 +39,12 @@ export function AdminSidebar() {
 
   return (
     <aside className="flex h-full w-[280px] flex-col bg-pale-green rounded-tr-3xl rounded-br-3xl p-6 shadow-sm relative">
-      <div className="mb-8">
-        <h1 className="text-xl font-bold text-forest">Cute Panda Forest</h1>
-        <p className="text-xs text-gray-500 mt-1">Cổng Quản Trị Hệ Thống</p>
+      <div className="mb-8 flex items-center gap-3">
+        <img src="/assets/images/logo/logo-mark.png" alt="Mầm Tre Hoa Ngữ" className="h-10 w-10 object-contain" />
+        <div>
+          <h1 className="text-lg font-bold text-forest leading-tight">Mầm Tre Hoa Ngữ</h1>
+          <p className="text-xs text-gray-500 mt-0.5">Cổng Quản Trị Hệ Thống</p>
+        </div>
       </div>
 
       <nav className="flex-1 space-y-2">

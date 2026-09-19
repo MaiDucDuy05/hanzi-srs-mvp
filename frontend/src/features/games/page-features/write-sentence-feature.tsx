@@ -66,7 +66,6 @@ export function WriteSentenceFeature({ sourceId, sourceType }: WriteSentenceFeat
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-4">
         <GameSummary
-          title="Xuất sắc!"
           subtitle="Hoàn thành Viết câu (Write the Sentence)"
           result={engine.result}
           elapsed={engine.elapsed}

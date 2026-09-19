@@ -72,7 +72,6 @@ export function PracticeSession({
     return (
       <div className="flex-1 flex flex-col items-center justify-center p-4">
         <GameSummary
-          title={tPractice('greatJob')}
           subtitle={`${tPractice('completedPrefix')} ${labelForPracticeType(t, practiceType)}`}
           result={engine.result}
           elapsed={engine.elapsed}
