@@ -28,6 +28,7 @@ import { QuestionBankModule } from './modules/question-bank/question-bank.module
 import { LiveQuizModule } from './modules/live-quiz/live-quiz.module';
 import { StudyModule } from './modules/study/study.module';
 import { AwsModule } from './modules/aws/aws.module';
+import { YctCurriculumModule } from './modules/yct-curriculum/yct-curriculum.module';
 
 @Module({
   imports: [
@@ -71,6 +72,7 @@ import { AwsModule } from './modules/aws/aws.module';
     LiveQuizModule,
     StudyModule,
     AwsModule,
+    YctCurriculumModule,
   ],
   controllers: [AppController],
   providers: [
