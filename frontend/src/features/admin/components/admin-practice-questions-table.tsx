@@ -4,8 +4,9 @@
 import { useState, useEffect } from 'react';
 import { adminContentApi } from '@/lib/api/endpoints/admin-content';
 import { useConfirm } from '@/providers/confirm-provider';
-import { Edit2, Trash2, Search, ListPlus } from 'lucide-react';
+import { Edit2, Trash2, Search, ListPlus, FileDown, UploadCloud } from 'lucide-react';
 import { AdminPracticeQuestionModal } from './admin-practice-question-modal';
+import { BulkAddPracticeQuestionsModal } from './bulk-add-practice-questions-modal';
 
 export const AdminPracticeQuestionsTable = () => {
   const [questions, setQuestions] = useState<any[]>([]);
@@ -18,6 +19,7 @@ export const AdminPracticeQuestionsTable = () => {
   
   const [hskLevels, setHskLevels] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [editForm, setEditForm] = useState<any>({});
 
   const fetchQuestions = async (searchStr = search, levelId = filterLevel) => {
@@ -55,6 +57,29 @@ export const AdminPracticeQuestionsTable = () => {
     } catch (error) {
       console.error('Failed to delete practice question:', error);
       alert('Lỗi khi xóa câu hỏi');
+    }
+  };
+
+  const handleExportCsv = async () => {
+    try {
+      const response = await fetch('/api/v1/admin/questions/export', {
+        method: 'GET',
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Export failed');
+      const text = await response.text();
+      // Add UTF-8 BOM (\uFEFF) so Excel can read Chinese and Vietnamese characters correctly
+      const blob = new Blob(['\uFEFF' + text], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'practice_questions_export.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Failed to export CSV', error);
+      alert('Lỗi khi xuất CSV');
     }
   };
 
@@ -154,7 +179,25 @@ export const AdminPracticeQuestionsTable = () => {
             </select>
           </div>
 
-          <div className="flex gap-2 w-full md:w-auto shrink-0">
+          <div className="flex flex-wrap gap-2 w-full md:w-auto shrink-0">
+            <button 
+              onClick={handleExportCsv}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white text-[#11321e] px-4 py-2 rounded-full text-sm font-bold border border-gray-200 shadow-sm hover:bg-gray-50 transition-colors"
+              title="Xuất file CSV"
+            >
+              <FileDown className="h-4 w-4" />
+              Export CSV
+            </button>
+
+            <button 
+              onClick={() => setIsImportModalOpen(true)}
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-50 text-blue-700 px-4 py-2 rounded-full text-sm font-bold border border-blue-100 shadow-sm hover:bg-blue-100 transition-colors"
+              title="Nhập câu hỏi từ file CSV"
+            >
+              <UploadCloud className="h-4 w-4" />
+              Import CSV
+            </button>
+
             <button 
               onClick={() => handleOpenModal()}
               className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-[#11321e] text-[#c7cf35] px-4 py-2 rounded-full text-sm font-bold shadow-sm hover:bg-[#1f4e31] transition-colors"
@@ -229,6 +272,18 @@ export const AdminPracticeQuestionsTable = () => {
           hskLevels={hskLevels}
           onClose={handleCloseModal}
           onSave={handleSave}
+        />
+      )}
+
+      {isImportModalOpen && (
+        <BulkAddPracticeQuestionsModal
+          isOpen={isImportModalOpen}
+          onClose={() => setIsImportModalOpen(false)}
+          onSuccess={() => {
+            setIsImportModalOpen(false);
+            fetchQuestions(search, filterLevel);
+          }}
+          hskLevels={hskLevels}
         />
       )}
     </div>

@@ -56,7 +56,17 @@ export function StudyFeature() {
 
     curriculumApi.listVocabularies(params).then((data) => {
       if (cancelled) return;
-      setVocabularies(data);
+      
+      let finalData = data;
+      if (studyMode === 'topic') {
+        // Shuffle array
+        const shuffled = [...data].sort(() => 0.5 - Math.random());
+        // Random count between 20 and 30
+        const randomCount = Math.floor(Math.random() * 11) + 20;
+        finalData = shuffled.slice(0, randomCount);
+      }
+
+      setVocabularies(finalData);
       setLoading(false);
     }).catch((e) => {
       if (!cancelled) setError(e instanceof Error ? e.message : t('loadError'));

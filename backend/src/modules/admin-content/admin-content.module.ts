@@ -65,5 +65,6 @@ import { AdminTeacherContentService } from './services/admin-teacher-content.ser
     CsvImportService,
     AdminTeacherContentService,
   ],
+  exports: [S3UploadService],
 })
 export class AdminContentModule {}

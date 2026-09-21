@@ -23,6 +23,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const NAV_ITEMS = [
     { label: t('dashboard'), href: '/dashboard' },
     { label: t('hsk'), href: '/dashboard/courses/hsk' },
+    { label: 'YCT', href: '/dashboard/yct' },
     { label: t('topic'), href: '/dashboard/courses/topic' },
     { label: t('practice'), href: '/dashboard/practice' },
     { label: t('exams'), href: '/dashboard/exams' },
@@ -130,7 +131,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Main Content Area */}
         <main className="flex-1 min-w-0 flex flex-col items-center overflow-y-auto custom-scrollbar h-full">
           <div className={`w-full max-w-6xl py-4 sm:py-0 flex flex-col ${
-            !(pathname.startsWith('/dashboard/courses') || pathname.startsWith('/dashboard/practice/lessons') || pathname.startsWith('/dashboard/achievements') || pathname.startsWith('/dashboard/exams')) 
+            !(pathname.startsWith('/dashboard/courses') || pathname.startsWith('/dashboard/practice/lessons') || pathname.startsWith('/dashboard/achievements') || pathname.startsWith('/dashboard/exams') || pathname.startsWith('/dashboard/yct')) 
               ? 'my-auto' 
               : ''
           }`}>

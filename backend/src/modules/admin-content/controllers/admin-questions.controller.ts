@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards, Ip } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards, Ip, BadRequestException } from '@nestjs/common';
 import { AdminQuestionsService } from '../services/admin-questions.service';
 import { Roles } from '../../auth/decorators/roles.decorator';
 import { Role } from '../../../common/enums/user.enums';
@@ -9,10 +9,33 @@ import { CurrentUser } from '../../auth/decorators/current-user.decorator';
 export class AdminQuestionsController {
   constructor(private readonly adminQuestionsService: AdminQuestionsService) {}
 
+  @Get('export')
+  async exportCsv() {
+    const csvContent = await this.adminQuestionsService.exportCsv();
+    return csvContent;
+  }
+
   @Get()
   async findAll(@Query() query: any) {
     const result = await this.adminQuestionsService.findAll(query);
     return { data: result, message: 'Questions retrieved successfully' };
+  }
+
+  @Post('bulk-create')
+  async bulkCreate(
+    @Body() body: any,
+    @CurrentUser('sub') adminId: string,
+    @Ip() ipAddress: string,
+  ) {
+    const dtos = Array.isArray(body) ? body : body?.items || [];
+    if (!Array.isArray(dtos)) {
+      throw new BadRequestException('Body must be an array of questions');
+    }
+    const results = await this.adminQuestionsService.bulkCreate(dtos, adminId, ipAddress);
+    return {
+      data: { ids: results.map((r: any) => r.id), count: results.length },
+      message: `Bulk created ${results.length} questions successfully`,
+    };
   }
 
   @Post()

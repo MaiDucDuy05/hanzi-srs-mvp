@@ -7,7 +7,7 @@ import { AuditLogService } from '../../admin/audit-log.service';
 
 describe('AdminQuestionsService', () => {
   let service: AdminQuestionsService;
-  let questionRepo: { createQueryBuilder: jest.Mock; create: jest.Mock; save: jest.Mock; findOne: jest.Mock };
+  let questionRepo: { createQueryBuilder: jest.Mock; create: jest.Mock; save: jest.Mock; findOne: jest.Mock; find: jest.Mock };
   let auditLog: { logAction: jest.Mock };
 
   beforeEach(async () => {
@@ -19,6 +19,7 @@ describe('AdminQuestionsService', () => {
         return Promise.resolve(x);
       }),
       findOne: jest.fn(),
+      find: jest.fn(),
     };
     auditLog = { logAction: jest.fn().mockResolvedValue(undefined) };
 
@@ -82,6 +83,42 @@ describe('AdminQuestionsService', () => {
     });
   });
 
+  describe('bulkCreate', () => {
+    it('returns empty array when dtos is empty', async () => {
+      const res = await service.bulkCreate([], 'admin-1', '127.0.0.1');
+      expect(res).toEqual([]);
+      expect(questionRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('creates multiple questions in batch and logs audit action', async () => {
+      questionRepo.save.mockResolvedValue([
+        { id: 'q-1', prompt: 'Q1' },
+        { id: 'q-2', prompt: 'Q2' },
+      ]);
+
+      const res = await service.bulkCreate(
+        [
+          { prompt: 'Q1', levelId: 'l1' },
+          { prompt: 'Q2', levelId: 'l2' },
+        ],
+        'admin-1',
+        '127.0.0.1',
+      );
+
+      expect(res).toHaveLength(2);
+      expect(questionRepo.create).toHaveBeenCalledTimes(2);
+      expect(questionRepo.save).toHaveBeenCalled();
+      expect(auditLog.logAction).toHaveBeenCalledWith(
+        'admin-1',
+        'BULK_CREATE_QUESTION',
+        'QUESTION',
+        'q-1',
+        '127.0.0.1',
+        expect.objectContaining({ newValue: { count: 2 } }),
+      );
+    });
+  });
+
   describe('update', () => {
     it('throws NotFoundException when not found', async () => {
       questionRepo.findOne.mockResolvedValue(null);
@@ -121,4 +158,38 @@ describe('AdminQuestionsService', () => {
       await expect(service.softDelete('q-x', 'admin-1', '127.0.0.1')).rejects.toThrow(NotFoundException);
     });
   });
-});
+
+  describe('exportCsv', () => {
+    it('generates valid CSV string for practice questions', async () => {
+      questionRepo.find.mockResolvedValue([
+        {
+          id: 'q1',
+          prompt: 'Ta là ai?',
+          questionType: 'FILL_BLANK',
+          answerType: 'TEXT',
+          questionData: { choices: ['A', 'B'] },
+          answerData: { answer: 'A' },
+          level: { name: 'HSK 1' },
+          translation: 'Who am I?',
+          explanation: 'Sample',
+        },
+        {
+          id: 'q2',
+          prompt: 'Sắp xếp câu',
+          questionType: 'SENTENCE_ORDERING',
+          answerType: 'TEXT',
+          questionData: { tokens: [{ id: 't1', text: 'Tôi' }, { id: 't2', text: 'học' }] },
+          answerData: { orderedTokenIds: ['t1', 't2'] },
+          level: { name: 'HSK 2' },
+          translation: 'I study',
+          explanation: '',
+        },
+      ]);
+
+      const csv = await service.exportCsv();
+      expect(csv).toContain('prompt,question_type,answer_type,choices,answer,hsk_level,translation,explanation');
+      expect(csv).toContain('"Ta là ai?","FILL_BLANK","TEXT","A;B","A","HSK 1","Who am I?","Sample"');
+      expect(csv).toContain('"Sắp xếp câu","SENTENCE_ORDERING","TEXT","","Tôi,học","HSK 2","I study",""');
+    });
+  });
+});

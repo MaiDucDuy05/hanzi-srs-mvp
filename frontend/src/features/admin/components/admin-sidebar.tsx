@@ -12,7 +12,8 @@ import {
   ShieldAlert,
   GraduationCap,
   Target,
-  Activity
+  Activity,
+  Sparkles
 } from 'lucide-react';
 
 import { useAuth } from '@/lib/auth/auth-context';
@@ -20,7 +21,8 @@ import { LogOut } from 'lucide-react';
 
 const NAV_ITEMS = [
   { href: '/admin', title: 'Bảng điều khiển', icon: LayoutDashboard, exact: true },
-  { href: '/admin/curriculum', title: 'Nội dung học', icon: BookOpen },
+  { href: '/admin/curriculum', title: 'Nội dung học (HSK)', icon: BookOpen },
+  { href: '/admin/yct', title: 'YCT Thiếu Nhi', icon: Sparkles },
   { href: '/admin/questions', title: 'Câu hỏi luyện tập', icon: Target },
   { href: '/admin/teacher-content', title: 'Quản lý giáo viên', icon: GraduationCap },
   { href: '/admin/users', title: 'Người dùng & Học sinh', icon: Users },
