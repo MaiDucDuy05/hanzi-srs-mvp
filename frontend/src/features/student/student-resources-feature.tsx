@@ -120,7 +120,7 @@ export function StudentResourcesFeature() {
                   : 'bg-white text-gray-600 hover:bg-emerald-50 border border-gray-100 shadow-2xs'
               }`}
             >
-              {type.name}
+              {type.name} ({type.resourceCount || 0})
             </button>
           ))}
         </div>

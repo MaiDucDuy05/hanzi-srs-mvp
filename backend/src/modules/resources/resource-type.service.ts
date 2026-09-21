@@ -19,17 +19,22 @@ export class ResourceTypeService {
   ) {}
 
   async findAll(includeInactive = false): Promise<ResourceType[]> {
-    const where: any = {};
+    const qb = this.repo.createQueryBuilder('rt')
+      .loadRelationCountAndMap(
+        'rt.resourceCount', 
+        'rt.resources', 
+        'res', 
+        (qb) => qb.where("res.deleted_at IS NULL") // optionally we could filter by status = 'PUBLISHED'
+      );
+
     if (!includeInactive) {
-      where.isActive = true;
+      qb.andWhere('rt.isActive = :isActive', { isActive: true });
     }
-    return this.repo.find({
-      where,
-      order: {
-        displayOrder: 'ASC',
-        name: 'ASC',
-      },
-    });
+
+    qb.orderBy('rt.displayOrder', 'ASC')
+      .addOrderBy('rt.name', 'ASC');
+
+    return qb.getMany();
   }
 
   async findById(id: string): Promise<ResourceType> {

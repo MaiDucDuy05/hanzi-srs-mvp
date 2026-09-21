@@ -378,7 +378,7 @@ export function AdminResourcesFeature() {
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {type.name}
+                {type.name} ({type.resourceCount || 0})
               </button>
             );
           })}
