@@ -6,6 +6,9 @@ export const resourceApi = {
   list: (params: { tier?: string; status?: string; resourceTypeId?: string; page?: number; limit?: number } = {}) =>
     apiFetch<Paginated<Resource>>(`/resources${toQuery({ ...params, limit: params.limit ?? 100 })}`).then((r) => r.data),
 
+  listPaginated: (params: { tier?: string; status?: string; resourceTypeId?: string; page?: number; limit?: number } = {}) =>
+    apiFetch<Paginated<Resource>>(`/resources${toQuery({ ...params, limit: params.limit ?? 100 })}`),
+
   get: (id: string) => unwrap(apiFetch<Single<Resource>>(`/resources/${id}`)),
 
   create: (data: Partial<Resource>) =>

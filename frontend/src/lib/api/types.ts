@@ -406,6 +406,7 @@ export interface ResourceType {
   deletedAt?: string | null;
   createdAt: string;
   updatedAt: string;
+  resourceCount?: number;
 }
 
 export interface Resource {
