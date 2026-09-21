@@ -96,10 +96,14 @@ export const adminContentApi = {
     apiFetch(`/admin/questions${toQuery(params)}`, { method: 'GET' }),
   createQuestion: (data: any) =>
     apiFetch(`/admin/questions`, { method: 'POST', body: JSON.stringify(data) }),
+  bulkCreateQuestions: (items: any[]) =>
+    apiFetch(`/admin/questions/bulk-create`, { method: 'POST', body: JSON.stringify(items) }),
   updateQuestion: (id: string, data: any) =>
     apiFetch(`/admin/questions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteQuestion: (id: string) =>
     apiFetch(`/admin/questions/${id}`, { method: 'DELETE' }),
+  exportQuestionsCsv: () =>
+    apiFetch(`/admin/questions/export`, { method: 'GET' }),
 
   // Exam/Bank Questions (New system via question-bank)
   getExamQuestions: (params?: Record<string, string | number | boolean | undefined>) =>
