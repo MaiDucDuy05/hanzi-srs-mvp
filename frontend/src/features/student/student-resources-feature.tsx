@@ -16,33 +16,52 @@ export function StudentResourcesFeature() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [resourceTypes, setResourceTypes] = useState<ResourceType[]>([]);
   const [selectedTypeId, setSelectedTypeId] = useState<string>('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [downloading, setDownloading] = useState<string | null>(null);
   const [viewerDoc, setViewerDoc] = useState<{ id: string, title: string, tier: any, fileKey: string } | null>(null);
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
 
-  const loadResources = async () => {
-    try {
-      setLoading(true);
-      // Fetch only published resources & active types
-      const [res, types] = await Promise.all([
-        resourceApi.list({ status: 'PUBLISHED', limit: 100 }),
-        resourceApi.listTypes(false).catch(() => []),
-      ]);
-      
-      setResources(res);
-      setResourceTypes(types || []);
-    } catch (error) {
-      console.error('Failed to load resources:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const types = await resourceApi.listTypes(false).catch(() => []);
+        if (cancelled) return;
+        setResourceTypes(types || []);
+        if (types && types.length > 0) {
+          setSelectedTypeId(types[0].id);
+        }
+      } catch (error) {
+        console.error('Failed to load types:', error);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
-    loadResources();
-  }, []);
+    if (!selectedTypeId) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    (async () => {
+      try {
+        const res = await resourceApi.listPaginated({ status: 'PUBLISHED', resourceTypeId: selectedTypeId, page, limit: 100 });
+        if (cancelled) return;
+        setResources(res.data || []);
+        setTotalPages(res.meta?.totalPages || 1);
+      } catch (error) {
+        console.error('Failed to load resources:', error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [selectedTypeId, page]);
 
   const handleOpenDoc = async (resource: Resource) => {
     try {
@@ -66,8 +85,7 @@ export function StudentResourcesFeature() {
     const matchesSearch =
       r.title.toLowerCase().includes(search.toLowerCase()) ||
       (r.description && r.description.toLowerCase().includes(search.toLowerCase()));
-    const matchesType = !selectedTypeId || r.resourceTypeId === selectedTypeId;
-    return matchesSearch && matchesType;
+    return matchesSearch;
   });
 
   return (
@@ -91,22 +109,11 @@ export function StudentResourcesFeature() {
       {/* Category Filter Pills */}
       {resourceTypes.length > 0 && (
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          <button
-            type="button"
-            onClick={() => setSelectedTypeId('')}
-            className={`px-4 py-2 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer ${
-              selectedTypeId === ''
-                ? 'bg-[#215b3b] text-white shadow-sm'
-                : 'bg-white text-gray-600 hover:bg-emerald-50 border border-gray-100 shadow-2xs'
-            }`}
-          >
-            Tất cả
-          </button>
           {resourceTypes.map((type) => (
             <button
               key={type.id}
               type="button"
-              onClick={() => setSelectedTypeId(type.id)}
+              onClick={() => { setSelectedTypeId(type.id); setPage(1); }}
               className={`px-4 py-2 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer ${
                 selectedTypeId === type.id
                   ? 'bg-[#215b3b] text-white shadow-sm'
@@ -175,6 +182,27 @@ export function StudentResourcesFeature() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center items-center gap-2 mt-8">
+          <button
+            onClick={() => setPage(p => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50"
+          >
+            Trước
+          </button>
+          <span className="text-sm font-medium">Trang {page} / {totalPages}</span>
+          <button
+            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50"
+          >
+            Sau
+          </button>
         </div>
       )}
 

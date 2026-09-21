@@ -32,6 +32,8 @@ export function AdminResourcesFeature() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [resourceTypes, setResourceTypes] = useState<ResourceType[]>([]);
   const [selectedTypeId, setSelectedTypeId] = useState<string>('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
   const [isVip, setIsVip] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,11 +80,12 @@ export function AdminResourcesFeature() {
 
   const loadData = async () => {
     try {
-      const [list, types] = await Promise.all([
-        resourceApi.list({}),
-        resourceApi.listTypes(true).catch(() => []),
-      ]);
-      setResources(list.filter((r) => !r.deletedAt));
+      if (!selectedTypeId) return;
+      const res = await resourceApi.listPaginated({ resourceTypeId: selectedTypeId, page, limit: 100 });
+      setResources(res.data.filter((r) => !r.deletedAt));
+      setTotalPages(res.meta.totalPages || 1);
+      
+      const types = await resourceApi.listTypes(true).catch(() => []);
       setResourceTypes(types || []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Lỗi tải dữ liệu.');
@@ -93,13 +96,12 @@ export function AdminResourcesFeature() {
     let cancelled = false;
     (async () => {
       try {
-        const [list, types] = await Promise.all([
-          resourceApi.list({}),
-          resourceApi.listTypes(true).catch(() => []),
-        ]);
+        const types = await resourceApi.listTypes(true).catch(() => []);
         if (cancelled) return;
-        setResources(list.filter((r) => !r.deletedAt));
         setResourceTypes(types || []);
+        if (types && types.length > 0) {
+          setSelectedTypeId(types[0].id);
+        }
         
         const vipRole = user?.role === 'TEACHER' || user?.role === 'ADMIN';
         let vipActive = false;
@@ -116,6 +118,28 @@ export function AdminResourcesFeature() {
         if (cancelled) return;
         setIsVip(vipRole || vipActive);
       } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'Lỗi tải loại giáo trình.');
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  useEffect(() => {
+    if (!selectedTypeId) {
+      setLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setLoading(true);
+    (async () => {
+      try {
+        const res = await resourceApi.listPaginated({ resourceTypeId: selectedTypeId, page, limit: 100 });
+        if (cancelled) return;
+        setResources(res.data.filter((r) => !r.deletedAt));
+        setTotalPages(res.meta.totalPages || 1);
+      } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Lỗi tải tài liệu.');
       } finally {
         if (!cancelled) setLoading(false);
@@ -124,7 +148,7 @@ export function AdminResourcesFeature() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [selectedTypeId, page]);
 
   const handleCreate = async () => {
     if (!createForm.title || !selectedFile) {
@@ -294,9 +318,7 @@ export function AdminResourcesFeature() {
     return <File className="h-5 w-5 text-gray-500" />;
   };
 
-  const displayedResources = selectedTypeId 
-    ? resources.filter(r => r.resourceTypeId === selectedTypeId)
-    : resources;
+  const displayedResources = resources;
   const freeResources = displayedResources.filter(r => r.tier === 'FREE');
   const vipResources = displayedResources.filter(r => r.tier === 'VIP');
 
@@ -345,29 +367,18 @@ export function AdminResourcesFeature() {
 
         {/* Category Filter Pills */}
         <div className="flex items-center gap-2 overflow-x-auto pb-3 mb-6 border-b border-gray-100 scrollbar-none">
-          <button
-            onClick={() => setSelectedTypeId('')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-all ${
-              selectedTypeId === ''
-                ? 'bg-[#11321e] text-white shadow-xs'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            Tất cả ({resources.length})
-          </button>
           {resourceTypes.map((type) => {
-            const count = resources.filter((r) => r.resourceTypeId === type.id).length;
             return (
               <button
                 key={type.id}
-                onClick={() => setSelectedTypeId(type.id)}
+                onClick={() => { setSelectedTypeId(type.id); setPage(1); }}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-semibold shrink-0 transition-all ${
                   selectedTypeId === type.id
                     ? 'bg-[#11321e] text-white shadow-xs'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                 }`}
               >
-                {type.name} ({count})
+                {type.name}
               </button>
             );
           })}
@@ -544,6 +555,27 @@ export function AdminResourcesFeature() {
           </div>
 
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 mt-8">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50"
+            >
+              Trước
+            </button>
+            <span className="text-sm font-medium">Trang {page} / {totalPages}</span>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-3 py-1 border rounded-lg text-sm disabled:opacity-50"
+            >
+              Sau
+            </button>
+          </div>
+        )}
       </div>
 
 
