@@ -16,7 +16,7 @@ import {
 import { resourceApi, testApi, questionBankApi, speakingApi } from '@/lib/api/endpoints';
 import type { TestAttempt } from '@/lib/api/types';
 import { PageLoading } from '@/features/ui/components/spinner';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
 
 export function TeacherDashboardFeature() {
   const [loading, setLoading] = useState(true);
@@ -159,7 +159,7 @@ export function TeacherDashboardFeature() {
                   <h3 className="text-[16px] font-extrabold text-[#d32f2f] mb-1">Chấm điểm HSKK</h3>
                   <p className="text-[13px] text-gray-700">Có <b>{stats.pendingSpeaking}</b> bài thi nói HSKK đang chờ bạn chấm điểm.</p>
                 </div>
-                <Link href="/en/teacher/speaking-reviews" className="px-5 py-2.5 bg-[#d32f2f] text-white text-sm font-bold rounded-xl hover:bg-[#b71c1c] transition-colors whitespace-nowrap">
+                <Link href="/teacher/hskk-grading" className="px-5 py-2.5 bg-[#d32f2f] text-white text-sm font-bold rounded-xl hover:bg-[#b71c1c] transition-colors whitespace-nowrap">
                   Chấm ngay
                 </Link>
               </div>
@@ -174,19 +174,19 @@ export function TeacherDashboardFeature() {
             </div>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Link href="/en/teacher/exams/new" className="bg-white border border-gray-200 rounded-[20px] p-5 flex flex-col items-center justify-center gap-3 hover:border-[#78993a] hover:bg-[#fcfce8] transition-all text-gray-600 hover:text-[#1f5333] group">
+              <Link href="/teacher/exams" className="bg-white border border-gray-200 rounded-[20px] p-5 flex flex-col items-center justify-center gap-3 hover:border-[#78993a] hover:bg-[#fcfce8] transition-all text-gray-600 hover:text-[#1f5333] group">
                 <PlusCircle className="w-8 h-8 text-gray-400 group-hover:text-[#78993a] transition-colors" />
                 <span className="text-sm font-bold text-center">Tạo bài thi</span>
               </Link>
-              <Link href="/en/teacher/question-bank" className="bg-white border border-gray-200 rounded-[20px] p-5 flex flex-col items-center justify-center gap-3 hover:border-[#78993a] hover:bg-[#fcfce8] transition-all text-gray-600 hover:text-[#1f5333] group">
+              <Link href="/teacher/questions" className="bg-white border border-gray-200 rounded-[20px] p-5 flex flex-col items-center justify-center gap-3 hover:border-[#78993a] hover:bg-[#fcfce8] transition-all text-gray-600 hover:text-[#1f5333] group">
                 <Database className="w-8 h-8 text-gray-400 group-hover:text-[#78993a] transition-colors" />
                 <span className="text-sm font-bold text-center">Ngân hàng câu hỏi</span>
               </Link>
-              <Link href="/en/teacher/speaking-reviews" className="bg-white border border-gray-200 rounded-[20px] p-5 flex flex-col items-center justify-center gap-3 hover:border-[#78993a] hover:bg-[#fcfce8] transition-all text-gray-600 hover:text-[#1f5333] group">
+              <Link href="/teacher/hskk-grading" className="bg-white border border-gray-200 rounded-[20px] p-5 flex flex-col items-center justify-center gap-3 hover:border-[#78993a] hover:bg-[#fcfce8] transition-all text-gray-600 hover:text-[#1f5333] group">
                 <Mic className="w-8 h-8 text-gray-400 group-hover:text-[#78993a] transition-colors" />
                 <span className="text-sm font-bold text-center">Chấm điểm nói</span>
               </Link>
-              <Link href="/en/teacher/students" className="bg-white border border-gray-200 rounded-[20px] p-5 flex flex-col items-center justify-center gap-3 hover:border-[#78993a] hover:bg-[#fcfce8] transition-all text-gray-600 hover:text-[#1f5333] group">
+              <Link href="/teacher/students" className="bg-white border border-gray-200 rounded-[20px] p-5 flex flex-col items-center justify-center gap-3 hover:border-[#78993a] hover:bg-[#fcfce8] transition-all text-gray-600 hover:text-[#1f5333] group">
                 <Users className="w-8 h-8 text-gray-400 group-hover:text-[#78993a] transition-colors" />
                 <span className="text-sm font-bold text-center">Quản lý học sinh</span>
               </Link>
