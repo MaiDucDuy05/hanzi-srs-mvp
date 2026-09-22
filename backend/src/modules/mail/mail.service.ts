@@ -35,14 +35,22 @@ export class MailService {
     }
   }
 
+  private getFromAddress(displayName = 'Mầm Tre Hoa Ngữ'): string {
+    const from = this.configService.get<string>('SMTP_FROM', 'noreply@mamtrehoangu.com');
+    if (from.includes('<') && from.includes('>')) {
+      return from;
+    }
+    return `"${displayName}" <${from}>`;
+  }
+
   async sendRegistrationOtp(to: string, otp: string) {
     const mailOptions = {
-      from: `"Hanzi SRS" <${this.configService.get<string>('SMTP_FROM', 'no-reply@hanzi-srs.com')}>`,
+      from: this.getFromAddress('Mầm Tre Hoa Ngữ'),
       to,
-      subject: 'Xác thực tài khoản Hanzi SRS',
+      subject: 'Xác thực tài khoản Mầm Tre Hoa Ngữ',
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-          <h2 style="color: #1a472a;">Chào mừng đến với Hanzi SRS!</h2>
+          <h2 style="color: #1a472a;">Chào mừng đến với Mầm Tre Hoa Ngữ!</h2>
           <p>Mã xác thực (OTP) của bạn để đăng ký tài khoản là:</p>
           <div style="font-size: 24px; font-weight: bold; background-color: #fbfbe9; padding: 15px; text-align: center; border-radius: 8px; margin: 20px 0; letter-spacing: 5px;">
             ${otp}
@@ -67,9 +75,9 @@ export class MailService {
 
   async sendForgotPasswordOtp(to: string, otp: string) {
     const mailOptions = {
-      from: `"Hanzi SRS" <${this.configService.get<string>('SMTP_FROM', 'no-reply@hanzi-srs.com')}>`,
+      from: this.getFromAddress('Mầm Tre Hoa Ngữ'),
       to,
-      subject: 'Khôi phục mật khẩu Hanzi SRS',
+      subject: 'Khôi phục mật khẩu Mầm Tre Hoa Ngữ',
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
           <h2 style="color: #1a472a;">Yêu cầu khôi phục mật khẩu!</h2>
@@ -96,13 +104,13 @@ export class MailService {
   }
   async sendContactConfirmationEmail(to: string, name: string) {
     const mailOptions = {
-      from: `"Hanzi SRS" <${this.configService.get<string>('SMTP_FROM', 'no-reply@hanzi-srs.com')}>`,
+      from: this.getFromAddress('Mầm Tre Hoa Ngữ'),
       to,
-      subject: 'Xác nhận yêu cầu liên hệ - Hanzi SRS',
+      subject: 'Xác nhận yêu cầu liên hệ - Mầm Tre Hoa Ngữ',
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
           <h2 style="color: #1a472a;">Chào ${name},</h2>
-          <p>Cảm ơn bạn đã liên hệ với Khu Rừng Xanh (Hanzi SRS). Chúng tôi đã nhận được yêu cầu của bạn và sẽ phản hồi trong thời gian sớm nhất (thường là trong vòng 24 giờ).</p>
+          <p>Cảm ơn bạn đã liên hệ với  Mầm Tre Hoa Ngữ. Chúng tôi đã nhận được yêu cầu của bạn và sẽ phản hồi trong thời gian sớm nhất (thường là trong vòng 24 giờ).</p>
           <p>Chúc bạn một ngày tốt lành!</p>
           <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
           <p style="font-size: 12px; color: #777;">Vui lòng không trả lời trực tiếp email tự động này.</p>
@@ -120,16 +128,16 @@ export class MailService {
 
   async sendContactReplyEmail(to: string, name: string, replyMessage: string) {
     const mailOptions = {
-      from: `"Hanzi SRS Support" <${this.configService.get<string>('SMTP_FROM', 'no-reply@hanzi-srs.com')}>`,
+      from: this.getFromAddress('Mầm Tre Hoa Ngữ Support'),
       to,
-      subject: 'Phản hồi liên hệ từ Hanzi SRS',
+      subject: 'Phản hồi liên hệ từ Mầm Tre Hoa Ngữ',
       html: `
         <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
           <h2 style="color: #1a472a;">Chào ${name},</h2>
           <p>Cảm ơn bạn đã chờ đợi. Dưới đây là phản hồi từ đội ngũ hỗ trợ của chúng tôi:</p>
           <div style="background-color: #fbfbe9; border-left: 4px solid #1a472a; padding: 15px; margin: 20px 0; white-space: pre-wrap;">${replyMessage}</div>
           <p>Nếu bạn cần hỗ trợ thêm, vui lòng tạo một yêu cầu liên hệ mới trên website.</p>
-          <p>Trân trọng,<br/>Đội ngũ Hanzi SRS</p>
+          <p>Trân trọng,<br/>Đội ngũ Mầm Tre Hoa Ngữ</p>
         </div>
       `,
     };
