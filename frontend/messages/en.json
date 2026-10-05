@@ -777,6 +777,18 @@
     "learnNewWordsButton": "Start learning new words",
     "learnGrammarButton": "Start learning grammar",
     "reviewFlashcardButton": "Review with flashcards",
+    "reviewMatchingButton": "Review with matching",
+    "matching": {
+      "insufficientWords": "At least 2 words with Hanzi and meaning are required to start matching.",
+      "backToLesson": "Back to lesson",
+      "back": "Back",
+      "setComplete": "Matching set complete!",
+      "shuffleDescription": "Each set has up to 6 words. Shuffle to get a different set and keep practicing.",
+      "nextSet": "Shuffle another set",
+      "skipSet": "Skip this set",
+      "instruction": "Match Hanzi with the Vietnamese meaning (up to 6 words)",
+      "pairsCounter": "{matched}/{total} pairs"
+    },
     "vocabTable": {
       "hanzi": "Hanzi",
       "pinyin": "Pinyin",

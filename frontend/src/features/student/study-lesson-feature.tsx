@@ -8,6 +8,7 @@ import { studentApi } from '@/lib/api/endpoints/student';
 import type { Vocabulary, GrammarPoint, UserVocabProgress, UserLessonProgress, Lesson } from '@/lib/api/types';
 import { StudyLessonVocabTable } from './components/study-lesson-vocab-table';
 import { StudyLessonGrammarList } from './components/study-lesson-grammar-list';
+import { LessonWordMatching } from './components/lesson-word-matching';
 import { LearnWordFlow } from '@/features/study/learn-word/learn-word-flow';
 import { LearnGrammarFlow } from '@/features/study/learn-grammar/learn-grammar-flow';
 import { CheckCircle2 } from 'lucide-react';
@@ -28,7 +29,7 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [lessonLoading, setLessonLoading] = useState(true);
 
-  const [mode, setMode] = useState<'list' | 'flashcard' | 'learn-word' | 'learn-grammar'>('list');
+  const [mode, setMode] = useState<'list' | 'flashcard' | 'matching' | 'learn-word' | 'learn-grammar'>('list');
   const [listTab, setListTab] = useState<'vocab' | 'grammar'>('vocab');
 
   const [learnIndex, setLearnIndex] = useState(0);
@@ -139,6 +140,14 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
     );
   }
 
+  if (mode === 'matching') {
+    return (
+      <div className="w-full min-h-[80vh] pt-4 pb-12">
+        <LessonWordMatching vocabularies={vocabularies} onExit={() => setMode('list')} />
+      </div>
+    );
+  }
+
   if (mode === 'list') {
     return (
       <div className="w-full h-[calc(100vh-140px)] flex flex-col relative mt-12">
@@ -182,18 +191,24 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
 
         {/* Floating Action Button */}
         {listTab === 'vocab' && vocabularies.length > 0 && (
-          <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50 flex gap-4">
+          <div className="fixed bottom-5 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-4xl -translate-x-1/2 flex-wrap justify-center gap-2 sm:bottom-10 sm:gap-4">
             <button
               onClick={() => setMode('learn-word')}
-              className="px-12 py-4 bg-[#1f5333] hover:bg-[#163f25] text-white text-lg font-bold rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2"
+              className="rounded-full bg-[#1f5333] px-5 py-3 text-sm font-bold text-white shadow-lg transition-transform hover:scale-105 sm:px-8 sm:py-4 sm:text-base"
             >
               {t('learnNewWordsButton')}
             </button>
             <button
               onClick={() => setMode('flashcard')}
-              className="px-12 py-4 bg-[#8BC34A] hover:bg-[#7CB342] text-white text-lg font-bold rounded-full shadow-[0_8px_30px_rgb(139,195,74,0.3)] transition-transform hover:scale-105 flex items-center gap-2"
+              className="rounded-full bg-[#8BC34A] px-5 py-3 text-sm font-bold text-white shadow-[0_8px_30px_rgb(139,195,74,0.3)] transition-transform hover:scale-105 sm:px-8 sm:py-4 sm:text-base"
             >
               {t('reviewFlashcardButton')}
+            </button>
+            <button
+              onClick={() => setMode('matching')}
+              className="rounded-full bg-[#215b3b] px-5 py-3 text-sm font-bold text-white shadow-lg transition-transform hover:scale-105 sm:px-8 sm:py-4 sm:text-base"
+            >
+              {t('reviewMatchingButton')}
             </button>
           </div>
         )}

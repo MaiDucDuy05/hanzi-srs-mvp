@@ -776,6 +776,18 @@
     "learnNewWordsButton": "Bắt đầu học từ mới",
     "learnGrammarButton": "Bắt đầu học ngữ pháp",
     "reviewFlashcardButton": "Ôn tập Flashcard",
+    "reviewMatchingButton": "Ôn tập nối từ",
+    "matching": {
+      "insufficientWords": "Cần ít nhất 2 từ có chữ Hán và nghĩa để bắt đầu nối từ.",
+      "backToLesson": "Quay lại bài học",
+      "back": "Quay lại",
+      "setComplete": "Hoàn thành lượt nối từ!",
+      "shuffleDescription": "Mỗi lượt có tối đa 6 từ. Bạn có thể xáo sang bộ từ khác để luyện tiếp.",
+      "nextSet": "Xáo bộ từ khác",
+      "skipSet": "Bỏ qua bộ từ",
+      "instruction": "Nối chữ Hán với nghĩa tiếng Việt (tối đa 6 từ)",
+      "pairsCounter": "{matched}/{total} cặp"
+    },
     "vocabTable": {
       "hanzi": "Hanzi",
       "pinyin": "Pinyin",
