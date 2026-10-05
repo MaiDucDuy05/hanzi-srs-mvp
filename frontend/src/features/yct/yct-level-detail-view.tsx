@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link } from '@/i18n/routing';
+import { useTranslations } from 'next-intl';
 import { yctApi, type YctLevel } from '@/lib/api/endpoints/yct';
 import { Layers, Play, ArrowLeft, Lock, Crown } from 'lucide-react';
 import { Spinner } from '@/features/ui/components/spinner';
@@ -15,6 +16,7 @@ interface YctLevelDetailViewProps {
 }
 
 export function YctLevelDetailView({ code }: YctLevelDetailViewProps) {
+  const t = useTranslations('Yct');
   const { user } = useAuth();
   const isVip = isUserVip(user);
   const [level, setLevel] = useState<YctLevel | null>(null);
@@ -27,10 +29,10 @@ export function YctLevelDetailView({ code }: YctLevelDetailViewProps) {
       .then((data) => setLevel(data))
       .catch((err) => {
         console.error('Failed to load level detail:', err);
-        setError('Không tìm thấy thông tin cấp độ YCT này.');
+        setError(t('levelDetailError'));
       })
       .finally(() => setLoading(false));
-  }, [code]);
+  }, [code, t]);
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-5xl">
@@ -49,7 +51,7 @@ export function YctLevelDetailView({ code }: YctLevelDetailViewProps) {
               <Link
                 href="/dashboard/yct"
                 className="p-2.5 rounded-2xl bg-[#e5f5eb] hover:bg-[#d0eedb] text-[#215b3b] transition-colors shadow-xs"
-                title="Quay lại danh sách cấp độ"
+                title={t('backToLevels')}
               >
                 <ArrowLeft className="w-5 h-5" />
               </Link>
@@ -57,7 +59,7 @@ export function YctLevelDetailView({ code }: YctLevelDetailViewProps) {
                 <h2 className="text-xl font-black text-[#11321e] flex items-center gap-2">
                   <span>{level.name} ({level.code})</span>
                   <span className="text-xs bg-[#e5f5eb] text-[#215b3b] font-bold px-3 py-1 rounded-full border border-[#eaf3c5]">
-                    {level.lessons?.length || 0} bài học
+                    {t('lessonsInLevel', { count: level.lessons?.length || 0 })}
                   </span>
                 </h2>
                 {level.description && (
@@ -70,9 +72,9 @@ export function YctLevelDetailView({ code }: YctLevelDetailViewProps) {
           {!level.lessons || level.lessons.length === 0 ? (
             <div className="bg-[#f3f8d7]/40 border-2 border-dashed border-[#eaf3c5] rounded-3xl p-12 text-center">
               <span className="text-5xl">📚</span>
-              <h3 className="text-lg font-bold text-[#11321e] mt-3">Chưa có bài học nào</h3>
+              <h3 className="text-lg font-bold text-[#11321e] mt-3">{t('noLessons')}</h3>
               <p className="text-sm text-gray-500 mt-1">
-                Các bài học của cấp độ {level.code} đang được chuẩn bị. Bạn hãy quay lại sau nhé!
+                {t('noLessonsDesc', { code: level.code })}
               </p>
             </div>
           ) : (

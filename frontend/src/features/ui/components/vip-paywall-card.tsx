@@ -3,6 +3,7 @@
 import React from 'react';
 import { Crown, Lock, Sparkles, ArrowLeft } from 'lucide-react';
 import { Link, useRouter } from '@/i18n/routing';
+import { useTranslations } from 'next-intl';
 
 interface VipPaywallCardProps {
   levelName?: string;
@@ -16,6 +17,7 @@ export function VipPaywallCard({
   backHref,
 }: VipPaywallCardProps) {
   const router = useRouter();
+  const t = useTranslations('Vip.lockModal');
 
   return (
     <div className="container mx-auto px-4 py-12 max-w-lg text-center">
@@ -30,25 +32,25 @@ export function VipPaywallCard({
 
         {/* Heading */}
         <h2 className="text-2xl sm:text-3xl font-black text-[#11321e] mb-3 font-heading">
-          Nội Dung Dành Cho VIP
+          {t('modalTitle')}
         </h2>
 
         {/* Explanatory text */}
         <p className="text-gray-600 text-sm leading-relaxed mb-6">
           {levelName ? (
-            <>
-              Cấp độ <span className="font-bold text-[#215b3b]">{levelName}</span> chỉ mở miễn phí 3 bài đầu tiên.
-            </>
+            <span>
+              {t('modalDesc', { level: levelName })}
+            </span>
           ) : (
-            'Khoá học này chỉ mở miễn phí 3 bài đầu tiên.'
+            t('modalDefaultDesc')
           )}
           {lessonTitle && (
             <span className="block font-semibold text-gray-800 mt-1">
-              Bài: {lessonTitle}
+              {t('lessonLabel', { title: lessonTitle })}
             </span>
           )}
           <span className="block mt-2 text-xs text-gray-500">
-            Nâng cấp VIP để học trọn bộ bài học, ngữ pháp và mở khoá toàn bộ trò chơi luyện tập không giới hạn!
+            {t('upgradePrompt')}
           </span>
         </p>
 
@@ -59,7 +61,7 @@ export function VipPaywallCard({
             className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-sm shadow-md shadow-amber-500/25 flex items-center justify-center gap-2 transition-all active:scale-95"
           >
             <Sparkles className="w-4 h-4 fill-white" />
-            <span>Nâng Cấp VIP Ngay</span>
+            <span>{t('upgradeNow')}</span>
           </Link>
 
           {backHref ? (
@@ -68,7 +70,7 @@ export function VipPaywallCard({
               className="w-full py-3 px-4 rounded-xl text-xs font-bold text-[#215b3b] hover:bg-[#e5f5eb] transition-all flex items-center justify-center gap-1.5"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Quay lại danh sách bài học</span>
+              <span>{t('backToLessons')}</span>
             </Link>
           ) : (
             <button
@@ -76,7 +78,7 @@ export function VipPaywallCard({
               className="w-full py-3 px-4 rounded-xl text-xs font-bold text-[#215b3b] hover:bg-[#e5f5eb] transition-all flex items-center justify-center gap-1.5"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Quay lại danh sách bài học</span>
+              <span>{t('backToLessons')}</span>
             </button>
           )}
         </div>

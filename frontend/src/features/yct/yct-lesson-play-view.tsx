@@ -5,6 +5,7 @@ import { Link, useRouter } from '@/i18n/routing';
 import { yctApi, type YctLesson } from '@/lib/api/endpoints/yct';
 import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { YctFlashcardGame } from './components/yct-flashcard-game';
+import { YctWritingGame } from './components/yct-writing-game';
 import { YctMemoryGame } from './components/yct-memory-game';
 import { YctMatchGame } from './components/yct-match-game';
 import { Spinner } from '@/features/ui/components/spinner';
@@ -17,10 +18,11 @@ interface YctLessonPlayViewProps {
   lessonId: string;
 }
 
-type GameTab = 'flashcard' | 'memory' | 'match';
+type GameTab = 'flashcard' | 'writing' | 'memory' | 'match';
 
 const STAGES: { id: GameTab; label: string; icon: string }[] = [
   { id: 'flashcard', label: 'Thẻ Hình Flashcard', icon: '🃏' },
+  { id: 'writing', label: 'Luyện Viết Chữ Hán', icon: '✍️' },
   { id: 'memory', label: 'Lật Thẻ Trí Nhớ', icon: '🧩' },
   { id: 'match', label: 'Nối Từ Nhanh', icon: '🎯' },
 ];
@@ -149,6 +151,14 @@ export function YctLessonPlayView({ lessonId }: YctLessonPlayViewProps) {
       <div className="bg-white border border-[#eaf3c5] rounded-3xl p-6 sm:p-8 shadow-xs">
         {currentTab === 'flashcard' && (
           <YctFlashcardGame
+            vocabularies={vocabs}
+            lessonTitle={lesson.title}
+            onFinish={() => setCurrentTab('writing')}
+          />
+        )}
+
+        {currentTab === 'writing' && (
+          <YctWritingGame
             vocabularies={vocabs}
             lessonTitle={lesson.title}
             onFinish={() => setCurrentTab('memory')}

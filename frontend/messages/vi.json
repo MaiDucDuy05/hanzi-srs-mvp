@@ -62,6 +62,9 @@
     "loadLevelsError": "Lỗi tải danh sách cấp.",
     "noLevels": "Chưa có cấp độ nào.",
     "hskLevelLabel": "Cấp độ HSK {level}",
+    "vipBadge": "VIP (Mở 3 bài đầu)",
+    "freeBadge": "Miễn phí",
+    "unlockVip": "Mở khoá VIP",
     "detail": {
       "loading": "Đang tải bài học...",
       "loadError": "Lỗi tải bài học.",
@@ -75,7 +78,8 @@
       "noLessons": "Chưa có bài học nào.",
       "paginationLabel": "Hiển thị {start}–{end} / {total} bài",
       "prev": "Trước",
-      "next": "Sau"
+      "next": "Sau",
+      "unlockVip": "Mở khoá VIP"
     }
   },
   "TopicDetail": {},
@@ -653,7 +657,20 @@
     },
     "statusApproved": "Đã duyệt",
     "statusRejected": "Bị từ chối",
-    "statusPending": "Đang chờ"
+    "statusPending": "Đang chờ",
+    "lockModal": {
+      "modalTitle": "Nội Dung Dành Cho VIP",
+      "modalDesc": "Khoá học {level} chỉ mở miễn phí 3 bài đầu tiên.",
+      "modalDefaultDesc": "Khoá học này chỉ mở miễn phí 3 bài đầu tiên.",
+      "lessonLabel": "Bài: {title}",
+      "upgradePrompt": "Hãy nâng cấp tài khoản VIP để mở khoá toàn bộ bài học, ngữ pháp, bài tập và trò chơi luyện tập tương tác!",
+      "benefitAllLessons": "Mở khoá 100% bài học tất cả cấp độ HSK & YCT",
+      "benefitMiniGames": "Không giới hạn lượt chơi Mini-game luyện từ & chữ Hán",
+      "benefitGrammar": "Đầy đủ giải thích ngữ pháp và ví dụ thực tế chuyên sâu",
+      "upgradeNow": "Nâng Cấp VIP Ngay",
+      "later": "Để sau",
+      "backToLessons": "Quay lại danh sách bài học"
+    }
   },
   "Srs": {
     "loadingReviewCards": "Đang tải thẻ ôn tập...",
@@ -834,5 +851,60 @@
     "recentTests": "Bài kiểm tra gần đây",
     "noTestsYet": "Chưa làm bài kiểm tra nào.",
     "loadError": "Lỗi tải hồ sơ."
+  },
+  "Yct": {
+    "pageTitle": "Khoá Học YCT Thiếu Nhi",
+    "pageDesc": "Chương trình chuẩn hoá cho thiếu nhi với từ vựng minh hoạ trực quan.",
+    "lessons": "Bài học",
+    "vocabularies": "Từ vựng",
+    "lessonsCount": "{count} bài",
+    "wordsCount": "{count} từ",
+    "startLearning": "Vào học ngay",
+    "backToLevels": "Quay lại danh sách cấp độ",
+    "lessonsInLevel": "{count} bài học",
+    "noLessons": "Chưa có bài học nào",
+    "noLessonsDesc": "Các bài học của cấp độ {code} đang được chuẩn bị. Bạn hãy quay lại sau nhé!",
+    "studyPractice": "Vào học & Luyện tập",
+    "unlockVip": "Mở khoá VIP",
+    "freeBadge": "Miễn phí",
+    "vipBadge": "VIP (Mở 3 bài đầu)",
+    "loadError": "Không thể tải danh sách cấp độ YCT. Vui lòng thử lại sau.",
+    "levelDetailError": "Không tìm thấy thông tin cấp độ YCT này.",
+    "lessonNotFound": "Không tìm thấy bài học",
+    "partProgress": "Phần {current}/4: {label}",
+    "prevStep": "Quay lại",
+    "nextStep": "Chuyển tiếp",
+    "finishLesson": "Hoàn thành bài học",
+    "backToLessons": "Quay lại danh sách bài học",
+    "stages": {
+      "flashcard": "Thẻ Hình Flashcard",
+      "writing": "Luyện Viết Chữ Hán",
+      "memory": "Lật Thẻ Trí Nhớ",
+      "match": "Nối Từ Nhanh"
+    },
+    "writing": {
+      "title": "Luyện Viết Nét Chữ Hán",
+      "subtitle": "Tập viết từng nét chữ theo thứ tự chuẩn",
+      "progress": "Từ {current}/{total}",
+      "selectChar": "Chọn chữ:",
+      "tianZiGe": "Bảng Tập Viết Ô Điền (Tian Zi Ge)",
+      "correct": "Đã viết đúng!",
+      "rewrite": "Viết lại nét",
+      "modelStroke": "Mẫu nét viết chuẩn",
+      "speedSlow": "Chậm",
+      "speedNormal": "Vừa",
+      "speedFast": "Nhanh",
+      "hint": "Quan sát nét bút đỏ chạy trên khung để viết theo đúng thứ tự từ trên xuống dưới, từ trái sang phải nhé!",
+      "prevWord": "Từ trước",
+      "nextWord": "Từ tiếp theo",
+      "finishWriting": "Hoàn thành viết",
+      "congratsTitle": "Bé Viết Rất Đẹp!",
+      "congratsDesc": "Bé đã hoàn thành phần luyện viết nét chữ Hán cho toàn bộ từ vựng trong bài \"{title}\".",
+      "totalWords": "Tổng số từ",
+      "completedWords": "Số từ hoàn thành",
+      "continueNext": "Chuyển sang phần tiếp theo",
+      "restartWriting": "Luyện viết lại từ đầu",
+      "noVocab": "Bài học này chưa có từ vựng nào để luyện viết."
+    }
   }
 }

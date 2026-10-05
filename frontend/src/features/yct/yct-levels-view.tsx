@@ -2,12 +2,15 @@
 
 import React, { useEffect, useState } from 'react';
 import { Link } from '@/i18n/routing';
+import { useTranslations } from 'next-intl';
 import { yctApi, type YctLevel } from '@/lib/api/endpoints/yct';
 import { BookOpen, Layers, ArrowRight, Crown } from 'lucide-react';
 import { Spinner } from '@/features/ui/components/spinner';
 import { isLevelVip } from '@/lib/utils/vip-permission';
 
 export function YctLevelsView() {
+  const t = useTranslations('Yct');
+  const tCourses = useTranslations('Courses');
   const [levels, setLevels] = useState<YctLevel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -19,10 +22,10 @@ export function YctLevelsView() {
       })
       .catch((err) => {
         console.error('Failed to load YCT levels:', err);
-        setError('Không thể tải danh sách cấp độ YCT. Vui lòng thử lại sau.');
+        setError(t('loadError'));
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [t]);
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-5xl">
@@ -53,11 +56,11 @@ export function YctLevelsView() {
                     {isVipCourse ? (
                       <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-400 text-amber-950 flex items-center gap-1 shadow-sm">
                         <Crown className="w-3.5 h-3.5 fill-amber-950" />
-                        <span>VIP (Mở 3 bài đầu)</span>
+                        <span>{tCourses('vipBadge')}</span>
                       </span>
                     ) : (
                       <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-400/30 text-emerald-100 border border-emerald-300/40">
-                        Miễn phí
+                        {tCourses('freeBadge')}
                       </span>
                     )}
                   </div>
@@ -67,7 +70,7 @@ export function YctLevelsView() {
                 {/* Nội dung card */}
                 <div className="p-6 flex-1 flex flex-col justify-between">
                   <p className="text-gray-600 text-sm mb-6 line-clamp-3 leading-relaxed">
-                    {lvl.description || 'Chương trình chuẩn hoá cho thiếu nhi với từ vựng minh hoạ trực quan.'}
+                    {lvl.description || t('pageDesc')}
                   </p>
 
                   <div className="space-y-4">
@@ -75,18 +78,18 @@ export function YctLevelsView() {
                       <div className="flex items-center gap-2">
                         <BookOpen className="w-4 h-4 text-[#215b3b]" />
                         <div>
-                          <span className="text-xs text-gray-500 block font-medium">Bài học</span>
+                          <span className="text-xs text-gray-500 block font-medium">{t('lessons')}</span>
                           <span className="font-bold text-[#11321e] text-sm">
-                            {lvl.totalLessons ?? 0} bài
+                            {t('lessonsCount', { count: lvl.totalLessons ?? 0 })}
                           </span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <Layers className="w-4 h-4 text-[#215b3b]" />
                         <div>
-                          <span className="text-xs text-gray-500 block font-medium">Từ vựng</span>
+                          <span className="text-xs text-gray-500 block font-medium">{t('vocabularies')}</span>
                           <span className="font-bold text-[#11321e] text-sm">
-                            {lvl.totalVocabularies ?? 0} từ
+                            {t('wordsCount', { count: lvl.totalVocabularies ?? 0 })}
                           </span>
                         </div>
                       </div>
@@ -96,7 +99,7 @@ export function YctLevelsView() {
                       href={`/dashboard/yct/${lvl.code.toLowerCase()}`}
                       className="w-full flex items-center justify-center gap-2 bg-[#215b3b] hover:bg-[#18452b] text-white font-bold py-3 px-4 rounded-2xl shadow-sm transition-all active:scale-95"
                     >
-                      <span>Vào học ngay</span>
+                      <span>{t('startLearning')}</span>
                       <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </div>

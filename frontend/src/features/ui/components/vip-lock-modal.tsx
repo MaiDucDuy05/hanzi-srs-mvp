@@ -5,6 +5,8 @@ import { Crown, Sparkles, Lock, Check } from 'lucide-react';
 import { Modal } from './modal';
 import { Link } from '@/i18n/routing';
 
+import { useTranslations } from 'next-intl';
+
 export interface VipLockModalProps {
   open: boolean;
   onClose: () => void;
@@ -18,6 +20,8 @@ export function VipLockModal({
   levelName,
   lessonTitle,
 }: VipLockModalProps) {
+  const t = useTranslations('Vip.lockModal');
+
   return (
     <Modal open={open} onClose={onClose} className="max-w-md p-0 overflow-hidden rounded-[2rem] border border-[#eaf3c5]">
       <div className="relative p-6 sm:p-8 text-center bg-gradient-to-b from-[#f3f8d7]/60 via-white to-white">
@@ -31,25 +35,19 @@ export function VipLockModal({
 
         {/* Title */}
         <h3 className="text-2xl font-black text-[#11321e] mb-2 font-heading">
-          Nội Dung Dành Cho VIP
+          {t('modalTitle')}
         </h3>
 
         {/* Subtitle / context */}
         <p className="text-sm text-gray-600 leading-relaxed mb-6">
-          {levelName ? (
-            <>
-              Khoá học <span className="font-bold text-[#215b3b]">{levelName}</span> chỉ mở miễn phí 3 bài đầu tiên.
-            </>
-          ) : (
-            'Khoá học này chỉ mở miễn phí 3 bài đầu tiên.'
-          )}
+          {levelName ? t('modalDesc', { level: levelName }) : t('modalDefaultDesc')}
           {lessonTitle && (
             <span className="block font-semibold text-gray-800 mt-1">
-              Bài: {lessonTitle}
+              {t('lessonLabel', { title: lessonTitle })}
             </span>
           )}
           <span className="block mt-2 text-xs text-gray-500">
-            Hãy nâng cấp tài khoản VIP để mở khoá toàn bộ bài học, ngữ pháp, bài tập và trò chơi luyện tập tương tác!
+            {t('upgradePrompt')}
           </span>
         </p>
 
@@ -59,19 +57,19 @@ export function VipLockModal({
             <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
               <Check className="w-3.5 h-3.5 stroke-[3]" />
             </div>
-            <span>Mở khoá 100% bài học tất cả cấp độ HSK & YCT</span>
+            <span>{t('benefitAllLessons')}</span>
           </div>
           <div className="flex items-center gap-2.5">
             <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
               <Check className="w-3.5 h-3.5 stroke-[3]" />
             </div>
-            <span>Không giới hạn lượt chơi Mini-game luyện từ & chữ Hán</span>
+            <span>{t('benefitMiniGames')}</span>
           </div>
           <div className="flex items-center gap-2.5">
             <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
               <Check className="w-3.5 h-3.5 stroke-[3]" />
             </div>
-            <span>Đầy đủ giải thích ngữ pháp và ví dụ thực tế chuyên sâu</span>
+            <span>{t('benefitGrammar')}</span>
           </div>
         </div>
 
@@ -83,14 +81,14 @@ export function VipLockModal({
             className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-sm shadow-md shadow-amber-500/25 flex items-center justify-center gap-2 transition-all active:scale-95"
           >
             <Sparkles className="w-4 h-4 fill-white" />
-            <span>Nâng Cấp VIP Ngay</span>
+            <span>{t('upgradeNow')}</span>
           </Link>
 
           <button
             onClick={onClose}
             className="w-full py-2.5 px-4 rounded-xl text-xs font-bold text-gray-500 hover:text-gray-800 transition-colors"
           >
-            Để sau
+            {t('later')}
           </button>
         </div>
       </div>

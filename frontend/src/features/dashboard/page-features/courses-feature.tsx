@@ -47,11 +47,11 @@ export function CoursesFeature() {
                       {isVipCourse ? (
                         <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
                           <Crown className="w-3 h-3 text-amber-500 fill-amber-500" />
-                          <span>VIP (Mở 3 bài đầu)</span>
+                          <span>{t('vipBadge')}</span>
                         </span>
                       ) : (
                         <span className="inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          Miễn phí
+                          {t('freeBadge')}
                         </span>
                       )}
                     </div>

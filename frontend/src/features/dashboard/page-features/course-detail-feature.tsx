@@ -187,7 +187,7 @@ export function CourseDetailFeature({ params }: { params: Promise<{ id: string }
                     className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-full transition-all shadow-sm flex items-center justify-center gap-1.5 text-sm"
                   >
                     <Lock className="w-3.5 h-3.5" />
-                    <span>Mở khoá VIP</span>
+                    <span>{t('unlockVip')}</span>
                   </button>
                 )}
               </div>
