@@ -905,6 +905,34 @@
       "continueNext": "Chuyển sang phần tiếp theo",
       "restartWriting": "Luyện viết lại từ đầu",
       "noVocab": "Bài học này chưa có từ vựng nào để luyện viết."
+    },
+    "games": {
+      "noVocab": "Bài học này chưa có từ vựng nào.",
+      "completedTitle": "Hoàn thành bài học!",
+      "completedDesc": "Bạn đã xem hết {count} thẻ từ vựng của bài \"{title}\".",
+      "reviewFromStart": "Xem lại từ đầu",
+      "playNext": "Chuyển sang phần tiếp theo",
+      "cardCounter": "Thẻ {current} / {total}",
+      "tapToFlipVi": "Chạm để lật xem nghĩa",
+      "tapToFlipHanzi": "Chạm để lật lại chữ Hán",
+      "vietnameseMeaning": "Ý nghĩa",
+      "btnPrev": "Trước",
+      "btnNext": "Tiếp theo",
+      "btnFinish": "Hoàn thành",
+      "btnRestart": "Chơi lại",
+      "shuffle": "Xáo trộn ngẫu nhiên",
+      "memoryTitle": "Lật Thẻ Trí Nhớ",
+      "memorySubtitle": "Tìm cặp: Hình ảnh/Chữ ↔ Ý nghĩa",
+      "turns": "Lượt lật",
+      "memoryWonTitle": "Hoàn thành xuất sắc!",
+      "memoryWonDesc": "Bạn đã hoàn thành trò chơi lật thẻ trong {moves} lượt!",
+      "matchTitle": "Nối Từ & Ý Nghĩa",
+      "matchSubtitle": "Chạm một thẻ chữ Hán và chạm nghĩa tương ứng để ghép đôi",
+      "matchedCounter": "Đã nối: {current} / {total}",
+      "columnHanzi": "Chữ Hán & Hình ảnh",
+      "columnMeaning": "Ý nghĩa",
+      "matchWonTitle": "Nối từ chính xác!",
+      "matchWonDesc": "Bạn đã ghép đúng tất cả các từ trong bài học."
     }
   }
 }

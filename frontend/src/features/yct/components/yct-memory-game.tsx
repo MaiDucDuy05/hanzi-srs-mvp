@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import type { YctVocabulary } from '@/lib/api/endpoints/yct';
 import { speakText } from '@/lib/utils/tts';
-import { Sparkles, RotateCw } from 'lucide-react';
+import { Sparkles, RotateCw, Trophy, BookOpen } from 'lucide-react';
 import { Button } from '@/features/ui/components/button';
 import { cn } from '@/lib/utils/cn';
 import { resolveYctImageUrl } from '@/lib/utils/yct-image';
@@ -27,6 +28,7 @@ interface MemoryCard {
 }
 
 export function YctMemoryGame({ vocabularies, lessonTitle, onFinish }: YctMemoryGameProps) {
+  const t = useTranslations('Yct.games');
   const [cards, setCards] = useState<MemoryCard[]>([]);
   const [selectedCards, setSelectedCards] = useState<MemoryCard[]>([]);
   const [moves, setMoves] = useState(0);
@@ -132,7 +134,7 @@ export function YctMemoryGame({ vocabularies, lessonTitle, onFinish }: YctMemory
   if (!vocabularies || vocabularies.length === 0) {
     return (
       <div className="text-center py-12 bg-[#f3f8d7]/40 rounded-3xl border-2 border-dashed border-[#eaf3c5]">
-        <p className="text-base font-bold text-[#215b3b]">Bài học chưa có từ vựng để chơi lật thẻ.</p>
+        <p className="text-base font-bold text-[#215b3b]">{t('noVocab')}</p>
       </div>
     );
   }
@@ -142,13 +144,13 @@ export function YctMemoryGame({ vocabularies, lessonTitle, onFinish }: YctMemory
       {/* Thanh thông số game */}
       <div className="flex justify-between items-center bg-white border border-[#eaf3c5] rounded-2xl p-4 mb-6 shadow-xs">
         <div>
-          <h4 className="font-bold text-[#11321e] text-sm">Lật Thẻ Trí Nhớ</h4>
-          <p className="text-xs text-gray-500">Tìm cặp: Hình ảnh/Chữ ↔ Nghĩa tiếng Việt</p>
+          <h4 className="font-bold text-[#11321e] text-sm">{t('memoryTitle')}</h4>
+          <p className="text-xs text-gray-500">{t('memorySubtitle')}</p>
         </div>
 
         <div className="flex items-center gap-4">
           <div className="text-right">
-            <span className="text-xs text-gray-400 font-semibold block">Lượt lật</span>
+            <span className="text-xs text-gray-400 font-semibold block">{t('turns')}</span>
             <span className="text-lg font-black text-[#215b3b]">{moves}</span>
           </div>
 
@@ -157,10 +159,10 @@ export function YctMemoryGame({ vocabularies, lessonTitle, onFinish }: YctMemory
             size="sm"
             onClick={initGame}
             className="rounded-xl border border-[#eaf3c5] hover:bg-[#e5f5eb] text-[#215b3b] font-bold"
-            title="Chơi lại ván mới"
+            title={t('btnRestart')}
           >
             <RotateCw className="w-4 h-4 mr-1" />
-            Chơi lại
+            {t('btnRestart')}
           </Button>
         </div>
       </div>
@@ -213,7 +215,9 @@ export function YctMemoryGame({ vocabularies, lessonTitle, onFinish }: YctMemory
                           className="h-12 w-auto max-w-[80px] sm:h-14 rounded-lg object-contain mb-1 shadow-2xs"
                         />
                       ) : (
-                        <span className="text-2xl sm:text-3xl mb-1">🀄</span>
+                        <div className="w-8 h-8 rounded-lg bg-[#e5f5eb] flex items-center justify-center mb-1">
+                          <BookOpen className="w-5 h-5 text-[#215b3b]" />
+                        </div>
                       )}
                       <span className="text-lg sm:text-2xl font-black text-gray-900 leading-tight">
                         {card.hanzi}
@@ -225,7 +229,7 @@ export function YctMemoryGame({ vocabularies, lessonTitle, onFinish }: YctMemory
                   ) : (
                     <div className="flex flex-col items-center justify-center h-full w-full p-1 sm:p-2">
                       <span className="text-[10px] sm:text-xs uppercase font-bold text-gray-400 tracking-wider mb-1">
-                        Ý nghĩa
+                        {t('vietnameseMeaning')}
                       </span>
                       <span className="text-sm sm:text-base font-black text-[#11321e] leading-snug line-clamp-3">
                         {card.meaningVi}
@@ -248,13 +252,12 @@ export function YctMemoryGame({ vocabularies, lessonTitle, onFinish }: YctMemory
       {/* Màn hình chiến thắng */}
       {isWon && (
         <div className="mt-8 bg-white border border-[#eaf3c5] rounded-3xl p-8 text-center shadow-md">
-          <div className="w-16 h-16 bg-[#e5f5eb] text-[#215b3b] rounded-full flex items-center justify-center mx-auto mb-3 text-3xl">
-            🏆
+          <div className="w-16 h-16 bg-[#e5f5eb] text-[#215b3b] rounded-full flex items-center justify-center mx-auto mb-3 shadow-xs">
+            <Trophy className="w-8 h-8 text-[#215b3b]" />
           </div>
-          <h3 className="text-2xl font-black text-[#11321e] mb-1">Hoàn thành xuất sắc!</h3>
+          <h3 className="text-2xl font-black text-[#11321e] mb-1">{t('memoryWonTitle')}</h3>
           <p className="text-gray-600 text-sm mb-6">
-            Bạn đã hoàn thành trò chơi lật thẻ trong{' '}
-            <span className="font-bold text-[#215b3b]">{moves} lượt</span>!
+            {t('memoryWonDesc', { moves })}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -264,7 +267,7 @@ export function YctMemoryGame({ vocabularies, lessonTitle, onFinish }: YctMemory
               className="border-[#eaf3c5] text-[#215b3b] font-bold py-3 px-6 rounded-2xl transition-transform active:scale-95"
             >
               <RotateCw className="w-4 h-4 mr-2" />
-              Chơi lại
+              {t('btnRestart')}
             </Button>
             {onFinish && (
               <Button
@@ -272,7 +275,7 @@ export function YctMemoryGame({ vocabularies, lessonTitle, onFinish }: YctMemory
                 className="bg-[#215b3b] hover:bg-[#18452b] text-white font-bold py-3 px-6 rounded-2xl shadow-sm transition-transform active:scale-95"
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                Chơi Game Nối Từ
+                {t('playNext')}
               </Button>
             )}
           </div>

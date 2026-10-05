@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { Link, useRouter } from '@/i18n/routing';
 import { yctApi, type YctLesson } from '@/lib/api/endpoints/yct';
-import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, Layers, PenTool, Brain, Target } from 'lucide-react';
 import { YctFlashcardGame } from './components/yct-flashcard-game';
 import { YctWritingGame } from './components/yct-writing-game';
 import { YctMemoryGame } from './components/yct-memory-game';
@@ -20,14 +21,19 @@ interface YctLessonPlayViewProps {
 
 type GameTab = 'flashcard' | 'writing' | 'memory' | 'match';
 
-const STAGES: { id: GameTab; label: string; icon: string }[] = [
-  { id: 'flashcard', label: 'Thẻ Hình Flashcard', icon: '🃏' },
-  { id: 'writing', label: 'Luyện Viết Chữ Hán', icon: '✍️' },
-  { id: 'memory', label: 'Lật Thẻ Trí Nhớ', icon: '🧩' },
-  { id: 'match', label: 'Nối Từ Nhanh', icon: '🎯' },
+const STAGES: {
+  id: GameTab;
+  labelKey: 'flashcard' | 'writing' | 'memory' | 'match';
+  icon: React.ComponentType<{ className?: string }>;
+}[] = [
+  { id: 'flashcard', labelKey: 'flashcard', icon: Layers },
+  { id: 'writing', labelKey: 'writing', icon: PenTool },
+  { id: 'memory', labelKey: 'memory', icon: Brain },
+  { id: 'match', labelKey: 'match', icon: Target },
 ];
 
 export function YctLessonPlayView({ lessonId }: YctLessonPlayViewProps) {
+  const t = useTranslations('Yct');
   const router = useRouter();
   const { user } = useAuth();
   const isVip = isUserVip(user);
@@ -41,10 +47,10 @@ export function YctLessonPlayView({ lessonId }: YctLessonPlayViewProps) {
       .then((data) => setLesson(data))
       .catch((err) => {
         console.error('Failed to load lesson detail:', err);
-        setError('Không tìm thấy bài học này.');
+        setError(t('lessonNotFound'));
       })
       .finally(() => setLoading(false));
-  }, [lessonId]);
+  }, [lessonId, t]);
 
   if (loading) {
     return (
@@ -58,7 +64,7 @@ export function YctLessonPlayView({ lessonId }: YctLessonPlayViewProps) {
     return (
       <div className="container mx-auto px-4 py-12 max-w-lg text-center">
         <div className="bg-rose-50 border border-rose-200 text-rose-800 p-6 rounded-3xl">
-          <p className="font-bold">{error || 'Không tìm thấy bài học'}</p>
+          <p className="font-bold">{error || t('lessonNotFound')}</p>
         </div>
       </div>
     );
@@ -86,6 +92,7 @@ export function YctLessonPlayView({ lessonId }: YctLessonPlayViewProps) {
 
   const currentStageIndex = STAGES.findIndex((s) => s.id === currentTab);
   const currentStage = STAGES[currentStageIndex] || STAGES[0];
+  const StageIcon = currentStage.icon;
 
   return (
     <div className="w-full max-w-4xl mx-auto px-4 py-4 mt-8 sm:mt-12 overflow-y-auto max-h-[calc(100vh-4.5rem)] custom-scrollbar">
@@ -95,7 +102,7 @@ export function YctLessonPlayView({ lessonId }: YctLessonPlayViewProps) {
           <Link
             href={`/dashboard/yct/${levelCode}`}
             className="p-2.5 rounded-2xl bg-[#e5f5eb] hover:bg-[#d0eedb] text-[#215b3b] transition-colors shadow-xs shrink-0"
-            title="Quay lại danh sách bài học"
+            title={t('backToLessons')}
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
@@ -104,9 +111,14 @@ export function YctLessonPlayView({ lessonId }: YctLessonPlayViewProps) {
               <span className="text-xs font-black uppercase tracking-wider bg-[#e5f5eb] text-[#215b3b] px-2.5 py-0.5 rounded-full border border-[#eaf3c5]">
                 {lesson.level?.code || 'YCT'}
               </span>
-              <span className="text-xs font-bold text-[#215b3b] flex items-center gap-1">
-                <span>{currentStage.icon}</span>
-                <span>Phần {currentStageIndex + 1}/3: {currentStage.label}</span>
+              <span className="text-xs font-bold text-[#215b3b] flex items-center gap-1.5">
+                <StageIcon className="w-4 h-4" />
+                <span>
+                  {t('partProgress', {
+                    current: currentStageIndex + 1,
+                    label: t(`stages.${currentStage.labelKey}` as 'stages.flashcard'),
+                  })}
+                </span>
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl font-black text-[#11321e] mt-0.5">
@@ -123,7 +135,7 @@ export function YctLessonPlayView({ lessonId }: YctLessonPlayViewProps) {
               className="inline-flex items-center gap-1 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold border border-[#eaf3c5] bg-[#f3f8d7]/40 hover:bg-[#e5f5eb] text-[#215b3b] transition-all active:scale-95 shadow-2xs"
             >
               <ArrowLeft className="w-4 h-4" />
-              <span>Quay lại</span>
+              <span>{t('prevStep')}</span>
             </button>
           )}
 
@@ -132,7 +144,7 @@ export function YctLessonPlayView({ lessonId }: YctLessonPlayViewProps) {
               onClick={() => setCurrentTab(STAGES[currentStageIndex + 1].id)}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#215b3b] hover:bg-[#18452b] text-white transition-all active:scale-95 shadow-sm"
             >
-              <span>Chuyển tiếp</span>
+              <span>{t('nextStep')}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           ) : (
@@ -140,7 +152,7 @@ export function YctLessonPlayView({ lessonId }: YctLessonPlayViewProps) {
               onClick={() => router.push(`/dashboard/yct/${levelCode}`)}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#215b3b] hover:bg-[#18452b] text-white transition-all active:scale-95 shadow-sm"
             >
-              <span>Hoàn thành bài học</span>
+              <span>{t('finishLesson')}</span>
               <CheckCircle2 className="w-4 h-4" />
             </button>
           )}

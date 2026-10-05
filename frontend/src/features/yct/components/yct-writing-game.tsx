@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import type { YctVocabulary } from '@/lib/api/endpoints/yct';
 import { speakText } from '@/lib/utils/tts';
 import { resolveYctImageUrl } from '@/lib/utils/yct-image';
@@ -28,6 +29,7 @@ export function YctWritingGame({
   lessonTitle,
   onFinish,
 }: YctWritingGameProps) {
+  const t = useTranslations('Yct.writing');
   // Filter vocabularies that have hanzi characters
   const validVocabs = vocabularies.filter((v) => v.hanzi && v.hanzi.trim().length > 0);
 
@@ -117,7 +119,7 @@ export function YctWritingGame({
   if (!validVocabs || validVocabs.length === 0) {
     return (
       <div className="text-center py-12 bg-[#f3f8d7]/40 rounded-3xl border-2 border-dashed border-[#eaf3c5]">
-        <p className="text-base font-bold text-[#215b3b]">Bài học này chưa có từ vựng nào để luyện viết.</p>
+        <p className="text-base font-bold text-[#215b3b]">{t('noVocab')}</p>
       </div>
     );
   }
@@ -131,19 +133,19 @@ export function YctWritingGame({
         </div>
 
         <h3 className="text-3xl font-black text-[#11321e] mb-2 font-heading">
-          Bé Viết Rất Đẹp!
+          {t('congratsTitle')}
         </h3>
         <p className="text-gray-600 mb-6 text-sm">
-          Bé đã hoàn thành phần luyện viết nét chữ Hán cho toàn bộ từ vựng trong bài <span className="font-bold text-[#215b3b]">"{lessonTitle}"</span>.
+          {t('congratsDesc', { title: lessonTitle })}
         </p>
 
         <div className="bg-[#f3f8d7]/50 rounded-2xl p-4 mb-6 border border-[#eaf3c5] flex justify-around">
           <div>
-            <span className="text-xs text-gray-500 font-bold block">Tổng số từ</span>
+            <span className="text-xs text-gray-500 font-bold block">{t('totalWords')}</span>
             <span className="text-2xl font-black text-[#215b3b]">{validVocabs.length}</span>
           </div>
           <div>
-            <span className="text-xs text-gray-500 font-bold block">Số từ hoàn thành</span>
+            <span className="text-xs text-gray-500 font-bold block">{t('completedWords')}</span>
             <span className="text-2xl font-black text-[#8BC34A]">{completedWordsCount}</span>
           </div>
         </div>
@@ -154,7 +156,7 @@ export function YctWritingGame({
               onClick={onFinish}
               className="w-full flex items-center justify-center gap-2 bg-[#215b3b] hover:bg-[#18452b] text-white font-bold py-3.5 px-6 rounded-2xl shadow-md transition-all active:scale-95"
             >
-              <span>Chuyển sang phần tiếp theo</span>
+              <span>{t('continueNext')}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           )}
@@ -169,7 +171,7 @@ export function YctWritingGame({
             }}
             className="w-full py-3 px-6 rounded-2xl font-bold text-gray-600 hover:bg-gray-100 transition-colors text-sm"
           >
-            Luyện viết lại từ đầu
+            {t('restartWriting')}
           </button>
         </div>
       </div>
@@ -188,18 +190,17 @@ export function YctWritingGame({
           </div>
           <div>
             <h2 className="text-base sm:text-lg font-black text-[#11321e]">
-              Luyện Viết Nét Chữ Hán
+              {t('title')}
             </h2>
             <p className="text-xs text-gray-500">
-              Tập viết từng nét chữ theo thứ tự chuẩn
+              {t('subtitle')}
             </p>
           </div>
         </div>
 
         <div className="text-right">
-          <span className="text-xs font-bold text-gray-500 block">Tiến độ</span>
-          <span className="text-sm font-black text-[#215b3b]">
-            Từ {currentVocabIndex + 1}/{validVocabs.length}
+          <span className="text-xs font-bold text-gray-500 block">
+            {t('progress', { current: currentVocabIndex + 1, total: validVocabs.length })}
           </span>
         </div>
       </div>
@@ -271,7 +272,7 @@ export function YctWritingGame({
         {/* Nút chọn ký tự trong từ (nếu từ có nhiều hơn 1 chữ) */}
         {chars.length > 1 && (
           <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-[#eaf3c5]">
-            <span className="text-xs font-semibold text-gray-500">Chọn chữ:</span>
+            <span className="text-xs font-semibold text-gray-500">{t('selectChar')}</span>
             {chars.map((char, cIdx) => {
               const isCharDone = completedCharsMap[getCharKey(currentVocabIndex, cIdx)];
               const isSelected = cIdx === currentCharIndex;
@@ -301,7 +302,7 @@ export function YctWritingGame({
         {/* Khung viết chữ của bé */}
         <div className="flex flex-col items-center">
           <div className="text-xs font-bold text-gray-500 mb-2 flex items-center gap-1">
-            <span>Bảng Tập Viết Ô Điền (Tian Zi Ge)</span>
+            <span>{t('tianZiGe')}</span>
           </div>
 
           <div className="relative bg-white border-2 border-[#215b3b] rounded-3xl w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] shadow-sm flex items-center justify-center overflow-hidden">
@@ -327,7 +328,7 @@ export function YctWritingGame({
                   </span>
                   <div className="mt-2 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold">
                     <CheckCircle2 className="w-3.5 h-3.5" />
-                    <span>Đã viết đúng!</span>
+                    <span>{t('correct')}</span>
                   </div>
                 </div>
               )}
@@ -342,7 +343,7 @@ export function YctWritingGame({
               className="flex-1 py-2 px-3 text-xs bg-white border border-[#eaf3c5] rounded-xl font-bold text-gray-700 hover:bg-[#e5f5eb] hover:text-[#215b3b] transition-all shadow-2xs flex items-center justify-center gap-1.5 disabled:opacity-40"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>Viết lại nét</span>
+              <span>{t('rewrite')}</span>
             </button>
           </div>
         </div>
@@ -351,7 +352,7 @@ export function YctWritingGame({
         <div className="bg-[#fcfdf6] border border-[#eaf3c5] p-5 rounded-3xl shadow-2xs w-full max-w-[280px] flex flex-col items-center">
           <div className="text-xs font-bold text-gray-500 mb-3 flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-[#8BC34A] animate-pulse"></span>
-            <span>Mẫu nét viết chuẩn</span>
+            <span>{t('modelStroke')}</span>
           </div>
 
           <div className="relative bg-white border border-[#eaf3c5] rounded-2xl w-[160px] h-[160px] shadow-inner flex items-center justify-center overflow-hidden mb-4">
@@ -382,13 +383,13 @@ export function YctWritingGame({
                     : 'bg-white text-gray-600 border-[#eaf3c5] hover:bg-[#e5f5eb]'
                 }`}
               >
-                {s === 'slow' ? 'Chậm' : s === 'normal' ? 'Vừa' : 'Nhanh'}
+                {s === 'slow' ? t('speedSlow') : s === 'normal' ? t('speedNormal') : t('speedFast')}
               </button>
             ))}
           </div>
 
           <div className="mt-4 text-[11px] text-gray-500 text-center leading-relaxed">
-            Quan sát nét bút đỏ chạy trên khung để viết theo đúng thứ tự từ trên xuống dưới, từ trái sang phải nhé!
+            {t('hint')}
           </div>
         </div>
       </div>
@@ -401,14 +402,14 @@ export function YctWritingGame({
           className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold border border-[#eaf3c5] bg-white text-gray-700 hover:bg-[#e5f5eb] hover:text-[#215b3b] transition-all disabled:opacity-40"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Từ trước</span>
+          <span>{t('prevWord')}</span>
         </button>
 
         <button
           onClick={handleNextWord}
           className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-[#215b3b] hover:bg-[#18452b] text-white transition-all shadow-sm active:scale-95"
         >
-          <span>{currentVocabIndex < validVocabs.length - 1 ? 'Từ tiếp theo' : 'Hoàn thành viết'}</span>
+          <span>{currentVocabIndex < validVocabs.length - 1 ? t('nextWord') : t('finishWriting')}</span>
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>

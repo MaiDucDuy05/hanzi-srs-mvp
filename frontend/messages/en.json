@@ -906,6 +906,34 @@
       "continueNext": "Continue to Next Part",
       "restartWriting": "Practice Again",
       "noVocab": "No vocabulary available for writing practice in this lesson."
+    },
+    "games": {
+      "noVocab": "No vocabularies available in this lesson.",
+      "completedTitle": "Lesson Completed!",
+      "completedDesc": "You reviewed all {count} vocabulary cards for \"{title}\".",
+      "reviewFromStart": "Review from Start",
+      "playNext": "Continue to Next Part",
+      "cardCounter": "Card {current} / {total}",
+      "tapToFlipVi": "Tap to view meaning",
+      "tapToFlipHanzi": "Tap to flip back to Hanzi",
+      "vietnameseMeaning": "Meaning",
+      "btnPrev": "Previous",
+      "btnNext": "Next",
+      "btnFinish": "Finish",
+      "btnRestart": "Play Again",
+      "shuffle": "Shuffle cards",
+      "memoryTitle": "Memory Flip",
+      "memorySubtitle": "Match pairs: Image/Hanzi ↔ Meaning",
+      "turns": "Turns",
+      "memoryWonTitle": "Outstanding Job!",
+      "memoryWonDesc": "You completed the memory game in {moves} turns!",
+      "matchTitle": "Word Matching",
+      "matchSubtitle": "Tap a Hanzi card and tap its corresponding meaning to pair them",
+      "matchedCounter": "Matched: {current} / {total}",
+      "columnHanzi": "Hanzi & Image",
+      "columnMeaning": "Meaning",
+      "matchWonTitle": "All Pairs Matched!",
+      "matchWonDesc": "You matched all vocabulary words correctly."
     }
   }
 }

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 import { yctApi, type YctLevel } from '@/lib/api/endpoints/yct';
-import { Layers, Play, ArrowLeft, Lock, Crown } from 'lucide-react';
+import { Layers, Play, ArrowLeft, Lock, Crown, BookOpen } from 'lucide-react';
 import { Spinner } from '@/features/ui/components/spinner';
 import { useAuth } from '@/lib/auth/auth-context';
 import { isUserVip, isLessonAccessible } from '@/lib/utils/vip-permission';
@@ -71,7 +71,9 @@ export function YctLevelDetailView({ code }: YctLevelDetailViewProps) {
 
           {!level.lessons || level.lessons.length === 0 ? (
             <div className="bg-[#f3f8d7]/40 border-2 border-dashed border-[#eaf3c5] rounded-3xl p-12 text-center">
-              <span className="text-5xl">📚</span>
+              <div className="w-16 h-16 rounded-2xl bg-[#e5f5eb] text-[#215b3b] flex items-center justify-center mx-auto mb-3 shadow-2xs">
+                <BookOpen className="w-8 h-8 text-[#215b3b]" />
+              </div>
               <h3 className="text-lg font-bold text-[#11321e] mt-3">{t('noLessons')}</h3>
               <p className="text-sm text-gray-500 mt-1">
                 {t('noLessonsDesc', { code: level.code })}
@@ -120,7 +122,7 @@ export function YctLevelDetailView({ code }: YctLevelDetailViewProps) {
                           )}
                           <span className="text-xs font-bold text-[#215b3b] bg-[#e5f5eb] border border-[#eaf3c5] px-2.5 py-1 rounded-full flex items-center gap-1">
                             <Layers className="w-3.5 h-3.5" />
-                            {lesson.vocabCount ?? 0} từ vựng
+                            {t('wordsCount', { count: lesson.vocabCount ?? 0 })}
                           </span>
                         </div>
                       </div>
@@ -129,7 +131,7 @@ export function YctLevelDetailView({ code }: YctLevelDetailViewProps) {
                         {lesson.title}
                       </h3>
                       <p className="text-sm text-gray-500 mt-2 line-clamp-2 leading-relaxed">
-                        {lesson.description || 'Học từ vựng và câu ngắn qua thẻ hình ảnh.'}
+                        {lesson.description || t('pageDesc')}
                       </p>
                     </div>
 
@@ -140,7 +142,7 @@ export function YctLevelDetailView({ code }: YctLevelDetailViewProps) {
                           className="w-full inline-flex items-center justify-center gap-2 bg-[#215b3b] hover:bg-[#18452b] text-white font-bold py-3 px-4 rounded-2xl shadow-sm transition-all active:scale-95"
                         >
                           <Play className="w-4 h-4 fill-white" />
-                          <span>Vào học & Luyện tập</span>
+                          <span>{t('studyPractice')}</span>
                         </Link>
                       ) : (
                         <button
@@ -148,7 +150,7 @@ export function YctLevelDetailView({ code }: YctLevelDetailViewProps) {
                           className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold py-3 px-4 rounded-2xl shadow-sm transition-all active:scale-95"
                         >
                           <Lock className="w-4 h-4" />
-                          <span>Mở khoá VIP</span>
+                          <span>{t('unlockVip')}</span>
                         </button>
                       )}
                     </div>
