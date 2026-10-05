@@ -6,7 +6,7 @@ import { ForestBackground } from '@/features/background/components/forest-backgr
 import { useAuth } from '@/lib/auth/auth-context';
 import { useTranslations } from 'next-intl';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { DashboardSidebarContact } from '@/features/dashboard/components/dashboard-sidebar-contact';
+import { FloatingContactBubbles } from '@/features/ui/components/floating-contact-bubbles';
 
 const PawIcon = ({ className }: { className?: string }) => (
   <img 
@@ -91,9 +91,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </Link>
               );
             })}
-
-            {/* Thông tin liên hệ ngay dưới mục Cài đặt */}
-            <DashboardSidebarContact />
           </div>
 
           {/* VIP Status Box */}
@@ -145,6 +142,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </main>
       </div>
+
+      {/* Các quả bóng liên hệ & hỗ trợ nổi bên góc phải */}
+      <FloatingContactBubbles />
     </ForestBackground>
   );
 }
