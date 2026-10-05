@@ -9,10 +9,16 @@ import { studentApi } from '@/lib/api/endpoints/student';
 import type { HskLevel, Lesson } from '@/lib/api/types';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
+import { Lock, Crown } from 'lucide-react';
+import { useAuth } from '@/lib/auth/auth-context';
+import { isUserVip, isLessonAccessible } from '@/lib/utils/vip-permission';
+import { VipLockModal } from '@/features/ui/components/vip-lock-modal';
 
 export function CourseDetailFeature({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
+  const { user } = useAuth();
+  const isVip = isUserVip(user);
   const t = useTranslations('Courses.detail');
   const [level, setLevel] = useState<HskLevel | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
@@ -21,6 +27,7 @@ export function CourseDetailFeature({ params }: { params: Promise<{ id: string }
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [vipModalLesson, setVipModalLesson] = useState<Lesson | null>(null);
   const itemsPerPage = 25;
 
   useEffect(() => {
@@ -115,31 +122,78 @@ export function CourseDetailFeature({ params }: { params: Promise<{ id: string }
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6 flex-1">
-        {currentLessons.map((lesson) => (
-          <div key={lesson.id} className="bg-white rounded-[2rem] p-5 shadow-sm flex flex-col items-center text-center hover:shadow-md transition-all hover:-translate-y-1">
-            <div className="relative w-16 h-16 mb-4 flex items-center justify-center">
-              <svg className="w-full h-full transform -rotate-90">
-                <circle cx="32" cy="32" r="28" stroke="#eef7e9" strokeWidth="6" fill="none" />
-                <circle cx="32" cy="32" r="28" stroke="#8BC34A" strokeWidth="6" fill="none"
-                  strokeDasharray={2 * Math.PI * 28}
-                  strokeDashoffset={(2 * Math.PI * 28) * (1 - (progressMap[lesson.id] ?? 0))}
-                  strokeLinecap="round" className="transition-all duration-1000 ease-out" />
-              </svg>
-              <span className="absolute text-sm font-bold text-[#4a6b38]">{lesson.displayOrder}</span>
+        {currentLessons.map((lesson) => {
+          const accessible = isLessonAccessible({
+            levelCode: level?.name,
+            lessonOrder: lesson.displayOrder,
+            isVip,
+          });
+
+          return (
+            <div
+              key={lesson.id}
+              className={`bg-white rounded-[2rem] p-5 shadow-sm flex flex-col items-center text-center transition-all ${
+                accessible
+                  ? 'hover:shadow-md hover:-translate-y-1'
+                  : 'opacity-90 border border-amber-100 hover:border-amber-300'
+              }`}
+            >
+              <div className="relative w-16 h-16 mb-4 flex items-center justify-center">
+                <svg className="w-full h-full transform -rotate-90">
+                  <circle cx="32" cy="32" r="28" stroke="#eef7e9" strokeWidth="6" fill="none" />
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="28"
+                    stroke={accessible ? '#8BC34A' : '#f59e0b'}
+                    strokeWidth="6"
+                    fill="none"
+                    strokeDasharray={2 * Math.PI * 28}
+                    strokeDashoffset={(2 * Math.PI * 28) * (1 - (progressMap[lesson.id] ?? 0))}
+                    strokeLinecap="round"
+                    className="transition-all duration-1000 ease-out"
+                  />
+                </svg>
+                {accessible ? (
+                  <span className="absolute text-sm font-bold text-[#4a6b38]">{lesson.displayOrder}</span>
+                ) : (
+                  <span className="absolute w-7 h-7 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center shadow-xs">
+                    <Lock className="w-3.5 h-3.5" />
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 justify-center mb-1">
+                <h2 className="text-lg font-bold text-[#215b3b] line-clamp-2">{lesson.title}</h2>
+                {!accessible && (
+                  <span className="shrink-0 inline-flex items-center gap-0.5 text-[10px] font-black uppercase px-1.5 py-0.5 rounded-md bg-amber-100 text-amber-700 border border-amber-200">
+                    <Crown className="w-2.5 h-2.5" />
+                    <span>VIP</span>
+                  </span>
+                )}
+              </div>
+              {lesson.description && (
+                <p className="text-[#4a6b38] text-sm mb-4 line-clamp-2">{lesson.description}</p>
+              )}
+              <div className="mt-auto w-full pt-2">
+                {accessible ? (
+                  <Link href={`/study/${lesson.id}`} className="w-full block">
+                    <button className="w-full py-2.5 px-4 bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold rounded-full transition-colors shadow-sm">
+                      {lessonBtnLabel(lesson.id)}
+                    </button>
+                  </Link>
+                ) : (
+                  <button
+                    onClick={() => setVipModalLesson(lesson)}
+                    className="w-full py-2.5 px-4 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold rounded-full transition-all shadow-sm flex items-center justify-center gap-1.5 text-sm"
+                  >
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>{t('unlockVip')}</span>
+                  </button>
+                )}
+              </div>
             </div>
-            <h2 className="text-lg font-bold text-[#215b3b] mb-1 line-clamp-2">{lesson.title}</h2>
-            {lesson.description && (
-              <p className="text-[#4a6b38] text-sm mb-4 line-clamp-2">{lesson.description}</p>
-            )}
-            <div className="mt-auto w-full pt-2">
-              <Link href={`/study/${lesson.id}`} className="w-full block">
-                <button className="w-full py-2.5 px-4 bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold rounded-full transition-colors shadow-sm">
-                  {lessonBtnLabel(lesson.id)}
-                </button>
-              </Link>
-            </div>
-          </div>
-        ))}
+          );
+        })}
         {currentLessons.length === 0 && (
           <div className="col-span-full py-12 text-center text-[#4a6b38]">
             {searchQuery ? t('noLessonsSearch', { query: searchQuery }) : t('noLessons')}
@@ -171,6 +225,14 @@ export function CourseDetailFeature({ params }: { params: Promise<{ id: string }
             className="px-3 py-1 rounded-lg hover:bg-white disabled:opacity-50 transition-colors">{t('next')}</button>
         </div>
       )}
+
+      {/* Modal nhắc nhở nâng cấp VIP */}
+      <VipLockModal
+        open={!!vipModalLesson}
+        onClose={() => setVipModalLesson(null)}
+        levelName={level?.name}
+        lessonTitle={vipModalLesson?.title}
+      />
     </div>
   );
 }

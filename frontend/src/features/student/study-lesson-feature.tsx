@@ -5,14 +5,18 @@ import { FlashcardGameFeature } from '@/features/games/page-features/flashcard-g
 import { curriculumApi } from '@/lib/api/endpoints/curriculum';
 import { srsApi } from '@/lib/api/endpoints/srs';
 import { studentApi } from '@/lib/api/endpoints/student';
-import type { Vocabulary, GrammarPoint, UserVocabProgress, UserLessonProgress } from '@/lib/api/types';
+import type { Vocabulary, GrammarPoint, UserVocabProgress, UserLessonProgress, Lesson } from '@/lib/api/types';
 import { StudyLessonVocabTable } from './components/study-lesson-vocab-table';
 import { StudyLessonGrammarList } from './components/study-lesson-grammar-list';
+import { LessonWordMatching } from './components/lesson-word-matching';
 import { LearnWordFlow } from '@/features/study/learn-word/learn-word-flow';
 import { LearnGrammarFlow } from '@/features/study/learn-grammar/learn-grammar-flow';
 import { CheckCircle2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useStudyLayout } from '@/providers/study-layout-provider';
+import { useAuth } from '@/lib/auth/auth-context';
+import { isUserVip, isLessonAccessible } from '@/lib/utils/vip-permission';
+import { VipPaywallCard } from '@/features/ui/components/vip-paywall-card';
 
 export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: string }> }) {
   const resolvedParams = React.use(params);
@@ -20,7 +24,12 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
   const t = useTranslations('Study');
   const { setHideHeader } = useStudyLayout();
 
-  const [mode, setMode] = useState<'list' | 'flashcard' | 'learn-word' | 'learn-grammar'>('list');
+  const { user } = useAuth();
+  const isVip = isUserVip(user);
+  const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [lessonLoading, setLessonLoading] = useState(true);
+
+  const [mode, setMode] = useState<'list' | 'flashcard' | 'matching' | 'learn-word' | 'learn-grammar'>('list');
   const [listTab, setListTab] = useState<'vocab' | 'grammar'>('vocab');
 
   const [learnIndex, setLearnIndex] = useState(0);
@@ -31,6 +40,24 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
   const [grammarPoints, setGrammarPoints] = useState<GrammarPoint[]>([]);
   const [progressMap, setProgressMap] = useState<Record<string, UserVocabProgress>>({});
   const [lessonProgress, setLessonProgress] = useState<UserLessonProgress | null>(null);
+
+  // Load lesson detail to check Level & displayOrder
+  useEffect(() => {
+    curriculumApi.getLesson(lessonId)
+      .then(async (l) => {
+        if (!l.level && l.levelId) {
+          try {
+            const lvl = await curriculumApi.getLevel(l.levelId);
+            l.level = lvl;
+          } catch {
+            // ignore
+          }
+        }
+        setLesson(l);
+      })
+      .catch(console.error)
+      .finally(() => setLessonLoading(false));
+  }, [lessonId]);
 
   // Hide outer layout exit button when in sub-flows that have their own back button
   useEffect(() => {
@@ -69,6 +96,24 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
     srsApi.getProgress(lessonId, 'lesson').then(setProgressMap);
   };
 
+  const accessible = lesson
+    ? isLessonAccessible({
+        levelCode: lesson.level?.name || lesson.level?.code,
+        lessonOrder: lesson.displayOrder,
+        isVip,
+      })
+    : true;
+
+  if (!lessonLoading && lesson && !accessible) {
+    return (
+      <VipPaywallCard
+        levelName={lesson.level?.name || lesson.level?.code || 'HSK'}
+        lessonTitle={lesson.title}
+        backHref={lesson.levelId ? `/dashboard/courses/${lesson.levelId}` : '/dashboard/courses/hsk'}
+      />
+    );
+  }
+
   if (mode === 'learn-word') {
     return (
       <div className="w-full h-[98vh] min-h-[600px] pt-12 pb-4">
@@ -91,6 +136,14 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
           onClose={() => setMode('list')}
           onComplete={() => handleComplete('grammar')}
         />
+      </div>
+    );
+  }
+
+  if (mode === 'matching') {
+    return (
+      <div className="w-full min-h-[80vh] pt-4 pb-12">
+        <LessonWordMatching vocabularies={vocabularies} onExit={() => setMode('list')} />
       </div>
     );
   }
@@ -138,18 +191,24 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
 
         {/* Floating Action Button */}
         {listTab === 'vocab' && vocabularies.length > 0 && (
-          <div className="fixed bottom-10 left-1/2 transform -translate-x-1/2 z-50 flex gap-4">
+          <div className="fixed bottom-5 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-4xl -translate-x-1/2 flex-wrap justify-center gap-2 sm:bottom-10 sm:gap-4">
             <button
               onClick={() => setMode('learn-word')}
-              className="px-12 py-4 bg-[#1f5333] hover:bg-[#163f25] text-white text-lg font-bold rounded-full shadow-lg transition-transform hover:scale-105 flex items-center gap-2"
+              className="rounded-full bg-[#1f5333] px-5 py-3 text-sm font-bold text-white shadow-lg transition-transform hover:scale-105 sm:px-8 sm:py-4 sm:text-base"
             >
               {t('learnNewWordsButton')}
             </button>
             <button
               onClick={() => setMode('flashcard')}
-              className="px-12 py-4 bg-[#8BC34A] hover:bg-[#7CB342] text-white text-lg font-bold rounded-full shadow-[0_8px_30px_rgb(139,195,74,0.3)] transition-transform hover:scale-105 flex items-center gap-2"
+              className="rounded-full bg-[#8BC34A] px-5 py-3 text-sm font-bold text-white shadow-[0_8px_30px_rgb(139,195,74,0.3)] transition-transform hover:scale-105 sm:px-8 sm:py-4 sm:text-base"
             >
               {t('reviewFlashcardButton')}
+            </button>
+            <button
+              onClick={() => setMode('matching')}
+              className="rounded-full bg-[#215b3b] px-5 py-3 text-sm font-bold text-white shadow-lg transition-transform hover:scale-105 sm:px-8 sm:py-4 sm:text-base"
+            >
+              {t('reviewMatchingButton')}
             </button>
           </div>
         )}

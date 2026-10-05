@@ -1,4 +1,4 @@
-import { redirect } from 'next/navigation';
+import { redirect } from '@/i18n/routing';
 
 export default async function YctStudyLessonAliasPage({
   params,
@@ -6,5 +6,5 @@ export default async function YctStudyLessonAliasPage({
   params: Promise<{ locale: string; lessonId: string }>;
 }) {
   const { locale, lessonId } = await params;
-  redirect(`/${locale}/study/yct/${lessonId}`);
+  redirect({ href: `/study/yct/${lessonId}`, locale });
 }

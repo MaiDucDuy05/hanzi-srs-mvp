@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import type { YctVocabulary } from '@/lib/api/endpoints/yct';
 import { speakText } from '@/lib/utils/tts';
-import { Volume2, RotateCw, ArrowLeft, ArrowRight, Sparkles, CheckCircle2, Shuffle } from 'lucide-react';
+import { Volume2, RotateCw, ArrowLeft, ArrowRight, Sparkles, CheckCircle2, Shuffle, Trophy, Image as ImageIcon } from 'lucide-react';
 import { Button } from '@/features/ui/components/button';
 import { resolveYctImageUrl } from '@/lib/utils/yct-image';
 
@@ -14,6 +15,7 @@ interface YctFlashcardGameProps {
 }
 
 export function YctFlashcardGame({ vocabularies, lessonTitle, onFinish }: YctFlashcardGameProps) {
+  const t = useTranslations('Yct.games');
   const [cards, setCards] = useState<YctVocabulary[]>(vocabularies);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -22,7 +24,7 @@ export function YctFlashcardGame({ vocabularies, lessonTitle, onFinish }: YctFla
   if (!cards || cards.length === 0) {
     return (
       <div className="text-center py-12 bg-[#f3f8d7]/40 rounded-3xl border-2 border-dashed border-[#eaf3c5]">
-        <p className="text-base font-bold text-[#215b3b]">Bài học này chưa có từ vựng nào.</p>
+        <p className="text-base font-bold text-[#215b3b]">{t('noVocab')}</p>
       </div>
     );
   }
@@ -67,13 +69,12 @@ export function YctFlashcardGame({ vocabularies, lessonTitle, onFinish }: YctFla
   if (completed) {
     return (
       <div className="bg-white border border-[#eaf3c5] rounded-3xl p-8 text-center max-w-lg mx-auto shadow-sm">
-        <div className="w-16 h-16 bg-[#e5f5eb] text-[#215b3b] rounded-full flex items-center justify-center mx-auto mb-4 shadow-xs text-3xl">
-          🎉
+        <div className="w-16 h-16 bg-[#e5f5eb] text-[#215b3b] rounded-full flex items-center justify-center mx-auto mb-4 shadow-xs">
+          <Trophy className="w-8 h-8 text-[#215b3b]" />
         </div>
-        <h3 className="text-2xl font-black text-[#11321e] mb-2">Hoàn thành bài học!</h3>
+        <h3 className="text-2xl font-black text-[#11321e] mb-2">{t('completedTitle')}</h3>
         <p className="text-gray-600 text-sm mb-6">
-          Bạn đã xem hết <span className="font-bold text-[#215b3b]">{cards.length}</span> thẻ từ vựng của bài{' '}
-          <span className="font-bold">"{lessonTitle}"</span>.
+          {t('completedDesc', { count: cards.length, title: lessonTitle })}
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -83,7 +84,7 @@ export function YctFlashcardGame({ vocabularies, lessonTitle, onFinish }: YctFla
             className="border-[#eaf3c5] text-[#215b3b] font-bold py-3 px-6 rounded-2xl transition-transform active:scale-95"
           >
             <RotateCw className="w-4 h-4 mr-2" />
-            Xem lại từ đầu
+            {t('reviewFromStart')}
           </Button>
           {onFinish && (
             <Button
@@ -91,7 +92,7 @@ export function YctFlashcardGame({ vocabularies, lessonTitle, onFinish }: YctFla
               className="bg-[#215b3b] hover:bg-[#18452b] text-white font-bold py-3 px-6 rounded-2xl shadow-sm transition-transform active:scale-95"
             >
               <Sparkles className="w-4 h-4 mr-2" />
-              Chơi Lật Thẻ Trí Nhớ
+              {t('playNext')}
             </Button>
           )}
         </div>
@@ -107,7 +108,7 @@ export function YctFlashcardGame({ vocabularies, lessonTitle, onFinish }: YctFla
       <div className="mb-4">
         <div className="flex justify-between items-center text-xs font-bold text-[#215b3b] mb-1">
           <span className="flex items-center gap-1.5">
-            Thẻ {currentIndex + 1} / {cards.length}
+            {t('cardCounter', { current: currentIndex + 1, total: cards.length })}
           </span>
           <span className="bg-[#e5f5eb] text-[#215b3b] px-2 py-0.5 rounded-full border border-[#eaf3c5]">
             {progressPercent}%
@@ -156,8 +157,8 @@ export function YctFlashcardGame({ vocabularies, lessonTitle, onFinish }: YctFla
                 />
               ) : (
                 <div className="text-center p-4 bg-gray-50/80 rounded-2xl border border-dashed border-[#eaf3c5]">
-                  <span className="text-4xl">🎨</span>
-                  <p className="text-xs text-gray-400 mt-2 font-medium">Chưa có ảnh</p>
+                  <ImageIcon className="w-8 h-8 text-gray-300 mx-auto mb-1" />
+                  <p className="text-xs text-gray-400 font-medium">Chưa có ảnh</p>
                 </div>
               )}
             </div>
@@ -175,7 +176,7 @@ export function YctFlashcardGame({ vocabularies, lessonTitle, onFinish }: YctFla
             {/* Hint */}
             <div className="flex items-center gap-1 text-xs text-gray-400 font-medium">
               <RotateCw className="w-3.5 h-3.5" />
-              <span>Chạm để lật xem nghĩa tiếng Việt</span>
+              <span>{t('tapToFlipVi')}</span>
             </div>
           </div>
 
@@ -183,7 +184,7 @@ export function YctFlashcardGame({ vocabularies, lessonTitle, onFinish }: YctFla
           <div className="absolute inset-0 backface-hidden rotate-y-180 bg-gradient-to-br from-[#1c4d32] to-[#256642] text-white border-2 border-[#256642] rounded-3xl p-6 flex flex-col items-center justify-between shadow-lg">
             <div className="w-full flex justify-between items-center">
               <span className="text-xs font-bold uppercase tracking-wider bg-white/15 text-white px-3 py-1 rounded-full backdrop-blur-sm border border-white/20">
-                Nghĩa tiếng Việt
+                {t('vietnameseMeaning')}
               </span>
               <button
                 onClick={(e) => handlePlayAudio(e, current.hanzi)}
@@ -222,7 +223,7 @@ export function YctFlashcardGame({ vocabularies, lessonTitle, onFinish }: YctFla
 
             <div className="flex items-center gap-1 text-xs text-white/70 font-medium">
               <RotateCw className="w-3.5 h-3.5" />
-              <span>Chạm để lật lại chữ Hán</span>
+              <span>{t('tapToFlipHanzi')}</span>
             </div>
           </div>
         </div>
@@ -237,14 +238,14 @@ export function YctFlashcardGame({ vocabularies, lessonTitle, onFinish }: YctFla
           className="rounded-2xl px-4 py-3 font-bold border border-[#eaf3c5] hover:bg-[#e5f5eb] text-[#215b3b] disabled:opacity-40"
         >
           <ArrowLeft className="w-5 h-5 mr-1" />
-          Trước
+          {t('btnPrev')}
         </Button>
 
         <Button
           variant="secondary"
           onClick={handleShuffle}
           className="rounded-2xl px-4 py-3 font-bold border border-[#eaf3c5] hover:bg-[#e5f5eb] text-[#215b3b]"
-          title="Xáo trộn thẻ ngẫu nhiên"
+          title={t('shuffle')}
         >
           <Shuffle className="w-5 h-5" />
         </Button>
@@ -255,12 +256,12 @@ export function YctFlashcardGame({ vocabularies, lessonTitle, onFinish }: YctFla
         >
           {currentIndex === cards.length - 1 ? (
             <>
-              Hoàn thành
+              {t('btnFinish')}
               <CheckCircle2 className="w-5 h-5 ml-1.5" />
             </>
           ) : (
             <>
-              Tiếp theo
+              {t('btnNext')}
               <ArrowRight className="w-5 h-5 ml-1.5" />
             </>
           )}

@@ -5,6 +5,7 @@ import { usePathname } from '@/i18n/routing';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
 import { ForestBackground } from '@/features/background/components/forest-background';
+import { FloatingContactBubbles } from '@/features/ui/components/floating-contact-bubbles';
 
 /**
  * Bố cục chung toàn app: Navbar + nội dung + Footer.
@@ -59,8 +60,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <main className="mx-auto flex-1 w-full max-w-6xl px-4 py-6 pt-32 relative z-10 flex flex-col">
         {children}
       </main>
-      <div className="relative z-10">
-      </div>
+      <FloatingContactBubbles />
     </ForestBackground>
   );
 }

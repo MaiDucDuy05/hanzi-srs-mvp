@@ -77,6 +77,7 @@ export interface HskLevel {
 export interface Lesson {
   id: string;
   levelId: string;
+  level?: HskLevel;
   title: string;
   description: string | null;
   displayOrder: number;

@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import type { YctVocabulary } from '@/lib/api/endpoints/yct';
 import { speakText } from '@/lib/utils/tts';
-import { Sparkles, RotateCw, Volume2, CheckCircle2 } from 'lucide-react';
+import { Sparkles, RotateCw, Volume2, CheckCircle2, Target, BookOpen } from 'lucide-react';
 import { Button } from '@/features/ui/components/button';
 import { resolveYctImageUrl } from '@/lib/utils/yct-image';
 
@@ -23,6 +24,7 @@ interface MatchItem {
 }
 
 export function YctMatchGame({ vocabularies, lessonTitle, onFinish }: YctMatchGameProps) {
+  const t = useTranslations('Yct.games');
   const [leftItems, setLeftItems] = useState<MatchItem[]>([]);
   const [rightItems, setRightItems] = useState<MatchItem[]>([]);
   const [selectedLeft, setSelectedLeft] = useState<string | null>(null);
@@ -99,7 +101,7 @@ export function YctMatchGame({ vocabularies, lessonTitle, onFinish }: YctMatchGa
   if (!vocabularies || vocabularies.length === 0) {
     return (
       <div className="text-center py-12 bg-[#f3f8d7]/40 rounded-3xl border-2 border-dashed border-[#eaf3c5]">
-        <p className="text-base font-bold text-[#215b3b]">Bài học chưa có từ vựng để chơi nối từ.</p>
+        <p className="text-base font-bold text-[#215b3b]">{t('noVocab')}</p>
       </div>
     );
   }
@@ -109,13 +111,13 @@ export function YctMatchGame({ vocabularies, lessonTitle, onFinish }: YctMatchGa
       {/* Header trạng thái */}
       <div className="flex justify-between items-center bg-white border border-[#eaf3c5] rounded-2xl p-4 mb-6 shadow-xs">
         <div>
-          <h4 className="font-bold text-[#11321e] text-sm">Nối Từ & Ý Nghĩa</h4>
-          <p className="text-xs text-gray-500">Chạm một thẻ chữ Hán và chạm nghĩa tương ứng để ghép đôi</p>
+          <h4 className="font-bold text-[#11321e] text-sm">{t('matchTitle')}</h4>
+          <p className="text-xs text-gray-500">{t('matchSubtitle')}</p>
         </div>
 
         <div className="flex items-center gap-3">
           <span className="text-xs font-bold text-[#215b3b] bg-[#e5f5eb] border border-[#eaf3c5] px-3 py-1.5 rounded-full">
-            Đã nối: {matchedIds.size} / {leftItems.length}
+            {t('matchedCounter', { current: matchedIds.size, total: leftItems.length })}
           </span>
           <Button
             variant="secondary"
@@ -124,7 +126,7 @@ export function YctMatchGame({ vocabularies, lessonTitle, onFinish }: YctMatchGa
             className="rounded-xl border border-[#eaf3c5] hover:bg-[#e5f5eb] text-[#215b3b] font-bold"
           >
             <RotateCw className="w-4 h-4 mr-1" />
-            Làm lại
+            {t('btnRestart')}
           </Button>
         </div>
       </div>
@@ -134,7 +136,7 @@ export function YctMatchGame({ vocabularies, lessonTitle, onFinish }: YctMatchGa
         {/* CỘT TRÁI: CHỮ HÁN + PINYIN + ẢNH */}
         <div className="space-y-3">
           <h5 className="text-center font-bold text-xs uppercase tracking-wider text-[#215b3b]">
-            Chữ Hán & Hình ảnh
+            {t('columnHanzi')}
           </h5>
           {leftItems.map((item) => {
             const isMatched = matchedIds.has(item.vocabId);
@@ -163,8 +165,8 @@ export function YctMatchGame({ vocabularies, lessonTitle, onFinish }: YctMatchGa
                       className="w-12 h-12 rounded-xl object-contain border border-[#eaf3c5] bg-gray-50/50 p-0.5"
                     />
                   ) : (
-                    <div className="w-12 h-12 rounded-xl bg-gray-100 flex items-center justify-center text-xl">
-                      🀄
+                    <div className="w-12 h-12 rounded-xl bg-[#e5f5eb] flex items-center justify-center">
+                      <BookOpen className="w-6 h-6 text-[#215b3b]" />
                     </div>
                   )}
                   <div>
@@ -194,7 +196,7 @@ export function YctMatchGame({ vocabularies, lessonTitle, onFinish }: YctMatchGa
         {/* CỘT PHẢI: NGHĨA TIẾNG VIỆT */}
         <div className="space-y-3">
           <h5 className="text-center font-bold text-xs uppercase tracking-wider text-[#215b3b]">
-            Ý nghĩa tiếng Việt
+            {t('columnMeaning')}
           </h5>
           {rightItems.map((item) => {
             const isMatched = matchedIds.has(item.vocabId);
@@ -231,12 +233,12 @@ export function YctMatchGame({ vocabularies, lessonTitle, onFinish }: YctMatchGa
       {/* Màn hình hoàn thành */}
       {isWon && (
         <div className="mt-8 bg-white border border-[#eaf3c5] rounded-3xl p-8 text-center shadow-md">
-          <div className="w-16 h-16 bg-[#e5f5eb] text-[#215b3b] rounded-full flex items-center justify-center mx-auto mb-3 text-3xl">
-            🎯
+          <div className="w-16 h-16 bg-[#e5f5eb] text-[#215b3b] rounded-full flex items-center justify-center mx-auto mb-3 shadow-xs">
+            <Target className="w-8 h-8 text-[#215b3b]" />
           </div>
-          <h3 className="text-2xl font-black text-[#11321e] mb-1">Nối từ chính xác!</h3>
+          <h3 className="text-2xl font-black text-[#11321e] mb-1">{t('matchWonTitle')}</h3>
           <p className="text-gray-600 text-sm mb-6">
-            Bạn đã ghép đúng tất cả các từ trong bài học.
+            {t('matchWonDesc')}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -246,7 +248,7 @@ export function YctMatchGame({ vocabularies, lessonTitle, onFinish }: YctMatchGa
               className="border-[#eaf3c5] text-[#215b3b] font-bold py-3 px-6 rounded-2xl transition-transform active:scale-95"
             >
               <RotateCw className="w-4 h-4 mr-2" />
-              Chơi lại
+              {t('btnRestart')}
             </Button>
             {onFinish && (
               <Button
@@ -254,7 +256,7 @@ export function YctMatchGame({ vocabularies, lessonTitle, onFinish }: YctMatchGa
                 className="bg-[#215b3b] hover:bg-[#18452b] text-white font-bold py-3 px-6 rounded-2xl shadow-sm transition-transform active:scale-95"
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                Hoàn thành bài học
+                {t('btnFinish')}
               </Button>
             )}
           </div>

@@ -1,33 +1,38 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { Link } from '@/i18n/routing';
+import { useTranslations } from 'next-intl';
 import { yctApi, type YctLevel } from '@/lib/api/endpoints/yct';
-import { Layers, Play, ArrowLeft } from 'lucide-react';
+import { Layers, Play, ArrowLeft, Lock, Crown, BookOpen } from 'lucide-react';
 import { Spinner } from '@/features/ui/components/spinner';
+import { useAuth } from '@/lib/auth/auth-context';
+import { isUserVip, isLessonAccessible } from '@/lib/utils/vip-permission';
+import { VipLockModal } from '@/features/ui/components/vip-lock-modal';
+import type { YctLesson } from '@/lib/api/endpoints/yct';
 
 interface YctLevelDetailViewProps {
   code: string;
 }
 
 export function YctLevelDetailView({ code }: YctLevelDetailViewProps) {
+  const t = useTranslations('Yct');
+  const { user } = useAuth();
+  const isVip = isUserVip(user);
   const [level, setLevel] = useState<YctLevel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const pathname = usePathname();
-  const locale = pathname?.split('/')[1] || 'vi';
+  const [vipModalLesson, setVipModalLesson] = useState<YctLesson | null>(null);
 
   useEffect(() => {
     yctApi.getLevelByCode(code)
       .then((data) => setLevel(data))
       .catch((err) => {
         console.error('Failed to load level detail:', err);
-        setError('Không tìm thấy thông tin cấp độ YCT này.');
+        setError(t('levelDetailError'));
       })
       .finally(() => setLoading(false));
-  }, [code]);
+  }, [code, t]);
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-5xl">
@@ -44,9 +49,9 @@ export function YctLevelDetailView({ code }: YctLevelDetailViewProps) {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <Link
-                href={`/${locale}/dashboard/yct`}
+                href="/dashboard/yct"
                 className="p-2.5 rounded-2xl bg-[#e5f5eb] hover:bg-[#d0eedb] text-[#215b3b] transition-colors shadow-xs"
-                title="Quay lại danh sách cấp độ"
+                title={t('backToLevels')}
               >
                 <ArrowLeft className="w-5 h-5" />
               </Link>
@@ -54,7 +59,7 @@ export function YctLevelDetailView({ code }: YctLevelDetailViewProps) {
                 <h2 className="text-xl font-black text-[#11321e] flex items-center gap-2">
                   <span>{level.name} ({level.code})</span>
                   <span className="text-xs bg-[#e5f5eb] text-[#215b3b] font-bold px-3 py-1 rounded-full border border-[#eaf3c5]">
-                    {level.lessons?.length || 0} bài học
+                    {t('lessonsInLevel', { count: level.lessons?.length || 0 })}
                   </span>
                 </h2>
                 {level.description && (
@@ -66,53 +71,104 @@ export function YctLevelDetailView({ code }: YctLevelDetailViewProps) {
 
           {!level.lessons || level.lessons.length === 0 ? (
             <div className="bg-[#f3f8d7]/40 border-2 border-dashed border-[#eaf3c5] rounded-3xl p-12 text-center">
-              <span className="text-5xl">📚</span>
-              <h3 className="text-lg font-bold text-[#11321e] mt-3">Chưa có bài học nào</h3>
+              <div className="w-16 h-16 rounded-2xl bg-[#e5f5eb] text-[#215b3b] flex items-center justify-center mx-auto mb-3 shadow-2xs">
+                <BookOpen className="w-8 h-8 text-[#215b3b]" />
+              </div>
+              <h3 className="text-lg font-bold text-[#11321e] mt-3">{t('noLessons')}</h3>
               <p className="text-sm text-gray-500 mt-1">
-                Các bài học của cấp độ {level.code} đang được chuẩn bị. Bạn hãy quay lại sau nhé!
+                {t('noLessonsDesc', { code: level.code })}
               </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {level.lessons.map((lesson, idx) => (
-                <div
-                  key={lesson.id}
-                  className="bg-white rounded-3xl border border-[#eaf3c5] hover:border-[#78993a] shadow-xs hover:shadow-md transition-all duration-300 p-6 flex flex-col justify-between group"
-                >
-                  <div>
-                    <div className="flex justify-between items-start mb-3">
-                      <span className="w-10 h-10 rounded-2xl bg-[#e5f5eb] text-[#215b3b] font-black flex items-center justify-center text-sm shadow-xs group-hover:bg-[#215b3b] group-hover:text-white transition-colors">
-                        {idx + 1}
-                      </span>
-                      <span className="text-xs font-bold text-[#215b3b] bg-[#e5f5eb] border border-[#eaf3c5] px-2.5 py-1 rounded-full flex items-center gap-1">
-                        <Layers className="w-3.5 h-3.5" />
-                        {lesson.vocabCount ?? 0} từ vựng
-                      </span>
+              {level.lessons.map((lesson, idx) => {
+                const lessonOrder = lesson.displayOrder || (idx + 1);
+                const accessible = isLessonAccessible({
+                  levelCode: level.code,
+                  lessonOrder,
+                  isVip,
+                });
+
+                return (
+                  <div
+                    key={lesson.id}
+                    className={`bg-white rounded-3xl border shadow-xs transition-all duration-300 p-6 flex flex-col justify-between group ${
+                      accessible
+                        ? 'border-[#eaf3c5] hover:border-[#78993a] hover:shadow-md'
+                        : 'border-amber-200/80 bg-gradient-to-b from-white to-amber-50/20'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex justify-between items-start mb-3">
+                        <span
+                          className={`w-10 h-10 rounded-2xl font-black flex items-center justify-center text-sm shadow-xs transition-colors ${
+                            accessible
+                              ? 'bg-[#e5f5eb] text-[#215b3b] group-hover:bg-[#215b3b] group-hover:text-white'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {accessible ? (
+                            idx + 1
+                          ) : (
+                            <Lock className="w-4 h-4 text-amber-700" />
+                          )}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {!accessible && (
+                            <span className="text-xs font-bold text-amber-800 bg-amber-100 border border-amber-300/60 px-2.5 py-1 rounded-full flex items-center gap-1">
+                              <Crown className="w-3.5 h-3.5 fill-amber-700 text-amber-700" />
+                              <span>VIP</span>
+                            </span>
+                          )}
+                          <span className="text-xs font-bold text-[#215b3b] bg-[#e5f5eb] border border-[#eaf3c5] px-2.5 py-1 rounded-full flex items-center gap-1">
+                            <Layers className="w-3.5 h-3.5" />
+                            {t('wordsCount', { count: lesson.vocabCount ?? 0 })}
+                          </span>
+                        </div>
+                      </div>
+
+                      <h3 className="text-xl font-black text-[#11321e] group-hover:text-[#215b3b] transition-colors">
+                        {lesson.title}
+                      </h3>
+                      <p className="text-sm text-gray-500 mt-2 line-clamp-2 leading-relaxed">
+                        {lesson.description || t('pageDesc')}
+                      </p>
                     </div>
 
-                    <h3 className="text-xl font-black text-[#11321e] group-hover:text-[#215b3b] transition-colors">
-                      {lesson.title}
-                    </h3>
-                    <p className="text-sm text-gray-500 mt-2 line-clamp-2 leading-relaxed">
-                      {lesson.description || 'Học từ vựng và câu ngắn qua thẻ hình ảnh.'}
-                    </p>
+                    <div className="mt-6 pt-4 border-t border-gray-100">
+                      {accessible ? (
+                        <Link
+                          href={`/study/yct/${lesson.id}`}
+                          className="w-full inline-flex items-center justify-center gap-2 bg-[#215b3b] hover:bg-[#18452b] text-white font-bold py-3 px-4 rounded-2xl shadow-sm transition-all active:scale-95"
+                        >
+                          <Play className="w-4 h-4 fill-white" />
+                          <span>{t('studyPractice')}</span>
+                        </Link>
+                      ) : (
+                        <button
+                          onClick={() => setVipModalLesson(lesson)}
+                          className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold py-3 px-4 rounded-2xl shadow-sm transition-all active:scale-95"
+                        >
+                          <Lock className="w-4 h-4" />
+                          <span>{t('unlockVip')}</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
-
-                  <div className="mt-6 pt-4 border-t border-gray-100">
-                    <Link
-                      href={`/${locale}/study/yct/${lesson.id}`}
-                      className="w-full inline-flex items-center justify-center gap-2 bg-[#215b3b] hover:bg-[#18452b] text-white font-bold py-3 px-4 rounded-2xl shadow-sm transition-all active:scale-95"
-                    >
-                      <Play className="w-4 h-4 fill-white" />
-                      <span>Vào học & Luyện tập</span>
-                    </Link>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
       )}
+
+      {/* Modal nhắc nhở nâng cấp VIP */}
+      <VipLockModal
+        open={!!vipModalLesson}
+        onClose={() => setVipModalLesson(null)}
+        levelName={level?.name || level?.code}
+        lessonTitle={vipModalLesson?.title}
+      />
     </div>
   );
 }
