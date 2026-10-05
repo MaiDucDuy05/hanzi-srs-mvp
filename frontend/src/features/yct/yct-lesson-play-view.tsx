@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { Link, useRouter } from '@/i18n/routing';
 import { yctApi, type YctLesson } from '@/lib/api/endpoints/yct';
 import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { YctFlashcardGame } from './components/yct-flashcard-game';
@@ -28,9 +27,6 @@ export function YctLessonPlayView({ lessonId }: YctLessonPlayViewProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentTab, setCurrentTab] = useState<GameTab>('flashcard');
-
-  const pathname = usePathname();
-  const locale = pathname?.split('/')[1] || 'vi';
 
   useEffect(() => {
     yctApi.getLessonDetail(lessonId)
@@ -72,7 +68,7 @@ export function YctLessonPlayView({ lessonId }: YctLessonPlayViewProps) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 bg-white/80 backdrop-blur-xs p-4 rounded-3xl border border-[#eaf3c5] shadow-xs">
         <div className="flex items-center gap-3">
           <Link
-            href={`/${locale}/dashboard/yct/${levelCode}`}
+            href={`/dashboard/yct/${levelCode}`}
             className="p-2.5 rounded-2xl bg-[#e5f5eb] hover:bg-[#d0eedb] text-[#215b3b] transition-colors shadow-xs shrink-0"
             title="Quay lại danh sách bài học"
           >
@@ -116,7 +112,7 @@ export function YctLessonPlayView({ lessonId }: YctLessonPlayViewProps) {
             </button>
           ) : (
             <button
-              onClick={() => router.push(`/${locale}/dashboard/yct/${levelCode}`)}
+              onClick={() => router.push(`/dashboard/yct/${levelCode}`)}
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-[#215b3b] hover:bg-[#18452b] text-white transition-all active:scale-95 shadow-sm"
             >
               <span>Hoàn thành bài học</span>
@@ -148,7 +144,7 @@ export function YctLessonPlayView({ lessonId }: YctLessonPlayViewProps) {
           <YctMatchGame
             vocabularies={vocabs}
             lessonTitle={lesson.title}
-            onFinish={() => router.push(`/${locale}/dashboard/yct/${levelCode}`)}
+            onFinish={() => router.push(`/dashboard/yct/${levelCode}`)}
           />
         )}
       </div>

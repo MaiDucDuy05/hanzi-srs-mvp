@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { Link } from '@/i18n/routing';
 import { yctApi, type YctLevel } from '@/lib/api/endpoints/yct';
 import { BookOpen, Layers, ArrowRight } from 'lucide-react';
 import { Spinner } from '@/features/ui/components/spinner';
@@ -11,9 +10,6 @@ export function YctLevelsView() {
   const [levels, setLevels] = useState<YctLevel[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const pathname = usePathname();
-  const locale = pathname?.split('/')[1] || 'vi';
 
   useEffect(() => {
     yctApi.getLevels()
@@ -87,7 +83,7 @@ export function YctLevelsView() {
                     </div>
 
                     <Link
-                      href={`/${locale}/dashboard/yct/${lvl.code.toLowerCase()}`}
+                      href={`/dashboard/yct/${lvl.code.toLowerCase()}`}
                       className="w-full flex items-center justify-center gap-2 bg-[#215b3b] hover:bg-[#18452b] text-white font-bold py-3 px-4 rounded-2xl shadow-sm transition-all active:scale-95"
                     >
                       <span>Vào học ngay</span>

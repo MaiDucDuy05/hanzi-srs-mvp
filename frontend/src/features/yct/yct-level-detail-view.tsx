@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { Link } from '@/i18n/routing';
 import { yctApi, type YctLevel } from '@/lib/api/endpoints/yct';
 import { Layers, Play, ArrowLeft } from 'lucide-react';
 import { Spinner } from '@/features/ui/components/spinner';
@@ -15,9 +14,6 @@ export function YctLevelDetailView({ code }: YctLevelDetailViewProps) {
   const [level, setLevel] = useState<YctLevel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const pathname = usePathname();
-  const locale = pathname?.split('/')[1] || 'vi';
 
   useEffect(() => {
     yctApi.getLevelByCode(code)
@@ -44,7 +40,7 @@ export function YctLevelDetailView({ code }: YctLevelDetailViewProps) {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <Link
-                href={`/${locale}/dashboard/yct`}
+                href="/dashboard/yct"
                 className="p-2.5 rounded-2xl bg-[#e5f5eb] hover:bg-[#d0eedb] text-[#215b3b] transition-colors shadow-xs"
                 title="Quay lại danh sách cấp độ"
               >
@@ -100,7 +96,7 @@ export function YctLevelDetailView({ code }: YctLevelDetailViewProps) {
 
                   <div className="mt-6 pt-4 border-t border-gray-100">
                     <Link
-                      href={`/${locale}/study/yct/${lesson.id}`}
+                      href={`/study/yct/${lesson.id}`}
                       className="w-full inline-flex items-center justify-center gap-2 bg-[#215b3b] hover:bg-[#18452b] text-white font-bold py-3 px-4 rounded-2xl shadow-sm transition-all active:scale-95"
                     >
                       <Play className="w-4 h-4 fill-white" />
