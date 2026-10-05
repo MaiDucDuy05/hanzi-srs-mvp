@@ -9,6 +9,10 @@ import { YctMemoryGame } from './components/yct-memory-game';
 import { YctMatchGame } from './components/yct-match-game';
 import { Spinner } from '@/features/ui/components/spinner';
 
+import { useAuth } from '@/lib/auth/auth-context';
+import { isUserVip, isLessonAccessible } from '@/lib/utils/vip-permission';
+import { VipPaywallCard } from '@/features/ui/components/vip-paywall-card';
+
 interface YctLessonPlayViewProps {
   lessonId: string;
 }
@@ -23,6 +27,8 @@ const STAGES: { id: GameTab; label: string; icon: string }[] = [
 
 export function YctLessonPlayView({ lessonId }: YctLessonPlayViewProps) {
   const router = useRouter();
+  const { user } = useAuth();
+  const isVip = isUserVip(user);
   const [lesson, setLesson] = useState<YctLesson | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,8 +62,25 @@ export function YctLessonPlayView({ lessonId }: YctLessonPlayViewProps) {
     );
   }
 
-  const vocabs = lesson.vocabularies || [];
   const levelCode = lesson.level?.code?.toLowerCase() || 'yct1';
+  const lessonOrder = lesson.displayOrder || 1;
+  const accessible = isLessonAccessible({
+    levelCode: lesson.level?.code,
+    lessonOrder,
+    isVip,
+  });
+
+  if (!accessible) {
+    return (
+      <VipPaywallCard
+        levelName={lesson.level?.name || lesson.level?.code || 'YCT'}
+        lessonTitle={lesson.title}
+        backHref={`/dashboard/yct/${levelCode}`}
+      />
+    );
+  }
+
+  const vocabs = lesson.vocabularies || [];
 
   const currentStageIndex = STAGES.findIndex((s) => s.id === currentTab);
   const currentStage = STAGES[currentStageIndex] || STAGES[0];

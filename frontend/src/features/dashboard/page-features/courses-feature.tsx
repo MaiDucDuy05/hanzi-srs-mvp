@@ -8,6 +8,9 @@ import type { HskLevel } from '@/lib/api/types';
 import { PageLoading } from '@/features/ui/components/spinner';
 import { ErrorState } from '@/features/ui/components/error-state';
 
+import { Crown } from 'lucide-react';
+import { isLevelVip } from '@/lib/utils/vip-permission';
+
 export function CoursesFeature() {
   const t = useTranslations('Courses');
   const [levels, setLevels] = useState<HskLevel[]>([]);
@@ -28,24 +31,40 @@ export function CoursesFeature() {
     <div className="w-full">
       <h1 className="text-4xl font-black text-[#215b3b] mb-8 font-heading">{t('hskListTitle')}</h1>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full">
-        {levels.map((level, i) => (
-          <Link href={`/dashboard/courses/${level.id}`} key={level.id}>
-            <div className="bg-white rounded-[2rem] p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow h-full cursor-pointer">
-              <div className="flex items-center gap-4 mb-5">
-                <div className="relative w-20 h-24 flex-shrink-0 flex items-center justify-center">
-                  <img src="/assets/illustrations/bamboo/bamboo.png" alt="Bamboo" className="w-auto h-48 object-contain relative z-10" />
+        {levels.map((level) => {
+          const isVipCourse = isLevelVip(level.name);
+
+          return (
+            <Link href={`/dashboard/courses/${level.id}`} key={level.id}>
+              <div className="bg-white rounded-[2rem] p-5 shadow-sm flex flex-col justify-between hover:shadow-md transition-shadow h-full cursor-pointer relative overflow-hidden group">
+                <div className="flex items-center gap-4 mb-5">
+                  <div className="relative w-20 h-24 flex-shrink-0 flex items-center justify-center">
+                    <img src="/assets/illustrations/bamboo/bamboo.png" alt="Bamboo" className="w-auto h-48 object-contain relative z-10" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                      <h2 className="text-xl font-black text-[#215b3b]">{level.name}</h2>
+                      {isVipCourse ? (
+                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                          <Crown className="w-3 h-3 text-amber-500 fill-amber-500" />
+                          <span>VIP (Mở 3 bài đầu)</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          Miễn phí
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs font-semibold text-gray-500">{t('hskLevelLabel', { level: level.name.replace('HSK ', '') })}</p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-xl font-black text-[#215b3b] mb-2">{level.name}</h2>
-                  <p className="text-xs font-semibold text-gray-500">{t('hskLevelLabel', { level: level.name.replace('HSK ', '') })}</p>
-                </div>
+                <button className="w-full py-3 px-4 bg-[#8BC34A] group-hover:bg-[#7CB342] text-white font-bold rounded-full transition-colors text-sm shadow-sm pointer-events-none">
+                  {t('learnNow')}
+                </button>
               </div>
-              <button className="w-full py-3 px-4 bg-[#8BC34A] hover:bg-[#7CB342] text-white font-bold rounded-full transition-colors text-sm shadow-sm pointer-events-none">
-                {t('learnNow')}
-              </button>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
         {levels.length === 0 && (
           <p className="text-sm text-gray-500 col-span-full">{t('noLevels')}</p>
         )}

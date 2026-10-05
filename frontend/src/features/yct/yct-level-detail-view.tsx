@@ -3,17 +3,24 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from '@/i18n/routing';
 import { yctApi, type YctLevel } from '@/lib/api/endpoints/yct';
-import { Layers, Play, ArrowLeft } from 'lucide-react';
+import { Layers, Play, ArrowLeft, Lock, Crown } from 'lucide-react';
 import { Spinner } from '@/features/ui/components/spinner';
+import { useAuth } from '@/lib/auth/auth-context';
+import { isUserVip, isLessonAccessible } from '@/lib/utils/vip-permission';
+import { VipLockModal } from '@/features/ui/components/vip-lock-modal';
+import type { YctLesson } from '@/lib/api/endpoints/yct';
 
 interface YctLevelDetailViewProps {
   code: string;
 }
 
 export function YctLevelDetailView({ code }: YctLevelDetailViewProps) {
+  const { user } = useAuth();
+  const isVip = isUserVip(user);
   const [level, setLevel] = useState<YctLevel | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [vipModalLesson, setVipModalLesson] = useState<YctLesson | null>(null);
 
   useEffect(() => {
     yctApi.getLevelByCode(code)
@@ -70,45 +77,94 @@ export function YctLevelDetailView({ code }: YctLevelDetailViewProps) {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {level.lessons.map((lesson, idx) => (
-                <div
-                  key={lesson.id}
-                  className="bg-white rounded-3xl border border-[#eaf3c5] hover:border-[#78993a] shadow-xs hover:shadow-md transition-all duration-300 p-6 flex flex-col justify-between group"
-                >
-                  <div>
-                    <div className="flex justify-between items-start mb-3">
-                      <span className="w-10 h-10 rounded-2xl bg-[#e5f5eb] text-[#215b3b] font-black flex items-center justify-center text-sm shadow-xs group-hover:bg-[#215b3b] group-hover:text-white transition-colors">
-                        {idx + 1}
-                      </span>
-                      <span className="text-xs font-bold text-[#215b3b] bg-[#e5f5eb] border border-[#eaf3c5] px-2.5 py-1 rounded-full flex items-center gap-1">
-                        <Layers className="w-3.5 h-3.5" />
-                        {lesson.vocabCount ?? 0} từ vựng
-                      </span>
+              {level.lessons.map((lesson, idx) => {
+                const lessonOrder = lesson.displayOrder || (idx + 1);
+                const accessible = isLessonAccessible({
+                  levelCode: level.code,
+                  lessonOrder,
+                  isVip,
+                });
+
+                return (
+                  <div
+                    key={lesson.id}
+                    className={`bg-white rounded-3xl border shadow-xs transition-all duration-300 p-6 flex flex-col justify-between group ${
+                      accessible
+                        ? 'border-[#eaf3c5] hover:border-[#78993a] hover:shadow-md'
+                        : 'border-amber-200/80 bg-gradient-to-b from-white to-amber-50/20'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex justify-between items-start mb-3">
+                        <span
+                          className={`w-10 h-10 rounded-2xl font-black flex items-center justify-center text-sm shadow-xs transition-colors ${
+                            accessible
+                              ? 'bg-[#e5f5eb] text-[#215b3b] group-hover:bg-[#215b3b] group-hover:text-white'
+                              : 'bg-amber-100 text-amber-800'
+                          }`}
+                        >
+                          {accessible ? (
+                            idx + 1
+                          ) : (
+                            <Lock className="w-4 h-4 text-amber-700" />
+                          )}
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {!accessible && (
+                            <span className="text-xs font-bold text-amber-800 bg-amber-100 border border-amber-300/60 px-2.5 py-1 rounded-full flex items-center gap-1">
+                              <Crown className="w-3.5 h-3.5 fill-amber-700 text-amber-700" />
+                              <span>VIP</span>
+                            </span>
+                          )}
+                          <span className="text-xs font-bold text-[#215b3b] bg-[#e5f5eb] border border-[#eaf3c5] px-2.5 py-1 rounded-full flex items-center gap-1">
+                            <Layers className="w-3.5 h-3.5" />
+                            {lesson.vocabCount ?? 0} từ vựng
+                          </span>
+                        </div>
+                      </div>
+
+                      <h3 className="text-xl font-black text-[#11321e] group-hover:text-[#215b3b] transition-colors">
+                        {lesson.title}
+                      </h3>
+                      <p className="text-sm text-gray-500 mt-2 line-clamp-2 leading-relaxed">
+                        {lesson.description || 'Học từ vựng và câu ngắn qua thẻ hình ảnh.'}
+                      </p>
                     </div>
 
-                    <h3 className="text-xl font-black text-[#11321e] group-hover:text-[#215b3b] transition-colors">
-                      {lesson.title}
-                    </h3>
-                    <p className="text-sm text-gray-500 mt-2 line-clamp-2 leading-relaxed">
-                      {lesson.description || 'Học từ vựng và câu ngắn qua thẻ hình ảnh.'}
-                    </p>
+                    <div className="mt-6 pt-4 border-t border-gray-100">
+                      {accessible ? (
+                        <Link
+                          href={`/study/yct/${lesson.id}`}
+                          className="w-full inline-flex items-center justify-center gap-2 bg-[#215b3b] hover:bg-[#18452b] text-white font-bold py-3 px-4 rounded-2xl shadow-sm transition-all active:scale-95"
+                        >
+                          <Play className="w-4 h-4 fill-white" />
+                          <span>Vào học & Luyện tập</span>
+                        </Link>
+                      ) : (
+                        <button
+                          onClick={() => setVipModalLesson(lesson)}
+                          className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold py-3 px-4 rounded-2xl shadow-sm transition-all active:scale-95"
+                        >
+                          <Lock className="w-4 h-4" />
+                          <span>Mở khoá VIP</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
-
-                  <div className="mt-6 pt-4 border-t border-gray-100">
-                    <Link
-                      href={`/study/yct/${lesson.id}`}
-                      className="w-full inline-flex items-center justify-center gap-2 bg-[#215b3b] hover:bg-[#18452b] text-white font-bold py-3 px-4 rounded-2xl shadow-sm transition-all active:scale-95"
-                    >
-                      <Play className="w-4 h-4 fill-white" />
-                      <span>Vào học & Luyện tập</span>
-                    </Link>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
       )}
+
+      {/* Modal nhắc nhở nâng cấp VIP */}
+      <VipLockModal
+        open={!!vipModalLesson}
+        onClose={() => setVipModalLesson(null)}
+        levelName={level?.name || level?.code}
+        lessonTitle={vipModalLesson?.title}
+      />
     </div>
   );
 }

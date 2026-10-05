@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { Lesson } from './entities/lesson.entity';
@@ -6,7 +6,7 @@ import { LessonContent } from './entities/lesson-content.entity';
 import { Vocabulary } from './entities/vocabulary.entity';
 import { GrammarPoint } from './entities/grammar-point.entity';
 import { LessonQueryDto } from './dto/curriculum.dto';
-import { paginatedResult, findOrNotFound } from '../../common/helpers/query-helpers';
+import { paginatedResult } from '../../common/helpers/query-helpers';
 import { ContentType } from '../../common/enums/curriculum.enums';
 
 export interface LessonContentsAggregate {
@@ -30,7 +30,11 @@ export class LessonService {
     const [data, total] = await this.repo.findAndCount({ where, skip: (page - 1) * limit, take: limit, order: { [sortBy]: sortOrder } });
     return paginatedResult(data, total, page, limit);
   }
-  async findById(id: string) { return findOrNotFound(this.repo, id, 'Lesson'); }
+  async findById(id: string) {
+    const entity = await this.repo.findOne({ where: { id }, relations: ['level'] });
+    if (!entity) throw new NotFoundException('Lesson not found');
+    return entity;
+  }
 
   /**
    * Tổng hợp nội dung bài học — join qua lesson_contents trả vocab + grammar

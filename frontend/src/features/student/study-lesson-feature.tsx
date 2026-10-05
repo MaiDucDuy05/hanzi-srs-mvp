@@ -5,7 +5,7 @@ import { FlashcardGameFeature } from '@/features/games/page-features/flashcard-g
 import { curriculumApi } from '@/lib/api/endpoints/curriculum';
 import { srsApi } from '@/lib/api/endpoints/srs';
 import { studentApi } from '@/lib/api/endpoints/student';
-import type { Vocabulary, GrammarPoint, UserVocabProgress, UserLessonProgress } from '@/lib/api/types';
+import type { Vocabulary, GrammarPoint, UserVocabProgress, UserLessonProgress, Lesson } from '@/lib/api/types';
 import { StudyLessonVocabTable } from './components/study-lesson-vocab-table';
 import { StudyLessonGrammarList } from './components/study-lesson-grammar-list';
 import { LearnWordFlow } from '@/features/study/learn-word/learn-word-flow';
@@ -13,12 +13,20 @@ import { LearnGrammarFlow } from '@/features/study/learn-grammar/learn-grammar-f
 import { CheckCircle2 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useStudyLayout } from '@/providers/study-layout-provider';
+import { useAuth } from '@/lib/auth/auth-context';
+import { isUserVip, isLessonAccessible } from '@/lib/utils/vip-permission';
+import { VipPaywallCard } from '@/features/ui/components/vip-paywall-card';
 
 export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: string }> }) {
   const resolvedParams = React.use(params);
   const { lessonId } = resolvedParams;
   const t = useTranslations('Study');
   const { setHideHeader } = useStudyLayout();
+
+  const { user } = useAuth();
+  const isVip = isUserVip(user);
+  const [lesson, setLesson] = useState<Lesson | null>(null);
+  const [lessonLoading, setLessonLoading] = useState(true);
 
   const [mode, setMode] = useState<'list' | 'flashcard' | 'learn-word' | 'learn-grammar'>('list');
   const [listTab, setListTab] = useState<'vocab' | 'grammar'>('vocab');
@@ -31,6 +39,24 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
   const [grammarPoints, setGrammarPoints] = useState<GrammarPoint[]>([]);
   const [progressMap, setProgressMap] = useState<Record<string, UserVocabProgress>>({});
   const [lessonProgress, setLessonProgress] = useState<UserLessonProgress | null>(null);
+
+  // Load lesson detail to check Level & displayOrder
+  useEffect(() => {
+    curriculumApi.getLesson(lessonId)
+      .then(async (l) => {
+        if (!l.level && l.levelId) {
+          try {
+            const lvl = await curriculumApi.getLevel(l.levelId);
+            l.level = lvl;
+          } catch {
+            // ignore
+          }
+        }
+        setLesson(l);
+      })
+      .catch(console.error)
+      .finally(() => setLessonLoading(false));
+  }, [lessonId]);
 
   // Hide outer layout exit button when in sub-flows that have their own back button
   useEffect(() => {
@@ -68,6 +94,24 @@ export function StudyLessonFeature({ params }: { params: Promise<{ lessonId: str
     // Refresh progress after completing flashcards
     srsApi.getProgress(lessonId, 'lesson').then(setProgressMap);
   };
+
+  const accessible = lesson
+    ? isLessonAccessible({
+        levelCode: lesson.level?.name || lesson.level?.code,
+        lessonOrder: lesson.displayOrder,
+        isVip,
+      })
+    : true;
+
+  if (!lessonLoading && lesson && !accessible) {
+    return (
+      <VipPaywallCard
+        levelName={lesson.level?.name || lesson.level?.code || 'HSK'}
+        lessonTitle={lesson.title}
+        backHref={lesson.levelId ? `/dashboard/courses/${lesson.levelId}` : '/dashboard/courses/hsk'}
+      />
+    );
+  }
 
   if (mode === 'learn-word') {
     return (

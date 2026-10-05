@@ -3,8 +3,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from '@/i18n/routing';
 import { yctApi, type YctLevel } from '@/lib/api/endpoints/yct';
-import { BookOpen, Layers, ArrowRight } from 'lucide-react';
+import { BookOpen, Layers, ArrowRight, Crown } from 'lucide-react';
 import { Spinner } from '@/features/ui/components/spinner';
+import { isLevelVip } from '@/lib/utils/vip-permission';
 
 export function YctLevelsView() {
   const [levels, setLevels] = useState<YctLevel[]>([]);
@@ -36,6 +37,8 @@ export function YctLevelsView() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {levels.map((lvl) => {
+            const isVipCourse = isLevelVip(lvl.code);
+
             return (
               <div
                 key={lvl.id}
@@ -47,9 +50,16 @@ export function YctLevelsView() {
                     <span className="text-3xl font-black tracking-wider text-white">
                       {lvl.code}
                     </span>
-                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-white/15 text-emerald-100 border border-white/20">
-                      YCT
-                    </span>
+                    {isVipCourse ? (
+                      <span className="text-xs font-bold px-3 py-1 rounded-full bg-amber-400 text-amber-950 flex items-center gap-1 shadow-sm">
+                        <Crown className="w-3.5 h-3.5 fill-amber-950" />
+                        <span>VIP (Mở 3 bài đầu)</span>
+                      </span>
+                    ) : (
+                      <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-400/30 text-emerald-100 border border-emerald-300/40">
+                        Miễn phí
+                      </span>
+                    )}
                   </div>
                   <h3 className="text-2xl font-black mt-3">{lvl.name}</h3>
                 </div>
