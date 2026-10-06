@@ -43,18 +43,6 @@ export class FillBlankService {
     return Math.abs(h);
   }
 
-  private fisherYates<T>(arr: T[], seed: string): T[] {
-    const a = [...arr];
-    let m = a.length;
-    let seedNum = this.simpleHash(seed);
-    while (m > 0) {
-      const i = Math.floor(this.seededRandom(seedNum++) * m);
-      m--;
-      [a[m], a[i]] = [a[i], a[m]];
-    }
-    return a;
-  }
-
   async startFillBlank(
     attemptId: string,
     sourceId: string,
@@ -65,35 +53,33 @@ export class FillBlankService {
     const attempt = await this.attemptRepo.findOne({ where: { id: attemptId } });
     if (!attempt) throw new NotFoundException('Attempt not found');
 
-    let allQuestions: PracticeQuestion[];
+    let questions: PracticeQuestion[];
 
     if (topicId) {
-      allQuestions = await this.qRepo.find({
+      questions = await this.qRepo.find({
         where: {
           questionType: 'FILL_BLANK' as any,
           status: 'PUBLISHED' as any,
           topicId: topicId,
         } as any,
         order: { createdAt: 'DESC' },
+        take: Math.min(count, 10),
       });
     } else {
-      allQuestions = await this.qRepo.find({
+      questions = await this.qRepo.find({
         where: {
           questionType: 'FILL_BLANK' as any,
           status: 'PUBLISHED' as any,
           ...(sourceType === SourceType.LESSON ? { lessonId: sourceId } : { levelId: sourceId }),
         } as any,
         order: { createdAt: 'DESC' },
+        take: Math.min(count, 10),
       });
     }
 
-    if (allQuestions.length === 0) {
+    if (questions.length === 0) {
       throw new NotFoundException('Không tìm thấy câu hỏi điền từ cho nguồn này.');
     }
-
-    const targetCount = Math.min(Math.max(count, 1), 10);
-    const shuffledPool = this.fisherYates(allQuestions, `${attemptId}-fill-questions-pool`);
-    const questions = shuffledPool.slice(0, targetCount);
 
     const resultQuestions: FillBlankQuestion[] = [];
     const correctAnswers: Record<string, string> = {};

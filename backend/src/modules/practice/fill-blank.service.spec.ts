@@ -104,17 +104,15 @@ describe('FillBlankService', () => {
     it('caps question count to 10 maximum', async () => {
       attemptRepo.findOne.mockResolvedValue(mockAttempt as PracticeAttempt);
       attemptRepo.save.mockImplementation((a) => Promise.resolve(a as PracticeAttempt));
-      const mockQuestions = Array.from({ length: 15 }, (_, i) => ({
-        id: `q${i}`,
-        prompt: `Q${i} ___`,
-        questionData: { choices: ['a', 'b'] },
-        acceptedAnswers: { list: ['a'] },
-      }));
-      qRepo.find.mockResolvedValue(mockQuestions);
+      qRepo.find.mockResolvedValue([]);
 
-      const result = await service.startFillBlank('att-1', 'lesson-1', SourceType.LESSON, undefined, 50);
+      await expect(
+        service.startFillBlank('att-1', 'lesson-1', SourceType.LESSON, undefined, 50),
+      ).rejects.toThrow(NotFoundException);
 
-      expect(result.questions).toHaveLength(10);
+      expect(qRepo.find).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 10 }),
+      );
     });
 
     it('persists snapshot to attempt.questionData', async () => {

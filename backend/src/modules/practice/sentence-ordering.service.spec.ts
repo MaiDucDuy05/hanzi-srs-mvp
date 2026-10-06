@@ -148,16 +148,13 @@ describe('SentenceOrderingService', () => {
 
     it('caps question count to 10', async () => {
       attemptRepo.findOne.mockResolvedValue(mockAttempt as PracticeAttempt);
-      const mockQuestions = Array.from({ length: 15 }, (_, i) => ({
-        id: `q${i}`,
-        questionData: { tokens: [{ id: 't1', text: '你' }, { id: 't2', text: '好' }] },
-        answerData: { orderedTokenIds: ['t1', 't2'] },
-      }));
-      qRepo.find.mockResolvedValue(mockQuestions);
+      qRepo.find.mockResolvedValue([]);
 
-      const result = await service.startSentenceOrdering('att-1', 'l1', SourceType.LESSON, undefined, 50);
+      await service.startSentenceOrdering('att-1', 'l1', SourceType.LESSON, undefined, 50);
 
-      expect(result.questions).toHaveLength(10);
+      expect(qRepo.find).toHaveBeenCalledWith(
+        expect.objectContaining({ take: 10 }),
+      );
     });
 
     it('falls back to correctOrder when orderedTokenIds missing', async () => {
