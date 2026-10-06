@@ -107,22 +107,21 @@ export class SentenceOrderingService {
     const attempt = await this.attemptRepo.findOne({ where: { id: attemptId } });
     if (!attempt) throw new NotFoundException('Attempt not found');
 
-    let questions: PracticeQuestion[];
+    let allQuestions: PracticeQuestion[];
 
     if (topicId) {
       // TOPIC: Truy vấn trực tiếp bằng topic_id (đã được liên kết)
-      questions = await this.qRepo.find({
+      allQuestions = await this.qRepo.find({
         where: {
           questionType: 'SENTENCE_ORDERING' as any,
           status: 'PUBLISHED' as any,
           topicId: topicId,
         } as any,
         order: { createdAt: 'DESC' },
-        take: Math.min(count, 10),
       });
     } else {
       // LESSON hoặc LEVEL
-      questions = await this.qRepo.find({
+      allQuestions = await this.qRepo.find({
         where: {
           questionType: 'SENTENCE_ORDERING' as any,
           status: 'PUBLISHED' as any,
@@ -131,9 +130,22 @@ export class SentenceOrderingService {
             : { levelId: sourceId }),
         } as any,
         order: { createdAt: 'DESC' },
-        take: Math.min(count, 10),
       });
     }
+
+    // Lọc các câu hợp lệ có tokens và correctIds
+    const validQuestions = allQuestions.filter(q => {
+      const qData = (q.questionData ?? {}) as { tokens?: SentenceToken[] };
+      const aData = (q.answerData ?? {}) as { correctOrder?: string[]; orderedTokenIds?: string[] };
+      const tokens: SentenceToken[] = qData.tokens ?? [];
+      const correctIds: string[] = aData.orderedTokenIds ?? aData.correctOrder ?? [];
+      return tokens.length > 0 && correctIds.length > 0;
+    });
+
+    // Shuffle danh sách câu hỏi theo attemptId để ngẫu nhiên hoá câu hỏi mỗi lượt chơi
+    const targetCount = Math.min(Math.max(count, 1), 10);
+    const shuffledPool = this.fisherYates(validQuestions, `${attemptId}-questions-pool`);
+    const questions = shuffledPool.slice(0, targetCount);
 
     // Nếu không đủ câu → dùng số câu hiện có (PR-10 §3.5)
     const snapshot: SentenceOrderingSnapshot = { questions: [], correctAnswers: {} };
