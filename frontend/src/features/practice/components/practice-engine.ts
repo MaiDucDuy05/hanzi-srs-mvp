@@ -9,7 +9,7 @@ import { activityKey } from '@/lib/utils/constants';
 import { clearSession, loadSession, saveSession } from '@/lib/utils/storage';
 import { uuid } from '@/lib/utils/format';
 import { loadSourceVocab } from './source-loader';
-import { buildQuestions, computeScore, type ModeResult, type QuestionItem } from './practice-models';
+import { buildQuestions, computeScore, shuffle, type ModeResult, type QuestionItem } from './practice-models';
 
 export type EngineStatus = 'loading' | 'limit' | 'error' | 'running' | 'finished';
 
@@ -128,7 +128,7 @@ export function usePracticeEngine<TState = unknown>(options: {
             levelId: sourceType === 'LEVEL' ? sourceId : undefined,
             lessonId: sourceType === 'LESSON' ? sourceId : undefined,
             topicId: sourceType === 'TOPIC' ? sourceId : undefined,
-            questionCount: 5,
+            questionCount: 10,
             idempotencyKey: uuid(),
           });
 
@@ -295,7 +295,7 @@ export function usePracticeEngine<TState = unknown>(options: {
             levelId: sourceType === 'LEVEL' ? sourceId : undefined,
             lessonId: sourceType === 'LESSON' ? sourceId : undefined,
             topicId: sourceType === 'TOPIC' ? sourceId : undefined,
-            questionCount: 5,
+            questionCount: 10,
             idempotencyKey: uuid(),
           });
 
@@ -354,7 +354,7 @@ export function usePracticeEngine<TState = unknown>(options: {
     (async () => {
       try {
         const vocab = await loadSourceVocab(sourceType, sourceId);
-        const qs = buildQuestions(vocab);
+        const qs = shuffle(buildQuestions(vocab));
         if (qs.length < 2) {
           if (!cancelled) {
             setError('Nguồn này chưa đủ từ vựng để luyện tập.');
