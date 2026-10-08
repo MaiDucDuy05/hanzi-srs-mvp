@@ -1,289 +1,169 @@
 'use client';
 
-import { useState } from 'react';
+import React from 'react';
 import type { SentenceQuestion } from '@/lib/api/types';
 import type { ModeResult } from './practice-models';
 import { Button } from '@/features/ui/components/button';
-import { Check } from 'lucide-react';
+import { Check, RotateCcw } from 'lucide-react';
+import { SelectedTokenChip, BankTokenChip } from './sentence-ordering-token';
+import {
+  useSentenceOrderingState,
+  type OrderingState,
+} from './use-sentence-ordering-state';
 
-export interface OrderingState {
-  index: number;
-  answer: string[];          // mảng token ID đã chọn
-  correct: number;
-  wrong: number;
-  moves: number;
-  feedback: 'correct' | 'wrong' | null;
-  questionResults: Record<string, 'correct' | 'wrong' | null>;
-}
+export type { OrderingState };
 
 interface SentenceOrderingModeProps {
-  /** Câu hỏi từ backend (đã shuffle) */
+  /** Danh sách câu hỏi từ backend (đã shuffle token) */
   questions: SentenceQuestion[];
   initialState?: OrderingState | null;
   /** Lưu userAnswers: questionId → tokenIds[] */
   onAnswersChange: (answers: Record<string, string[]>) => void;
-  /** User đang trả lời xong tất cả câu → gọi handleComplete */
+  /** Gọi khi người dùng hoàn thành tất cả các câu */
   onComplete: (result: ModeResult) => void;
 }
 
+/**
+ * Giao diện luyện tập Sắp xếp câu (Sentence Ordering).
+ * Hỗ trợ co giãn linh hoạt, chống tràn UI khi câu có nhiều từ hoặc từ dài.
+ */
 export function SentenceOrderingMode({
   questions,
   initialState,
   onAnswersChange,
   onComplete,
 }: SentenceOrderingModeProps) {
-  const total = questions.length;
+  const {
+    state,
+    total,
+    question,
+    remainingTokens,
+    isCompact,
+    canSubmit,
+    progressPercent,
+    pickToken,
+    removeToken,
+    resetAnswer,
+    moveLeft,
+    moveRight,
+    check,
+  } = useSentenceOrderingState({
+    questions,
+    initialState,
+    onAnswersChange,
+    onComplete,
+  });
 
-  const [state, setState] = useState<OrderingState>(() =>
-    initialState
-      ? initialState
-      : {
-          index: 0,
-          answer: [],
-          correct: 0,
-          wrong: 0,
-          moves: 0,
-          feedback: null,
-          questionResults: {},
-        },
-  );
-
-  const update = (next: OrderingState) => {
-    setState(next);
-    // Persist userAnswers: mỗi câu → mảng token ID
-    const answers: Record<string, string[]> = {};
-    questions.forEach((q, idx) => {
-      if (idx === state.index) {
-        answers[q.questionId] = next.answer;
-      } else {
-        answers[q.questionId] = initialState
-          ? (Object.values(initialState.questionResults).length > 0
-              ? []
-              : [])
-          : [];
-      }
-    });
-    // Merge với các câu trước đó
-    const prevAnswers: Record<string, string[]> = {};
-    questions.forEach((q) => { prevAnswers[q.questionId] = []; });
-    Object.entries(prevAnswers).forEach(([qId, ids]) => {
-      if (qId === questions[state.index]?.questionId) {
-        prevAnswers[qId] = next.answer;
-      }
-    });
-    onAnswersChange(prevAnswers);
-  };
-
-  const question = questions[state.index];
   if (!question) return null;
 
-  /** Chuyển token vào vùng trả lời */
-  const pickToken = (tokenId: string) => {
-    if (state.feedback) return;
-    update({
-      ...state,
-      answer: [...state.answer, tokenId],
-      moves: state.moves + 1,
-    });
-  };
-
-  /** Bỏ token khỏi vùng trả lời */
-  const removeToken = (position: number) => {
-    if (state.feedback) return;
-    const answer = [...state.answer];
-    answer.splice(position, 1);
-    update({
-      ...state,
-      answer,
-      moves: state.moves + 1,
-    });
-  };
-
-  /** Chuyển token sang trái trong vùng trả lời */
-  const moveLeft = (position: number) => {
-    if (position === 0) return;
-    const answer = [...state.answer];
-    [answer[position - 1], answer[position]] = [answer[position], answer[position - 1]];
-    update({ ...state, answer, moves: state.moves + 1 });
-  };
-
-  /** Chuyển token sang phải trong vùng trả lời */
-  const moveRight = (position: number) => {
-    if (position === state.answer.length - 1) return;
-    const answer = [...state.answer];
-    [answer[position], answer[position + 1]] = [answer[position + 1], answer[position]];
-    update({ ...state, answer, moves: state.moves + 1 });
-  };
-
-  /** Kiểm tra câu hiện tại (dùng token ID so với backend đã lưu snapshot) */
-  const check = async () => {
-    if (state.feedback || state.answer.length === 0) return;
-
-    // Phía client: kiểm tra đủ token
-    const neededCount = question.tokens.length;
-    const hasAllTokens =
-      state.answer.length === neededCount &&
-      new Set(state.answer).size === neededCount;
-
-    if (!hasAllTokens) return;
-
-    // Submit sẽ được backend chấm — ở đây tạm tính client-side cho UX
-    const isCorrect = true; // Backend sẽ override khi submit
-    const next: OrderingState = {
-      ...state,
-      feedback: isCorrect ? 'correct' : 'wrong',
-      correct: state.correct + (isCorrect ? 1 : 0),
-      wrong: state.wrong + (isCorrect ? 0 : 1),
-      moves: state.moves + 1,
-      questionResults: {
-        ...state.questionResults,
-        [question.questionId]: isCorrect ? 'correct' : 'wrong',
-      },
-    };
-
-    if (state.index + 1 >= total) {
-      // Đây là câu cuối → nộp bài
-      update(next);
-      setTimeout(() => {
-        const result: ModeResult = {
-          correctCount: next.correct,
-          wrongCount: next.wrong,
-          moveCount: next.moves,
-          score: Math.round((next.correct / total) * 100),
-          answerData: { questions: total } as unknown as Record<string, unknown>,
-        };
-        onComplete(result);
-      }, 800);
-    } else {
-      update(next);
-      // Chuyển câu tiếp theo sau delay
-      setTimeout(() => {
-        const nextState: OrderingState = {
-          index: state.index + 1,
-          answer: [],
-          correct: next.correct,
-          wrong: next.wrong,
-          moves: next.moves,
-          feedback: null,
-          questionResults: next.questionResults,
-        };
-        setState(nextState);
-      }, 800);
-    }
-  };
-
-  /** Token chưa dùng = tokens chưa có trong answer */
-  const usedIds = new Set(state.answer);
-  const remainingTokens = question.tokens.filter((t) => !usedIds.has(t.id));
-
-  const canSubmit =
-    state.answer.length === question.tokens.length &&
-    new Set(state.answer).size === question.tokens.length &&
-    !state.feedback;
-
   return (
-    <div className="mx-auto max-w-lg space-y-4">
-      {/* Progress */}
-      <div className="flex items-center justify-between text-sm text-gray-500">
-        <span>
-          Câu {state.index + 1}/{total}
-        </span>
-        <span>
-          Đúng {state.correct} · Sai {state.wrong}
-        </span>
+    <div className="w-full max-w-2xl sm:max-w-3xl mx-auto space-y-4 sm:space-y-6">
+      {/* Thanh tiến độ và số câu đúng / sai */}
+      <div className="space-y-1.5 px-1">
+        <div className="flex items-center justify-between text-xs sm:text-sm font-semibold text-gray-500">
+          <span className="text-[#215b3b] font-bold">
+            Câu {state.index + 1} / {total}
+          </span>
+          <span className="flex items-center gap-2">
+            <span className="text-emerald-600">Đúng: {state.correct}</span>
+            <span>·</span>
+            <span className="text-rose-500">Sai: {state.wrong}</span>
+          </span>
+        </div>
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-gray-200/70">
+          <div
+            className="h-full bg-gradient-to-r from-[#8BC34A] to-[#5E7F26] transition-all duration-300"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
       </div>
 
-      {/* Card */}
-      <div className="rounded-xl border border-gray-200 p-6 text-center">
-        {/* Pinyin + nghĩa */}
+      {/* Thẻ nội dung câu hỏi */}
+      <div className="rounded-3xl border border-[#d8ecd8] bg-white/95 p-5 sm:p-7 shadow-soft text-center transition-all">
         {question.translation && (
-          <p className="text-lg font-semibold text-brand mb-1">{question.translation}</p>
+          <p className="text-xl sm:text-2xl font-bold text-[#215b3b] font-heading mb-1.5">
+            {question.translation}
+          </p>
         )}
         {question.explanation && (
           <p className="text-sm text-gray-500 italic mb-3">{question.explanation}</p>
         )}
 
-        <p className="text-xs text-gray-400 mt-2">Sắp xếp các từ thành câu đúng:</p>
+        {/* Thanh tiêu đề vùng ghép và nút Đặt lại */}
+        <div className="flex items-center justify-between mt-3 mb-1 px-1">
+          <p className="text-xs sm:text-sm font-medium text-gray-400">
+            Sắp xếp các từ thành câu đúng:
+          </p>
+          {state.answer.length > 0 && !state.feedback && (
+            <button
+              type="button"
+              onClick={resetAnswer}
+              className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-rose-600 transition-colors"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Đặt lại</span>
+            </button>
+          )}
+        </div>
 
-        {/* Vùng trả lời — token đã chọn */}
-        <div className="mt-3 flex min-h-[52px] flex-wrap items-center justify-center gap-2 rounded-lg border-2 border-dashed border-[#8BC34A] bg-[#f9fdf5] p-3">
+        {/* Vùng trả lời — Drop Zone (giới hạn max-h có cuộn, chống tràn dọc) */}
+        <div className="flex min-h-[68px] max-h-52 overflow-y-auto flex-wrap items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-[#8BC34A] bg-[#f9fdf5]/80 p-3 sm:p-4 transition-all shadow-inner">
           {state.answer.length === 0 && (
-            <span className="text-sm text-gray-400">Chạm từ bên dưới để ghép</span>
+            <span className="text-sm text-gray-400 select-none">
+              Chạm từ bên dưới để ghép câu
+            </span>
           )}
           {state.answer.map((tokenId, pos) => {
             const token = question.tokens.find((t) => t.id === tokenId);
             if (!token) return null;
-            const isWrong = state.feedback === 'wrong';
             return (
-              <div key={`${tokenId}-${pos}`} className="flex items-center gap-0.5">
-                {pos > 0 && (
-                  <button
-                    onClick={() => moveLeft(pos)}
-                    disabled={!!state.feedback}
-                    className="text-gray-400 hover:text-brand disabled:opacity-30 text-xs px-1"
-                    title="←"
-                  >
-                    ‹
-                  </button>
-                )}
-                <button
-                  onClick={() => removeToken(pos)}
-                  disabled={!!state.feedback}
-                  className={`hanzi rounded-md px-3 py-1.5 text-xl font-bold transition-colors ${
-                    isWrong
-                      ? 'bg-red-100 text-red-500 line-through'
-                      : 'bg-[#8BC34A] text-white'
-                  } disabled:opacity-60`}
-                >
-                  {token.text}
-                </button>
-                {pos < state.answer.length - 1 && (
-                  <button
-                    onClick={() => moveRight(pos)}
-                    disabled={!!state.feedback}
-                    className="text-gray-400 hover:text-brand disabled:opacity-30 text-xs px-1"
-                    title="→"
-                  >
-                    ›
-                  </button>
-                )}
-              </div>
+              <SelectedTokenChip
+                key={`${tokenId}-${pos}`}
+                token={token}
+                position={pos}
+                totalSelected={state.answer.length}
+                isCompact={isCompact}
+                feedback={state.feedback}
+                onMoveLeft={() => moveLeft(pos)}
+                onMoveRight={() => moveRight(pos)}
+                onRemove={() => removeToken(pos)}
+              />
             );
           })}
         </div>
 
-        {/* Vùng chọn — token chưa dùng */}
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+        {/* Vùng chọn — Token Bank (giới hạn max-h có cuộn, co giãn khi nhiều từ) */}
+        <div className="mt-4 flex max-h-48 sm:max-h-56 overflow-y-auto flex-wrap items-center justify-center gap-2 p-1">
           {remainingTokens.map((token) => (
-            <button
+            <BankTokenChip
               key={token.id}
-              onClick={() => pickToken(token.id)}
+              token={token}
+              isCompact={isCompact}
               disabled={!!state.feedback}
-              className="hanzi rounded-md border-2 border-gray-200 bg-white px-3 py-1.5 text-xl font-bold text-gray-700 hover:border-[#8BC34A] hover:text-brand disabled:opacity-40 transition-colors"
-            >
-              {token.text}
-            </button>
+              onPick={() => pickToken(token.id)}
+            />
           ))}
         </div>
 
-        {/* Feedback */}
+        {/* Thông báo phản hồi đúng / sai */}
         {state.feedback === 'correct' && (
-          <p className="mt-4 font-medium text-green-600 inline-flex items-center gap-1">
+          <div className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-bold text-emerald-700">
             <span>Chính xác!</span>
             <Check className="w-4 h-4 stroke-[2.5]" />
-          </p>
+          </div>
         )}
         {state.feedback === 'wrong' && (
-          <p className="mt-4 font-medium text-red-600">
+          <div className="mt-4 inline-flex items-center rounded-full bg-rose-50 px-4 py-1.5 text-sm font-bold text-rose-700">
             Chưa đúng — thử lại câu khác nhé!
-          </p>
+          </div>
         )}
 
         {/* Nút kiểm tra */}
-        <div className="mt-4">
+        <div className="mt-5">
           <Button
             onClick={check}
             disabled={!canSubmit}
+            className="px-8 py-2.5 rounded-full font-bold shadow-sm"
           >
             Kiểm tra
           </Button>
@@ -291,7 +171,7 @@ export function SentenceOrderingMode({
 
         {/* Số token còn thiếu */}
         {!canSubmit && state.answer.length > 0 && (
-          <p className="mt-2 text-xs text-gray-400">
+          <p className="mt-2 text-xs text-gray-400 font-medium">
             {question.tokens.length - state.answer.length} từ còn thiếu
           </p>
         )}
