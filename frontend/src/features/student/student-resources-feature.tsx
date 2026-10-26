@@ -2,13 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Card, CardHeader, CardBody } from '@/features/ui/components/card';
-import { Button } from '@/features/ui/components/button';
 import { Input } from '@/features/ui/components/form';
-import { Badge } from '@/features/ui/components/badge';
 import { resourceApi } from '@/lib/api/endpoints/resource';
-import { Download, FileText, Search } from 'lucide-react';
+import { FileText, Search } from 'lucide-react';
 import { DocumentViewerModal } from '@/features/ui/components/document-viewer-modal';
+import { StudentResourceCard } from './components/student-resource-card';
+import { StudentResourceTypesBar } from './components/student-resource-types-bar';
 import type { Resource, ResourceType } from '@/lib/api/types';
 
 export function StudentResourcesFeature() {
@@ -107,29 +106,38 @@ export function StudentResourcesFeature() {
       </div>
 
       {/* Category Filter Pills */}
-      {resourceTypes.length > 0 && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {resourceTypes.map((type) => (
-            <button
-              key={type.id}
-              type="button"
-              onClick={() => { setSelectedTypeId(type.id); setPage(1); }}
-              className={`px-4 py-2 rounded-full text-xs font-bold shrink-0 transition-all cursor-pointer ${
-                selectedTypeId === type.id
-                  ? 'bg-[#215b3b] text-white shadow-sm'
-                  : 'bg-white text-gray-600 hover:bg-emerald-50 border border-gray-100 shadow-2xs'
-              }`}
-            >
-              {type.name} ({type.resourceCount || 0})
-            </button>
-          ))}
-        </div>
-      )}
+      <StudentResourceTypesBar
+        resourceTypes={resourceTypes}
+        selectedTypeId={selectedTypeId}
+        onSelect={(typeId) => {
+          setSelectedTypeId(typeId);
+          setPage(1);
+        }}
+      />
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 animate-pulse">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 animate-pulse">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="h-64 rounded-3xl bg-emerald-50/50 border border-emerald-100" />
+            <div
+              key={i}
+              className="h-[170px] rounded-[28px] bg-white/70 border border-emerald-100/60 p-4 sm:p-5 flex items-stretch gap-4 sm:gap-5"
+            >
+              <div className="w-[96px] sm:w-[108px] h-full rounded-2xl bg-emerald-100/50 shrink-0" />
+              <div className="flex-1 flex flex-col justify-between py-1">
+                <div>
+                  <div className="flex justify-between items-center mb-2.5">
+                    <div className="h-4 w-28 bg-emerald-100/60 rounded-full" />
+                    <div className="h-4 w-12 bg-emerald-100/60 rounded-full" />
+                  </div>
+                  <div className="h-5 w-4/5 bg-gray-200/70 rounded-md mb-2" />
+                  <div className="h-4 w-full bg-gray-100/70 rounded-md" />
+                </div>
+                <div className="pt-2 border-t border-emerald-50/70 flex justify-between">
+                  <div className="h-3 w-20 bg-gray-100 rounded" />
+                  <div className="h-3 w-16 bg-gray-100 rounded" />
+                </div>
+              </div>
+            </div>
           ))}
         </div>
       ) : filteredResources.length === 0 ? (
@@ -139,48 +147,15 @@ export function StudentResourcesFeature() {
           <p className="text-emerald-600">{t('notFoundDesc')}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {filteredResources.map((resource) => (
-            <div 
-              key={resource.id} 
-              className={`flex flex-row bg-white rounded-[28px] border-none p-[18px] hover:shadow-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 cursor-pointer hover:-translate-y-1 ${downloading === resource.id ? 'opacity-70 pointer-events-none' : ''}`}
+            <StudentResourceCard
+              key={resource.id}
+              resource={resource}
               onClick={() => handleOpenDoc(resource)}
-            >
-              {/* Left: Cover Image */}
-              <div className="w-[84px] h-[116px] shrink-0 bg-emerald-50 rounded-2xl overflow-hidden relative mr-4 flex items-center justify-center border border-emerald-50/50">
-                {resource.coverImageUrl ? (
-                  <img src={resource.coverImageUrl} alt={resource.title} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-emerald-400 bg-emerald-100/30">
-                    <FileText className="h-10 w-10 opacity-50" />
-                  </div>
-                )}
-              </div>
-              
-              {/* Right: Content */}
-              <div className="flex-1 min-w-0 flex flex-col py-1">
-                 <div className="flex justify-between items-start gap-2 mb-1.5">
-                    <div className="flex-1 min-w-0 pr-2">
-                       {resource.resourceType && (
-                         <span className="inline-block text-[10px] font-semibold text-[#215b3b] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100/80 mb-1">
-                           {resource.resourceType.name}
-                         </span>
-                       )}
-                       <h3 className="text-[17px] font-bold text-[#11321e] line-clamp-2 leading-[1.3] tracking-tight" title={resource.title}>
-                          {resource.title}
-                       </h3>
-                    </div>
-                    { resource.tier === 'VIP' ? (
-                      <Badge tone="amber" className="shrink-0 uppercase text-[10px] px-2.5 py-0.5 rounded-full font-bold tracking-wider shadow-sm">PREMIUM</Badge>
-                    ) : (
-                      <Badge tone="green" className="shrink-0 uppercase text-[10px] px-2.5 py-0.5 rounded-full font-bold bg-[#43b97f] text-white tracking-wider shadow-sm border-none">FREE</Badge>
-                    )}
-                 </div>
-                 <p className="text-[14px] text-gray-500 line-clamp-3 leading-relaxed mt-1">
-                    {resource.description || t('defaultDesc')}
-                 </p>
-              </div>
-            </div>
+              isDownloading={downloading === resource.id}
+              defaultDescription={t('defaultDesc')}
+            />
           ))}
         </div>
       )}
